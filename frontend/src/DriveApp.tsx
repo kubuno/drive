@@ -1378,7 +1378,7 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
       {marqueeStyle && marqueeStyle.width > 2 && marqueeStyle.height > 2 && (
         <div
           className="pointer-events-none z-50 rounded border border-primary/50 bg-primary/10"
-          style={marqueeStyle}
+          style={marqueeStyle as React.CSSProperties}
         />
       )}
 
