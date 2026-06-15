@@ -1,0 +1,82 @@
+[module]
+id           = "drive"
+display_name = "Drive"
+version      = "0.1.0"
+description  = "Gestionnaire de fichiers — upload, téléchargement, partage, arborescence."
+author       = "Kubuno Contributors"
+license      = "AGPL-3.0"
+homepage_url = "https://github.com/kubuno/kubuno"
+runtime      = "rust"
+dependencies = []
+settings_path = "/drive/settings"
+
+[process]
+entrypoint = "kubuno-drive"
+args       = []
+
+[server]
+host = "127.0.0.1"
+port = 3101
+
+[routes]
+patterns = [
+    { method = "*", path = "/*" },
+]
+
+[[sidebar_items]]
+id       = "drive"
+label    = "Mes fichiers"
+icon     = "FolderOpen"
+path     = "/drive"
+position = 10
+section  = "main"
+
+[[sidebar_items]]
+id       = "drive-shared"
+label    = "Partagés avec moi"
+icon     = "Share2"
+path     = "/drive/shared"
+position = 11
+section  = "main"
+
+[[sidebar_items]]
+id       = "drive-recent"
+label    = "Récents"
+icon     = "Clock"
+path     = "/drive/recent"
+position = 12
+section  = "main"
+
+[[sidebar_items]]
+id       = "drive-starred"
+label    = "Suivis"
+icon     = "Star"
+path     = "/drive/starred"
+position = 13
+section  = "main"
+
+[[sidebar_items]]
+id       = "drive-trash"
+label    = "Corbeille"
+icon     = "Trash2"
+path     = "/drive/trash"
+position = 99
+section  = "secondary"
+
+[[cli_commands]]
+name        = "drive:upload"
+description = "Uploade un ou plusieurs fichiers vers Kubuno (authentification par token d'API)"
+usage       = "kubuno drive:upload <FICHIER>... --token <TOKEN> [--server <URL>] [--folder <FOLDER|UUID>]"
+
+[events]
+subscribed = [
+    "UserDeleted",
+    "QuotaUpdated",
+]
+publishes = [
+    "FileUploaded",
+    "FileDeleted",
+    "FileMoved",
+    "ShareCreated",
+    "ShareRevoked",
+]

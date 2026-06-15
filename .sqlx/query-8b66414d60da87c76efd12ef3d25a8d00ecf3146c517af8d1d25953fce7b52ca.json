@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE drive.remote_connections SET status = 'connected', last_connected_at = NOW(),\n                          last_error = NULL,\n                          remote_quota_bytes = $2,\n                          remote_used_bytes  = $3\n                 WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "8b66414d60da87c76efd12ef3d25a8d00ecf3146c517af8d1d25953fce7b52ca"
+}

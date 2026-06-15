@@ -1,0 +1,14 @@
+pub mod activity;
+pub mod embeddings;
+pub mod extract;
+pub mod files;
+pub mod folders;
+pub mod indexer;
+pub mod phash;
+pub mod scanner;
+pub mod search;
+pub mod shares;
+pub mod thumbnails;
+pub mod uploads;
+pub mod versions;
+pub mod watcher;

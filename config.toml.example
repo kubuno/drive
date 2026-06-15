@@ -1,0 +1,47 @@
+# ─── Kubuno Files — Configuration ────────────────────────────────────────────
+# Copiez ce fichier en config.toml et adaptez les valeurs.
+# Les variables d'environnement préfixées KD__ surchargent ce fichier.
+# Exemple : KD__SERVER__PORT=3102
+
+[server]
+host = "127.0.0.1"
+port = 3101
+
+[core]
+# URL du core Kubuno (pour l'enregistrement du module)
+url             = "http://127.0.0.1:8080"
+# Secret partagé — doit correspondre à server.internal_secret dans le core
+internal_secret = "change_me"
+
+# ── Base de données ───────────────────────────────────────────────────────────
+# Les paramètres de connexion sont injectés par le superviseur Kubuno via
+# KUBUNO_DB_HOST / KUBUNO_DB_PORT / KUBUNO_DB_USER / KUBUNO_DB_PASSWORD / KUBUNO_DB_NAME.
+# Pour un démarrage hors superviseur, exporter ces variables manuellement.
+
+[storage]
+backend    = "local"
+# Production (installation Debian) — chemins créés par le postinst
+local_path = "/var/lib/kubuno/modules/drive/data"
+temp_path  = "/var/lib/kubuno/modules/drive/temp"
+# Développement local (décommenter et commenter les lignes ci-dessus) :
+# local_path = "./data/files"
+# temp_path  = "./data/temp"
+
+# Backend S3 (optionnel)
+# s3_bucket     = "kubuno-files"
+# s3_region     = "eu-west-1"
+# s3_endpoint   = "https://s3.amazonaws.com"
+# s3_access_key = ""
+# s3_secret_key = ""
+
+[files]
+# Taille maximale d'un upload (en bytes). Défaut : 5 Go
+max_upload_bytes  = 5368709120
+# Taille des thumbnails (carrés NxN pixels). Défaut : 256
+thumbnail_size    = 256
+# Chunk size pour les uploads multipart (en bytes). Défaut : 10 Mo
+chunk_size        = 10485760
+
+[logging]
+level  = "info"
+format = "pretty"
