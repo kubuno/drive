@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE drive.files SET size_bytes = $1, has_thumbnail = FALSE, updated_at = NOW() WHERE id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "a517007537c6c61ea31ee0f8c2afffd41ebe35c2618a73fb494727fd348a2448"
+}

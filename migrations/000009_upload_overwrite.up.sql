@@ -1,0 +1,2 @@
+ALTER TABLE drive.upload_sessions
+    ADD COLUMN IF NOT EXISTS overwrite BOOLEAN NOT NULL DEFAULT FALSE;

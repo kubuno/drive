@@ -1,0 +1,1 @@
+ALTER TABLE drive.folders ADD COLUMN IF NOT EXISTS color VARCHAR(20);
