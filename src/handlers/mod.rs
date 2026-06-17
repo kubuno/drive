@@ -10,6 +10,7 @@ pub mod remotes;
 pub mod scan;
 pub mod search;
 pub mod shares;
+pub mod sync;
 pub mod system;
 pub mod transform;
 pub mod uploads;
