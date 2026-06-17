@@ -7,6 +7,8 @@ use uuid::Uuid;
 
 use crate::{errors::FilesError, state::AppState};
 
+pub mod idempotency;
+
 /// Middleware IPC : valide X-Internal-Secret pour les appels inter-modules.
 pub async fn require_ipc_secret(
     State(state): State<AppState>,

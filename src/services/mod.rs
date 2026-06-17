@@ -8,6 +8,7 @@ pub mod phash;
 pub mod scanner;
 pub mod search;
 pub mod shares;
+pub mod sync;
 pub mod thumbnails;
 pub mod uploads;
 pub mod versions;
