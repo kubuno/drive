@@ -10,7 +10,7 @@ use tower_http::{
 };
 
 use crate::{
-    handlers::{activity, archive, files, folders, health, import_url, ipc, public, remotes, scan, search, shares, system, transform, uploads, versions, webdav},
+    handlers::{activity, archive, files, folders, health, import_url, ipc, public, remotes, scan, search, shares, sync, system, transform, uploads, versions, webdav},
     middleware::{require_auth, require_ipc_secret},
     state::AppState,
 };
@@ -90,6 +90,10 @@ pub fn build(state: AppState) -> Router {
         .route("/system/files/:id",             delete(system::delete_file))
         .route("/system/upload",                post(system::upload)
                                                     .layer(DefaultBodyLimit::max(state.settings.files.max_upload_bytes as usize)))
+        // Synchro delta + écriture conflit-safe (clients offline-first natifs/desktop)
+        .route("/sync/delta",                   get(sync::delta))
+        .route("/sync/file/:id/content",        put(sync::put_content)
+                                                    .layer(DefaultBodyLimit::max(state.settings.files.max_upload_bytes as usize)))
         // WebDAV token management
         .route("/webdav-token",                 get(webdav::get_webdav_token))
         .route("/webdav-token/regenerate",      post(webdav::regenerate_webdav_token))
@@ -101,6 +105,8 @@ pub fn build(state: AppState) -> Router {
         .route("/uploads/:session_id/chunks/:chunk_index", post(uploads::upload_chunk)
                                                             .layer(DefaultBodyLimit::max(state.settings.files.chunk_size as usize)))
         .layer(middleware::from_fn_with_state(state.clone(), require_auth))
+        // Idempotence des écritures (rejeu offline sans duplication).
+        .layer(middleware::from_fn_with_state(state.clone(), crate::middleware::idempotency::idempotency))
         .with_state(state.clone());
 
     // Scan (sans auth — appelé par le core ou en local; protéger par réseau en prod)

@@ -22,6 +22,9 @@ pub enum FilesError {
     #[error("Conflit: {0}")]
     Conflict(String),
 
+    #[error("Précondition échouée: {0}")]
+    PreconditionFailed(String),
+
     #[error("{0}")]
     Protected(String),
 
@@ -55,6 +58,7 @@ impl IntoResponse for FilesError {
             FilesError::NotFound(_)     => (StatusCode::NOT_FOUND,              "NOT_FOUND",       self.to_string()),
             FilesError::Validation(_)   => (StatusCode::UNPROCESSABLE_ENTITY,   "VALIDATION",      self.to_string()),
             FilesError::Conflict(_)     => (StatusCode::CONFLICT,               "CONFLICT",        self.to_string()),
+            FilesError::PreconditionFailed(_) => (StatusCode::PRECONDITION_FAILED, "PRECONDITION_FAILED", self.to_string()),
             FilesError::Protected(_)    => (StatusCode::CONFLICT,               "PROTECTED",       self.to_string()),
             FilesError::QuotaExceeded   => (StatusCode::from_u16(507).unwrap(), "QUOTA_EXCEEDED",  self.to_string()),
             FilesError::FileTooLarge    => (StatusCode::PAYLOAD_TOO_LARGE,      "FILE_TOO_LARGE",  self.to_string()),

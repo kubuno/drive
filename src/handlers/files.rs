@@ -105,6 +105,8 @@ pub async fn upload(
     activity::log_file(&state.db, file.id, user.id, &user.email, "uploaded",
         serde_json::json!({ "size": file.size_bytes })).await;
 
+    crate::events::notify_change(&state.settings, user.id);
+
     // Génération thumbnail en arrière-plan
     let db2       = state.db.clone();
     let storage2  = state.storage.clone();
@@ -271,6 +273,7 @@ pub async fn rename(
     let file = files::rename_file(&state.db, &state.storage, user.id, file_id, dto).await?;
     activity::log_file(&state.db, file.id, user.id, &user.email, "renamed",
         serde_json::json!({ "old_name": old.name, "new_name": file.name })).await;
+    crate::events::notify_change(&state.settings, user.id);
     Ok(Json(json!({ "file": file })))
 }
 
@@ -283,6 +286,7 @@ pub async fn move_file(
     let file = files::move_file(&state.db, &state.storage, user.id, file_id, dto).await?;
     activity::log_file(&state.db, file.id, user.id, &user.email, "moved",
         serde_json::json!({})).await;
+    crate::events::notify_change(&state.settings, user.id);
     Ok(Json(json!({ "file": file })))
 }
 
@@ -294,6 +298,7 @@ pub async fn trash(
     let file = files::trash_file(&state.db, user.id, file_id).await?;
     activity::log_file(&state.db, file.id, user.id, &user.email, "trashed",
         serde_json::json!({})).await;
+    crate::events::notify_change(&state.settings, user.id);
     Ok(Json(json!({ "file": file })))
 }
 
@@ -305,6 +310,7 @@ pub async fn restore(
     let file = files::restore_file(&state.db, user.id, file_id).await?;
     activity::log_file(&state.db, file.id, user.id, &user.email, "restored",
         serde_json::json!({})).await;
+    crate::events::notify_change(&state.settings, user.id);
     Ok(Json(json!({ "file": file })))
 }
 
@@ -314,6 +320,7 @@ pub async fn delete(
     Path(file_id): Path<Uuid>,
 ) -> Result<Json<Value>> {
     files::delete_file_permanently(&state.db, &state.storage, user.id, file_id).await?;
+    crate::events::notify_change(&state.settings, user.id);
     Ok(Json(json!({ "ok": true })))
 }
 
