@@ -220,6 +220,19 @@ pub async fn get_file_any_owner(db: &PgPool, file_id: Uuid) -> Result<File> {
     .ok_or_else(|| FilesError::NotFound(format!("Fichier {file_id} introuvable")))
 }
 
+/// A file the user may READ: either they own it, or it is internally shared with
+/// them via an active share. Used by download/thumbnail so "Partagés avec moi"
+/// items open. Never grants write access.
+pub async fn get_file_readable(db: &PgPool, user_id: Uuid, file_id: Uuid) -> Result<File> {
+    let file = get_file_any_owner(db, file_id).await?;
+    if file.owner_id == user_id
+        || crate::services::shares::is_file_shared_with(db, user_id, file_id).await?
+    {
+        return Ok(file);
+    }
+    Err(FilesError::NotFound(format!("Fichier {file_id} introuvable")))
+}
+
 pub async fn rename_file(
     db: &PgPool,
     storage: &Arc<dyn StorageBackend>,

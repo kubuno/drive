@@ -35,8 +35,27 @@ pub async fn list(
     State(state): State<AppState>,
     Extension(user): Extension<FilesUser>,
 ) -> Result<Json<Value>> {
-    let items = shares::list_shares(&state.db, user.id).await?;
+    let items = shares::list_shares_enriched(&state.db, user.id).await?;
     Ok(Json(json!({ "shares": items })))
+}
+
+/// Internal shares targeting the current user ("Partagés avec moi").
+pub async fn received(
+    State(state): State<AppState>,
+    Extension(user): Extension<FilesUser>,
+) -> Result<Json<Value>> {
+    let items = shares::list_received_shares(&state.db, user.id).await?;
+    Ok(Json(json!({ "shares": items })))
+}
+
+/// Resolved folders/files shared with the current user (for the shared view's
+/// virtual StorageSource).
+pub async fn received_items(
+    State(state): State<AppState>,
+    Extension(user): Extension<FilesUser>,
+) -> Result<Json<Value>> {
+    let (folders, files) = shares::list_received_items(&state.db, user.id).await?;
+    Ok(Json(json!({ "folders": folders, "files": files })))
 }
 
 pub async fn create(

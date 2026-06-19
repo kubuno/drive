@@ -5,11 +5,13 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Folder as FolderIcon, FolderOpen, ChevronRight, Star, Clock,
   Trash2, Share2, HardDrive, Server, FolderPlus, RefreshCw, Plug, Settings2, ExternalLink, Columns2, ServerCog,
+  Search, X,
 } from 'lucide-react'
 import { MenuDropdown, type MenuItem, ConfirmDialog } from '@ui'
 import { filesApi, FolderGlyph, type Folder, type RemoteConnection, type RemoteEntry } from '@kubuno/drive'
 import { usePendingKind, pendingBoxClass, pendingBoxStyle, useConfirm, useAuthStore } from '@kubuno/sdk'
-import { useFilesStore } from '@kubuno/drive'
+import { useFilesStore, type FilesSearchFilters } from '@kubuno/drive'
+import { useDriveExtras, tagColorHex, type SavedSearch } from './driveExtras'
 import { useFilesContextMenuStore } from './filesContextMenuStore'
 import FilesStorageGauge from './FilesStorageGauge'
 import { SidebarNavItem } from '@kubuno/sdk'
@@ -335,7 +337,20 @@ export default function FilesTreeSidebar({ collapsed = false }: { collapsed?: bo
   const { pathname } = useLocation()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
-  const { currentFolderId, refreshKey, openNewFolder, openRemotesPanel } = useFilesStore()
+  const { currentFolderId, refreshKey, openNewFolder, openRemotesPanel,
+          setSearchQuery, setSearchFilters, applySearch } = useFilesStore()
+  const savedSearches      = useDriveExtras(s => s.savedSearches)
+  const deleteSavedSearch  = useDriveExtras(s => s.deleteSavedSearch)
+
+  // Recall a saved search: push its query + filters into the core search store.
+  const applySaved = (s: SavedSearch) => {
+    setSearchQuery(s.query || '')
+    if (s.filters && Object.keys(s.filters).length) {
+      setSearchFilters(s.filters as Partial<FilesSearchFilters>)
+    }
+    applySearch()
+    navigate('/drive')
+  }
   const { openFolderMenu, contextMenuFolderId, setContextMenuFolderId } = useFilesContextMenuStore()
   const qc = useQueryClient()
   const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm()
@@ -486,6 +501,33 @@ export default function FilesTreeSidebar({ collapsed = false }: { collapsed?: bo
             isActive={isSystem}
             onClick={() => navigate('/drive/system')}
           />
+        )}
+
+        {/* Recherches sauvegardées (smart folders) */}
+        {savedSearches.length > 0 && (
+          <>
+            <div className="h-px bg-border mx-1 my-1" />
+            <div className="px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-text-tertiary select-none">
+              Recherches
+            </div>
+            {savedSearches.map(s => (
+              <div
+                key={s.id}
+                onClick={() => applySaved(s)}
+                className="group w-full flex items-center gap-3 px-3 py-2 rounded-full text-sm hover:bg-surface-2 cursor-pointer text-left select-none"
+              >
+                <Search size={18} className="flex-shrink-0" style={{ color: s.color ? tagColorHex(s.color) : '#5f6368' }} />
+                <span className="truncate flex-1" style={{ color: '#5f6368' }}>{s.name}</span>
+                <button
+                  onClick={(e) => { e.stopPropagation(); void deleteSavedSearch(s.id) }}
+                  className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-danger-light text-danger transition-opacity"
+                  title="Supprimer la recherche"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ))}
+          </>
         )}
       </nav>
 
