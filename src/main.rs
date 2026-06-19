@@ -4,7 +4,7 @@ use uuid::Uuid;
 use kubuno_drive::{
     config::Settings,
     router,
-    services::{indexer, watcher},
+    services::{indexer, maintenance, watcher},
     state::AppState,
 };
 use reqwest::Client;
@@ -469,6 +469,14 @@ async fn main() -> Result<()> {
         let state_idx = state.clone();
         tokio::spawn(async move {
             indexer::run_worker(state_idx).await;
+        });
+    }
+
+    // Worker de nettoyage de la corbeille — purge auto des fichiers anciens
+    {
+        let state_trash = state.clone();
+        tokio::spawn(async move {
+            maintenance::run_trash_cleaner(state_trash).await;
         });
     }
 

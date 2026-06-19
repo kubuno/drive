@@ -10,15 +10,18 @@ import {
   Download, MoreVertical, CloudUpload, Info,
   Image, Search, X, History, Play,
   FolderPlus, Camera,
-  Scissors, Copy, ClipboardPaste, Archive, Link,
+  Scissors, Copy, ClipboardPaste, Archive, Link, Link2,
   PackageOpen, ListChecks, CheckSquare,
+  Lock, Unlock, Tags, Wand2, CopyPlus, Files as FilesIcon, BarChart3, Bookmark,
+  Move, Palette, AppWindow,
 } from 'lucide-react'
 import { filesApi, formatSize, type Folder, type FolderAncestor, type FileItem, type SearchHit } from '@kubuno/drive'
-import { StorageExplorer, localSource, FolderGlyph, FilesTextViewer, isTextFile } from '@kubuno/drive'
+import { StorageExplorer, localSource, FolderGlyph, FilesTextViewer, isTextFile, type FileContextAction } from '@kubuno/drive'
 import { useFilesStore, type FilesSearchFilters } from '@kubuno/drive'
 import { useFilesPaintStore } from '@kubuno/drive'
 import { useAuthStore } from '@kubuno/sdk'
 import { api } from '@kubuno/sdk'
+import { prompt } from '@kubuno/sdk'
 import type { User } from '@kubuno/sdk'
 import { ViewMenu, VIEW_SPECS, type ViewMode } from '@kubuno/drive'
 import { NewFolderModal } from '@kubuno/drive'
@@ -43,13 +46,21 @@ import { FloatCheckbox, Button, Dropdown, MenuDropdown, type MenuItem } from '@u
 import { useFilesMediaPlayerStore } from '@kubuno/drive'
 import { useFilesVideoPlayerStore } from '@kubuno/drive'
 import { useImageCacheStore } from '@kubuno/sdk'
-import { getFileIcon, OpenWithSubmenu, OrganiserSubmenu } from '@kubuno/drive'
+import { getFileIcon, FOLDER_COLORS } from '@kubuno/drive'
 import { useFilesContextMenuStore } from './filesContextMenuStore'
 import { useFilesDialogStore } from '@kubuno/drive'
 import { PdfViewerModal } from '@kubuno/sdk'
 import { ConflictDialog, type ConflictChoice } from '@ui'
 import ArchiveBrowser from './ArchiveBrowser'
 import { useMarqueeSelection } from '@kubuno/drive'
+import { useDriveExtras } from './driveExtras'
+import { TagDots, TagDialog, type TagDialogTarget } from './TagUI'
+import ImageEditDialog from './ImageEditDialog'
+import DuplicatesDialog from './DuplicatesDialog'
+import StorageInsightsDialog from './StorageInsightsDialog'
+import AdvancedShareDialog from './AdvancedShareDialog'
+import TrashStatsBanner from './TrashStatsBanner'
+import { recentSource, starredSource, sharedSource } from './driveSources'
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type MenuTarget =
@@ -139,6 +150,7 @@ interface ItemMenuHandlers {
   onRestore: () => void
   onShare: () => void
   onGetLink: () => void
+  onAdvancedShare: () => void
   onInfo: () => void
   onEditPaint: () => void
   onVersionHistory: () => void
@@ -149,22 +161,60 @@ interface ItemMenuHandlers {
   onCompressSave: () => void
   onDecompress: () => void
   onSetColor: (color: string | null) => void
+  onTags: () => void
+  onLock: () => void
+  onUnlock: () => void
+  onEditImage: () => void
+  onDuplicate: () => void
+  /** Items du sous-menu « Ouvrir avec » (calculés dans le composant). */
+  openWithItems: MenuItem[]
   clipboard: { action: 'cut' | 'copy'; type: 'file' | 'folder'; id: string; name: string } | null
   isTrashed: boolean
   isPlaying: boolean
+  isLocked: boolean
   isMultiSelection: boolean
   selectionCount: number
 }
 
-// Construit la liste d'items du menu contextuel pour <MenuDropdown>. Les sous-menus
-// dynamiques (« Ouvrir avec » + grille couleurs de l'« Organiser ») sont embarqués
-// via des items `custom` qui rendent leurs composants existants tels quels.
+// Grille de couleurs de dossier, rendue dans le sous-menu « Organiser » (item custom).
+function FolderColorGrid({ current, onPick }: { current?: string | null; onPick: (c: string | null) => void }) {
+  const { t } = useTranslation('drive')
+  return (
+    <div className="px-3 py-2">
+      <p className="flex items-center gap-1.5 text-xs text-text-tertiary mb-2 font-medium">
+        <Palette size={12} />
+        {t('ctx.folder_color')}
+      </p>
+      <div className="grid grid-cols-6 gap-1.5">
+        {FOLDER_COLORS.map((c, i) => (
+          <button
+            key={i}
+            title={c ?? t('ctx.no_color')}
+            onClick={() => onPick(c)}
+            className="w-6 h-6 rounded-full border-2 flex items-center justify-center hover:scale-110 transition-transform"
+            style={{
+              backgroundColor: c ?? '#f1f3f4',
+              borderColor: c === current ? '#1a73e8' : (c ? c : '#dadce0'),
+              boxShadow: c === current ? '0 0 0 2px #fff, 0 0 0 4px #1a73e8' : undefined,
+            }}
+          >
+            {c === null && <span style={{ fontSize: 10, color: '#80868b', lineHeight: 1 }}>✕</span>}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// Construit la liste d'items du menu contextuel pour <MenuDropdown>. « Ouvrir avec »
+// et « Organiser » utilisent le type `submenu` NATIF du MenuDropdown (style homogène
+// + sous-panneau en portal, donc jamais rogné par le défilement du menu).
 function buildItemMenuItems(
   menu: NonNullable<MenuTarget>,
   tr: (k: string, opts?: Record<string, unknown>) => string,
   h: ItemMenuHandlers,
 ): MenuItem[] {
-  const { clipboard, isTrashed, isPlaying, isMultiSelection, selectionCount } = h
+  const { clipboard, isTrashed, isPlaying, isLocked, isMultiSelection, selectionCount } = h
   const isFile   = menu.type === 'file'
   const isFolder = menu.type === 'folder'
   const starred  = isFile
@@ -173,10 +223,12 @@ function buildItemMenuItems(
   const folderColor  = isFolder ? (menu.item as Folder).color : null
   const isProtected  = isFolder && !!(menu.item as Folder).is_protected
   const trashDisabled = isProtected || isPlaying
-  const isZip = isFile && (
-    (menu.item as FileItem).mime_type.includes('zip') ||
-    (menu.item as FileItem).name.toLowerCase().endsWith('.zip')
-  )
+  const isZip = isFile && (() => {
+    const it = menu.item as FileItem
+    const n  = it.name.toLowerCase()
+    return it.mime_type.includes('zip') || it.mime_type.includes('tar') || it.mime_type.includes('gzip')
+      || n.endsWith('.zip') || n.endsWith('.tar') || n.endsWith('.tar.gz') || n.endsWith('.tgz')
+  })()
 
   const items: MenuItem[] = []
 
@@ -205,39 +257,72 @@ function buildItemMenuItems(
   // Renommer — en multi-sélection, ouvre le renommage en lot (PowerRename).
   items.push({ type: 'action', label: tr('common.rename'), shortcut: 'F2', icon: <Pencil size={14} />, onClick: h.onRename, disabled: isProtected })
 
-  // Ouvrir avec (fichiers).
+  // Ouvrir avec (fichiers) — sous-menu natif.
   if (isFile && !isMultiSelection) {
-    items.push({ type: 'custom', render: (close) => <OpenWithSubmenu file={menu.item as FileItem} onClose={close} /> })
+    items.push({
+      type: 'submenu',
+      label: tr('ctx.open_with'),
+      icon: <AppWindow size={14} />,
+      disabled: h.openWithItems.length === 0,
+      items: h.openWithItems,
+    })
   }
 
-  // Modifier dans Paint (images).
+  // Édition d'images : Paint (édition libre) + Ajuster (rotation/recadrage/conversion).
   if (isFile && (menu.item as FileItem).mime_type.startsWith('image/')) {
     items.push({ type: 'action', label: tr('ctx.edit_paint'), icon: <Image size={14} />, onClick: h.onEditPaint, disabled: isMultiSelection })
+    items.push({ type: 'action', label: 'Ajuster l’image', icon: <Wand2 size={14} />, onClick: h.onEditImage, disabled: isMultiSelection })
+  }
+
+  // Dupliquer (fichiers).
+  if (isFile) {
+    items.push({ type: 'action', label: 'Dupliquer', icon: <CopyPlus size={14} />, onClick: h.onDuplicate, disabled: isMultiSelection })
   }
 
   items.push({ type: 'separator' })
 
+  // Étiquettes (fichiers et dossiers).
+  items.push({ type: 'action', label: 'Étiquettes…', icon: <Tags size={14} />, onClick: h.onTags, disabled: isMultiSelection })
+
   // Partager.
   items.push({ type: 'action', label: tr('ctx.share'), icon: <Share2 size={14} />, onClick: h.onShare, disabled: isMultiSelection })
   items.push({ type: 'action', label: tr('ctx.get_link'), icon: <Link size={14} />, onClick: h.onGetLink, disabled: isMultiSelection })
+  items.push({ type: 'action', label: 'Partage avancé…', icon: <Link2 size={14} />, onClick: h.onAdvancedShare, disabled: isMultiSelection })
 
-  // Organiser (sous-menu).
-  items.push({
-    type: 'custom',
-    render: (close) => (
-      <OrganiserSubmenu
-        isFolder={isFolder}
-        starred={starred}
-        folderColor={folderColor}
-        isProtected={isProtected}
-        disabled={isMultiSelection}
-        onMove={h.onMove}
-        onStar={h.onStar}
-        onSetColor={h.onSetColor}
-        onClose={close}
-      />
-    ),
-  })
+  // Verrouiller / déverrouiller (fichiers).
+  if (isFile && !isMultiSelection) {
+    items.push(isLocked
+      ? { type: 'action', label: 'Déverrouiller', icon: <Unlock size={14} />, onClick: h.onUnlock }
+      : { type: 'action', label: 'Verrouiller', icon: <Lock size={14} />, onClick: h.onLock })
+  }
+
+  // Organiser (sous-menu natif) : Déplacer, Étoiler, et — pour les dossiers — couleur.
+  {
+    const organiserItems: MenuItem[] = [
+      { type: 'action', label: tr('ctx.move'), icon: <Move size={14} />, onClick: h.onMove, disabled: isProtected },
+      { type: 'separator' },
+      {
+        type: 'action',
+        label: starred ? tr('ctx.unstar') : tr('ctx.star'),
+        icon: <Star size={14} className={starred ? 'fill-yellow-400 text-yellow-400' : ''} />,
+        onClick: h.onStar,
+      },
+    ]
+    if (isFolder) {
+      organiserItems.push({ type: 'separator' })
+      organiserItems.push({
+        type: 'custom',
+        render: (close) => <FolderColorGrid current={folderColor} onPick={(c) => { h.onSetColor(c); close() }} />,
+      })
+    }
+    items.push({
+      type: 'submenu',
+      label: tr('ctx.organize'),
+      icon: <FolderInput size={14} />,
+      disabled: isMultiSelection,
+      items: organiserItems,
+    })
+  }
 
   items.push({ type: 'separator' })
 
@@ -302,6 +387,10 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
   const folderId = (starred || shared || recent || trashed) ? null : (searchParams.get('folder') ?? null)
   // Source locale pour la vue normale déléguée à StorageExplorer (zone unifiée).
   const driveSource = useMemo(() => localSource(), [])
+  // Sources virtuelles des vues spéciales : même explorateur, source surchargée.
+  const recentSrc  = useMemo(() => recentSource(), [])
+  const starredSrc = useMemo(() => starredSource(), [])
+  const sharedSrc  = useMemo(() => sharedSource(), [])
   const qc = useQueryClient()
 
   // Use photos module image viewer if photos module is active
@@ -343,9 +432,50 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
   const isSearchMode = searchApplied || searchQuery.trim().length > 0
   // Vue normale « simple » (ni recherche, ni vue spéciale) → déléguée à StorageExplorer.
   const isPlainNormal = !imageSearch && !isSearchMode && !starred && !shared && !recent && !trashed
+  // Vues spéciales déléguées à l'explorateur partagé via une source virtuelle
+  // (sauf si une recherche est active → vue de résultats dédiée).
+  const searchActive  = isSearchMode || !!imageSearch
+  const specialSource = searchActive ? null
+                      : recent ? recentSrc
+                      : starred ? starredSrc
+                      : shared ? sharedSrc
+                      : null
+  const specialTitle  = recent ? t('nav.recent', { defaultValue: 'Récents' })
+                      : starred ? t('tree.starred', { defaultValue: 'Étoilés' })
+                      : shared ? t('nav.shared', { defaultValue: 'Partagés avec moi' })
+                      : ''
 
   // Modals / menu state
   const [menu,         setMenu]         = useState<MenuTarget>(null)
+
+  // Items du sous-menu « Ouvrir avec » pour le fichier ciblé (apps + contributeurs).
+  const openWithItems = useMemo<MenuItem[]>(() => {
+    if (!menu || menu.type !== 'file') return []
+    const file = menu.item as FileItem
+    const out: MenuItem[] = FileTypeRegistry.openersFor(file).map((decl) => ({
+      type: 'action' as const,
+      label: decl.label,
+      icon: <AppWindow size={14} />,
+      onClick: () => { decl.open?.(file, routerNavigate); filesApi.setOpenWith(file.id, decl.moduleId).catch(() => {}) },
+    }))
+    const contributors = SlotRegistry.getSlot('files-open-with') as Array<{ moduleId: string; Component: React.ComponentType; match?: (f: FileItem) => boolean }>
+    contributors
+      .filter((e) => activeIds.has(e.moduleId))
+      .filter((e) => !e.match || e.match(file))
+      .forEach((e) => { const C = e.Component; out.push({ type: 'custom', render: () => <C key={e.moduleId} /> }) })
+    return out
+  }, [menu, activeIds])
+
+  // Actions Drive injectées dans StorageExplorer (My Drive) → parité avec les
+  // vues custom. visible() lit l'état des verrous au moment de l'ouverture du menu.
+  const driveContextActions = useMemo<FileContextAction[]>(() => [
+    { id: 'tags',      label: 'Étiquettes…',       icon: Tags,    onClick: (f) => setTagDialogTarget({ kind: 'file', id: f.id, name: f.name }) },
+    { id: 'editimg',   label: 'Ajuster l’image',   icon: Wand2,   visible: (f) => f.mime_type.startsWith('image/'), onClick: (f) => setImageEditFile(f) },
+    { id: 'lock',      label: 'Verrouiller',       icon: Lock,    visible: (f) => !useDriveExtras.getState().locks[f.id], onClick: (f) => { void useDriveExtras.getState().lockFile(f.id).catch(() => {}) } },
+    { id: 'unlock',    label: 'Déverrouiller',     icon: Unlock,  visible: (f) => !!useDriveExtras.getState().locks[f.id], onClick: (f) => { void useDriveExtras.getState().unlockFile(f.id).catch(() => {}) } },
+    { id: 'advshare',  label: 'Partage avancé…',   icon: Link2,   onClick: (f) => setAdvShareTarget({ kind: 'file', id: f.id, name: f.name }) },
+    { id: 'duplicate', label: 'Dupliquer',         icon: CopyPlus, onClick: (f) => { void filesApi.copyFile(f.id, folderId).then(() => qc.invalidateQueries({ queryKey: ['files'] })) } },
+  ], [folderId, qc])
   const [renameTarget, setRenameTarget] = useState<RenameTarget>(null)
   const { open: batchOpen, items: batchItems, close: closeBatch } = useBatchRenameStore()
   const [moveTarget,   setMoveTarget]   = useState<MoveTarget>(null)
@@ -372,6 +502,12 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
   const [pdfFile,         setPdfFile]         = useState<FileItem | null>(null)
   const [archiveFile,     setArchiveFile]     = useState<FileItem | null>(null)
   const [textFile,        setTextFile]        = useState<FileItem | null>(null)
+  const [tagDialogTarget, setTagDialogTarget] = useState<TagDialogTarget | null>(null)
+  const [imageEditFile,   setImageEditFile]   = useState<FileItem | null>(null)
+  const [advShareTarget,  setAdvShareTarget]  = useState<{ kind: 'file' | 'folder'; id: string; name: string } | null>(null)
+  const tool      = useDriveExtras(s => s.tool)
+  const closeTool = useDriveExtras(s => s.closeTool)
+  const lockedMap = useDriveExtras(s => s.locks)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const lastSelectedIdxRef = useRef<number>(-1)
 
@@ -391,6 +527,8 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
   const openAudio = useFilesMediaPlayerStore(s => s.open)
 
   const openFile = useCallback((file: FileItem) => {
+    // Record a view (best-effort) for access stats and the "frequent" list.
+    void api.post(`/drive/${file.id}/view`).catch(() => {})
     // 1. Préférence explicite « S'ouvre avec » (moduleId FileTypeRegistry, sinon service legacy)
     const openWith = typeof file.metadata?.['open_with'] === 'string' ? file.metadata['open_with'] as string : null
     if (openWith) {
@@ -406,7 +544,13 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
     if (is3dFile(file))                               { setModel3dFile(file);  return }
     if (isFontFile(file))                             { setFontFile(file);     return }
     if (file.mime_type === 'application/pdf')         { setPdfFile(file);      return }
-    if (file.mime_type.includes('zip') || file.name.toLowerCase().endsWith('.zip')) { setArchiveFile(file); return }
+    {
+      const nm = file.name.toLowerCase()
+      if (file.mime_type.includes('zip') || file.mime_type.includes('tar') || file.mime_type.includes('gzip')
+          || nm.endsWith('.zip') || nm.endsWith('.tar') || nm.endsWith('.tar.gz') || nm.endsWith('.tgz')) {
+        setArchiveFile(file); return
+      }
+    }
     // 3. Texte (txt, md, csv, log, json, code…) → visionneuse rapide par défaut.
     //    Un éditeur (ex. Documents) reste accessible via « Ouvrir avec ». La
     //    préférence explicite par-fichier (étape 1) a déjà la priorité absolue.
@@ -429,6 +573,9 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
   const folderInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => { setCurrentFolderId(folderId); return () => setCurrentFolderId(null) }, [folderId, setCurrentFolderId])
+
+  // Load cross-cutting extras (tags, locks, saved searches) once on mount.
+  useEffect(() => { void useDriveExtras.getState().loadAll().catch(() => {}) }, [])
 
   // Register direct callbacks so the sidebar "Nouveau" menu can trigger clicks
   // synchronously within the browser user gesture context (useEffect is fine here
@@ -531,11 +678,34 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
         setSelectedIds(new Set(orderedIds))
       } else if (e.key === 'Escape' && selectedIds.size > 0) {
         setSelectedIds(new Set())
+      } else if (e.key === 'Delete' && selectedIds.size > 0 && !trashed) {
+        // Suppr → met la sélection à la corbeille (best-effort, ignore les verrous).
+        e.preventDefault()
+        const ids = [...selectedIds]
+        void Promise.allSettled(ids.map(id =>
+          folders.some(f => f.id === id) ? filesApi.trashFolder(id) : filesApi.trashFile(id)
+        )).then(() => {
+          setSelectedIds(new Set())
+          qc.invalidateQueries({ queryKey: ['files'] })
+          qc.invalidateQueries({ queryKey: ['folders'] })
+          qc.invalidateQueries({ queryKey: ['tree-children'] })
+        })
+      } else if (e.key === 'F2' && selectedIds.size > 0) {
+        // F2 → renommage (en lot si plusieurs éléments sélectionnés).
+        e.preventDefault()
+        const out: BatchRenameItem[] = []
+        for (const id of selectedIds) {
+          const fo = folders.find(x => x.id === id)
+          if (fo) { out.push({ id: fo.id, name: fo.name, type: 'folder' }); continue }
+          const fi = files.find(x => x.id === id)
+          if (fi) out.push({ id: fi.id, name: fi.name, type: 'file' })
+        }
+        if (out.length) useBatchRenameStore.getState().start(out)
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [orderedIds, selectedIds.size])
+  }, [orderedIds, selectedIds, folders, files, trashed, qc])
 
   const hasProtectedInSelection = useMemo(
     () => folders.some(f => f.is_protected && selectedIds.has(f.id)),
@@ -989,11 +1159,23 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
           pathParam="folder"
           title={t('nav.my_drive', { defaultValue: 'Mon Drive' })}
           onOpenFile={f => { openFile(f); return true }}
+          fileContextActions={driveContextActions}
         />
       )}
 
-      {/* Recherche + vues spéciales (Corbeille/Étoilés/Partagés/Récents) — rendu DriveApp. */}
-      {!isPlainNormal && (
+      {/* Vues spéciales (Récents/Étoilés…) : explorateur partagé + source virtuelle. */}
+      {specialSource && (
+        <StorageExplorer
+          source={specialSource}
+          title={specialTitle}
+          onOpenFile={f => { openFile(f); return true }}
+          /* Partagés = lecture seule (non-propriétaire) → pas d'actions Drive. */
+          fileContextActions={shared ? [] : driveContextActions}
+        />
+      )}
+
+      {/* Recherche + autres vues spéciales (Corbeille/Partagés) — rendu DriveApp. */}
+      {!isPlainNormal && !specialSource && (
       <div
         ref={marqueeContainerRef}
         className="flex-1 min-w-0 overflow-y-auto p-6"
@@ -1174,6 +1356,8 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
               <EmptyState trashed={trashed} starred={starred} shared={shared} recent={recent} />
             ) : (
               <div className="space-y-6">
+                {/* Bandeau d'information de la corbeille (compteur + auto-purge). */}
+                {trashed && <TrashStatsBanner />}
                 {/* Sort / filter bar */}
                 {files.length > 0 && !trashed && !recent && !starred && !shared && (
                   <SortFilterBar
@@ -1322,6 +1506,7 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
           items={buildItemMenuItems(menu, t, {
             isTrashed: menu.item.is_trashed,
             isPlaying: isMenuItemPlaying,
+            isLocked: menu.type === 'file' && !!lockedMap[menu.item.id],
             isMultiSelection: selectedIds.size > 1 && selectedIds.has(menu.item.id),
             selectionCount: selectedIds.size,
             clipboard,
@@ -1350,6 +1535,7 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
               if (menu.type === 'folder') setShareTarget({ type: 'folder', item: menu.item as Folder })
             },
             onGetLink: handleGetLink,
+            onAdvancedShare: () => setAdvShareTarget({ kind: menu.type, id: menu.item.id, name: menu.item.name }),
             onInfo: () => {
               if (menu.type === 'file')   setInfoTarget({ type: 'file',   item: menu.item as FileItem })
               if (menu.type === 'folder') setInfoTarget({ type: 'folder', item: menu.item as Folder })
@@ -1370,6 +1556,16 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
             onCompressSave: handleCompressSave,
             onDecompress: handleDecompress,
             onSetColor: handleSetFolderColor,
+            onTags: () => setTagDialogTarget({ kind: menu.type, id: menu.item.id, name: menu.item.name }),
+            onLock: () => { void useDriveExtras.getState().lockFile(menu.item.id).catch(() => {}) },
+            onUnlock: () => { void useDriveExtras.getState().unlockFile(menu.item.id).catch(() => {}) },
+            onEditImage: () => { if (menu.type === 'file') setImageEditFile(menu.item as FileItem) },
+            openWithItems,
+            onDuplicate: () => {
+              if (menu.type === 'file') {
+                void filesApi.copyFile(menu.item.id, folderId).then(() => qc.invalidateQueries({ queryKey: ['files'] }))
+              }
+            },
           })}
         />
       )}
@@ -1392,6 +1588,29 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
       <ShareModal          target={shareTarget}    onClose={() => setShareTarget(null)} />
       <FileInfoModal       target={infoTarget}     onClose={() => setInfoTarget(null)} />
       <VersionHistoryModal file={versionTarget}    onClose={() => setVersionTarget(null)} />
+
+      {/* Étiquettes, édition d'image, doublons, vue d'ensemble du stockage */}
+      {tagDialogTarget && <TagDialog target={tagDialogTarget} onClose={() => setTagDialogTarget(null)} />}
+      {imageEditFile && (
+        <ImageEditDialog
+          file={imageEditFile}
+          onClose={() => setImageEditFile(null)}
+          onSaved={() => { qc.invalidateQueries({ queryKey: ['files'] }) }}
+        />
+      )}
+      {tool === 'duplicates' && (
+        <DuplicatesDialog
+          onClose={closeTool}
+          onChanged={() => qc.invalidateQueries({ queryKey: ['files'] })}
+        />
+      )}
+      {tool === 'insights' && (
+        <StorageInsightsDialog
+          onClose={closeTool}
+          onOpenFile={(id) => { const f = files.find(x => x.id === id); closeTool(); if (f) openFile(f) }}
+        />
+      )}
+      {advShareTarget && <AdvancedShareDialog target={advShareTarget} onClose={() => setAdvShareTarget(null)} />}
 
       {/* Archive browser */}
       {archiveFile && (
@@ -1639,13 +1858,38 @@ function SearchResultsView({
             {isLoading ? t('app.searching') : t('app.result_count', { count: total })}
           </p>
         </div>
-        <button
-          onClick={onClear}
-          className="flex items-center gap-2 text-sm text-primary hover:text-primary-hover transition-colors"
-        >
-          <X size={16} />
-          {t('app.clear_search')}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={async () => {
+              const name = await prompt({
+                title: 'Sauvegarder la recherche',
+                message: 'Donnez un nom à cette recherche pour la retrouver dans la barre latérale.',
+                defaultValue: searchQuery || 'Ma recherche',
+                confirmLabel: 'Sauvegarder',
+              })
+              if (name && name.trim()) {
+                try {
+                  await useDriveExtras.getState().createSavedSearch({
+                    name: name.trim(),
+                    query: searchQuery,
+                    filters: effFilters as unknown as Record<string, unknown>,
+                  })
+                } catch { /* ignore */ }
+              }
+            }}
+            className="flex items-center gap-2 text-sm text-text-secondary hover:text-primary transition-colors"
+          >
+            <Bookmark size={16} />
+            Sauvegarder
+          </button>
+          <button
+            onClick={onClear}
+            className="flex items-center gap-2 text-sm text-primary hover:text-primary-hover transition-colors"
+          >
+            <X size={16} />
+            {t('app.clear_search')}
+          </button>
+        </div>
       </div>
 
       {/* Onglets de type */}
@@ -1805,6 +2049,7 @@ function FolderCard({
       />
       <FolderGlyph folder={folder} size={20} className={`shrink-0 ${trashed ? 'opacity-50' : ''}`} />
       <span className={`text-sm truncate flex-1 ${trashed ? 'text-text-secondary line-through' : 'text-text-primary'}`}>{folder.name}</span>
+      {!trashed && <TagDots itemId={folder.id} />}
       {folder.is_starred && !trashed && (
         <Star size={12} className="shrink-0 fill-yellow-400 text-yellow-400" />
       )}
@@ -1822,6 +2067,13 @@ function FolderCard({
 }
 
 const _videoPreviewCache = new Map<string, string>()
+
+/** Small amber padlock shown on cards when a file is locked. */
+function LockBadge({ fileId }: { fileId: string }) {
+  const locked = useDriveExtras(s => !!s.locks[fileId])
+  if (!locked) return null
+  return <Lock size={12} className="shrink-0 text-amber-500" />
+}
 
 function FileCard({
   file, trashed, selected, preSelected, onSelect, onToggle, onContextMenu, onDragStart, onRestore, onDelete, onOpen,
@@ -1952,6 +2204,8 @@ function FileCard({
       <div className={`flex items-center gap-2 ${dense ? 'px-2 h-8' : 'px-3 h-10'}`}>
         <span className="shrink-0 flex items-center [&_svg]:w-[18px] [&_svg]:h-[18px]">{getFileIcon(file.mime_type, file.name)}</span>
         <span className={`${dense ? 'text-xs' : 'text-[13px]'} font-medium truncate flex-1 ${trashed ? 'text-text-secondary line-through' : 'text-text-primary'}`} title={file.name}>{file.name}</span>
+        {!trashed && <TagDots itemId={file.id} />}
+        {!trashed && <LockBadge fileId={file.id} />}
         {file.is_starred && !trashed && <Star size={12} className="shrink-0 fill-yellow-400 text-yellow-400" />}
         <button className="shrink-0 -mr-1.5 p-1 rounded-full hover:bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => { e.stopPropagation(); onContextMenu(e) }}>
           <MoreVertical size={14} className="text-text-secondary" />
@@ -2063,7 +2317,11 @@ function FileRow({ file, trashed, onContextMenu, onRestore, onDelete, onOpen, de
         }
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-text-primary truncate">{file.name}</p>
+        <p className="text-sm text-text-primary truncate flex items-center gap-1.5">
+          <span className="truncate">{file.name}</span>
+          {!trashed && <TagDots itemId={file.id} />}
+          {!trashed && <LockBadge fileId={file.id} />}
+        </p>
         {density === 'large' && <p className="text-[11px] text-text-tertiary truncate">{file.mime_type} · {formatSize(file.size_bytes)}</p>}
       </div>
       {!hideMeta && <span className="text-xs text-text-tertiary shrink-0 w-28 text-right">{updated}</span>}
@@ -2161,8 +2419,22 @@ function SortFilterBar({
         />
       </div>
 
-      {/* Menu « Afficher » façon explorateur Windows. */}
-      <div className="ml-auto">
+      {/* Menu « Afficher » + outils (doublons, vue d'ensemble). */}
+      <div className="ml-auto flex items-center gap-1">
+        <button
+          onClick={() => useDriveExtras.getState().openTool('duplicates')}
+          title="Fichiers en double"
+          className="p-2 rounded-lg hover:bg-surface-2 text-text-secondary transition-colors"
+        >
+          <FilesIcon size={16} />
+        </button>
+        <button
+          onClick={() => useDriveExtras.getState().openTool('insights')}
+          title="Vue d'ensemble du stockage"
+          className="p-2 rounded-lg hover:bg-surface-2 text-text-secondary transition-colors"
+        >
+          <BarChart3 size={16} />
+        </button>
         <ViewMenu
           value={viewMode} onChange={onViewMode}
           compact={compact} onCompact={onCompact}

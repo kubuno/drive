@@ -86,6 +86,25 @@ pub async fn create_version(
     .fetch_one(db)
     .await?;
 
+    // Retention: keep at most MAX_VERSIONS, pruning the oldest beyond the limit.
+    const MAX_VERSIONS: i64 = 50;
+    let stale: Vec<(Uuid, String)> = sqlx::query_as(
+        "SELECT id, storage_path FROM drive.file_versions
+         WHERE file_id = $1 ORDER BY version_number DESC OFFSET $2",
+    )
+    .bind(file_id)
+    .bind(MAX_VERSIONS)
+    .fetch_all(db)
+    .await
+    .unwrap_or_default();
+    for (vid, path) in stale {
+        let _ = storage.delete(&path).await;
+        let _ = sqlx::query("DELETE FROM drive.file_versions WHERE id = $1")
+            .bind(vid)
+            .execute(db)
+            .await;
+    }
+
     Ok(version)
 }
 

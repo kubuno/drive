@@ -1,6 +1,6 @@
 [package]
 name        = "kubuno-drive"
-version     = "0.1.0"
+version     = "0.1.0-alpha"
 edition     = "2021"
 description = "Kubuno Drive — module de gestion de fichiers"
 license     = "AGPL-3.0"
@@ -24,7 +24,7 @@ server = [
     "dep:toml", "dep:aes-gcm", "dep:mime_guess", "dep:sanitize-filename",
     "dep:image", "dep:rand", "dep:notify", "dep:walkdir", "dep:zip",
     "dep:quick-xml", "dep:pdf-extract", "dep:url", "dep:urlencoding",
-    "dep:flate2",
+    "dep:flate2", "dep:argon2", "dep:tar", "dep:exif",
 ]
 
 [dependencies]
@@ -71,6 +71,9 @@ pdf-extract       = { version = "0.7", optional = true }
 url               = { workspace = true, optional = true }
 urlencoding       = { workspace = true, optional = true }
 flate2            = { version = "1", optional = true }
+argon2            = { workspace = true, optional = true }
+tar               = { version = "0.4", optional = true }
+exif              = { package = "kamadak-exif", version = "0.5", optional = true }
 
 [dev-dependencies]
 tokio = { workspace = true }
@@ -81,7 +84,7 @@ sqlx  = { workspace = true }
 [workspace]
 
 [workspace.package]
-version      = "0.1.0"
+version      = "0.1.0-alpha"
 edition      = "2021"
 authors      = ["Kubuno Contributors"]
 license      = "AGPL-3.0"
