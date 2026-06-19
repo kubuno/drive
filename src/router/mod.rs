@@ -10,7 +10,7 @@ use tower_http::{
 };
 
 use crate::{
-    handlers::{activity, archive, files, folders, health, import_url, ipc, public, remotes, scan, search, shares, sync, system, transform, uploads, versions, webdav},
+    handlers::{access, activity, archive, files, folders, health, import_url, insights, ipc, locks, maintenance, public, remotes, saved_searches, scan, search, shares, sync, system, tags, transform, uploads, versions, webdav},
     middleware::{require_auth, require_ipc_secret},
     state::AppState,
 };
@@ -29,6 +29,7 @@ pub fn build(state: AppState) -> Router {
         .route("/folders/:id/trash",            post(folders::trash))
         .route("/folders/:id/restore",          post(folders::restore))
         .route("/trash/purge",                  post(folders::purge_trash))
+        .route("/trash/stats",                  get(maintenance::trash_stats))
         .route("/folders/:id/versioning",       patch(versions::set_folder_versioning))
         .route("/folders/:id/activity",         get(activity::folder_activity))
         .route("/folders/:id/info-extra",       get(activity::folder_info_extra))
@@ -70,7 +71,32 @@ pub fn build(state: AppState) -> Router {
         // Partages
         .route("/shares",                       get(shares::list).post(shares::create))
         .route("/shares/recipients",            get(shares::search_recipients))
+        .route("/shares/received",              get(shares::received))
+        .route("/shares/received-items",        get(shares::received_items))
         .route("/shares/:id",                   delete(shares::revoke))
+        // Étiquettes (tags) colorées — organisation transversale
+        .route("/tags",                         get(tags::list).post(tags::create))
+        .route("/tags/assignments",             get(tags::assignments))
+        .route("/tags/:id",                     patch(tags::update).delete(tags::delete))
+        .route("/tags/:id/items",               get(tags::tag_items))
+        .route("/:id/tags",                     post(tags::assign_file))
+        .route("/:id/tags/:tag_id",             delete(tags::unassign_file))
+        .route("/folders/:id/tags",             post(tags::assign_folder))
+        .route("/folders/:id/tags/:tag_id",     delete(tags::unassign_folder))
+        // Verrous de fichiers (locks coopératifs)
+        .route("/locks",                        get(locks::list))
+        .route("/:id/lock",                     get(locks::get).post(locks::lock).delete(locks::unlock))
+        // Recherches sauvegardées (smart folders)
+        .route("/saved-searches",               get(saved_searches::list).post(saved_searches::create))
+        .route("/saved-searches/:id",           patch(saved_searches::update).delete(saved_searches::delete))
+        // Statistiques d'accès (vues / téléchargements)
+        .route("/access/frequent",              get(access::frequent))
+        .route("/:id/view",                     post(access::record_view))
+        .route("/:id/access",                   get(access::get_access))
+        // Intelligence : métadonnées EXIF, doublons, vue d'ensemble du stockage
+        .route("/:id/metadata-extra",           get(insights::metadata_extra))
+        .route("/duplicates",                   get(insights::duplicates))
+        .route("/stats/overview",               get(insights::overview))
         // Connexions distantes (remote storage)
         .route("/remotes",                           get(remotes::list_connections).post(remotes::create_connection))
         .route("/remotes/:id",                       delete(remotes::delete_connection))

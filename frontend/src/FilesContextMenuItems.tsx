@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
-import { FolderPlus, Upload, RefreshCw, Plus, ChevronRight, ClipboardPaste, Pencil } from 'lucide-react'
+import { FolderPlus, Upload, RefreshCw, Plus, ChevronRight, ClipboardPaste, Pencil, Files as FilesIcon, BarChart3 } from 'lucide-react'
+import { useDriveExtras } from './driveExtras'
 import { useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useFilesStore } from '@kubuno/drive'
@@ -136,6 +137,17 @@ export default function FilesContextMenuItems() {
           />
         </>
       )}
+      <ContextMenuSeparator />
+      <ContextMenuItem
+        icon={<FilesIcon size={16} />}
+        label="Fichiers en double"
+        onClick={wrap(() => useDriveExtras.getState().openTool('duplicates'))}
+      />
+      <ContextMenuItem
+        icon={<BarChart3 size={16} />}
+        label="Vue d'ensemble du stockage"
+        onClick={wrap(() => useDriveExtras.getState().openTool('insights'))}
+      />
       <ContextMenuSeparator />
       <ContextMenuItem
         icon={<RefreshCw size={16} />}

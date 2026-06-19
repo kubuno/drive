@@ -25,6 +25,7 @@ import FilesNewActions from './FilesNewActions'
 import FilesTreeSidebar from './FilesTreeSidebar'
 import FilesPaintEditor from './FilesPaintEditor'
 import FilesContextMenuItems from './FilesContextMenuItems'
+import { TagInfoSection } from './TagUI'
 import FilesStorageGauge from './FilesStorageGauge'
 import FilesDashboardWidget from './FilesDashboardWidget'
 import FilesRecentWidget from './FilesRecentWidget'
@@ -56,6 +57,7 @@ export function register() {
   SlotRegistry.register('app-dialogs',           'drive', FilesFolderPickerDialog)
   SlotRegistry.register('app-dialogs',           'drive', FilesFloatingAudioPlayer)
   SlotRegistry.register('app-dialogs',           'drive', FilesPaintEditor)
+  SlotRegistry.register('files-info-extra',      'drive', TagInfoSection)
 
   useSidebarStore.getState().register({
     moduleId:    'drive',

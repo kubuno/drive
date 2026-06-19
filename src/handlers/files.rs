@@ -15,7 +15,7 @@ use crate::{
     errors::{FilesError, Result},
     middleware::FilesUser,
     models::{ListFilesQuery, MoveFileDto, RenameFileDto},
-    services::{activity, files, thumbnails},
+    services::{access, activity, files, locks, thumbnails},
     state::AppState,
 };
 
@@ -194,9 +194,20 @@ pub async fn download(
     State(state): State<AppState>,
     Extension(user): Extension<FilesUser>,
     Path(file_id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Result<Response> {
-    let file = files::get_file(&state.db, user.id, file_id).await?;
+    // Readable = owned OR internally shared with the user (« Partagés avec moi »).
+    let file = files::get_file_readable(&state.db, user.id, file_id).await?;
     let data = state.storage.get(&file.storage_path).await?;
+
+    // Count only full downloads; range requests are previews/streaming.
+    if !headers.contains_key(axum::http::header::RANGE) {
+        let db = state.db.clone();
+        let uid = user.id;
+        tokio::spawn(async move {
+            let _ = access::record_download(&db, file_id, uid).await;
+        });
+    }
 
     let disposition = format!(
         "attachment; filename=\"{}\"",
@@ -218,7 +229,7 @@ pub async fn thumbnail(
     Extension(user): Extension<FilesUser>,
     Path(file_id): Path<Uuid>,
 ) -> Result<Response> {
-    let file = files::get_file(&state.db, user.id, file_id).await?;
+    let file = files::get_file_readable(&state.db, user.id, file_id).await?;
 
     // SVG : on sert directement le fichier vectoriel comme miniature (le navigateur
     // le rend ; les scripts SVG ne s'exécutent pas dans un <img>). Pas de raster.
@@ -295,6 +306,12 @@ pub async fn trash(
     Extension(user): Extension<FilesUser>,
     Path(file_id): Path<Uuid>,
 ) -> Result<Json<Value>> {
+    // A locked file must be explicitly unlocked before it can be trashed.
+    if locks::locked_holder(&state.db, file_id).await?.is_some() {
+        return Err(FilesError::Conflict(
+            "Fichier verrouillé — déverrouillez-le avant de le mettre à la corbeille".into(),
+        ));
+    }
     let file = files::trash_file(&state.db, user.id, file_id).await?;
     activity::log_file(&state.db, file.id, user.id, &user.email, "trashed",
         serde_json::json!({})).await;
@@ -319,6 +336,11 @@ pub async fn delete(
     Extension(user): Extension<FilesUser>,
     Path(file_id): Path<Uuid>,
 ) -> Result<Json<Value>> {
+    if locks::locked_holder(&state.db, file_id).await?.is_some() {
+        return Err(FilesError::Conflict(
+            "Fichier verrouillé — déverrouillez-le avant de le supprimer".into(),
+        ));
+    }
     files::delete_file_permanently(&state.db, &state.storage, user.id, file_id).await?;
     crate::events::notify_change(&state.settings, user.id);
     Ok(Json(json!({ "ok": true })))

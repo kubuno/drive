@@ -7,14 +7,13 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::io::{Read, Write};
 use uuid::Uuid;
 
 use crate::{
     errors::{FilesError, Result},
     middleware::FilesUser,
     models::CreateFolderDto,
-    services::{files, folders},
+    services::{archives, files, folders},
     state::AppState,
 };
 
@@ -22,11 +21,13 @@ use crate::{
 
 #[derive(Deserialize)]
 pub struct CompressSaveDto {
-    pub file_ids:    Vec<Uuid>,
-    pub folder_ids:  Vec<Uuid>,
+    pub file_ids:     Vec<Uuid>,
+    pub folder_ids:   Vec<Uuid>,
     pub archive_name: Option<String>,
     /// Dossier de destination (null = racine)
-    pub folder_id:   Option<Uuid>,
+    pub folder_id:    Option<Uuid>,
+    /// Format de l'archive : "zip" (défaut) ou "targz".
+    pub format:       Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -45,50 +46,61 @@ pub struct ArchiveListQuery {
 
 #[derive(Serialize)]
 pub struct ArchiveEntry {
-    pub name:         String,
-    pub path:         String,      // chemin complet dans l'archive
-    pub is_dir:       bool,
-    pub size:         u64,
+    pub name:            String,
+    pub path:            String, // chemin complet dans l'archive
+    pub is_dir:          bool,
+    pub size:            u64,
     pub compressed_size: u64,
+}
+
+/// Strips a known archive extension to derive a destination folder name.
+fn strip_archive_ext(name: &str) -> String {
+    let lower = name.to_ascii_lowercase();
+    for ext in [".tar.gz", ".tgz", ".tar", ".zip"] {
+        if lower.ends_with(ext) {
+            return name[..name.len() - ext.len()].to_string();
+        }
+    }
+    name.to_string()
 }
 
 // ── POST /archive/compress-save ───────────────────────────────────────────────
 /// Compresse des fichiers/dossiers et sauvegarde l'archive dans le drive.
+/// Supporte les formats ZIP (défaut) et TAR.GZ.
 pub async fn compress_save(
     State(state): State<AppState>,
     Extension(user): Extension<FilesUser>,
     Json(dto): Json<CompressSaveDto>,
 ) -> Result<Json<Value>> {
-    use zip::write::SimpleFileOptions;
-
     if dto.file_ids.is_empty() && dto.folder_ids.is_empty() {
         return Err(FilesError::Validation("Aucun élément sélectionné".into()));
     }
 
-    let archive_name = sanitize_filename::sanitize(
-        dto.archive_name.unwrap_or_else(|| "archive.zip".to_string())
+    let targz = matches!(dto.format.as_deref(), Some("targz") | Some("tar.gz") | Some("tgz"));
+    let default_ext = if targz { "tar.gz" } else { "zip" };
+
+    let mut base = sanitize_filename::sanitize(
+        dto.archive_name.unwrap_or_else(|| "archive".to_string()),
     );
-    let archive_name = if archive_name.ends_with(".zip") {
-        archive_name
+    if base.is_empty() {
+        base = "archive".to_string();
+    }
+    let archive_name = if base.to_ascii_lowercase().ends_with(default_ext) {
+        base
     } else {
-        format!("{}.zip", archive_name)
+        format!("{base}.{default_ext}")
     };
 
-    let buf  = Vec::new();
-    let cursor = std::io::Cursor::new(buf);
-    let mut zip = zip::ZipWriter::new(cursor);
-    let options = SimpleFileOptions::default()
-        .compression_method(zip::CompressionMethod::Deflated);
+    // Gather every entry into memory, then encode in the chosen format.
+    let mut dirs: Vec<String> = Vec::new();
+    let mut entries: Vec<(String, Vec<u8>)> = Vec::new();
 
-    // Ajouter les fichiers individuels
     for file_id in &dto.file_ids {
         let Ok(file) = files::get_file(&state.db, user.id, *file_id).await else { continue };
         let Ok(data) = state.storage.get(&file.storage_path).await else { continue };
-        let _ = zip.start_file(&file.name, options);
-        let _ = zip.write_all(&data);
+        entries.push((file.name, data.to_vec()));
     }
 
-    // Ajouter les dossiers récursivement
     for folder_id in &dto.folder_ids {
         let folder_name: Option<String> = sqlx::query_scalar(
             "SELECT name FROM drive.folders WHERE id = $1 AND owner_id = $2",
@@ -100,23 +112,26 @@ pub async fn compress_save(
         .ok()
         .flatten();
         let prefix = folder_name.unwrap_or_else(|| folder_id.to_string());
-        add_folder_to_zip(&state, user.id, *folder_id, prefix, &mut zip, options).await;
+        gather_folder(&state, user.id, *folder_id, prefix, &mut dirs, &mut entries).await;
     }
 
-    let cursor = zip.finish()
-        .map_err(|e| FilesError::Internal(anyhow::anyhow!(e)))?;
-    let zip_bytes = bytes::Bytes::from(cursor.into_inner());
-    let size = zip_bytes.len() as i64;
+    let bytes = if targz {
+        archives::write_targz(&dirs, &entries)?
+    } else {
+        archives::write_zip(&dirs, &entries)?
+    };
+    let mime = if targz { "application/gzip" } else { "application/zip" };
+    let archive_bytes = bytes::Bytes::from(bytes);
+    let size = archive_bytes.len() as i64;
 
-    // Sauvegarder dans le drive
     let file = files::create_with_bytes(
         &state.db,
         &state.storage,
         user.id,
         dto.folder_id,
         &archive_name,
-        "application/zip",
-        zip_bytes,
+        mime,
+        archive_bytes,
         None,
         false,
     ).await?;
@@ -126,16 +141,16 @@ pub async fn compress_save(
     Ok(Json(json!({ "file": file })))
 }
 
-/// Ajoute récursivement le contenu d'un dossier dans le ZIP.
-async fn add_folder_to_zip(
+/// Recursively collects a folder's files (with content) and directory paths.
+async fn gather_folder(
     state:    &AppState,
     owner_id: Uuid,
     folder_id: Uuid,
     prefix:   String,
-    zip:      &mut zip::ZipWriter<std::io::Cursor<Vec<u8>>>,
-    options:  zip::write::SimpleFileOptions,
+    dirs:     &mut Vec<String>,
+    entries:  &mut Vec<(String, Vec<u8>)>,
 ) {
-    let _ = zip.add_directory(format!("{}/", prefix), zip::write::SimpleFileOptions::default());
+    dirs.push(prefix.clone());
 
     let folder_files = files::list_files(&state.db, owner_id, crate::models::ListFilesQuery {
         folder_id: Some(folder_id),
@@ -144,9 +159,7 @@ async fn add_folder_to_zip(
 
     for file in folder_files {
         let Ok(data) = state.storage.get(&file.storage_path).await else { continue };
-        let entry_path = format!("{}/{}", prefix, file.name);
-        let _ = zip.start_file(&entry_path, options);
-        let _ = zip.write_all(&data);
+        entries.push((format!("{}/{}", prefix, file.name), data.to_vec()));
     }
 
     let subfolders: Vec<(Uuid, String)> = sqlx::query_as(
@@ -160,23 +173,23 @@ async fn add_folder_to_zip(
 
     for (sub_id, sub_name) in subfolders {
         let sub_prefix = format!("{}/{}", prefix, sub_name);
-        add_folder_to_zip_boxed(state, owner_id, sub_id, sub_prefix, zip, options).await;
+        gather_folder_boxed(state, owner_id, sub_id, sub_prefix, dirs, entries).await;
     }
 }
 
-fn add_folder_to_zip_boxed<'a>(
+fn gather_folder_boxed<'a>(
     state:    &'a AppState,
     owner_id: Uuid,
     folder_id: Uuid,
     prefix:   String,
-    zip:      &'a mut zip::ZipWriter<std::io::Cursor<Vec<u8>>>,
-    options:  zip::write::SimpleFileOptions,
+    dirs:     &'a mut Vec<String>,
+    entries:  &'a mut Vec<(String, Vec<u8>)>,
 ) -> std::pin::Pin<Box<dyn std::future::Future<Output = ()> + Send + 'a>> {
-    Box::pin(add_folder_to_zip(state, owner_id, folder_id, prefix, zip, options))
+    Box::pin(gather_folder(state, owner_id, folder_id, prefix, dirs, entries))
 }
 
 // ── POST /:id/decompress ──────────────────────────────────────────────────────
-/// Décompresse une archive ZIP dans un dossier.
+/// Décompresse une archive (ZIP, TAR ou TAR.GZ) dans un dossier.
 pub async fn decompress(
     State(state): State<AppState>,
     Extension(user): Extension<FilesUser>,
@@ -185,39 +198,18 @@ pub async fn decompress(
 ) -> Result<Json<Value>> {
     let file = files::get_file(&state.db, user.id, file_id).await?;
 
-    if !file.mime_type.contains("zip") && !file.name.ends_with(".zip") {
-        return Err(FilesError::Validation("Seuls les fichiers ZIP sont supportés".into()));
-    }
+    let kind = archives::detect_kind(&file.name, &file.mime_type).ok_or_else(|| {
+        FilesError::Validation("Format d'archive non supporté (ZIP, TAR, TAR.GZ)".into())
+    })?;
 
     let data = state.storage.get(&file.storage_path).await
         .map_err(|e| FilesError::Internal(anyhow::anyhow!(e)))?;
 
-    // Collecter toutes les entrées de manière synchrone (pas d'await pendant que ZipArchive est vivant)
-    let entries: Vec<(String, bool, Vec<u8>)> = {
-        let cursor = std::io::Cursor::new(data.as_ref());
-        let mut zip = zip::ZipArchive::new(cursor)
-            .map_err(|e| FilesError::Validation(format!("Archive invalide : {}", e)))?;
-
-        let mut result = Vec::with_capacity(zip.len());
-        for i in 0..zip.len() {
-            let mut entry = zip.by_index(i)
-                .map_err(|e| FilesError::Internal(anyhow::anyhow!(e)))?;
-            let name = entry.name().to_string();
-            let is_dir = entry.is_dir();
-            let mut buf = Vec::new();
-            if !is_dir {
-                entry.read_to_end(&mut buf)
-                    .map_err(|e| FilesError::Internal(anyhow::anyhow!(e)))?;
-            }
-            result.push((name, is_dir, buf));
-        }
-        result
-        // zip et cursor sont droppés ici, avant tout await
-    };
+    let items = tokio::task::block_in_place(|| archives::read_all(kind, data.as_ref()))?;
     drop(data);
 
     // Dossier de destination
-    let base_name = file.name.trim_end_matches(".zip").to_string();
+    let base_name = strip_archive_ext(&file.name);
     let create_sub = dto.create_subfolder.unwrap_or(true);
 
     let dest_folder_id = if create_sub {
@@ -237,59 +229,25 @@ pub async fn decompress(
     let mut dir_map: std::collections::HashMap<String, Uuid> = std::collections::HashMap::new();
     let mut extracted = 0usize;
 
-    for (raw_name, is_dir, buf) in entries {
-        let name = raw_name.trim_end_matches('/').to_string();
+    for item in items {
+        let name = item.path.trim_end_matches('/').to_string();
+        if name.is_empty() { continue }
 
-        if is_dir {
-            let parts: Vec<&str> = name.split('/').collect();
-            let mut parent = dest_folder_id;
-            let mut path_acc = String::new();
-            for part in parts {
-                if part.is_empty() { continue }
-                if !path_acc.is_empty() { path_acc.push('/'); }
-                path_acc.push_str(part);
-                if let Some(&id) = dir_map.get(&path_acc) {
-                    parent = Some(id);
-                } else {
-                    let created = folders::create_folder(
-                        &state.db, &state.storage, user.id,
-                        CreateFolderDto { name: part.to_string(), parent_id: parent },
-                    ).await?;
-                    dir_map.insert(path_acc.clone(), created.id);
-                    parent = Some(created.id);
-                }
-            }
+        if item.is_dir {
+            ensure_dirs(&state, user.id, dest_folder_id, &name, &mut dir_map).await?;
         } else {
             let parts: Vec<&str> = name.split('/').collect();
             let file_name = parts.last().copied().unwrap_or("file");
 
             let parent = if parts.len() > 1 {
-                let mut parent = dest_folder_id;
-                let mut path_acc = String::new();
-                for part in &parts[..parts.len() - 1] {
-                    if part.is_empty() { continue }
-                    if !path_acc.is_empty() { path_acc.push('/'); }
-                    path_acc.push_str(part);
-                    if let Some(&id) = dir_map.get(&path_acc) {
-                        parent = Some(id);
-                    } else {
-                        let created = folders::create_folder(
-                            &state.db, &state.storage, user.id,
-                            CreateFolderDto { name: part.to_string(), parent_id: parent },
-                        ).await?;
-                        dir_map.insert(path_acc.clone(), created.id);
-                        parent = Some(created.id);
-                    }
-                }
-                parent
+                let dir_path = parts[..parts.len() - 1].join("/");
+                ensure_dirs(&state, user.id, dest_folder_id, &dir_path, &mut dir_map).await?
             } else {
                 dest_folder_id
             };
 
-            let size = buf.len() as i64;
-            let mime = mime_guess::from_path(file_name)
-                .first_or_octet_stream()
-                .to_string();
+            let size = item.data.len() as i64;
+            let mime = mime_guess::from_path(file_name).first_or_octet_stream().to_string();
 
             if files::create_with_bytes(
                 &state.db,
@@ -298,7 +256,7 @@ pub async fn decompress(
                 parent,
                 file_name,
                 &mime,
-                bytes::Bytes::from(buf),
+                bytes::Bytes::from(item.data),
                 None,
                 false,
             ).await.is_ok() {
@@ -308,7 +266,36 @@ pub async fn decompress(
         }
     }
 
+    crate::events::notify_change(&state.settings, user.id);
     Ok(Json(json!({ "extracted": extracted, "folder_id": dest_folder_id })))
+}
+
+/// Ensures every directory along `path` exists under `root`, returning the leaf id.
+async fn ensure_dirs(
+    state:   &AppState,
+    owner_id: Uuid,
+    root:    Option<Uuid>,
+    path:    &str,
+    dir_map: &mut std::collections::HashMap<String, Uuid>,
+) -> Result<Option<Uuid>> {
+    let mut parent = root;
+    let mut path_acc = String::new();
+    for part in path.split('/') {
+        if part.is_empty() { continue }
+        if !path_acc.is_empty() { path_acc.push('/'); }
+        path_acc.push_str(part);
+        if let Some(&id) = dir_map.get(&path_acc) {
+            parent = Some(id);
+        } else {
+            let created = folders::create_folder(
+                &state.db, &state.storage, owner_id,
+                CreateFolderDto { name: part.to_string(), parent_id: parent },
+            ).await?;
+            dir_map.insert(path_acc.clone(), created.id);
+            parent = Some(created.id);
+        }
+    }
+    Ok(parent)
 }
 
 // ── GET /:id/archive/list ─────────────────────────────────────────────────────
@@ -320,87 +307,61 @@ pub async fn list_archive(
     Query(q): Query<ArchiveListQuery>,
 ) -> Result<Json<Value>> {
     let file = files::get_file(&state.db, user.id, file_id).await?;
+    let kind = archives::detect_kind(&file.name, &file.mime_type).ok_or_else(|| {
+        FilesError::Validation("Format d'archive non supporté".into())
+    })?;
     let data = state.storage.get(&file.storage_path).await
         .map_err(|e| FilesError::Internal(anyhow::anyhow!(e)))?;
 
-    let cursor = std::io::Cursor::new(data.as_ref());
-    let mut zip = zip::ZipArchive::new(cursor)
-        .map_err(|e| FilesError::Validation(format!("Archive invalide : {}", e)))?;
+    let index = tokio::task::block_in_place(|| archives::read_index(kind, data.as_ref()))?;
+    let total = index.len();
 
     let prefix = q.path.unwrap_or_default();
     let prefix = prefix.trim_matches('/').to_string();
 
-    // Collecter les entrées directes (pas les sous-entrées)
     let mut entries: Vec<ArchiveEntry> = Vec::new();
     let mut seen_dirs: std::collections::HashSet<String> = std::collections::HashSet::new();
 
-    for i in 0..zip.len() {
-        let entry = zip.by_index(i)
-            .map_err(|e| FilesError::Internal(anyhow::anyhow!(e)))?;
+    for e in &index {
+        let raw_name = e.path.trim_end_matches('/');
 
-        let raw_name = entry.name().trim_end_matches('/').to_string();
-
-        // Filtrer par préfixe
         let relative = if prefix.is_empty() {
-            raw_name.as_str()
-        } else if raw_name.starts_with(&format!("{}/", prefix)) {
-            &raw_name[prefix.len() + 1..]
+            raw_name
+        } else if let Some(rest) = raw_name.strip_prefix(&format!("{prefix}/")) {
+            rest
         } else {
             continue
         };
-
         if relative.is_empty() { continue }
 
-        // Seuls les éléments directs (pas de sous-chemin)
         let parts: Vec<&str> = relative.splitn(2, '/').collect();
         let direct_name = parts[0];
 
-        if parts.len() > 1 || entry.is_dir() {
-            // C'est un répertoire direct ou un chemin plus profond
-            if seen_dirs.contains(direct_name) { continue }
-            seen_dirs.insert(direct_name.to_string());
+        let full_path = if prefix.is_empty() {
+            direct_name.to_string()
+        } else {
+            format!("{prefix}/{direct_name}")
+        };
 
-            let full_path = if prefix.is_empty() {
-                direct_name.to_string()
-            } else {
-                format!("{}/{}", prefix, direct_name)
-            };
-
+        if parts.len() > 1 || e.is_dir {
+            if !seen_dirs.insert(direct_name.to_string()) { continue }
             entries.push(ArchiveEntry {
-                name:            direct_name.to_string(),
-                path:            full_path,
-                is_dir:          true,
-                size:            0,
-                compressed_size: 0,
+                name: direct_name.to_string(), path: full_path,
+                is_dir: true, size: 0, compressed_size: 0,
             });
         } else {
-            // Fichier direct
-            let full_path = if prefix.is_empty() {
-                direct_name.to_string()
-            } else {
-                format!("{}/{}", prefix, direct_name)
-            };
-
             entries.push(ArchiveEntry {
-                name:            direct_name.to_string(),
-                path:            full_path,
-                is_dir:          false,
-                size:            entry.size(),
-                compressed_size: entry.compressed_size(),
+                name: direct_name.to_string(), path: full_path,
+                is_dir: false, size: e.size, compressed_size: e.size,
             });
         }
     }
 
-    // Tri : dossiers d'abord, puis alphabétique
     entries.sort_by(|a, b| {
         b.is_dir.cmp(&a.is_dir).then(a.name.to_lowercase().cmp(&b.name.to_lowercase()))
     });
 
-    Ok(Json(json!({
-        "entries": entries,
-        "path":    prefix,
-        "total":   zip.len(),
-    })))
+    Ok(Json(json!({ "entries": entries, "path": prefix, "total": total })))
 }
 
 // ── GET /:id/archive/file ─────────────────────────────────────────────────────
@@ -417,38 +378,25 @@ pub async fn get_archive_file(
     Query(q): Query<ArchiveFileQuery>,
 ) -> Result<Response> {
     let file = files::get_file(&state.db, user.id, file_id).await?;
+    let kind = archives::detect_kind(&file.name, &file.mime_type).ok_or_else(|| {
+        FilesError::Validation("Format d'archive non supporté".into())
+    })?;
     let data = state.storage.get(&file.storage_path).await
         .map_err(|e| FilesError::Internal(anyhow::anyhow!(e)))?;
 
-    let cursor = std::io::Cursor::new(data.as_ref());
-    let mut zip = zip::ZipArchive::new(cursor)
-        .map_err(|e| FilesError::Validation(format!("Archive invalide : {}", e)))?;
-
     let path = q.path.trim_matches('/').to_string();
-
-    let mut entry = zip.by_name(&path)
-        .map_err(|_| FilesError::NotFound(format!("Fichier '{}' introuvable dans l'archive", path)))?;
-
-    let mut buf = Vec::with_capacity(entry.size() as usize);
-    entry.read_to_end(&mut buf)
-        .map_err(|e| FilesError::Internal(anyhow::anyhow!(e)))?;
+    let buf = tokio::task::block_in_place(|| archives::read_single(kind, data.as_ref(), &path))?;
 
     let file_name = std::path::Path::new(&path)
         .file_name()
         .and_then(|n| n.to_str())
         .unwrap_or("file");
-
-    let mime = mime_guess::from_path(file_name)
-        .first_or_octet_stream()
-        .to_string();
+    let mime = mime_guess::from_path(file_name).first_or_octet_stream().to_string();
 
     let response = Response::builder()
         .status(StatusCode::OK)
         .header(header::CONTENT_TYPE, mime)
-        .header(
-            header::CONTENT_DISPOSITION,
-            format!("attachment; filename=\"{}\"", file_name),
-        )
+        .header(header::CONTENT_DISPOSITION, format!("attachment; filename=\"{}\"", file_name))
         .header(header::CONTENT_LENGTH, buf.len().to_string())
         .body(Body::from(buf))
         .map_err(|e| FilesError::Internal(anyhow::anyhow!(e)))?;
