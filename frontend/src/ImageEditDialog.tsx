@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { api, useAuthStore } from '@kubuno/sdk'
-import { Button } from '@ui'
+import { Button, RangeSlider } from '@ui'
 import {
   RotateCw,
   RotateCcw,
@@ -397,13 +397,13 @@ export default function ImageEditDialog({ file, onClose, onSaved }: Props) {
                 <span>Qualité</span>
                 <span className="text-text-secondary">{quality}</span>
               </div>
-              <input
-                type="range"
+              <RangeSlider
                 min={1}
                 max={100}
                 value={quality}
-                onChange={(e) => setQuality(Number(e.target.value))}
+                onChange={(v) => setQuality(v)}
                 className="w-full"
+                aria-label="Qualité"
               />
             </div>
           )}

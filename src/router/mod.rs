@@ -10,7 +10,7 @@ use tower_http::{
 };
 
 use crate::{
-    handlers::{access, activity, archive, files, folders, health, import_url, insights, ipc, locks, maintenance, public, remotes, saved_searches, scan, search, shares, sync, system, tags, transform, uploads, versions, webdav},
+    handlers::{access, activity, archive, files, folders, health, import_url, insights, ipc, locks, maintenance, public, remotes, resolve, saved_searches, scan, search, shares, sync, system, tags, transform, uploads, versions, webdav},
     middleware::{require_auth, require_ipc_secret},
     state::AppState,
 };
@@ -108,6 +108,10 @@ pub fn build(state: AppState) -> Router {
         .route("/remotes/:id/mkdir/*path",           post(remotes::create_remote_dir))
         .route("/remotes/:id/entry/*path",           delete(remotes::delete_remote_entry))
         .route("/remotes/:id/rename/*path",          post(remotes::rename_remote_entry))
+        // Résolveur de chemin canonique « [stockage]/chemin » (local ou montage distant).
+        // Point d'entrée unique des autres modules : ils envoient un chemin, drive route.
+        .route("/resolve/browse",                    get(resolve::browse))
+        .route("/resolve/file",                      get(resolve::file))
         // Répertoire SYSTÈME (partagé) : lecture pour tous, écriture admins (gardée dans les handlers)
         .route("/system/folders",               get(system::list_folders).post(system::create_folder))
         .route("/system/folders/:id",           get(system::get_folder).delete(system::delete_folder))
@@ -169,6 +173,9 @@ pub fn build(state: AppState) -> Router {
         .route("/ipc/files/:id/content",          put(ipc::update_file_content))
         .route("/ipc/files/:id/protect",          patch(ipc::set_file_protected))
         .route("/ipc/folders/:id/protect",        patch(ipc::set_folder_protected))
+        // Résolveur canonique interne (sans session) pour les modules / jobs de fond.
+        .route("/ipc/resolve/:uid/browse",        get(resolve::ipc_browse))
+        .route("/ipc/resolve/:uid/file",          get(resolve::ipc_file))
         .layer(middleware::from_fn_with_state(state.clone(), require_ipc_secret))
         .with_state(state.clone());
 

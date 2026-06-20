@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useConfirm } from '@kubuno/sdk'
 import { ConfirmDialog } from '@ui'
+import { openable, isCoarsePointer, useLongPress } from './openable'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -2018,6 +2019,7 @@ function FolderCard({
   onDrop: (e: React.DragEvent) => void
 }) {
   const pendingKind = usePendingKind(folder.id)
+  const longPress = useLongPress(onContextMenu)
   return (
     <div
       data-selectable-id={folder.id}
@@ -2033,8 +2035,11 @@ function FolderCard({
                   } ${pendingBoxClass(pendingKind)}`}
       style={pendingBoxStyle(pendingKind)}
       draggable
-      onClick={(e) => { e.preventDefault(); onSelect(folder.id, e) }}
-      onDoubleClick={(e) => { e.preventDefault(); e.stopPropagation(); onOpen() }}
+      {...openable<React.MouseEvent>({
+        select: (e) => { e.preventDefault(); onSelect(folder.id, e) },
+        open:   (e) => { e.preventDefault(); e.stopPropagation(); onOpen() },
+      })}
+      {...longPress}
       onContextMenu={onContextMenu}
       onDragStart={onDragStart}
       onDragOver={onDragOver}
@@ -2157,12 +2162,15 @@ function FileCard({
     else stopVideoPreview()
   }, [selected]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const longPress = useLongPress(onContextMenu)
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault()
+    // Touch UIs have no double-click: a single tap opens (unless trashed).
+    if (isCoarsePointer() && !trashed) { onOpen(); return }
     onSelect(file.id, e)
   }
   const handleDoubleClick = (e: React.MouseEvent) => {
-    if (trashed) return
+    if (trashed || isCoarsePointer()) return
     e.preventDefault()
     onOpen()
   }
@@ -2188,6 +2196,7 @@ function FileCard({
                  } ${pendingBoxClass(pendingKind)}`}
       style={pendingBoxStyle(pendingKind)}
       draggable={!trashed}
+      {...longPress}
       onContextMenu={onContextMenu}
       onDragStart={onDragStart}
       onClick={handleClick}
@@ -2303,12 +2312,16 @@ function FileRow({ file, trashed, onContextMenu, onRestore, onDelete, onOpen, de
   const thumbSrc = thumbVer ? `${filesApi.thumbnailUrl(file.id)}?v=${thumbVer}` : filesApi.thumbnailUrl(file.id)
   const pad   = density === 'compact' ? 'px-3 py-1' : density === 'large' ? 'px-4 py-3.5' : 'px-4 py-2.5'
   const thumb = density === 'large' ? 'w-12 h-12' : density === 'compact' ? 'w-6 h-6' : 'w-8 h-8'
+  const longPress = useLongPress(onContextMenu)
   return (
     <div
       className={`group flex items-center gap-3 ${pad} bg-white hover:bg-surface-1 transition-colors cursor-default select-none ${pendingBoxClass(pendingKind)}`}
       style={pendingBoxStyle(pendingKind)}
+      {...longPress}
       onContextMenu={onContextMenu}
-      onDoubleClick={!trashed ? e => { e.preventDefault(); onOpen() } : undefined}
+      {...(!trashed
+        ? openable<React.MouseEvent>({ open: (e) => { e.preventDefault(); onOpen() } })
+        : {})}
     >
       <div className={`shrink-0 ${thumb} flex items-center justify-center rounded overflow-hidden bg-surface-2`}>
         {file.has_thumbnail
