@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
-import { FloatingWindow } from '@ui'
+import { FloatingWindow, RangeSlider } from '@ui'
 import { ColorPicker, useAppPickerTheme } from '@ui'
 import { useFilesPaintStore } from '@kubuno/drive'
 import { filesApi } from '@kubuno/drive'
@@ -698,10 +698,12 @@ export default function FilesPaintEditor() {
             <button className="hover:bg-surface-2 rounded p-0.5" onClick={() => setZoom(z => Math.max(0.1, z - 0.25))} title={t('paint.zoom_out')}>
               <ZoomIn size={13} className="rotate-180" />
             </button>
-            <input
-              type="range" min="10" max="800" value={Math.round(zoom * 100)}
-              onChange={e => setZoom(Number(e.target.value) / 100)}
-              className="w-20 accent-primary"
+            <RangeSlider
+              min={10} max={800} value={Math.round(zoom * 100)}
+              onChange={v => setZoom(v / 100)}
+              className="w-20"
+              accent="var(--color-primary)"
+              aria-label={t('paint.zoom_in')}
             />
             <button className="hover:bg-surface-2 rounded p-0.5" onClick={() => setZoom(z => Math.min(8, z + 0.25))} title={t('paint.zoom_in')}>
               <ZoomIn size={13} />

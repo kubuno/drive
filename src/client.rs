@@ -32,6 +32,17 @@ pub struct FolderInfo {
     pub path: String,
 }
 
+/// One entry returned by the canonical-path resolver (`resolve_browse`).
+/// `path` is itself canonical (`[storage]/...`) so callers can keep navigating.
+#[derive(Debug, Clone, Deserialize)]
+pub struct ResolveEntry {
+    pub name:       String,
+    pub path:       String,
+    pub is_dir:     bool,
+    pub size_bytes: Option<i64>,
+    pub mime_type:  Option<String>,
+}
+
 /// Client HTTP vers l'IPC interne du module `files` (auth par X-Internal-Secret).
 #[derive(Clone)]
 pub struct FilesClient {
@@ -184,6 +195,36 @@ impl FilesClient {
             anyhow::bail!("set_file_protected failed: {s} — {b}");
         }
         Ok(())
+    }
+
+    /// Liste un répertoire par chemin canonique `[stockage]/chemin` (Drive local OU
+    /// montage distant — drive route en interne). Les `path` retournés sont canoniques.
+    pub async fn resolve_browse(&self, user_id: Uuid, path: &str) -> Result<Vec<ResolveEntry>> {
+        let resp = self.http
+            .get(format!("{}/ipc/resolve/{user_id}/browse", self.base_url))
+            .query(&[("path", path)])
+            .header("X-Internal-Secret", &self.secret)
+            .send().await?;
+        if !resp.status().is_success() {
+            let s = resp.status(); let b = resp.text().await.unwrap_or_default();
+            anyhow::bail!("resolve_browse failed: {s} — {b}");
+        }
+        let body: serde_json::Value = resp.json().await?;
+        Ok(serde_json::from_value(body["items"].clone())?)
+    }
+
+    /// Lit un fichier par chemin canonique `[stockage]/chemin` → octets bruts.
+    pub async fn resolve_file(&self, user_id: Uuid, path: &str) -> Result<Bytes> {
+        let resp = self.http
+            .get(format!("{}/ipc/resolve/{user_id}/file", self.base_url))
+            .query(&[("path", path)])
+            .header("X-Internal-Secret", &self.secret)
+            .send().await?;
+        if !resp.status().is_success() {
+            let s = resp.status(); let b = resp.text().await.unwrap_or_default();
+            anyhow::bail!("resolve_file failed: {s} — {b}");
+        }
+        Ok(resp.bytes().await?)
     }
 
     /// Protège/déprotège un dossier.
