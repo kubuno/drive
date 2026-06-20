@@ -1,15 +1,22 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
-import { ChevronRight, Folder, FolderOpen, FileText, Search, Home, Loader2, Server } from 'lucide-react'
+import { ChevronRight, Folder, FolderOpen, FileText, Search, Loader2 } from 'lucide-react'
 import { filesApi, FolderGlyph, FileItem, type RemoteEntry } from '@kubuno/drive'
+import { openable } from './openable'
 import { useFilesDialogStore, OpenDialogOptions, fileMatchesOptions } from '@kubuno/drive'
 import { FloatingWindow } from '@ui'
 import { Button } from '@ui'
+import DialogBreadcrumb, { type StorageOpt } from './DialogBreadcrumb'
+import DialogTree from './DialogTree'
 
-// Un emplacement distant en cours de navigation dans le dialog.
 interface RemoteLoc { id: string; name: string; path: string }
-interface BreadcrumbItem { id: string | null; name: string; remote?: RemoteLoc }
+// Internal crumb — carries navigation state; only { name } is passed to DialogBreadcrumb
+interface InternalCrumb {
+  name:        string
+  folderId?:   string | null
+  remotePath?: string
+}
 
 function FileIcon({ mimeType, name }: { mimeType: string; name: string }) {
   const ext = name.split('.').pop()?.toLowerCase() ?? ''
@@ -26,62 +33,89 @@ interface Props {
 
 function OpenDialogInner({ opts, onClose }: Props) {
   const { t } = useTranslation('drive')
-  const [folderId,   setFolderId]   = useState<string | null>(null)
-  const [remote,     setRemote]     = useState<RemoteLoc | null>(null)
-  const [breadcrumb, setBreadcrumb] = useState<BreadcrumbItem[]>([{ id: null, name: t('nav.my_files') }])
-  const [selected,   setSelected]   = useState<FileItem | null>(null)
-  const [selectedRemote, setSelectedRemote] = useState<RemoteEntry | null>(null)
-  const [search,     setSearch]     = useState('')
-  const [busy,       setBusy]       = useState(false)
+  const [currentSourceId, setCurrentSourceId] = useState<string | null>(null)
+  const [folderId,        setFolderId]         = useState<string | null>(null)
+  const [remote,          setRemote]           = useState<RemoteLoc | null>(null)
+  const [pathCrumbs,      setPathCrumbs]       = useState<InternalCrumb[]>([])
+  const [selected,        setSelected]         = useState<FileItem | null>(null)
+  const [selectedRemote,  setSelectedRemote]   = useState<RemoteEntry | null>(null)
+  const [search,          setSearch]           = useState('')
+  const [busy,            setBusy]             = useState(false)
 
-  const isRoot = !remote && folderId === null
-
-  // ── Sources locales ──────────────────────────────────────────────────────────
+  // ── Local sources ──────────────────────────────────────────────────────────────
   const foldersQ = useQuery({ queryKey: ['dialog-folders', folderId], queryFn: () => filesApi.listFolders(folderId), staleTime: 10_000, enabled: !remote })
-  const filesQ   = useQuery({ queryKey: ['dialog-files', folderId],   queryFn: () => filesApi.listFiles(folderId),   staleTime: 10_000, enabled: !remote })
-  // ── Montages distants (listés à la racine) ───────────────────────────────────
+  const filesQ   = useQuery({ queryKey: ['dialog-files',   folderId], queryFn: () => filesApi.listFiles(folderId),   staleTime: 10_000, enabled: !remote })
+  // ── Remote mounts ──────────────────────────────────────────────────────────────
   const remotesQ = useQuery({ queryKey: ['dialog-remotes'], queryFn: filesApi.listRemotes, staleTime: 30_000 })
-  // ── Contenu d'un montage (mode distant) ──────────────────────────────────────
-  const remoteQ = useQuery({
+  const remoteQ  = useQuery({
     queryKey: ['dialog-remote-browse', remote?.id, remote?.path],
     queryFn:  () => filesApi.browseRemote(remote!.id, remote!.path),
     enabled:  !!remote,
     retry:    false,
   })
 
-  const matchesSearch = (n: string) => search === '' || n.toLowerCase().includes(search.toLowerCase())
+  const remotes   = remotesQ.data ?? []
+  const sources: StorageOpt[] = [
+    { id: null, name: t('nav.my_files') },
+    ...remotes.map(m => ({ id: m.id, name: m.name, remote: true })),
+  ]
 
-  const folders = !remote ? (foldersQ.data?.folders ?? []).filter(fo => matchesSearch(fo.name)) : []
-  const files   = !remote ? (filesQ.data?.files ?? []).filter(f =>
+  const matchesSearch = (n: string) => search === '' || n.toLowerCase().includes(search.toLowerCase())
+  const folders    = !remote ? (foldersQ.data?.folders ?? []).filter(fo => matchesSearch(fo.name)) : []
+  const files      = !remote ? (filesQ.data?.files ?? []).filter(f =>
     !f.is_trashed && fileMatchesOptions(f.name, f.mime_type, opts) && matchesSearch(f.name)) : []
-  const mounts  = isRoot ? (remotesQ.data ?? []).filter(m => matchesSearch(m.name)) : []
   const remoteDirs  = remote ? (remoteQ.data ?? []).filter(e => e.is_dir && matchesSearch(e.name)) : []
   const remoteFiles = remote ? (remoteQ.data ?? []).filter(e => !e.is_dir && fileMatchesOptions(e.name, '', opts) && matchesSearch(e.name)) : []
 
   const isLoading = remote ? remoteQ.isLoading : (foldersQ.isLoading || filesQ.isLoading)
-  const empty = folders.length === 0 && files.length === 0 && mounts.length === 0 && remoteDirs.length === 0 && remoteFiles.length === 0
+  const empty     = folders.length === 0 && files.length === 0 && remoteDirs.length === 0 && remoteFiles.length === 0
 
   const reset = () => { setSelected(null); setSelectedRemote(null); setSearch('') }
-  const enterFolder = (id: string, name: string) => { setFolderId(id); setBreadcrumb(p => [...p, { id, name }]); reset() }
-  const enterMount  = (m: { id: string; name: string }) => {
-    const loc = { id: m.id, name: m.name, path: '' }
-    setRemote(loc); setBreadcrumb(p => [...p, { id: null, name: m.name, remote: loc }]); reset()
-  }
-  const enterRemoteDir = (e: RemoteEntry) => {
-    const loc = { id: remote!.id, name: remote!.name, path: e.path }
-    setRemote(loc); setBreadcrumb(p => [...p, { id: null, name: e.name, remote: loc }]); reset()
-  }
-  const goToBreadcrumb = (idx: number) => {
-    const slice = breadcrumb.slice(0, idx + 1)
-    setBreadcrumb(slice)
-    const last = slice[slice.length - 1]
-    setRemote(last.remote ?? null)
-    setFolderId(last.remote ? null : last.id)
+
+  const selectSource = (id: string | null) => {
+    setCurrentSourceId(id); setPathCrumbs([])
+    if (id === null) {
+      setRemote(null); setFolderId(null)
+    } else {
+      const m = remotes.find(r => r.id === id)
+      if (m) setRemote({ id: m.id, name: m.name, path: '' })
+      setFolderId(null)
+    }
     reset()
   }
 
-  // Ouvre un fichier distant : matérialisé (téléchargé → importé en local) pour
-  // rester compatible avec tous les consommateurs (qui attendent un FileItem local).
+  const enterFolder    = (id: string, name: string) => { setFolderId(id); setPathCrumbs(p => [...p, { name, folderId: id }]); reset() }
+  const enterRemoteDir = (e: RemoteEntry) => {
+    const loc = { id: remote!.id, name: remote!.name, path: e.path }
+    setRemote(loc); setPathCrumbs(p => [...p, { name: e.name, remotePath: e.path }]); reset()
+  }
+  const navigatePath   = (idx: number) => {
+    const slice = pathCrumbs.slice(0, idx + 1)
+    const crumb = slice[slice.length - 1]
+    setPathCrumbs(slice)
+    if (remote) setRemote({ ...remote, path: crumb.remotePath ?? '' })
+    else        setFolderId(crumb.folderId ?? null)
+    reset()
+  }
+
+  // ── Jump from the left tree to an arbitrary folder (rebuild breadcrumb) ─────────
+  const jumpLocal = async (fid: string | null) => {
+    reset()
+    if (!fid) { setFolderId(null); setPathCrumbs([]); return }
+    setFolderId(fid)
+    try {
+      const { folder, ancestors } = await filesApi.getFolder(fid)
+      setPathCrumbs([...ancestors.map(a => ({ name: a.name, folderId: a.id })), { name: folder.name, folderId: fid }])
+    } catch { setPathCrumbs([{ name: '…', folderId: fid }]) }
+  }
+  const jumpRemote = (path: string) => {
+    if (!remote) return
+    setRemote({ ...remote, path }); reset()
+    const segs = path.split('/').filter(Boolean)
+    setPathCrumbs(segs.map((name, i) => ({ name, remotePath: segs.slice(0, i + 1).join('/') })))
+  }
+
+  // Materialise a remote file: download → re-upload locally → return as FileItem.
   const openRemoteFile = async (e: RemoteEntry) => {
     if (!remote) return
     setBusy(true)
@@ -105,29 +139,32 @@ function OpenDialogInner({ opts, onClose }: Props) {
       title={opts.title ?? t('opendialog.title')}
       icon={<FolderOpen size={17} className="text-primary" />}
       onClose={() => onClose(null)}
-      defaultWidth={680}
+      defaultWidth={840}
       defaultHeight={520}
       resizable
       titleActions={filterLabel ? (
         <span className="text-xs text-text-tertiary bg-surface-2 px-2 py-0.5 rounded-full">{filterLabel}</span>
       ) : undefined}
     >
-      <div className="flex flex-col flex-1 min-h-0">
+      <div className="flex flex-1 min-h-0">
+        <DialogTree
+          sourceId={currentSourceId}
+          rootLabel={sources.find(s => s.id === currentSourceId)?.name ?? t('nav.my_files')}
+          selectedFolderId={folderId}
+          selectedRemotePath={remote?.path ?? ''}
+          onPickLocal={jumpLocal}
+          onPickRemote={jumpRemote}
+        />
+        <div className="flex flex-col flex-1 min-h-0">
         {/* Breadcrumb + Search */}
         <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-surface-1 flex-shrink-0">
-          <nav className="flex items-center gap-1 flex-1 min-w-0 overflow-x-auto text-xs text-text-secondary">
-            {breadcrumb.map((b, idx) => (
-              <span key={idx} className="flex items-center gap-1 flex-shrink-0">
-                {idx > 0 && <ChevronRight size={12} className="text-text-tertiary" />}
-                <button
-                  onClick={() => goToBreadcrumb(idx)}
-                  className={`hover:text-primary hover:underline rounded px-1 py-0.5 ${idx === breadcrumb.length - 1 ? 'text-text-primary font-medium' : ''}`}
-                >
-                  {idx === 0 ? <Home size={12} /> : b.name}
-                </button>
-              </span>
-            ))}
-          </nav>
+          <DialogBreadcrumb
+            sources={sources}
+            currentSourceId={currentSourceId}
+            onSelectSource={selectSource}
+            pathCrumbs={pathCrumbs}
+            onNavigatePath={navigatePath}
+          />
           <div className="relative flex-shrink-0">
             <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none" />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('common.search_ph')}
@@ -146,34 +183,25 @@ function OpenDialogInner({ opts, onClose }: Props) {
             </div>
           ) : (
             <div className="space-y-0.5">
-              {/* Dossiers locaux */}
+              {/* Local sub-folders */}
               {folders.map(fo => (
-                <button key={fo.id} onDoubleClick={() => enterFolder(fo.id, fo.name)} onClick={reset}
+                <button key={fo.id} {...openable({ open: () => enterFolder(fo.id, fo.name), select: reset })}
                   className="flex items-center gap-3 w-full px-3 py-2 rounded-lg hover:bg-surface-1 text-left group">
                   <FolderGlyph folder={fo} size={16} className="flex-shrink-0" />
                   <span className="text-sm text-text-primary flex-1 truncate">{fo.name}</span>
                   <ChevronRight size={14} className="text-text-tertiary opacity-0 group-hover:opacity-100" />
                 </button>
               ))}
-              {/* Montages distants (racine) */}
-              {mounts.map(m => (
-                <button key={m.id} onDoubleClick={() => enterMount(m)} onClick={reset}
-                  className="flex items-center gap-3 w-full px-3 py-2 rounded-lg hover:bg-surface-1 text-left group">
-                  <Server size={16} className="text-primary flex-shrink-0" />
-                  <span className="text-sm text-text-primary flex-1 truncate">{m.name}</span>
-                  <ChevronRight size={14} className="text-text-tertiary opacity-0 group-hover:opacity-100" />
-                </button>
-              ))}
-              {/* Dossiers distants */}
+              {/* Remote sub-folders */}
               {remoteDirs.map(e => (
-                <button key={e.path} onDoubleClick={() => enterRemoteDir(e)} onClick={reset}
+                <button key={e.path} {...openable({ open: () => enterRemoteDir(e), select: reset })}
                   className="flex items-center gap-3 w-full px-3 py-2 rounded-lg hover:bg-surface-1 text-left group">
                   <Folder size={16} className="text-text-secondary flex-shrink-0" />
                   <span className="text-sm text-text-primary flex-1 truncate">{e.name}</span>
                   <ChevronRight size={14} className="text-text-tertiary opacity-0 group-hover:opacity-100" />
                 </button>
               ))}
-              {/* Fichiers locaux */}
+              {/* Local files */}
               {files.map(file => (
                 <button key={file.id} onClick={() => { setSelected(file); setSelectedRemote(null) }} onDoubleClick={() => onClose(file)}
                   className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-left transition-colors ${selected?.id === file.id ? 'bg-primary/10 ring-1 ring-primary' : 'hover:bg-surface-1'}`}>
@@ -182,7 +210,7 @@ function OpenDialogInner({ opts, onClose }: Props) {
                   <span className="text-xs text-text-tertiary flex-shrink-0">{(file.size_bytes / 1024).toFixed(0)} {t('common.kb')}</span>
                 </button>
               ))}
-              {/* Fichiers distants */}
+              {/* Remote files */}
               {remoteFiles.map(e => (
                 <button key={e.path} onClick={() => { setSelectedRemote(e); setSelected(null) }} onDoubleClick={() => openRemoteFile(e)}
                   className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-left transition-colors ${selectedRemote?.path === e.path ? 'bg-primary/10 ring-1 ring-primary' : 'hover:bg-surface-1'}`}>
@@ -206,6 +234,7 @@ function OpenDialogInner({ opts, onClose }: Props) {
           )}
           <Button variant="secondary" size="sm" onClick={() => onClose(null)} disabled={busy}>{t('common.cancel')}</Button>
           <Button size="sm" onClick={confirmOpen} disabled={busy || (!selected && !selectedRemote)}>{t('common.open')}</Button>
+        </div>
         </div>
       </div>
     </FloatingWindow>

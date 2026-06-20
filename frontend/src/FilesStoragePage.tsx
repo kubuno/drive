@@ -110,7 +110,7 @@ function SelectionBar({ count, onArchive, onDelete, busy }: {
   const { t } = useTranslation('drive')
   if (count === 0) return null
   return (
-    <div className="flex items-center gap-3 px-4 py-2 bg-primary-light border-b border-border">
+    <div className="flex items-center gap-3 px-4 py-2 bg-primary-light border-b border-border no-print">
       <span className="text-sm font-medium text-primary flex-1">{t('storage.selected', { count })}</span>
       <Button size="sm" variant="secondary" icon={<Archive size={14} />} onClick={onArchive} loading={busy}>
         {t('storage.archive')}

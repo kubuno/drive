@@ -11,6 +11,7 @@ pub mod locks;
 pub mod maintenance;
 pub mod public;
 pub mod remotes;
+pub mod resolve;
 pub mod saved_searches;
 pub mod scan;
 pub mod search;

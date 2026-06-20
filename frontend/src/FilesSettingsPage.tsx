@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@kubuno/sdk'
 import { FolderOpen, Save, ChevronLeft, Info, ExternalLink } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { Button, Tabs } from '@ui'
+import { Button, Tabs, RangeSlider } from '@ui'
 
 type Tab = 'storage' | 'about'
 
@@ -67,14 +67,14 @@ function StorageTab() {
             {t('settings_page.quota_desc', { current: formatBytes(bytesFromGb(currentDefaultQuota), t('common.gb'), t('common.mb')) })}
           </p>
           <div className="flex items-center gap-3">
-            <input
-              type="range"
+            <RangeSlider
               min={1}
               max={100}
               step={1}
               value={currentDefaultQuota}
-              onChange={(e) => setDefaultQuota(Number(e.target.value))}
+              onChange={(v) => setDefaultQuota(v)}
               className="flex-1"
+              aria-label={t('settings_page.quota_label')}
             />
             <span className="text-sm font-medium text-text-primary w-16 text-right">
               {currentDefaultQuota} {t('common.gb')}
