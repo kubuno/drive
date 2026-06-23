@@ -1,7 +1,7 @@
 // Virtual StorageSource(s) for the Drive's special views. They reuse the shared
 // StorageExplorer (one explorer, one menu) by deriving from the local source and
 // overriding only what differs — chiefly list() returns a flat, filtered listing.
-import { localSource, filesApi, type FileItem, type Folder } from '@kubuno/drive'
+import { localSource, filesApi, recentApi, type FileItem, type Folder } from '@kubuno/drive'
 import { api } from '@kubuno/sdk'
 
 type LocalSource = ReturnType<typeof localSource>
@@ -35,10 +35,11 @@ function flatSource(
   }
 }
 
-/** « Récents » : flat list of recently-modified files. */
+/** « Récents » : journal centralisé des fichiers récemment OUVERTS (recentApi),
+ *  toutes apps confondues — au lieu d'un simple tri par date de modification. */
 export function recentSource(): LocalSource {
   return flatSource('recent', 'Récents', async () => {
-    const { files } = await filesApi.listFiles(null, false, false, true)
+    const files = await recentApi.list({ limit: 30 })
     return { folders: [], files }
   })
 }
