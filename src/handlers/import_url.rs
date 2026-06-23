@@ -15,7 +15,7 @@ use uuid::Uuid;
 use crate::{
     errors::{FilesError, Result},
     middleware::FilesUser,
-    services::files::{folder_virt_path, resolve_name, update_used_bytes},
+    services::files::{folder_virt_path, insert_or_update_record, resolve_for_write, update_used_bytes},
     state::AppState,
 };
 
@@ -149,7 +149,7 @@ pub async fn import_from_url(
     use kubuno_storage::path as storage_path;
     use mime_guess::MimeGuess;
 
-    let safe_name = resolve_name(&state.db, &state.storage, user.id, dto.folder_id, &filename, dto.overwrite, false).await?;
+    let (safe_name, existing) = resolve_for_write(&state.db, user.id, dto.folder_id, &filename, dto.overwrite, false).await?;
     let mime        = MimeGuess::from_path(&safe_name).first_or_octet_stream().to_string();
     let virt_path   = folder_virt_path(&state.db, dto.folder_id, user.id).await?;
     let dest        = storage_path::user_file_path(user.id, &virt_path, &safe_name);
@@ -157,32 +157,11 @@ pub async fn import_from_url(
 
     state.storage.put(&dest_str, data).await?;
 
-    // ── Enregistrement DB ────────────────────────────────────────────────────
-
-    let extension = std::path::Path::new(&safe_name)
-        .extension()
-        .and_then(|e| e.to_str())
-        .map(|e| e.to_lowercase());
-
-    let file_id = Uuid::new_v4();
-
-    let file = sqlx::query_as::<_, crate::models::File>(
-        "INSERT INTO drive.files
-            (id, owner_id, folder_id, name, extension, mime_type, size_bytes, storage_path, content_hash)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-         RETURNING *"
-    )
-    .bind(file_id)
-    .bind(user.id)
-    .bind(dto.folder_id)
-    .bind(&safe_name)
-    .bind(extension)
-    .bind(&mime)
-    .bind(size)
-    .bind(&dest_str)
-    .bind(&hash)
-    .fetch_one(&state.db)
-    .await?;
+    // ── Enregistrement DB (insert ou remplacement en place sur overwrite) ─────
+    let file = insert_or_update_record(
+        &state.db, &state.storage, user.id, dto.folder_id,
+        &safe_name, &mime, size, &dest_str, Some(&hash), None, existing,
+    ).await?;
 
     update_used_bytes(&state.db, user.id, size).await;
 

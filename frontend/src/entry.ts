@@ -9,6 +9,8 @@ import {
   SlotRegistry,
   WidgetRegistry,
   ModuleServiceRegistry,
+  ModuleSettingsRegistry,
+  NotificationRegistry,
   WaffleAppRegistry,
   FaviconRegistry,
   useSidebarStore,
@@ -26,11 +28,10 @@ import FilesTreeSidebar from './FilesTreeSidebar'
 import FilesPaintEditor from './FilesPaintEditor'
 import FilesContextMenuItems from './FilesContextMenuItems'
 import { TagInfoSection } from './TagUI'
-import FilesStorageGauge from './FilesStorageGauge'
+import FilesStorageGaugeHeader from './FilesStorageGaugeHeader'
 import FilesDashboardWidget from './FilesDashboardWidget'
 import FilesRecentWidget from './FilesRecentWidget'
 import FilesFilterPanel from './FilesFilterPanel'
-import FilesWebDavSettings from './FilesWebDavSettings'
 import FilesOpenDialog from './FilesOpenDialog'
 import FilesSaveDialog from './FilesSaveDialog'
 import FilesFolderPickerDialog from './FilesFolderPickerDialog'
@@ -47,11 +48,27 @@ export function register() {
 
   WidgetRegistry.register({ id: 'drive-recent', moduleId: 'drive', Component: FilesRecentWidget, size: 'medium', order: 20 })
 
+  // The header gear button opens the per-user Drive settings while in /drive.
+  // (WebDAV, formerly a core `settings-sections` panel, is now a tab there.)
+  ModuleSettingsRegistry.register('drive')
+
+  // Declare the notification activities shown in the core Settings → Notifications matrix.
+  NotificationRegistry.register({
+    moduleId: 'drive',
+    title: 'Fichiers et partage',
+    order: 50,
+    activities: [
+      { id: 'item_shared', label: 'Un fichier ou un dossier est partagé avec vous', emailDefault: true, pushDefault: true },
+      { id: 'file_comment', label: 'Un commentaire est ajouté sur un fichier' },
+      { id: 'link_downloaded', label: 'Un fichier partagé par lien a été téléchargé' },
+      { id: 'shared_upload', label: 'Un téléversement a lieu dans un dossier partagé' },
+    ],
+  })
+
   SlotRegistry.register('sidebar-new-actions',   'drive', FilesNewActions)
   SlotRegistry.register('context-menu-items',    'drive', FilesContextMenuItems)
-  SlotRegistry.register('sidebar-footer',        'drive', FilesStorageGauge)
+  SlotRegistry.register('topbar-actions',        'drive', FilesStorageGaugeHeader)
   SlotRegistry.register('dashboard-stats-cards', 'drive', FilesDashboardWidget)
-  SlotRegistry.register('settings-sections',     'drive', FilesWebDavSettings)
   SlotRegistry.register('app-dialogs',           'drive', FilesOpenDialog)
   SlotRegistry.register('app-dialogs',           'drive', FilesSaveDialog)
   SlotRegistry.register('app-dialogs',           'drive', FilesFolderPickerDialog)
@@ -89,7 +106,7 @@ export function register() {
 
   // Routes
   const FilesApp          = lazy(() => import('./DriveApp'))
-  const FilesSettingsPage = lazy(() => import('./FilesSettingsPage'))
+  const DriveSettingsPage = lazy(() => import('./DriveSettingsPage'))
   const FilesStoragePage  = lazy(() => import('./FilesStoragePage'))
   const RemoteBrowser     = lazy(() => import('./RemoteExplorer'))
   const SystemBrowser     = lazy(() => import('./SystemExplorer'))
@@ -101,7 +118,7 @@ export function register() {
   RouteRegistry.register('drive/starred',  FilesApp, { starred: true })
   RouteRegistry.register('drive/shared',   FilesApp, { shared:  true })
   RouteRegistry.register('drive/trash',    FilesApp, { trashed: true })
-  RouteRegistry.register('drive/settings', FilesSettingsPage)
+  RouteRegistry.register('drive/settings', DriveSettingsPage)
   RouteRegistry.register('drive/storage',  FilesStoragePage)
   RouteRegistry.register('drive/remote/:id', RemoteBrowser)
   RouteRegistry.register('drive/system',     SystemBrowser)
