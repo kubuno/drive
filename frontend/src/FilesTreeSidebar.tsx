@@ -13,7 +13,6 @@ import { usePendingKind, pendingBoxClass, pendingBoxStyle, useConfirm, useAuthSt
 import { useFilesStore, type FilesSearchFilters } from '@kubuno/drive'
 import { useDriveExtras, tagColorHex, type SavedSearch } from './driveExtras'
 import { useFilesContextMenuStore } from './filesContextMenuStore'
-import FilesStorageGauge from './FilesStorageGauge'
 import { SidebarNavItem } from '@kubuno/sdk'
 // ── Folder tree node ──────────────────────────────────────────────────────────
 
@@ -530,8 +529,6 @@ export default function FilesTreeSidebar({ collapsed = false }: { collapsed?: bo
           </>
         )}
       </nav>
-
-      <FilesStorageGauge />
 
       {ctx && (
         <MenuDropdown items={ctx.items} pos={{ top: ctx.y, left: ctx.x }} onClose={() => setCtx(null)} />

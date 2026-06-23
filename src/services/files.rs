@@ -131,6 +131,97 @@ pub async fn create_file_record(
     Ok(file)
 }
 
+/// Résout le nom final d'un UPLOAD et, en mode `overwrite`, retourne aussi le
+/// fichier existant À REMPLACER EN PLACE. Contrairement à `resolve_name` (qui
+/// supprime puis laisse recréer un NOUVEL id, cassant toute référence — ex.
+/// `source_file_id` d'Office → documents/feuilles dupliqués), on conserve ici
+/// l'id du fichier existant.
+pub async fn resolve_for_write(
+    db: &PgPool,
+    owner_id: Uuid,
+    folder_id: Option<Uuid>,
+    name: &str,
+    overwrite: bool,
+    strict: bool,
+) -> Result<(String, Option<File>)> {
+    if overwrite {
+        if let Some(existing) = sqlx::query_as::<_, File>(
+            "SELECT * FROM drive.files
+             WHERE owner_id = $1 AND folder_id IS NOT DISTINCT FROM $2 AND name = $3 AND is_trashed = FALSE",
+        )
+        .bind(owner_id).bind(folder_id).bind(name)
+        .fetch_optional(db).await?
+        {
+            return Ok((existing.name.clone(), Some(existing)));
+        }
+        return Ok((name.to_string(), None));
+    }
+    let existing_names: Vec<String> = sqlx::query_scalar(
+        "SELECT name FROM drive.files
+         WHERE owner_id = $1 AND folder_id IS NOT DISTINCT FROM $2 AND is_trashed = FALSE",
+    )
+    .bind(owner_id).bind(folder_id)
+    .fetch_all(db).await?;
+    if strict && existing_names.iter().any(|n| n == name) {
+        return Err(FilesError::Conflict(name.to_string()));
+    }
+    Ok((unique_file_name(name, &existing_names), None))
+}
+
+/// Enregistre la ligne fichier après écriture du blob : INSERT, ou MISE À JOUR
+/// EN PLACE (id préservé) quand `existing` est fourni (cas overwrite). Conserve
+/// l'id → toutes les références au fichier (Office, etc.) restent valides ;
+/// supprime l'ancien blob si le chemin a changé ; ajuste le quota par delta.
+#[allow(clippy::too_many_arguments)]
+pub async fn insert_or_update_record(
+    db: &PgPool,
+    storage: &Arc<dyn StorageBackend>,
+    owner_id: Uuid,
+    folder_id: Option<Uuid>,
+    name: &str,
+    mime_type: &str,
+    size: i64,
+    storage_path_str: &str,
+    content_hash: Option<&str>,
+    metadata: Option<serde_json::Value>,
+    existing: Option<File>,
+) -> Result<File> {
+    let extension = std::path::Path::new(name)
+        .extension().and_then(|e| e.to_str()).map(|e| e.to_lowercase());
+
+    if let Some(ex) = existing {
+        if ex.storage_path != storage_path_str {
+            let _ = storage.delete(&ex.storage_path).await;
+        }
+        let delta = size - ex.size_bytes;
+        let updated = sqlx::query_as::<_, File>(
+            "UPDATE drive.files
+             SET name = $1, extension = $2, mime_type = $3, size_bytes = $4,
+                 storage_path = $5, content_hash = $6, metadata = COALESCE($7, metadata)
+             WHERE id = $8 AND owner_id = $9 RETURNING *",
+        )
+        .bind(name).bind(extension).bind(mime_type).bind(size)
+        .bind(storage_path_str).bind(content_hash).bind(metadata)
+        .bind(ex.id).bind(owner_id)
+        .fetch_one(db).await?;
+        if delta != 0 { update_used_bytes(db, owner_id, delta).await; }
+        return Ok(updated);
+    }
+
+    let meta = metadata.unwrap_or(serde_json::Value::Object(Default::default()));
+    let file = sqlx::query_as::<_, File>(
+        "INSERT INTO drive.files
+            (owner_id, folder_id, name, extension, mime_type, size_bytes, storage_path, content_hash, metadata)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+         RETURNING *",
+    )
+    .bind(owner_id).bind(folder_id).bind(name).bind(extension).bind(mime_type)
+    .bind(size).bind(storage_path_str).bind(content_hash).bind(&meta)
+    .fetch_one(db).await?;
+    update_used_bytes(db, owner_id, size).await;
+    Ok(file)
+}
+
 pub async fn list_files(
     db: &PgPool,
     owner_id: Uuid,
@@ -490,7 +581,7 @@ pub async fn create_with_bytes(
     metadata:  Option<serde_json::Value>,
     overwrite: bool,
 ) -> Result<File> {
-    let safe_name = resolve_name(db, storage, owner_id, folder_id, name, overwrite, false).await?;
+    let (safe_name, existing) = resolve_for_write(db, owner_id, folder_id, name, overwrite, false).await?;
 
     let virt_path = folder_virt_path(db, folder_id, owner_id).await?;
     let dest      = storage_path::user_file_path(owner_id, &virt_path, &safe_name);
@@ -504,34 +595,9 @@ pub async fn create_with_bytes(
 
     storage.put(&dest_str, data).await?;
 
-    let extension = std::path::Path::new(&safe_name)
-        .extension()
-        .and_then(|e| e.to_str())
-        .map(|e| e.to_lowercase());
-
-    let meta = metadata.unwrap_or(serde_json::Value::Object(Default::default()));
-
-    let file = sqlx::query_as::<_, File>(
-        "INSERT INTO drive.files
-            (owner_id, folder_id, name, extension, mime_type, size_bytes, storage_path, content_hash, metadata)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-         RETURNING *"
-    )
-    .bind(owner_id)
-    .bind(folder_id)
-    .bind(&safe_name)
-    .bind(extension)
-    .bind(mime_type)
-    .bind(size)
-    .bind(&dest_str)
-    .bind(&hash)
-    .bind(&meta)
-    .fetch_one(db)
-    .await?;
-
-    update_used_bytes(db, owner_id, size).await;
-
-    Ok(file)
+    insert_or_update_record(
+        db, storage, owner_id, folder_id, &safe_name, mime_type, size, &dest_str, Some(&hash), metadata, existing,
+    ).await
 }
 
 /// Remplace le contenu d'un fichier existant (même chemin storage, taille/hash mis à jour).
@@ -623,12 +689,10 @@ pub async fn upload_simple(
         return Err(FilesError::Validation("Nom de fichier invalide".into()));
     }
 
-    let safe_name = resolve_name(db, storage, owner_id, folder_id, &sanitized, overwrite, false).await?;
+    let (safe_name, existing) = resolve_for_write(db, owner_id, folder_id, &sanitized, overwrite, false).await?;
 
     let mime = MimeGuess::from_path(&safe_name).first_or_octet_stream().to_string();
-
-    let file_id = Uuid::new_v4();
-    let size    = data.len() as i64;
+    let size = data.len() as i64;
 
     use sha2::{Digest, Sha256};
     let mut hasher = Sha256::new();
@@ -642,32 +706,9 @@ pub async fn upload_simple(
 
     storage.put(&dest_str, data).await?;
 
-    let extension = std::path::Path::new(&safe_name)
-        .extension()
-        .and_then(|e| e.to_str())
-        .map(|e| e.to_lowercase());
-
-    let file = sqlx::query_as::<_, File>(
-        "INSERT INTO drive.files
-            (id, owner_id, folder_id, name, extension, mime_type, size_bytes, storage_path, content_hash)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-         RETURNING *"
-    )
-    .bind(file_id)
-    .bind(owner_id)
-    .bind(folder_id)
-    .bind(&safe_name)
-    .bind(extension)
-    .bind(&mime)
-    .bind(size)
-    .bind(&dest_str)
-    .bind(&hash)
-    .fetch_one(db)
-    .await?;
-
-    update_used_bytes(db, owner_id, size).await;
-
-    Ok(file)
+    insert_or_update_record(
+        db, storage, owner_id, folder_id, &safe_name, &mime, size, &dest_str, Some(&hash), None, existing,
+    ).await
 }
 
 /// Noms de plusieurs fichiers en un appel (pour les listes des apps) → { id: name }.

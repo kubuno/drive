@@ -7,7 +7,7 @@ use uuid::Uuid;
 use crate::{
     errors::{FilesError, Result},
     models::{File, InitUploadDto, UploadSession},
-    services::files::{create_file_record, resolve_name},
+    services::files::{insert_or_update_record, resolve_for_write},
 };
 
 pub async fn init_upload(
@@ -138,7 +138,7 @@ pub async fn complete_upload(
         .ok_or_else(|| FilesError::NotFound("Dossier cible introuvable".into()))?,
     };
 
-    let safe_filename = resolve_name(db, storage, owner_id, session.folder_id, &session.filename, session.overwrite, false).await?;
+    let (safe_filename, existing) = resolve_for_write(db, owner_id, session.folder_id, &session.filename, session.overwrite, false).await?;
 
     let dest_path = storage_path::user_file_path(owner_id, &folder_virt_path, &safe_filename);
     let dest_str  = dest_path.to_string_lossy().to_string();
@@ -169,15 +169,9 @@ pub async fn complete_upload(
     let temp_dir = storage_path::upload_temp_dir_v2(session_id);
     let _ = storage.delete_dir(&temp_dir.to_string_lossy()).await;
 
-    let file = create_file_record(
-        db,
-        owner_id,
-        session.folder_id,
-        &safe_filename,
-        &session.mime_type,
-        size,
-        &dest_str,
-        Some(&hash),
+    let file = insert_or_update_record(
+        db, storage, owner_id, session.folder_id,
+        &safe_filename, &session.mime_type, size, &dest_str, Some(&hash), None, existing,
     )
     .await?;
 

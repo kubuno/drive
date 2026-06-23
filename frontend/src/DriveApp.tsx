@@ -51,7 +51,7 @@ import { getFileIcon, FOLDER_COLORS } from '@kubuno/drive'
 import { useFilesContextMenuStore } from './filesContextMenuStore'
 import { useFilesDialogStore } from '@kubuno/drive'
 import { PdfViewerModal } from '@kubuno/sdk'
-import { ConflictDialog, type ConflictChoice } from '@ui'
+import { useImportConflicts } from '@kubuno/drive'
 import ArchiveBrowser from './ArchiveBrowser'
 import { useMarqueeSelection } from '@kubuno/drive'
 import { useDriveExtras } from './driveExtras'
@@ -74,17 +74,6 @@ type MoveTarget   = { type: 'folder'; item: Folder } | { type: 'file'; item: Fil
 
 // ── Drag & drop helpers ───────────────────────────────────────────────────────
 
-async function readAllEntries(reader: FileSystemDirectoryReader): Promise<FileSystemEntry[]> {
-  const all: FileSystemEntry[] = []
-  for (;;) {
-    const batch = await new Promise<FileSystemEntry[]>((res, rej) =>
-      reader.readEntries(res, rej),
-    )
-    if (batch.length === 0) break
-    all.push(...batch)
-  }
-  return all
-}
 
 // ── Breadcrumb ────────────────────────────────────────────────────────────────
 
@@ -511,6 +500,8 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
   const lockedMap = useDriveExtras(s => s.locks)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const lastSelectedIdxRef = useRef<number>(-1)
+  // Keyboard navigation cursor (arrow keys move it; Enter opens).
+  const [cursorId, setCursorId] = useState<string | null>(null)
 
   const handleMarqueeSelect = useCallback((ids: Set<string>, additive: boolean) => {
     setSelectedIds(additive ? prev => new Set([...prev, ...ids]) : ids)
@@ -618,6 +609,7 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
 
   const { data: filesData, isLoading: loadingFiles, isError: filesError } = useQuery({
     queryKey: ['files', folderId, starred, recent, trashed, refreshKey],
+    // « Récents » = journal centralisé des ouvertures (recentApi), pas un tri par date.
     queryFn:  () => filesApi.listFiles(folderId, starred, trashed, recent),
     retry:    1,
   })
@@ -679,12 +671,17 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
         setSelectedIds(new Set(orderedIds))
       } else if (e.key === 'Escape' && selectedIds.size > 0) {
         setSelectedIds(new Set())
-      } else if (e.key === 'Delete' && selectedIds.size > 0 && !trashed) {
-        // Suppr → met la sélection à la corbeille (best-effort, ignore les verrous).
+      } else if ((e.key === 'Delete' || e.key === 'Backspace') && selectedIds.size > 0) {
+        // Suppr → corbeille ; Maj+Suppr → suppression définitive. Dans la corbeille,
+        // Suppr supprime aussi définitivement. Best-effort (ignore les verrous).
         e.preventDefault()
         const ids = [...selectedIds]
+        const permanent = e.shiftKey || trashed
+        const isFolder = (id: string) => folders.some(f => f.id === id)
         void Promise.allSettled(ids.map(id =>
-          folders.some(f => f.id === id) ? filesApi.trashFolder(id) : filesApi.trashFile(id)
+          permanent
+            ? (isFolder(id) ? filesApi.deleteFolder(id) : filesApi.deleteFile(id))
+            : (isFolder(id) ? filesApi.trashFolder(id) : filesApi.trashFile(id))
         )).then(() => {
           setSelectedIds(new Set())
           qc.invalidateQueries({ queryKey: ['files'] })
@@ -708,6 +705,87 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
     return () => window.removeEventListener('keydown', onKey)
   }, [orderedIds, selectedIds, folders, files, trashed, qc])
 
+  // Arrow-key navigation: move a cursor across folders+files (any view mode),
+  // Enter opens. Left/Right step in the flat order; Up/Down jump to the nearest
+  // item on the adjacent visual row (works for grids and single-column lists).
+  useEffect(() => {
+    const openItem = (id: string) => {
+      const folder = folders.find(f => f.id === id)
+      if (folder) { if (!trashed) navigate(folder.id); return }
+      const file = files.find(f => f.id === id)
+      if (file && !trashed) openFile(file)
+    }
+    const focusCursor = (id: string, additive: boolean) => {
+      setCursorId(id)
+      setSelectedIds(prev => additive ? new Set([...prev, id]) : new Set([id]))
+      lastSelectedIdxRef.current = orderedIds.indexOf(id)
+      const el = marqueeContainerRef.current?.querySelector<HTMLElement>(`[data-selectable-id="${CSS.escape(id)}"]`)
+      el?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+    }
+    // Nearest item on the row above/below, by visual geometry.
+    const vertical = (id: string, dir: 1 | -1): string | null => {
+      const root = marqueeContainerRef.current
+      if (!root) return null
+      const nodes = [...root.querySelectorAll<HTMLElement>('[data-selectable-id]')]
+      const cur = nodes.find(n => n.dataset.selectableId === id)
+      if (!cur) return null
+      const cr = cur.getBoundingClientRect()
+      const cx = cr.left + cr.width / 2, cy = cr.top + cr.height / 2
+      let best: { id: string; dist: number } | null = null
+      for (const n of nodes) {
+        if (n === cur) continue
+        const r = n.getBoundingClientRect()
+        const ny = r.top + r.height / 2
+        // Must be on a different row in the requested direction.
+        if (dir === 1 && r.top <= cr.bottom - 2) continue
+        if (dir === -1 && r.bottom >= cr.top + 2) continue
+        const nx = r.left + r.width / 2
+        const dist = Math.abs(nx - cx) + Math.abs(ny - cy) * 3 // bias toward same column
+        const nid = n.dataset.selectableId
+        if (nid && (!best || dist < best.dist)) best = { id: nid, dist }
+      }
+      return best?.id ?? null
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (orderedIds.length === 0) return
+      const el = document.activeElement as HTMLElement | null
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return
+      if (e.ctrlKey || e.metaKey || e.altKey) return
+      // Anchor movement on the keyboard cursor, falling back to the current
+      // selection so arrows continue from the selected object.
+      const selectionAnchor = (): string | null => {
+        if (selectedIds.size === 0) return null
+        const li = lastSelectedIdxRef.current
+        if (li >= 0 && li < orderedIds.length && selectedIds.has(orderedIds[li])) return orderedIds[li]
+        for (let i = orderedIds.length - 1; i >= 0; i--) if (selectedIds.has(orderedIds[i])) return orderedIds[i]
+        return null
+      }
+      const cur = cursorId && orderedIds.includes(cursorId) ? cursorId : selectionAnchor()
+      const idx = cur ? orderedIds.indexOf(cur) : -1
+      if (e.key === 'ArrowRight') {
+        e.preventDefault()
+        focusCursor(orderedIds[idx < 0 ? 0 : Math.min(idx + 1, orderedIds.length - 1)], e.shiftKey)
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        focusCursor(orderedIds[idx < 0 ? 0 : Math.max(idx - 1, 0)], e.shiftKey)
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        const next = cur ? vertical(cur, 1) : orderedIds[0]
+        if (next) focusCursor(next, e.shiftKey)
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        const next = cur ? vertical(cur, -1) : orderedIds[0]
+        if (next) focusCursor(next, e.shiftKey)
+      } else if (e.key === 'Enter' && cur) {
+        e.preventDefault()
+        openItem(cur)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderedIds, cursorId, selectedIds, folders, files, trashed])
+
   const hasProtectedInSelection = useMemo(
     () => folders.some(f => f.is_protected && selectedIds.has(f.id)),
     [folders, selectedIds],
@@ -725,6 +803,9 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
 
   const handleItemSelect = useCallback((id: string, e: React.MouseEvent) => {
     const currentIdx = orderedIds.indexOf(id)
+    // Keep the keyboard cursor anchored on the clicked item so arrow keys
+    // continue from the current selection.
+    setCursorId(id)
     if (e.shiftKey && lastSelectedIdxRef.current >= 0) {
       const from = Math.min(lastSelectedIdxRef.current, currentIdx)
       const to   = Math.max(lastSelectedIdxRef.current, currentIdx)
@@ -740,6 +821,7 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
   }, [orderedIds])
 
   const handleItemToggle = useCallback((id: string) => {
+    setCursorId(id)
     setSelectedIds(prev => {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id); else next.add(id)
@@ -756,8 +838,6 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
 
   // ── Upload avec suivi de progression ─────────────────────────────────────
 
-  const [uploadConflictQueue, setUploadConflictQueue] = useState<Array<{ file: File; folderId: string | null }>>([])
-
   const uploadFileTracked = useCallback((file: File, targetFolderId: string | null, overwrite = false) => {
     const id = crypto.randomUUID()
     addUpload({ id, name: file.name, progress: 0, status: 'uploading' })
@@ -772,87 +852,22 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
         refreshUser()
       })
       .catch(err => updateUpload(id, { status: 'error', error: (err as Error).message ?? t('common.error') }))
-  }, [addUpload, updateUpload, qc, refreshUser])
+  }, [addUpload, updateUpload, qc, refreshUser, t])
 
-  const handleUploadConflictChoice = useCallback((choice: ConflictChoice) => {
-    setUploadConflictQueue(prev => {
-      const [current, ...rest] = prev
-      if (current && choice !== 'cancel') {
-        uploadFileTracked(current.file, current.folderId, choice === 'overwrite')
-      }
-      return rest
-    })
-  }, [uploadFileTracked])
+  // Shared import-with-conflict pipeline: any imported file OR folder whose name
+  // already exists prompts the user (overwrite / keep both / cancel), at any depth.
+  const { importFiles, importEntries, importWebkitFolder, conflictDialog } = useImportConflicts({
+    list: async (fid: string | null) => {
+      const [{ folders: fl }, { files: fi }] = await Promise.all([filesApi.listFolders(fid), filesApi.listFiles(fid)])
+      return { folders: fl, files: fi }
+    },
+    createFolder: async (name: string, parentId: string | null) => { const { folder } = await filesApi.createFolder(name, parentId); qc.invalidateQueries({ queryKey: ['folders'] }); qc.invalidateQueries({ queryKey: ['tree-children'] }); return { id: folder.id } },
+    uploadFile: uploadFileTracked,
+    canMkdir: true,
+  })
 
-  const enqueueUpload = useCallback((file: File, targetFolderId: string | null) => {
-    const hasConflict = (filesData?.files ?? []).some(f => f.name === file.name)
-    if (hasConflict && targetFolderId === folderId) {
-      setUploadConflictQueue(prev => [...prev, { file, folderId: targetFolderId }])
-    } else {
-      uploadFileTracked(file, targetFolderId)
-    }
-  }, [filesData, folderId, uploadFileTracked])
-
-  // Traitement récursif d'une entrée FileSystem (fichier ou répertoire)
-  const processEntry = useCallback(async (entry: FileSystemEntry, parentFolderId: string | null): Promise<void> => {
-    if (entry.isFile) {
-      const fileEntry = entry as FileSystemFileEntry
-      const file = await new Promise<File>((res, rej) => fileEntry.file(res, rej))
-      uploadFileTracked(file, parentFolderId)
-    } else if (entry.isDirectory) {
-      const dirEntry = entry as FileSystemDirectoryEntry
-      const { folder } = await filesApi.createFolder(entry.name, parentFolderId)
-      qc.invalidateQueries({ queryKey: ['folders'] })
-      qc.invalidateQueries({ queryKey: ['tree-children'] })
-      const entries = await readAllEntries(dirEntry.createReader())
-      for (const child of entries) await processEntry(child, folder.id)
-    }
-  }, [uploadFileTracked, qc])
-
-  // Input fichiers classique
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    Array.from(e.target.files ?? []).forEach(f => enqueueUpload(f, folderId))
-    e.target.value = ''
-  }
-
-  // Input dossier (<input webkitdirectory>)
-  const handleFolderInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? [])
-    if (files.length === 0) return
-
-    // Regrouper par répertoire racine
-    const byRoot = new Map<string, File[]>()
-    files.forEach(f => {
-      const parts = (f.webkitRelativePath || f.name).split('/')
-      const root  = parts[0]
-      if (!byRoot.has(root)) byRoot.set(root, [])
-      byRoot.get(root)!.push(f)
-    })
-
-    byRoot.forEach(async (rootFiles, rootName) => {
-      const { folder: rootFolder } = await filesApi.createFolder(rootName, folderId)
-      qc.invalidateQueries({ queryKey: ['folders'] })
-      qc.invalidateQueries({ queryKey: ['tree-children'] })
-
-      for (const f of rootFiles) {
-        const parts = (f.webkitRelativePath || f.name).split('/')
-        // parts[0] = root, parts[last] = file, parts[1..last-1] = subdirs
-        const subParts = parts.slice(1, -1)
-        let parentId: string = rootFolder.id
-
-        for (const sub of subParts) {
-          const { folder: subFolder } = await filesApi.createFolder(sub, parentId)
-          qc.invalidateQueries({ queryKey: ['folders'] })
-          qc.invalidateQueries({ queryKey: ['tree-children'] })
-          parentId = subFolder.id
-        }
-
-        uploadFileTracked(f, parentId)
-      }
-    })
-
-    e.target.value = ''
-  }
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => { const files = Array.from(e.target.files ?? []); e.target.value = ''; void importFiles(files, folderId) }
+  const handleFolderInput = (e: React.ChangeEvent<HTMLInputElement>) => { const files = Array.from(e.target.files ?? []); e.target.value = ''; void importWebkitFolder(files, folderId) }
 
   // ── Drag & drop depuis l'OS ───────────────────────────────────────────────
 
@@ -904,11 +919,11 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
       .filter((en): en is FileSystemEntry => en !== null)
 
     if (entries.length > 0) {
-      entries.forEach(en => processEntry(en, targetFolderId))
+      void importEntries(entries, targetFolderId)
     } else {
-      Array.from(e.dataTransfer.files).forEach(f => enqueueUpload(f, targetFolderId))
+      void importFiles(Array.from(e.dataTransfer.files), targetFolderId)
     }
-  }, [folderId, draggingItem, selectedIds, itemTypeMap, processEntry, enqueueUpload, qc])
+  }, [folderId, draggingItem, selectedIds, itemTypeMap, importEntries, importFiles, qc])
 
   // ── Mutations ─────────────────────────────────────────────────────────────
 
@@ -1142,8 +1157,10 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
         onChange={handleFolderInput}
       />
 
-      {/* Overlay drag & drop */}
-      {isDragOver && (
+      {/* Overlay drag & drop — only for DriveApp's own views; the normal view
+          delegates to StorageExplorer, which renders its own drop overlay (avoids
+          a doubled "Drop here to import"). */}
+      {isDragOver && !isPlainNormal && (
         <div className="pointer-events-none absolute inset-0 z-20 flex flex-col items-center
                         justify-center gap-3 rounded-2xl border-2 border-dashed border-primary
                         bg-primary/5 transition-all">
@@ -1404,6 +1421,7 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
                           isDragTarget={dragOverFolderId === folder.id}
                           selected={selectedIds.has(folder.id)}
                           preSelected={preSelectedIds.has(folder.id)}
+                          focused={cursorId === folder.id}
                           trashed={trashed}
                           onSelect={handleItemSelect}
                           onToggle={handleItemToggle}
@@ -1434,6 +1452,12 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
                     </h2>
                     {(() => {
                       const spec = VIEW_SPECS[viewMode]
+                      // Props de sélection communs → mêmes opérations dans toutes les vues.
+                      const sel = (file: FileItem) => ({
+                        selected: selectedIds.has(file.id), preSelected: preSelectedIds.has(file.id), focused: cursorId === file.id, canMove: !trashed,
+                        onSelect: handleItemSelect, onToggle: handleItemToggle,
+                        onDragStart: () => { if (!selectedIds.has(file.id)) { setSelectedIds(new Set([file.id])); lastSelectedIdxRef.current = orderedIds.indexOf(file.id) } setDraggingItem({ type: 'file', id: file.id }) },
+                      })
                       if (spec.kind === 'icons') {
                         return (
                           <div className="grid" style={{ gridTemplateColumns: `repeat(auto-fill,minmax(${spec.min}px,1fr))`, gap: compact ? 6 : 12 }}>
@@ -1444,6 +1468,7 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
                                 trashed={trashed}
                                 selected={selectedIds.has(file.id)}
                                 preSelected={preSelectedIds.has(file.id)}
+                                focused={cursorId === file.id}
                                 onSelect={handleItemSelect}
                                 onToggle={handleItemToggle}
                                 onContextMenu={e => openMenu(e, 'file', file)}
@@ -1467,7 +1492,7 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
                           <div className="grid" style={{ gridTemplateColumns: `repeat(auto-fill,minmax(${spec.min}px,1fr))`, gap: compact ? 6 : 10 }}>
                             {filteredFiles.map(file => (
                               <div key={file.id} className="border border-border rounded-lg overflow-hidden bg-white hover:border-border-strong transition-colors">
-                                <FileRow file={file} trashed={trashed} onContextMenu={e => openMenu(e, 'file', file)} onRestore={() => restoreFileMut.mutate(file.id)} onDelete={() => scheduleDelete('permanent', [{ id: file.id, type: 'file' }])} onOpen={() => openFile(file)} hideMeta />
+                                <FileRow file={file} trashed={trashed} {...sel(file)} onContextMenu={e => openMenu(e, 'file', file)} onRestore={() => restoreFileMut.mutate(file.id)} onDelete={() => scheduleDelete('permanent', [{ id: file.id, type: 'file' }])} onOpen={() => openFile(file)} hideMeta />
                               </div>
                             ))}
                           </div>
@@ -1477,7 +1502,7 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
                         return (
                           <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill,minmax(240px,1fr))', gap: 2 }}>
                             {filteredFiles.map(file => (
-                              <FileRow key={file.id} file={file} trashed={trashed} onContextMenu={e => openMenu(e, 'file', file)} onRestore={() => restoreFileMut.mutate(file.id)} onDelete={() => scheduleDelete('permanent', [{ id: file.id, type: 'file' }])} onOpen={() => openFile(file)} density="compact" hideMeta />
+                              <FileRow key={file.id} file={file} trashed={trashed} {...sel(file)} onContextMenu={e => openMenu(e, 'file', file)} onRestore={() => restoreFileMut.mutate(file.id)} onDelete={() => scheduleDelete('permanent', [{ id: file.id, type: 'file' }])} onOpen={() => openFile(file)} density="compact" hideMeta />
                             ))}
                           </div>
                         )
@@ -1485,7 +1510,7 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
                       return (
                         <div className="divide-y divide-border rounded-xl border border-border overflow-hidden">
                           {filteredFiles.map(file => (
-                            <FileRow key={file.id} file={file} trashed={trashed} onContextMenu={e => openMenu(e, 'file', file)} onRestore={() => restoreFileMut.mutate(file.id)} onDelete={() => scheduleDelete('permanent', [{ id: file.id, type: 'file' }])} onOpen={() => openFile(file)} density={spec.density} />
+                            <FileRow key={file.id} file={file} trashed={trashed} {...sel(file)} onContextMenu={e => openMenu(e, 'file', file)} onRestore={() => restoreFileMut.mutate(file.id)} onDelete={() => scheduleDelete('permanent', [{ id: file.id, type: 'file' }])} onOpen={() => openFile(file)} density={spec.density} />
                           ))}
                         </div>
                       )
@@ -1622,13 +1647,7 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
       <UploadPanel />
 
       {/* Conflit d'upload */}
-      {uploadConflictQueue.length > 0 && (
-        <ConflictDialog
-          type="file"
-          name={uploadConflictQueue[0].file.name}
-          onChoice={handleUploadConflictChoice}
-        />
-      )}
+      {conflictDialog}
 
       {/* Lightbox image — remplacé par PhotosImageViewer si le module photos est actif */}
       {lightboxFile && (
@@ -2002,12 +2021,13 @@ function ImageSearchResultsView({
 }
 
 function FolderCard({
-  folder, isDragTarget, selected, preSelected, trashed, onSelect, onToggle, onOpen, onContextMenu, onDragStart, onDragOver, onDragLeave, onDrop,
+  folder, isDragTarget, selected, preSelected, focused, trashed, onSelect, onToggle, onOpen, onContextMenu, onDragStart, onDragOver, onDragLeave, onDrop,
 }: {
   folder: Folder
   isDragTarget: boolean
   selected: boolean
   preSelected?: boolean
+  focused?: boolean
   trashed?: boolean
   onSelect: (id: string, e: React.MouseEvent) => void
   onToggle: (id: string) => void
@@ -2031,6 +2051,8 @@ function FolderCard({
                     ? 'border-primary ring-2 ring-primary/20 bg-[#c9defa]'
                     : preSelected
                     ? 'border-primary/50 bg-[#c9defa]'
+                    : focused
+                    ? 'border-primary/60 ring-2 ring-primary/20 bg-[#f3f4f5]'
                     : 'border-[#e8eaed] bg-[#f3f4f5] hover:border-border hover:bg-[#e4ecf7] hover:shadow-sm'
                   } ${pendingBoxClass(pendingKind)}`}
       style={pendingBoxStyle(pendingKind)}
@@ -2081,13 +2103,14 @@ function LockBadge({ fileId }: { fileId: string }) {
 }
 
 function FileCard({
-  file, trashed, selected, preSelected, onSelect, onToggle, onContextMenu, onDragStart, onRestore, onDelete, onOpen,
+  file, trashed, selected, preSelected, focused, onSelect, onToggle, onContextMenu, onDragStart, onRestore, onDelete, onOpen,
   thumbH = 128, iconScale = 1, dense = false,
 }: {
   file: FileItem
   trashed: boolean
   selected: boolean
   preSelected?: boolean
+  focused?: boolean
   onSelect: (id: string, e: React.MouseEvent) => void
   onToggle: (id: string) => void
   onContextMenu: (e: React.MouseEvent) => void
@@ -2187,11 +2210,13 @@ function FileCard({
       data-selectable-id={file.id}
       className={`group relative rounded-xl border
                  hover:shadow-[0_1px_6px_rgba(0,0,0,0.1)]
-                 transition-all min-w-0 select-none cursor-default overflow-hidden
+                 transition-all min-w-0 select-none cursor-default
                  ${selected
                    ? 'border-primary ring-2 ring-primary/20 bg-[#ddeafc]'
                    : preSelected
                    ? 'border-primary/50 bg-[#ddeafc]'
+                   : focused
+                   ? 'border-primary/60 ring-2 ring-primary/20 bg-surface-1'
                    : 'border-[#e8eaed] bg-surface-1 hover:border-border hover:bg-[#e4ecf7]'
                  } ${pendingBoxClass(pendingKind)}`}
       style={pendingBoxStyle(pendingKind)}
@@ -2202,11 +2227,11 @@ function FileCard({
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
     >
-      {/* Checkbox overlay */}
+      {/* Checkbox overlay — top-left corner, consistent with FolderCard. */}
       <FloatCheckbox
         selected={selected}
         onToggle={() => onToggle(file.id)}
-        className="absolute top-2 left-2 z-10"
+        className="absolute -top-1.5 -left-1.5 z-10"
       />
 
       {/* En-tête : icône de type + nom + étoile + menu (la checkbox couvre l'icône au survol) */}
@@ -2295,13 +2320,16 @@ function FileCard({
 
 // ── FileRow (vue liste) ───────────────────────────────────────────────────────
 
-function FileRow({ file, trashed, onContextMenu, onRestore, onDelete, onOpen, density = 'normal', hideMeta = false }: {
+function FileRow({ file, trashed, selected, preSelected, focused, canMove, onSelect, onToggle, onContextMenu, onRestore, onDelete, onOpen, onDragStart, density = 'normal', hideMeta = false }: {
   file: FileItem
   trashed: boolean
+  selected: boolean; preSelected?: boolean; focused?: boolean; canMove: boolean
+  onSelect: (id: string, e: React.MouseEvent) => void; onToggle: (id: string) => void
   onContextMenu: (e: React.MouseEvent) => void
   onRestore: () => void
   onDelete: () => void
   onOpen: () => void
+  onDragStart?: (e: React.DragEvent) => void
   density?: 'compact' | 'normal' | 'large'
   hideMeta?: boolean
 }) {
@@ -2314,15 +2342,19 @@ function FileRow({ file, trashed, onContextMenu, onRestore, onDelete, onOpen, de
   const thumb = density === 'large' ? 'w-12 h-12' : density === 'compact' ? 'w-6 h-6' : 'w-8 h-8'
   const longPress = useLongPress(onContextMenu)
   return (
-    <div
-      className={`group flex items-center gap-3 ${pad} bg-white hover:bg-surface-1 transition-colors cursor-default select-none ${pendingBoxClass(pendingKind)}`}
+    <div data-selectable-id={file.id}
+      draggable={canMove} onDragStart={onDragStart}
+      className={`group relative flex items-center gap-3 ${pad} transition-colors cursor-default select-none border-l-[3px]
+        ${selected ? 'bg-[#e8f0fe] border-primary' : preSelected ? 'bg-[#e8f0fe] border-primary/50' : focused ? 'bg-surface-1 border-primary/40' : 'bg-white border-transparent hover:bg-surface-1'} ${pendingBoxClass(pendingKind)}`}
       style={pendingBoxStyle(pendingKind)}
       {...longPress}
       onContextMenu={onContextMenu}
-      {...(!trashed
-        ? openable<React.MouseEvent>({ open: (e) => { e.preventDefault(); onOpen() } })
-        : {})}
+      {...openable<React.MouseEvent>({ select: (e) => { e.preventDefault(); onSelect(file.id, e) }, open: (e: React.MouseEvent) => { e.preventDefault(); if (!trashed) onOpen() } })}
     >
+      <span data-no-drag onClick={e => { e.stopPropagation(); onToggle(file.id) }}
+        className={`shrink-0 transition-opacity ${selected || preSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+        <FloatCheckbox selected={selected || !!preSelected} onToggle={() => onToggle(file.id)} />
+      </span>
       <div className={`shrink-0 ${thumb} flex items-center justify-center rounded overflow-hidden bg-surface-2`}>
         {file.has_thumbnail
           ? <img src={thumbSrc} alt={file.name} className="w-full h-full object-cover" />

@@ -91,6 +91,9 @@ pub fn build(state: AppState) -> Router {
         .route("/saved-searches/:id",           patch(saved_searches::update).delete(saved_searches::delete))
         // Statistiques d'accès (vues / téléchargements)
         .route("/access/frequent",              get(access::frequent))
+        // Récents centralisés : quelle app a ouvert quel fichier et quand (30 max)
+        .route("/recent",                       get(access::list_recent).post(access::record_open).delete(access::clear_recent))
+        .route("/recent/:id",                   delete(access::remove_recent))
         .route("/:id/view",                     post(access::record_view))
         .route("/:id/access",                   get(access::get_access))
         // Intelligence : métadonnées EXIF, doublons, vue d'ensemble du stockage
