@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Folder as FolderIcon, FolderOpen, ChevronRight, Star, Clock,
   Trash2, Share2, HardDrive, Server, FolderPlus, RefreshCw, Plug, Settings2, ExternalLink, Columns2, ServerCog,
-  Search, X,
+  Search, X, Cloud,
 } from 'lucide-react'
 import { MenuDropdown, type MenuItem, ConfirmDialog } from '@ui'
 import { filesApi, FolderGlyph, type Folder, type RemoteConnection, type RemoteEntry } from '@kubuno/drive'
@@ -13,7 +13,7 @@ import { usePendingKind, pendingBoxClass, pendingBoxStyle, useConfirm, useAuthSt
 import { useFilesStore, type FilesSearchFilters } from '@kubuno/drive'
 import { useDriveExtras, tagColorHex, type SavedSearch } from './driveExtras'
 import { useFilesContextMenuStore } from './filesContextMenuStore'
-import { SidebarNavItem } from '@kubuno/sdk'
+import { SidebarNavItem, useModulesStore, ModuleServiceRegistry } from '@kubuno/sdk'
 // ── Folder tree node ──────────────────────────────────────────────────────────
 
 function TreeNode({
@@ -355,6 +355,16 @@ export default function FilesTreeSidebar({ collapsed = false }: { collapsed?: bo
   const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm()
   const isAdmin = useAuthStore(s => s.user?.role === 'admin')
 
+  // Storage mounts published by other active modules (e.g. p2pnas → "My Cloud").
+  const activeModules = useModulesStore(s => s.activeModules)
+  const moduleMounts = useMemo(
+    () => activeModules.flatMap(m => {
+      const list = ModuleServiceRegistry.call<Array<{ key: string; name: string }>>(m.module_id, 'getStorageMounts')
+      return (list ?? []).map(x => ({ moduleId: m.module_id, key: x.key, name: x.name }))
+    }),
+    [activeModules],
+  )
+
   // Menu contextuel local (Mon Drive / montages distants).
   const [ctx, setCtx] = useState<{ x: number; y: number; items: MenuItem[] } | null>(null)
   const openCtx = (e: React.MouseEvent, items: MenuItem[]) => {
@@ -386,6 +396,11 @@ export default function FilesTreeSidebar({ collapsed = false }: { collapsed?: bo
       <nav className="flex-1 overflow-y-auto px-2 py-2 space-y-0.5">
         <SidebarNavItem collapsed label={t('tree.my_drive', { defaultValue: 'Mon Drive' })}
           icon={<HardDrive size={20} />} active={isInDrive} onClick={() => navigate('/drive')} />
+        {moduleMounts.map(mt => (
+          <SidebarNavItem key={`${mt.moduleId}:${mt.key}`} collapsed label={mt.name}
+            icon={<Cloud size={20} />} active={pathname === `/drive/m/${mt.moduleId}/${mt.key}`}
+            onClick={() => navigate(`/drive/m/${mt.moduleId}/${mt.key}`)} />
+        ))}
         <SidebarNavItem collapsed label={t('nav.shared')}
           icon={<Share2 size={20} />} active={isShared} onClick={() => navigate('/drive/shared')} />
         <SidebarNavItem collapsed label={t('nav.recent')}
@@ -458,6 +473,17 @@ export default function FilesTreeSidebar({ collapsed = false }: { collapsed?: bo
             activePath={activeRemotePath}
             onNavigate={goToRemote}
             onHeaderContextMenu={e => openCtx(e, remoteMenuItems(remote))}
+          />
+        ))}
+
+        {/* Montages fournis par d'autres modules actifs (ex. p2pnas → « My Cloud »). */}
+        {moduleMounts.map(mt => (
+          <NavItem
+            key={`${mt.moduleId}:${mt.key}`}
+            icon={<Cloud size={20} />}
+            label={mt.name}
+            isActive={pathname === `/drive/m/${mt.moduleId}/${mt.key}`}
+            onClick={() => navigate(`/drive/m/${mt.moduleId}/${mt.key}`)}
           />
         ))}
 

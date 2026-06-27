@@ -71,7 +71,7 @@ pub struct Delta {
 }
 
 /// Returns changes with `change_seq > cursor`, at most `limit` of them.
-pub async fn delta(db: &PgPool, owner_id: Uuid, cursor: i64, limit: i64) -> Result<Delta> {
+pub async fn delta(db: &PgPool, owner_id: Uuid, cursor: i64, limit: i64, full: bool) -> Result<Delta> {
     // Fetch one extra per source so the merge can tell whether more remain.
     let fetch = limit + 1;
 
@@ -160,6 +160,46 @@ pub async fn delta(db: &PgPool, owner_id: Uuid, cursor: i64, limit: i64) -> Resu
                 "change_seq": t.change_seq,
             }),
         });
+    }
+
+    // `full` : enrichit chaque change file/folder avec le modèle COMPLET (byte-compatible
+    // avec GET /folders et GET /), pour le store local drive-core. 2 requêtes en plus,
+    // uniquement en mode full ; le sous-ensemble reste pour la rétro-compat kubuno-sync.
+    if full {
+        use std::collections::HashMap;
+        let pick = |kind: &str| -> Vec<Uuid> {
+            merged.iter()
+                .filter(|c| c.value["kind"] == kind)
+                .filter_map(|c| c.value["id"].as_str().and_then(|s| Uuid::parse_str(s).ok()))
+                .collect()
+        };
+        let file_ids = pick("file");
+        let folder_ids = pick("folder");
+
+        let mut fmap: HashMap<Uuid, Value> = HashMap::new();
+        if !file_ids.is_empty() {
+            let files = sqlx::query_as::<_, crate::models::file::File>(
+                "SELECT * FROM drive.files WHERE id = ANY($1)",
+            ).bind(&file_ids).fetch_all(db).await?;
+            for f in files { fmap.insert(f.id, json!(f)); }
+        }
+        let mut dmap: HashMap<Uuid, Value> = HashMap::new();
+        if !folder_ids.is_empty() {
+            let folders = sqlx::query_as::<_, crate::models::folder::Folder>(
+                "SELECT * FROM drive.folders WHERE id = ANY($1)",
+            ).bind(&folder_ids).fetch_all(db).await?;
+            for f in folders { dmap.insert(f.id, json!(f)); }
+        }
+        for c in merged.iter_mut() {
+            let id = c.value["id"].as_str().and_then(|s| Uuid::parse_str(s).ok());
+            if let Some(id) = id {
+                if c.value["kind"] == "file" {
+                    if let Some(m) = fmap.get(&id) { c.value["file"] = m.clone(); }
+                } else if c.value["kind"] == "folder" {
+                    if let Some(m) = dmap.get(&id) { c.value["folder"] = m.clone(); }
+                }
+            }
+        }
     }
 
     merged.sort_by_key(|c| c.seq);

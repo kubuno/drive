@@ -22,6 +22,9 @@ pub struct DeltaQuery {
     /// Last `change_seq` seen by the client. 0 (default) returns a full snapshot.
     pub cursor: Option<i64>,
     pub limit:  Option<i64>,
+    /// `full=true` → chaque change embarque le modèle complet `file`/`folder`
+    /// (en plus du sous-ensemble), pour un store local byte-compatible (drive-core).
+    pub full:   Option<bool>,
 }
 
 /// GET /sync/delta?cursor=&limit= — changes since the cursor (files, folders, deletions).
@@ -32,8 +35,9 @@ pub async fn delta(
 ) -> Result<Json<Value>> {
     let cursor = q.cursor.unwrap_or(0).max(0);
     let limit = q.limit.unwrap_or(500).clamp(1, 2000);
+    let full = q.full.unwrap_or(false);
 
-    let delta = sync::delta(&state.db, user.id, cursor, limit).await?;
+    let delta = sync::delta(&state.db, user.id, cursor, limit, full).await?;
 
     Ok(Json(json!({
         "changes":  delta.changes,

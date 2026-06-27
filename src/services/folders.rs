@@ -52,17 +52,36 @@ pub async fn create_folder(
     let name = unique_dir_name(&base_name, &existing_names);
     let path = if parent_path.is_empty() { format!("/{name}") } else { format!("{parent_path}/{name}") };
 
-    let folder = sqlx::query_as::<_, Folder>(
-        "INSERT INTO drive.folders (owner_id, parent_id, name, path)
-         VALUES ($1, $2, $3, $4)
-         RETURNING *"
-    )
-    .bind(owner_id)
-    .bind(dto.parent_id)
-    .bind(&name)
-    .bind(&path)
-    .fetch_one(db)
-    .await?;
+    // When the client supplies an id (offline create from drive-core), honour it so
+    // the folder id stays stable across the push — no id remapping. Otherwise let
+    // Postgres mint one. Paired with `Idempotency-Key`, a replayed create is
+    // deduplicated upstream rather than colliding on the primary key.
+    let folder = if let Some(client_id) = dto.id {
+        sqlx::query_as::<_, Folder>(
+            "INSERT INTO drive.folders (id, owner_id, parent_id, name, path)
+             VALUES ($1, $2, $3, $4, $5)
+             RETURNING *"
+        )
+        .bind(client_id)
+        .bind(owner_id)
+        .bind(dto.parent_id)
+        .bind(&name)
+        .bind(&path)
+        .fetch_one(db)
+        .await?
+    } else {
+        sqlx::query_as::<_, Folder>(
+            "INSERT INTO drive.folders (owner_id, parent_id, name, path)
+             VALUES ($1, $2, $3, $4)
+             RETURNING *"
+        )
+        .bind(owner_id)
+        .bind(dto.parent_id)
+        .bind(&name)
+        .bind(&path)
+        .fetch_one(db)
+        .await?
+    };
 
     // Créer le répertoire physique (style Nextcloud)
     let dir = storage_path::user_folder_dir(owner_id, &folder.path);
@@ -654,7 +673,7 @@ pub async fn ensure_path(
         } else {
             let created = create_folder(
                 db, storage, owner_id,
-                CreateFolderDto { name: segment.to_string(), parent_id },
+                CreateFolderDto { name: segment.to_string(), parent_id, id: None },
             ).await?;
             if protect || seg_hidden {
                 sqlx::query_as::<_, Folder>(

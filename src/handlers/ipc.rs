@@ -37,7 +37,7 @@ pub async fn create_folder(
         &state.db,
         &state.storage,
         dto.user_id,
-        CreateFolderDto { name: dto.name, parent_id: dto.parent_id },
+        CreateFolderDto { name: dto.name, parent_id: dto.parent_id, id: None },
     )
     .await?;
 
