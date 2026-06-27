@@ -41,6 +41,14 @@ struct SidebarItemRaw {
     icon:     String,
     path:     String,
     position: i32,
+    /// `false` for internal views/filters (Shared, Recent, Trash…) that are not
+    /// launchable apps. Defaults to `true` (a real app) for backward compatibility.
+    #[serde(default = "default_launchable")]
+    launchable: bool,
+}
+
+fn default_launchable() -> bool {
+    true
 }
 
 #[derive(Deserialize)]
@@ -504,14 +512,15 @@ async fn register_with_core(http: &Client, settings: &Settings) {
     let settings_path = manifest.as_ref().and_then(|m| m.module.settings_path.clone());
     let sidebar_items: Vec<Value> = manifest.as_ref()
         .map(|m| m.sidebar_items.iter().map(|s| json!({
-            "id":       s.id,
-            "label":    s.label,
-            "icon":     s.icon,
-            "path":     s.path,
-            "position": s.position,
+            "id":         s.id,
+            "label":      s.label,
+            "icon":       s.icon,
+            "path":       s.path,
+            "position":   s.position,
+            "launchable": s.launchable,
         })).collect())
         .unwrap_or_else(|| vec![
-            json!({ "id": "drive", "label": "Mes fichiers", "icon": "FolderOpen", "path": "/drive", "position": 10 }),
+            json!({ "id": "drive", "label": "Mes fichiers", "icon": "FolderOpen", "path": "/drive", "position": 10, "launchable": true }),
         ]);
     let subscribed_events: Vec<String> = manifest.as_ref()
         .and_then(|m| m.events.as_ref())

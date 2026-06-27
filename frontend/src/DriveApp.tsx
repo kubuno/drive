@@ -1012,6 +1012,12 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
   const openMenu = (e: React.MouseEvent, type: 'folder' | 'file', item: Folder | FileItem) => {
     e.preventDefault()
     e.stopPropagation()
+    // Right-clicking an item outside the current selection makes it the sole
+    // selection; right-clicking within a multi-selection keeps it.
+    if (!selectedIds.has(item.id)) {
+      setSelectedIds(new Set([item.id]))
+      lastSelectedIdxRef.current = orderedIds.indexOf(item.id)
+    }
     const vw = window.innerWidth
     const vh = window.innerHeight
     const x  = Math.min(e.clientX, vw - 200)
@@ -2130,6 +2136,14 @@ function FileCard({
   // ; `thumbErr` bascule sur l'icône de type si le serveur ne peut pas le produire.
   const [thumbErr, setThumbErr] = useState(false)
   const hasBigThumb = isImage || isVideo
+  // Extension badge shown on the thumbnail (e.g. "DOCX", "PDF"). Skipped for
+  // dotless names, hidden files (".gitignore") and non-extension-looking tails.
+  const badgeExt = (() => {
+    const dot = file.name.lastIndexOf('.')
+    if (dot <= 0 || dot === file.name.length - 1) return ''
+    const e = file.name.slice(dot + 1)
+    return /^[a-z0-9]{1,5}$/i.test(e) ? e.toUpperCase() : ''
+  })()
   const thumbVer = useImageCacheStore(s => s.global + (s.versions[file.id] ?? 0))
   const thumbSrc = thumbVer ? `${filesApi.thumbnailUrl(file.id)}?v=${thumbVer}` : filesApi.thumbnailUrl(file.id)
   const videoRef    = useRef<HTMLVideoElement>(null)
@@ -2286,6 +2300,35 @@ function FileCard({
           </div>
         )}
       </div>
+
+      {/* Extension badge — bottom-right of the preview. The outer span uses
+          `background-color: inherit` so its padding ring matches the card's own
+          background in EVERY state (hover/selected/focused) live, carving a
+          seamless notch into the white preview area around the white pill.
+          Inline styles so it never depends on arbitrary Tailwind utilities. */}
+      {badgeExt && (
+        <span
+          className="absolute z-10 inline-block pointer-events-none"
+          style={{
+            bottom: '4px', right: '4px',
+            padding: dense ? '5px' : '7px', borderRadius: dense ? '10px 0 0 0' : '12px 0 0 0',
+            backgroundColor: 'inherit',
+            // Match the card's `transition-all` (150ms) so the notch colour
+            // animates in lockstep with the card background on hover/select.
+            transition: 'background-color 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+          }}
+        >
+          <span
+            className="block font-semibold uppercase"
+            style={{
+              fontSize: '9px', lineHeight: 1, padding: '2px 5px', letterSpacing: '0.04em',
+              borderRadius: '6px', color: 'var(--color-text-secondary)',
+            }}
+          >
+            {badgeExt}
+          </span>
+        </span>
+      )}
 
       {trashed ? (
         <div className="absolute inset-0 flex flex-col items-center justify-end pb-2
