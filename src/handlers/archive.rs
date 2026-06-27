@@ -218,7 +218,7 @@ pub async fn decompress(
             &state.db,
             &state.storage,
             user.id,
-            CreateFolderDto { name: base_name, parent_id },
+            CreateFolderDto { name: base_name, parent_id, id: None },
         ).await?;
         Some(folder.id)
     } else {
@@ -289,7 +289,7 @@ async fn ensure_dirs(
         } else {
             let created = folders::create_folder(
                 &state.db, &state.storage, owner_id,
-                CreateFolderDto { name: part.to_string(), parent_id: parent },
+                CreateFolderDto { name: part.to_string(), parent_id: parent, id: None },
             ).await?;
             dir_map.insert(path_acc.clone(), created.id);
             parent = Some(created.id);

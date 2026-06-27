@@ -38,6 +38,7 @@ icon     = "Share2"
 path     = "/drive/shared"
 position = 11
 section  = "main"
+launchable = false
 
 [[sidebar_items]]
 id       = "drive-recent"
@@ -46,6 +47,7 @@ icon     = "Clock"
 path     = "/drive/recent"
 position = 12
 section  = "main"
+launchable = false
 
 [[sidebar_items]]
 id       = "drive-starred"
@@ -54,6 +56,7 @@ icon     = "Star"
 path     = "/drive/starred"
 position = 13
 section  = "main"
+launchable = false
 
 [[sidebar_items]]
 id       = "drive-trash"
@@ -62,6 +65,7 @@ icon     = "Trash2"
 path     = "/drive/trash"
 position = 99
 section  = "secondary"
+launchable = false
 
 [[cli_commands]]
 name        = "drive:upload"

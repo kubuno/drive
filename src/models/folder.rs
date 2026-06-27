@@ -42,6 +42,12 @@ pub struct FolderSize {
 pub struct CreateFolderDto {
     pub parent_id: Option<Uuid>,
     pub name:      String,
+    /// Optional client-provided id, honoured verbatim when present. Lets an
+    /// offline client (drive-core) mint the folder id locally so it stays stable
+    /// once the create is pushed — no id remapping. Paired with `Idempotency-Key`,
+    /// a replayed create is deduplicated rather than colliding on the primary key.
+    #[serde(default)]
+    pub id: Option<Uuid>,
 }
 
 #[derive(Debug, Deserialize)]

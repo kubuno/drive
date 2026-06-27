@@ -122,6 +122,9 @@ export function register() {
   RouteRegistry.register('drive/storage',  FilesStoragePage)
   RouteRegistry.register('drive/remote/:id', RemoteBrowser)
   RouteRegistry.register('drive/system',     SystemBrowser)
+  // Storage mounts published by other active modules (e.g. p2pnas → "My Cloud").
+  const ModuleMountBrowser = lazy(() => import('./ModuleMountExplorer'))
+  RouteRegistry.register('drive/m/:moduleId/:mountKey', ModuleMountBrowser)
 
   // API publique consommable par d'autres modules via ModuleServiceRegistry
   ModuleServiceRegistry.publish('drive', {

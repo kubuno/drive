@@ -468,7 +468,7 @@ async fn dav_mkcol(state: &AppState, owner: Uuid, dav_path: &str) -> Response {
         }
     };
 
-    let dto = models::CreateFolderDto { name, parent_id };
+    let dto = models::CreateFolderDto { name, parent_id, id: None };
     match services::folders::create_folder(&state.db, &state.storage, owner, dto).await {
         Ok(_)  => StatusCode::CREATED.into_response(),
         Err(e) => {
