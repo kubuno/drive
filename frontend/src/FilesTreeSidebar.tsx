@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -302,6 +302,132 @@ function RemoteSection({
   )
 }
 
+// ── Module mount tree (e.g. p2pnas → "My Cloud") ──────────────────────────────
+// A storage mount published by another active module. Browsed live through the
+// module's StorageSource so it renders identically to a remote mount / Mon Drive.
+
+type MountFolder = { id: string; name: string }
+type MountSource = { list: (parentId: string | null) => Promise<{ folders: MountFolder[]; files: unknown[] }> }
+
+function ModuleTreeNode({
+  source, moduleId, mountKey, folder, depth, activePath, onNavigate,
+}: {
+  source: MountSource
+  moduleId: string
+  mountKey: string
+  folder: MountFolder
+  depth: number
+  activePath: string | null
+  onNavigate: (path: string) => void
+}) {
+  const { t } = useTranslation('drive')
+  const [expanded, setExpanded] = useState(false)
+  const isActive = activePath === folder.id
+
+  const { data } = useQuery({
+    queryKey: ['module-mount', moduleId, mountKey, folder.id],
+    queryFn:  () => source.list(folder.id),
+    enabled:  expanded,
+    retry:    false,
+  })
+  const childDirs = data?.folders ?? []
+
+  return (
+    <div>
+      <div
+        className={`flex items-center gap-1 py-1 rounded-full cursor-pointer select-none
+          ${isActive ? 'bg-primary-light' : 'hover:bg-surface-2'}`}
+        style={{ paddingLeft: `${8 + depth * 16}px`, paddingRight: '8px' }}
+        onClick={() => onNavigate(folder.id)}
+      >
+        <button
+          className="shrink-0 p-0.5 rounded hover:bg-black/10"
+          style={{ transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 150ms' }}
+          onClick={e => { e.stopPropagation(); setExpanded(v => !v) }}
+          aria-label={expanded ? t('common.collapse') : t('common.expand')}
+        >
+          <ChevronRight size={14} className="text-text-tertiary" />
+        </button>
+        <FolderIcon size={15} className="shrink-0" style={{ color: isActive ? '#1a73e8' : '#5f6368' }} fill="currentColor" />
+        <span className="text-sm truncate ml-1 flex-1" style={{ color: isActive ? '#041e49' : '#5f6368', fontWeight: isActive ? 600 : 400 }}>
+          {folder.name}
+        </span>
+      </div>
+      {expanded && childDirs.map(child => (
+        <ModuleTreeNode
+          key={child.id} source={source} moduleId={moduleId} mountKey={mountKey}
+          folder={child} depth={depth + 1} activePath={activePath} onNavigate={onNavigate}
+        />
+      ))}
+    </div>
+  )
+}
+
+function ModuleMountSection({
+  moduleId, mountKey, name, isActiveMount, activePath, onNavigate, onHeaderContextMenu,
+}: {
+  moduleId: string
+  mountKey: string
+  name: string
+  isActiveMount: boolean
+  activePath: string
+  onNavigate: (path: string) => void
+  onHeaderContextMenu?: (e: React.MouseEvent) => void
+}) {
+  const { t } = useTranslation('drive')
+  const [expanded, setExpanded] = useState(false)
+  const source = useMemo(
+    () => ModuleServiceRegistry.call<MountSource>(moduleId, 'getStorageSource', mountKey),
+    [moduleId, mountKey],
+  )
+  const isRootActive = isActiveMount && activePath === ''
+
+  const { data } = useQuery({
+    queryKey: ['module-mount', moduleId, mountKey, ''],
+    queryFn:  () => source!.list(''),
+    enabled:  expanded && !!source,
+    retry:    false,
+  })
+  const dirs = data?.folders ?? []
+
+  return (
+    <div>
+      <div
+        className={`flex items-center gap-1 px-3 py-2 rounded-full cursor-pointer select-none
+          ${isRootActive ? 'bg-primary-light' : 'hover:bg-surface-2'}`}
+        onClick={() => onNavigate('')}
+        onContextMenu={onHeaderContextMenu}
+      >
+        <button
+          className="shrink-0 p-0.5 rounded hover:bg-black/10"
+          style={{ transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 150ms' }}
+          onClick={e => { e.stopPropagation(); setExpanded(v => !v) }}
+          aria-label={expanded ? t('common.collapse') : t('common.expand')}
+        >
+          <ChevronRight size={14} className="text-text-tertiary" />
+        </button>
+        <Cloud size={20} className="shrink-0" style={{ color: isRootActive ? '#1a73e8' : '#5f6368' }} />
+        <span className="text-sm font-medium truncate ml-1 flex-1" style={{ color: isRootActive ? '#041e49' : '#5f6368', fontWeight: isRootActive ? 600 : 500 }}>
+          {name}
+        </span>
+      </div>
+      {expanded && source && (
+        <div className="pl-4">
+          {dirs.map(d => (
+            <ModuleTreeNode
+              key={d.id} source={source} moduleId={moduleId} mountKey={mountKey}
+              folder={d} depth={0} activePath={activePath} onNavigate={onNavigate}
+            />
+          ))}
+          {data && dirs.length === 0 && (
+            <p className="text-xs text-text-tertiary italic py-1 pl-6">{t('common.empty')}</p>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Nav item (flat section) ───────────────────────────────────────────────────
 
 function NavItem({
@@ -356,14 +482,30 @@ export default function FilesTreeSidebar({ collapsed = false }: { collapsed?: bo
   const isAdmin = useAuthStore(s => s.user?.role === 'admin')
 
   // Storage mounts published by other active modules (e.g. p2pnas → "My Cloud").
+  // A module may decide a mount is unavailable for this user (e.g. no quota) and
+  // signal a recheck via the `kubuno:module-mounts-changed` event.
   const activeModules = useModulesStore(s => s.activeModules)
+  const [mountsVersion, setMountsVersion] = useState(0)
+  useEffect(() => {
+    const h = () => setMountsVersion(v => v + 1)
+    window.addEventListener('kubuno:module-mounts-changed', h)
+    return () => window.removeEventListener('kubuno:module-mounts-changed', h)
+  }, [])
   const moduleMounts = useMemo(
     () => activeModules.flatMap(m => {
       const list = ModuleServiceRegistry.call<Array<{ key: string; name: string }>>(m.module_id, 'getStorageMounts')
       return (list ?? []).map(x => ({ moduleId: m.module_id, key: x.key, name: x.name }))
     }),
-    [activeModules],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activeModules, mountsVersion],
   )
+  // Active module mount (route /drive/m/:moduleId/:mountKey?path=…).
+  const moduleMatch = pathname.match(/^\/drive\/m\/([^/]+)\/([^/]+)/)
+  const activeModuleId = moduleMatch ? moduleMatch[1] : null
+  const activeMountKey = moduleMatch ? moduleMatch[2] : null
+  const activeMountPath = moduleMatch ? (searchParams.get('path') ?? '') : ''
+  const goToModuleMount = (moduleId: string, key: string, path: string) =>
+    navigate(`/drive/m/${moduleId}/${key}${path ? `?path=${encodeURIComponent(path)}` : ''}`)
 
   // Menu contextuel local (Mon Drive / montages distants).
   const [ctx, setCtx] = useState<{ x: number; y: number; items: MenuItem[] } | null>(null)
@@ -380,7 +522,7 @@ export default function FilesTreeSidebar({ collapsed = false }: { collapsed?: bo
   const goToRemote = (remoteId: string, path: string) =>
     navigate(`/drive/remote/${remoteId}?path=${encodeURIComponent(path)}`)
 
-  const isSpecial = ['/drive/recent', '/drive/starred', '/drive/shared', '/drive/trash', '/drive/settings', '/drive/storage', '/drive/remote', '/drive/split', '/drive/system'].some(
+  const isSpecial = ['/drive/recent', '/drive/starred', '/drive/shared', '/drive/trash', '/drive/settings', '/drive/storage', '/drive/remote', '/drive/split', '/drive/system', '/drive/m'].some(
     p => pathname === p || pathname.startsWith(p + '/'),
   )
   const isInDrive = !isSpecial
@@ -434,6 +576,10 @@ export default function FilesTreeSidebar({ collapsed = false }: { collapsed?: bo
     { type: 'action', label: t('newfolder.title', { defaultValue: 'Nouveau dossier' }), icon: <FolderPlus size={15} />, onClick: openNewFolder },
     { type: 'action', label: t('common.refresh', { defaultValue: 'Actualiser' }), icon: <RefreshCw size={15} />, onClick: () => qc.invalidateQueries({ queryKey: ['tree-children'] }) },
   ]
+  const moduleMountMenuItems = (mt: { moduleId: string; key: string }): MenuItem[] => [
+    { type: 'action', label: t('common.open', { defaultValue: 'Ouvrir' }), icon: <ExternalLink size={15} />, onClick: () => goToModuleMount(mt.moduleId, mt.key, '') },
+    { type: 'action', label: t('common.refresh', { defaultValue: 'Actualiser' }), icon: <RefreshCw size={15} />, onClick: () => qc.invalidateQueries({ queryKey: ['module-mount', mt.moduleId, mt.key] }) },
+  ]
   const remoteMenuItems = (r: RemoteConnection): MenuItem[] => [
     { type: 'action', label: t('common.open', { defaultValue: 'Ouvrir' }), icon: <ExternalLink size={15} />, onClick: () => goToRemote(r.id, '') },
     { type: 'action', label: t('common.refresh', { defaultValue: 'Actualiser' }), icon: <RefreshCw size={15} />, onClick: () => qc.invalidateQueries({ queryKey: ['remote-browse', r.id] }) },
@@ -464,7 +610,22 @@ export default function FilesTreeSidebar({ collapsed = false }: { collapsed?: bo
           onHeaderContextMenu={e => openCtx(e, driveMenuItems())}
         />
 
-        {/* Montages distants — mêmes niveau hiérarchique que « Mon Drive » */}
+        {/* Montages de modules (ex. p2pnas → « My Cloud ») — 2e position, juste
+            après « Mon Drive » et avant les montages distants, en arbre complet. */}
+        {moduleMounts.map(mt => (
+          <ModuleMountSection
+            key={`${mt.moduleId}:${mt.key}`}
+            moduleId={mt.moduleId}
+            mountKey={mt.key}
+            name={mt.name}
+            isActiveMount={activeModuleId === mt.moduleId && activeMountKey === mt.key}
+            activePath={activeMountPath}
+            onNavigate={path => goToModuleMount(mt.moduleId, mt.key, path)}
+            onHeaderContextMenu={e => openCtx(e, moduleMountMenuItems(mt))}
+          />
+        ))}
+
+        {/* Montages distants — même niveau hiérarchique que « Mon Drive » */}
         {remotes.map(remote => (
           <RemoteSection
             key={remote.id}
@@ -473,17 +634,6 @@ export default function FilesTreeSidebar({ collapsed = false }: { collapsed?: bo
             activePath={activeRemotePath}
             onNavigate={goToRemote}
             onHeaderContextMenu={e => openCtx(e, remoteMenuItems(remote))}
-          />
-        ))}
-
-        {/* Montages fournis par d'autres modules actifs (ex. p2pnas → « My Cloud »). */}
-        {moduleMounts.map(mt => (
-          <NavItem
-            key={`${mt.moduleId}:${mt.key}`}
-            icon={<Cloud size={20} />}
-            label={mt.name}
-            isActive={pathname === `/drive/m/${mt.moduleId}/${mt.key}`}
-            onClick={() => navigate(`/drive/m/${mt.moduleId}/${mt.key}`)}
           />
         ))}
 
