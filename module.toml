@@ -1,7 +1,7 @@
 [module]
 id           = "drive"
 display_name = "Drive"
-version      = "0.1.2"
+version      = "0.1.3"
 description  = "Gestionnaire de fichiers — upload, téléchargement, partage, arborescence."
 author       = "Kubuno Contributors"
 license      = "AGPL-3.0"
