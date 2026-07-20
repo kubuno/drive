@@ -32,6 +32,8 @@ pub fn build(state: AppState) -> Router {
         .route("/trash/stats",                  get(maintenance::trash_stats))
         .route("/folders/:id/versioning",       patch(versions::set_folder_versioning))
         .route("/folders/:id/activity",         get(activity::folder_activity))
+        // Flux d'activité du compte (onglet « Activité » de l'accueil Drive)
+        .route("/activity",                     get(activity::user_activity))
         .route("/folders/:id/info-extra",       get(activity::folder_info_extra))
         // Recherche (plein-texte + sémantique optionnel)
         .route("/search",                       get(search::search_files))

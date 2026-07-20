@@ -12,10 +12,11 @@ export interface Tag {
   item_count: number
 }
 
-interface TagAssignment {
-  tag_id:  string
-  item_id: string
-  kind:    'file' | 'folder'
+/** What the tag mutators need to know about the tagged item (core snapshot). */
+export interface TagTarget {
+  kind: 'file' | 'folder'
+  id:   string
+  name: string
 }
 
 export interface LockInfo {
@@ -75,7 +76,7 @@ interface DriveExtrasState {
   createTag:   (name: string, color: string) => Promise<void>
   updateTag:   (id: string, patch: { name?: string; color?: string }) => Promise<void>
   deleteTag:   (id: string) => Promise<void>
-  toggleTag:   (kind: 'file' | 'folder', itemId: string, tagId: string) => Promise<void>
+  toggleTag:   (target: TagTarget, tagId: string) => Promise<void>
   tagsForItem: (itemId: string) => Tag[]
 
   lockFile:   (fileId: string, reason?: string) => Promise<void>
@@ -86,12 +87,32 @@ interface DriveExtrasState {
   deleteSavedSearch: (id: string) => Promise<void>
 }
 
-function indexAssignments(list: TagAssignment[]): Record<string, string[]> {
-  const map: Record<string, string[]> = {}
-  for (const a of list) {
-    ;(map[a.item_id] ||= []).push(a.tag_id)
-  }
-  return map
+// ── Core-backed tags ──────────────────────────────────────────────────────────
+// Tags ARE the core's cross-module labels (`/api/v1/labels`): the drive keeps
+// its dots/dialog UX, but reads and writes the central store — so a tag put on
+// a file here is the same label the user can filter on at /labels, and the
+// same one other modules attach through « Étiquettes Kubuno… ».
+
+interface CoreLabelJson { id: string; name: string; color: string; link_count: number }
+interface CoreBrowseItem { resource_type: string; resource_id: string; label_ids: string[] }
+
+/** Prefer the named palette (the pickers highlight it); pass hex through. */
+function hexToPaletteName(hex: string): string {
+  const found = Object.entries(TAG_COLORS).find(([, h]) => h.toLowerCase() === hex.toLowerCase())
+  return found ? found[0] : hex
+}
+
+/** Cross-module envelope snapshot stored with each link (rendered at /labels). */
+function targetEnvelope(t: TagTarget) {
+  return t.kind === 'folder'
+    ? {
+        kubuno: 1, type: 'drive.folder', module: 'drive', title: t.name,
+        href: `/drive?folder=${t.id}`, data: { id: t.id, name: t.name },
+      }
+    : {
+        kubuno: 1, type: 'drive.file', module: 'drive', title: t.name,
+        data: { id: t.id, name: t.name, size_bytes: 0, mime_type: '', folder_id: null },
+      }
 }
 
 export const useDriveExtras = create<DriveExtrasState>((set, get) => ({
@@ -111,8 +132,18 @@ export const useDriveExtras = create<DriveExtrasState>((set, get) => ({
   },
 
   async loadTags() {
-    const res = await api.get<{ tags: Tag[]; assignments: TagAssignment[] }>('/drive/tags')
-    set({ tags: res.data.tags ?? [], assignments: indexAssignments(res.data.assignments ?? []) })
+    // Labels + drive assignments come from the core in two calls: the label
+    // catalogue, and one browse pass over every labeled drive item.
+    const [labelsRes, browseRes] = await Promise.all([
+      api.get<{ labels: CoreLabelJson[] }>('/labels'),
+      api.get<{ items: CoreBrowseItem[] }>('/labels/browse', { params: { module: 'drive' } }),
+    ])
+    const tags: Tag[] = (labelsRes.data.labels ?? []).map(l => ({
+      id: l.id, name: l.name, color: hexToPaletteName(l.color), item_count: l.link_count,
+    }))
+    const assignments: Record<string, string[]> = {}
+    for (const it of browseRes.data.items ?? []) assignments[it.resource_id] = it.label_ids
+    set({ tags, assignments })
   },
 
   async loadLocks() {
@@ -128,18 +159,21 @@ export const useDriveExtras = create<DriveExtrasState>((set, get) => ({
   },
 
   async createTag(name, color) {
-    await api.post('/drive/tags', { name, color })
+    await api.post('/labels', { name, color: tagColorHex(color) })
     await get().loadTags()
   },
 
   async updateTag(id, patch) {
-    await api.patch(`/drive/tags/${id}`, patch)
+    await api.patch(`/labels/${id}`, {
+      name: patch.name,
+      color: patch.color ? tagColorHex(patch.color) : undefined,
+    })
     await get().loadTags()
   },
 
   async deleteTag(id) {
-    await api.delete(`/drive/tags/${id}`)
-    // Drop the tag and every assignment referencing it.
+    // Core-wide deletion: links in EVERY module go with it (cascade).
+    await api.delete(`/labels/${id}`)
     set((s) => {
       const assignments: Record<string, string[]> = {}
       for (const [itemId, ids] of Object.entries(s.assignments)) {
@@ -150,23 +184,24 @@ export const useDriveExtras = create<DriveExtrasState>((set, get) => ({
     })
   },
 
-  async toggleTag(kind, itemId, tagId) {
-    const current = get().assignments[itemId] ?? []
+  async toggleTag(target, tagId) {
+    const current = get().assignments[target.id] ?? []
     const has = current.includes(tagId)
-    const base = kind === 'folder' ? `/drive/folders/${itemId}` : `/drive/${itemId}`
-    if (has) {
-      await api.delete(`${base}/tags/${tagId}`)
-    } else {
-      await api.post(`${base}/tags`, { tag_id: tagId })
-    }
+    const next = has ? current.filter((t) => t !== tagId) : [...current, tagId]
+    await api.put('/labels/resource', {
+      module: 'drive',
+      resource_type: target.kind === 'folder' ? 'drive.folder' : 'drive.file',
+      resource_id: target.id,
+      title: target.name,
+      href: target.kind === 'folder' ? `/drive?folder=${target.id}` : undefined,
+      envelope: targetEnvelope(target),
+      label_ids: next,
+    })
     set((s) => {
-      const ids = new Set(s.assignments[itemId] ?? [])
-      if (has) ids.delete(tagId)
-      else ids.add(tagId)
-      const next = { ...s.assignments }
-      if (ids.size) next[itemId] = Array.from(ids)
-      else delete next[itemId]
-      return { assignments: next }
+      const map = { ...s.assignments }
+      if (next.length) map[target.id] = next
+      else delete map[target.id]
+      return { assignments: map }
     })
   },
 

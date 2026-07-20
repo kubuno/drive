@@ -156,7 +156,7 @@ export function TagDialog({ target, onClose }: { target: TagDialogTarget | null;
               <div
                 key={t.id}
                 className={`group flex items-center gap-2 rounded-lg px-2 py-1.5 ${target ? 'cursor-pointer hover:bg-surface-1' : ''}`}
-                onClick={target ? () => void toggleTag(target.kind, target.id, t.id) : undefined}
+                onClick={target ? () => void toggleTag(target, t.id) : undefined}
               >
                 {target && (
                   <span className={`w-4 h-4 rounded border flex items-center justify-center ${assigned ? 'bg-primary border-primary text-white' : 'border-border'}`}>
@@ -205,7 +205,7 @@ export function TagInfoSection() {
             return (
               <button
                 key={t.id}
-                onClick={() => void toggleTag(target.kind, target.id, t.id)}
+                onClick={() => void toggleTag(target, t.id)}
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border transition-colors ${on ? 'border-transparent text-white' : 'border-border text-text-secondary hover:bg-surface-1'}`}
                 style={on ? { backgroundColor: tagColorHex(t.color) } : undefined}
               >

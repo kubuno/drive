@@ -1,4 +1,5 @@
-use axum::{extract::{Path, State}, Extension, Json};
+use axum::{extract::{Path, Query, State}, Extension, Json};
+use serde::Deserialize;
 use serde_json::{json, Value};
 use uuid::Uuid;
 
@@ -16,6 +17,22 @@ pub async fn file_activity(
 ) -> Result<Json<Value>> {
     let entries = activity::list_file_activity(&state.db, file_id).await?;
     Ok(Json(json!({ "activities": entries })))
+}
+
+/// Account-wide activity feed (Drive home → "Activity" tab).
+pub async fn user_activity(
+    State(state): State<AppState>,
+    Extension(user): Extension<FilesUser>,
+    Query(q): Query<ActivityQuery>,
+) -> Result<Json<Value>> {
+    let limit = q.limit.unwrap_or(50).clamp(1, 200);
+    let entries = activity::list_user_activity(&state.db, user.id, limit).await?;
+    Ok(Json(json!({ "activities": entries })))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ActivityQuery {
+    pub limit: Option<i64>,
 }
 
 pub async fn folder_activity(

@@ -19,7 +19,8 @@
       "prev": "Previous",
       "next": "Next",
       "confirm_delete_title": "Move to trash",
-      "confirm_delete_msg": "Move {{count}} item(s) to trash?"
+      "confirm_delete_msg": "Move {{count}} item(s) to trash?",
+      "manage": "Manage storage"
     },
     "common": {
       "cancel": "Cancel",
@@ -75,7 +76,9 @@
       "storage_settings": "Storage settings",
       "files": "Files",
       "search_ph": "Search in files…",
-      "system": "System"
+      "system": "System",
+      "home": "Home",
+      "shared_short": "Shared"
     },
     "tree": {
       "collapse_drive": "Collapse My Drive",
@@ -528,6 +531,39 @@
       "truncated": "Large file — preview truncated.",
       "cannot_load": "Preview unavailable (binary or unreadable file).",
       "empty": "Empty file."
+    },
+    "home": {
+      "suggestions": "Suggestions",
+      "activity": "Activity"
+    },
+    "activity": {
+      "empty": "No recent activity",
+      "unknown_item": "Deleted item",
+      "action": {
+        "uploaded": "Uploaded",
+        "created": "Created",
+        "renamed": "Renamed",
+        "moved": "Moved",
+        "copied": "Copied",
+        "shared": "Shared",
+        "starred": "Starred",
+        "trashed": "Moved to trash",
+        "deleted": "Deleted",
+        "restored": "Restored",
+        "edited_paint": "Image edited"
+      }
+    },
+    "sort": {
+      "by": "Sort by",
+      "a_to_z": "A to Z",
+      "z_to_a": "Z to A",
+      "smallest": "Smallest first",
+      "largest": "Largest first",
+      "oldest": "Oldest first",
+      "newest": "Newest first"
+    },
+    "row": {
+      "modified": "Modified"
     }
   },
   "fr": {
@@ -550,7 +586,8 @@
       "prev": "Précédent",
       "next": "Suivant",
       "confirm_delete_title": "Déplacer vers la corbeille",
-      "confirm_delete_msg": "Déplacer {{count}} élément(s) vers la corbeille ?"
+      "confirm_delete_msg": "Déplacer {{count}} élément(s) vers la corbeille ?",
+      "manage": "Gérer le stockage"
     },
     "common": {
       "cancel": "Annuler",
@@ -606,7 +643,9 @@
       "storage_settings": "Paramètres du stockage",
       "files": "Fichiers",
       "search_ph": "Rechercher dans les fichiers…",
-      "system": "Système"
+      "system": "Système",
+      "home": "Accueil",
+      "shared_short": "Partagés"
     },
     "tree": {
       "collapse_drive": "Réduire Mon Drive",
@@ -1059,6 +1098,39 @@
       "truncated": "Fichier volumineux — aperçu tronqué.",
       "cannot_load": "Aperçu indisponible (fichier binaire ou illisible).",
       "empty": "Fichier vide."
+    },
+    "home": {
+      "suggestions": "Suggestions",
+      "activity": "Activité"
+    },
+    "activity": {
+      "empty": "Aucune activité récente",
+      "unknown_item": "Élément supprimé",
+      "action": {
+        "uploaded": "Importé",
+        "created": "Créé",
+        "renamed": "Renommé",
+        "moved": "Déplacé",
+        "copied": "Copié",
+        "shared": "Partagé",
+        "starred": "Mis en favori",
+        "trashed": "Mis à la corbeille",
+        "deleted": "Supprimé",
+        "restored": "Restauré",
+        "edited_paint": "Image modifiée"
+      }
+    },
+    "sort": {
+      "by": "Trier par",
+      "a_to_z": "De A à Z",
+      "z_to_a": "De Z à A",
+      "smallest": "Du plus petit",
+      "largest": "Du plus grand",
+      "oldest": "Du plus ancien",
+      "newest": "Du plus récent"
+    },
+    "row": {
+      "modified": "Modifié"
     }
   },
   "es": {
@@ -1081,7 +1153,8 @@
       "prev": "Anterior",
       "next": "Siguiente",
       "confirm_delete_title": "Mover a la papelera",
-      "confirm_delete_msg": "¿Mover {{count}} elemento(s) a la papelera?"
+      "confirm_delete_msg": "¿Mover {{count}} elemento(s) a la papelera?",
+      "manage": "Gestionar almacenamiento"
     },
     "common": {
       "cancel": "Cancelar",
@@ -1137,7 +1210,9 @@
       "storage_settings": "Ajustes de almacenamiento",
       "files": "Archivos",
       "search_ph": "Buscar en los archivos…",
-      "system": "Sistema"
+      "system": "Sistema",
+      "home": "Inicio",
+      "shared_short": "Compartidos"
     },
     "tree": {
       "collapse_drive": "Contraer Mi unidad",
@@ -1590,6 +1665,39 @@
       "truncated": "Archivo grande: vista previa truncada.",
       "cannot_load": "Vista previa no disponible (archivo binario o ilegible).",
       "empty": "Archivo vacío."
+    },
+    "home": {
+      "suggestions": "Sugerencias",
+      "activity": "Actividad"
+    },
+    "activity": {
+      "empty": "Sin actividad reciente",
+      "unknown_item": "Elemento eliminado",
+      "action": {
+        "uploaded": "Subido",
+        "created": "Creado",
+        "renamed": "Renombrado",
+        "moved": "Movido",
+        "copied": "Copiado",
+        "shared": "Compartido",
+        "starred": "Destacado",
+        "trashed": "Enviado a la papelera",
+        "deleted": "Eliminado",
+        "restored": "Restaurado",
+        "edited_paint": "Imagen editada"
+      }
+    },
+    "sort": {
+      "by": "Ordenar por",
+      "a_to_z": "De la A a la Z",
+      "z_to_a": "De la Z a la A",
+      "smallest": "Menor primero",
+      "largest": "Mayor primero",
+      "oldest": "Más antiguo primero",
+      "newest": "Más reciente primero"
+    },
+    "row": {
+      "modified": "Modificado"
     }
   },
   "pt": {
@@ -1612,7 +1720,8 @@
       "prev": "Anterior",
       "next": "Seguinte",
       "confirm_delete_title": "Mover para o lixo",
-      "confirm_delete_msg": "Mover {{count}} item(ns) para o lixo?"
+      "confirm_delete_msg": "Mover {{count}} item(ns) para o lixo?",
+      "manage": "Gerir armazenamento"
     },
     "common": {
       "cancel": "Cancelar",
@@ -1668,7 +1777,9 @@
       "storage_settings": "Definições de armazenamento",
       "files": "Ficheiros",
       "search_ph": "Pesquisar nos arquivos…",
-      "system": "Sistema"
+      "system": "Sistema",
+      "home": "Início",
+      "shared_short": "Partilhados"
     },
     "tree": {
       "collapse_drive": "Recolher O meu disco",
@@ -2121,6 +2232,39 @@
       "truncated": "Arquivo grande — pré-visualização truncada.",
       "cannot_load": "Pré-visualização indisponível (arquivo binário ou ilegível).",
       "empty": "Arquivo vazio."
+    },
+    "home": {
+      "suggestions": "Sugestões",
+      "activity": "Atividade"
+    },
+    "activity": {
+      "empty": "Sem atividade recente",
+      "unknown_item": "Item eliminado",
+      "action": {
+        "uploaded": "Carregado",
+        "created": "Criado",
+        "renamed": "Renomeado",
+        "moved": "Movido",
+        "copied": "Copiado",
+        "shared": "Partilhado",
+        "starred": "Marcado",
+        "trashed": "Movido para o lixo",
+        "deleted": "Eliminado",
+        "restored": "Restaurado",
+        "edited_paint": "Imagem editada"
+      }
+    },
+    "sort": {
+      "by": "Ordenar por",
+      "a_to_z": "De A a Z",
+      "z_to_a": "De Z a A",
+      "smallest": "Menor primeiro",
+      "largest": "Maior primeiro",
+      "oldest": "Mais antigo primeiro",
+      "newest": "Mais recente primeiro"
+    },
+    "row": {
+      "modified": "Modificado"
     }
   },
   "it": {
@@ -2143,7 +2287,8 @@
       "prev": "Precedente",
       "next": "Successivo",
       "confirm_delete_title": "Sposta nel cestino",
-      "confirm_delete_msg": "Spostare {{count}} elementi nel cestino?"
+      "confirm_delete_msg": "Spostare {{count}} elementi nel cestino?",
+      "manage": "Gestisci spazio"
     },
     "common": {
       "cancel": "Annulla",
@@ -2199,7 +2344,9 @@
       "storage_settings": "Impostazioni archiviazione",
       "files": "File",
       "search_ph": "Cerca nei file…",
-      "system": "Sistema"
+      "system": "Sistema",
+      "home": "Home",
+      "shared_short": "Condivisi"
     },
     "tree": {
       "collapse_drive": "Comprimi Il mio Drive",
@@ -2652,6 +2799,39 @@
       "truncated": "File grande — anteprima troncata.",
       "cannot_load": "Anteprima non disponibile (file binario o illeggibile).",
       "empty": "File vuoto."
+    },
+    "home": {
+      "suggestions": "Suggerimenti",
+      "activity": "Attività"
+    },
+    "activity": {
+      "empty": "Nessuna attività recente",
+      "unknown_item": "Elemento eliminato",
+      "action": {
+        "uploaded": "Caricato",
+        "created": "Creato",
+        "renamed": "Rinominato",
+        "moved": "Spostato",
+        "copied": "Copiato",
+        "shared": "Condiviso",
+        "starred": "Preferito",
+        "trashed": "Spostato nel cestino",
+        "deleted": "Eliminato",
+        "restored": "Ripristinato",
+        "edited_paint": "Immagine modificata"
+      }
+    },
+    "sort": {
+      "by": "Ordina per",
+      "a_to_z": "Dalla A alla Z",
+      "z_to_a": "Dalla Z alla A",
+      "smallest": "Prima i più piccoli",
+      "largest": "Prima i più grandi",
+      "oldest": "Prima i meno recenti",
+      "newest": "Prima i più recenti"
+    },
+    "row": {
+      "modified": "Modificato"
     }
   },
   "de": {
@@ -2674,7 +2854,8 @@
       "prev": "Zurück",
       "next": "Weiter",
       "confirm_delete_title": "In den Papierkorb verschieben",
-      "confirm_delete_msg": "{{count}} Element(e) in den Papierkorb verschieben?"
+      "confirm_delete_msg": "{{count}} Element(e) in den Papierkorb verschieben?",
+      "manage": "Speicher verwalten"
     },
     "common": {
       "cancel": "Abbrechen",
@@ -2730,7 +2911,9 @@
       "storage_settings": "Speichereinstellungen",
       "files": "Dateien",
       "search_ph": "In Dateien suchen…",
-      "system": "System"
+      "system": "System",
+      "home": "Start",
+      "shared_short": "Geteilt"
     },
     "tree": {
       "collapse_drive": "Mein Drive einklappen",
@@ -3183,6 +3366,39 @@
       "truncated": "Große Datei – Vorschau gekürzt.",
       "cannot_load": "Vorschau nicht verfügbar (Binär- oder unlesbare Datei).",
       "empty": "Leere Datei."
+    },
+    "home": {
+      "suggestions": "Vorschläge",
+      "activity": "Aktivität"
+    },
+    "activity": {
+      "empty": "Keine kürzliche Aktivität",
+      "unknown_item": "Gelöschtes Element",
+      "action": {
+        "uploaded": "Hochgeladen",
+        "created": "Erstellt",
+        "renamed": "Umbenannt",
+        "moved": "Verschoben",
+        "copied": "Kopiert",
+        "shared": "Geteilt",
+        "starred": "Markiert",
+        "trashed": "In den Papierkorb",
+        "deleted": "Gelöscht",
+        "restored": "Wiederhergestellt",
+        "edited_paint": "Bild bearbeitet"
+      }
+    },
+    "sort": {
+      "by": "Sortieren nach",
+      "a_to_z": "A bis Z",
+      "z_to_a": "Z bis A",
+      "smallest": "Kleinste zuerst",
+      "largest": "Größte zuerst",
+      "oldest": "Älteste zuerst",
+      "newest": "Neueste zuerst"
+    },
+    "row": {
+      "modified": "Geändert"
     }
   },
   "el": {
@@ -3205,7 +3421,8 @@
       "prev": "Προηγούμενο",
       "next": "Επόμενο",
       "confirm_delete_title": "Μετακίνηση στον κάδο",
-      "confirm_delete_msg": "Μετακίνηση {{count}} στοιχείων στον κάδο;"
+      "confirm_delete_msg": "Μετακίνηση {{count}} στοιχείων στον κάδο;",
+      "manage": "Διαχείριση αποθήκευσης"
     },
     "common": {
       "cancel": "Άκυρο",
@@ -3261,7 +3478,9 @@
       "storage_settings": "Ρυθμίσεις αποθήκευσης",
       "files": "Αρχεία",
       "search_ph": "Αναζήτηση στα αρχεία…",
-      "system": "Σύστημα"
+      "system": "Σύστημα",
+      "home": "Αρχική",
+      "shared_short": "Κοινόχρηστα"
     },
     "tree": {
       "collapse_drive": "Σύμπτυξη του Drive μου",
@@ -3714,6 +3933,39 @@
       "truncated": "Μεγάλο αρχείο — η προεπισκόπηση περικόπηκε.",
       "cannot_load": "Η προεπισκόπηση δεν είναι διαθέσιμη (δυαδικό ή μη αναγνώσιμο αρχείο).",
       "empty": "Κενό αρχείο."
+    },
+    "home": {
+      "suggestions": "Προτάσεις",
+      "activity": "Δραστηριότητα"
+    },
+    "activity": {
+      "empty": "Καμία πρόσφατη δραστηριότητα",
+      "unknown_item": "Διαγραμμένο στοιχείο",
+      "action": {
+        "uploaded": "Μεταφορτώθηκε",
+        "created": "Δημιουργήθηκε",
+        "renamed": "Μετονομάστηκε",
+        "moved": "Μετακινήθηκε",
+        "copied": "Αντιγράφηκε",
+        "shared": "Κοινοποιήθηκε",
+        "starred": "Με αστέρι",
+        "trashed": "Στον κάδο",
+        "deleted": "Διαγράφηκε",
+        "restored": "Επαναφέρθηκε",
+        "edited_paint": "Εικόνα επεξεργάστηκε"
+      }
+    },
+    "sort": {
+      "by": "Ταξινόμηση κατά",
+      "a_to_z": "Από Α έως Ω",
+      "z_to_a": "Από Ω έως Α",
+      "smallest": "Μικρότερα πρώτα",
+      "largest": "Μεγαλύτερα πρώτα",
+      "oldest": "Παλαιότερα πρώτα",
+      "newest": "Νεότερα πρώτα"
+    },
+    "row": {
+      "modified": "Τροποποιήθηκε"
     }
   },
   "ru": {
@@ -3736,7 +3988,8 @@
       "prev": "Назад",
       "next": "Вперёд",
       "confirm_delete_title": "Переместить в корзину",
-      "confirm_delete_msg": "Переместить {{count}} элемент(ов) в корзину?"
+      "confirm_delete_msg": "Переместить {{count}} элемент(ов) в корзину?",
+      "manage": "Управление хранилищем"
     },
     "common": {
       "cancel": "Отмена",
@@ -3792,7 +4045,9 @@
       "storage_settings": "Настройки хранилища",
       "files": "Файлы",
       "search_ph": "Поиск в файлах…",
-      "system": "Система"
+      "system": "Система",
+      "home": "Главная",
+      "shared_short": "Общие"
     },
     "tree": {
       "collapse_drive": "Свернуть «Мой диск»",
@@ -4245,6 +4500,39 @@
       "truncated": "Большой файл — предпросмотр обрезан.",
       "cannot_load": "Предпросмотр недоступен (двоичный или нечитаемый файл).",
       "empty": "Пустой файл."
+    },
+    "home": {
+      "suggestions": "Рекомендации",
+      "activity": "Действия"
+    },
+    "activity": {
+      "empty": "Нет недавних действий",
+      "unknown_item": "Удалённый объект",
+      "action": {
+        "uploaded": "Загружено",
+        "created": "Создано",
+        "renamed": "Переименовано",
+        "moved": "Перемещено",
+        "copied": "Скопировано",
+        "shared": "Открыт доступ",
+        "starred": "В избранном",
+        "trashed": "В корзину",
+        "deleted": "Удалено",
+        "restored": "Восстановлено",
+        "edited_paint": "Изображение изменено"
+      }
+    },
+    "sort": {
+      "by": "Сортировать по",
+      "a_to_z": "От А до Я",
+      "z_to_a": "От Я до А",
+      "smallest": "Сначала маленькие",
+      "largest": "Сначала большие",
+      "oldest": "Сначала старые",
+      "newest": "Сначала новые"
+    },
+    "row": {
+      "modified": "Изменён"
     }
   },
   "ar": {
@@ -4267,7 +4555,8 @@
       "prev": "السابق",
       "next": "التالي",
       "confirm_delete_title": "نقل إلى المهملات",
-      "confirm_delete_msg": "نقل {{count}} عنصر إلى المهملات؟"
+      "confirm_delete_msg": "نقل {{count}} عنصر إلى المهملات؟",
+      "manage": "إدارة التخزين"
     },
     "common": {
       "cancel": "إلغاء",
@@ -4323,7 +4612,9 @@
       "storage_settings": "إعدادات التخزين",
       "files": "الملفات",
       "search_ph": "البحث في الملفات…",
-      "system": "النظام"
+      "system": "النظام",
+      "home": "الرئيسية",
+      "shared_short": "المشتركة"
     },
     "tree": {
       "collapse_drive": "طي قرصي",
@@ -4776,6 +5067,39 @@
       "truncated": "ملف كبير — تم اقتطاع المعاينة.",
       "cannot_load": "المعاينة غير متاحة (ملف ثنائي أو غير قابل للقراءة).",
       "empty": "ملف فارغ."
+    },
+    "home": {
+      "suggestions": "اقتراحات",
+      "activity": "النشاط"
+    },
+    "activity": {
+      "empty": "لا يوجد نشاط حديث",
+      "unknown_item": "عنصر محذوف",
+      "action": {
+        "uploaded": "تم الرفع",
+        "created": "تم الإنشاء",
+        "renamed": "تمت إعادة التسمية",
+        "moved": "تم النقل",
+        "copied": "تم النسخ",
+        "shared": "تمت المشاركة",
+        "starred": "مميز بنجمة",
+        "trashed": "نُقل إلى المهملات",
+        "deleted": "تم الحذف",
+        "restored": "تمت الاستعادة",
+        "edited_paint": "تم تعديل الصورة"
+      }
+    },
+    "sort": {
+      "by": "ترتيب حسب",
+      "a_to_z": "من أ إلى ي",
+      "z_to_a": "من ي إلى أ",
+      "smallest": "الأصغر أولاً",
+      "largest": "الأكبر أولاً",
+      "oldest": "الأقدم أولاً",
+      "newest": "الأحدث أولاً"
+    },
+    "row": {
+      "modified": "عُدّل"
     }
   },
   "he": {
@@ -4798,7 +5122,8 @@
       "prev": "הקודם",
       "next": "הבא",
       "confirm_delete_title": "העברה לאשפה",
-      "confirm_delete_msg": "להעביר {{count}} פריטים לאשפה?"
+      "confirm_delete_msg": "להעביר {{count}} פריטים לאשפה?",
+      "manage": "ניהול אחסון"
     },
     "common": {
       "cancel": "ביטול",
@@ -4854,7 +5179,9 @@
       "storage_settings": "הגדרות אחסון",
       "files": "קבצים",
       "search_ph": "חיפוש בקבצים…",
-      "system": "מערכת"
+      "system": "מערכת",
+      "home": "בית",
+      "shared_short": "משותפים"
     },
     "tree": {
       "collapse_drive": "כווץ את הכונן שלי",
@@ -5307,6 +5634,39 @@
       "truncated": "קובץ גדול — התצוגה המקדימה קוצרה.",
       "cannot_load": "התצוגה המקדימה אינה זמינה (קובץ בינארי או לא קריא).",
       "empty": "קובץ ריק."
+    },
+    "home": {
+      "suggestions": "הצעות",
+      "activity": "פעילות"
+    },
+    "activity": {
+      "empty": "אין פעילות אחרונה",
+      "unknown_item": "פריט שנמחק",
+      "action": {
+        "uploaded": "הועלה",
+        "created": "נוצר",
+        "renamed": "שם שונה",
+        "moved": "הועבר",
+        "copied": "הועתק",
+        "shared": "שותף",
+        "starred": "סומן",
+        "trashed": "הועבר לאשפה",
+        "deleted": "נמחק",
+        "restored": "שוחזר",
+        "edited_paint": "תמונה נערכה"
+      }
+    },
+    "sort": {
+      "by": "מיין לפי",
+      "a_to_z": "מא׳ עד ת׳",
+      "z_to_a": "מת׳ עד א׳",
+      "smallest": "הקטן ביותר תחילה",
+      "largest": "הגדול ביותר תחילה",
+      "oldest": "הישן ביותר תחילה",
+      "newest": "החדש ביותר תחילה"
+    },
+    "row": {
+      "modified": "עודכן"
     }
   },
   "hi": {
@@ -5329,7 +5689,8 @@
       "prev": "पिछला",
       "next": "अगला",
       "confirm_delete_title": "कचरे में ले जाएँ",
-      "confirm_delete_msg": "{{count}} आइटम कचरे में ले जाएँ?"
+      "confirm_delete_msg": "{{count}} आइटम कचरे में ले जाएँ?",
+      "manage": "संग्रहण प्रबंधित करें"
     },
     "common": {
       "cancel": "रद्द करें",
@@ -5385,7 +5746,9 @@
       "storage_settings": "संग्रहण सेटिंग्स",
       "files": "फ़ाइलें",
       "search_ph": "फ़ाइलों में खोजें…",
-      "system": "सिस्टम"
+      "system": "सिस्टम",
+      "home": "होम",
+      "shared_short": "साझा"
     },
     "tree": {
       "collapse_drive": "मेरा ड्राइव संकुचित करें",
@@ -5838,6 +6201,39 @@
       "truncated": "बड़ी फ़ाइल — पूर्वावलोकन छोटा किया गया.",
       "cannot_load": "पूर्वावलोकन उपलब्ध नहीं (बाइनरी या अपठनीय फ़ाइल).",
       "empty": "खाली फ़ाइल."
+    },
+    "home": {
+      "suggestions": "सुझाव",
+      "activity": "गतिविधि"
+    },
+    "activity": {
+      "empty": "कोई हालिया गतिविधि नहीं",
+      "unknown_item": "हटाया गया आइटम",
+      "action": {
+        "uploaded": "अपलोड किया",
+        "created": "बनाया",
+        "renamed": "नाम बदला",
+        "moved": "स्थानांतरित",
+        "copied": "कॉपी किया",
+        "shared": "साझा किया",
+        "starred": "तारांकित",
+        "trashed": "ट्रैश में भेजा",
+        "deleted": "हटाया",
+        "restored": "पुनर्स्थापित",
+        "edited_paint": "छवि संपादित"
+      }
+    },
+    "sort": {
+      "by": "इसके अनुसार क्रमबद्ध करें",
+      "a_to_z": "A से Z",
+      "z_to_a": "Z से A",
+      "smallest": "सबसे छोटा पहले",
+      "largest": "सबसे बड़ा पहले",
+      "oldest": "सबसे पुराना पहले",
+      "newest": "सबसे नया पहले"
+    },
+    "row": {
+      "modified": "संशोधित"
     }
   },
   "zh": {
@@ -5860,7 +6256,8 @@
       "prev": "上一页",
       "next": "下一页",
       "confirm_delete_title": "移到回收站",
-      "confirm_delete_msg": "将 {{count}} 项移到回收站？"
+      "confirm_delete_msg": "将 {{count}} 项移到回收站？",
+      "manage": "管理存储空间"
     },
     "common": {
       "cancel": "取消",
@@ -5916,7 +6313,9 @@
       "storage_settings": "存储设置",
       "files": "文件",
       "search_ph": "在文件中搜索…",
-      "system": "系统"
+      "system": "系统",
+      "home": "主页",
+      "shared_short": "共享"
     },
     "tree": {
       "collapse_drive": "收起“我的云端硬盘”",
@@ -6369,6 +6768,39 @@
       "truncated": "文件较大 — 预览已截断。",
       "cannot_load": "预览不可用（二进制或无法读取的文件）。",
       "empty": "空文件。"
+    },
+    "home": {
+      "suggestions": "建议",
+      "activity": "活动"
+    },
+    "activity": {
+      "empty": "暂无近期活动",
+      "unknown_item": "已删除的项目",
+      "action": {
+        "uploaded": "已上传",
+        "created": "已创建",
+        "renamed": "已重命名",
+        "moved": "已移动",
+        "copied": "已复制",
+        "shared": "已共享",
+        "starred": "已加星标",
+        "trashed": "已移入回收站",
+        "deleted": "已删除",
+        "restored": "已恢复",
+        "edited_paint": "图片已编辑"
+      }
+    },
+    "sort": {
+      "by": "排序方式",
+      "a_to_z": "从 A 到 Z",
+      "z_to_a": "从 Z 到 A",
+      "smallest": "从小到大",
+      "largest": "从大到小",
+      "oldest": "从旧到新",
+      "newest": "从新到旧"
+    },
+    "row": {
+      "modified": "修改于"
     }
   },
   "ja": {
@@ -6391,7 +6823,8 @@
       "prev": "前へ",
       "next": "次へ",
       "confirm_delete_title": "ゴミ箱に移動",
-      "confirm_delete_msg": "{{count}} 件をゴミ箱に移動しますか？"
+      "confirm_delete_msg": "{{count}} 件をゴミ箱に移動しますか？",
+      "manage": "ストレージを管理"
     },
     "common": {
       "cancel": "キャンセル",
@@ -6447,7 +6880,9 @@
       "storage_settings": "ストレージ設定",
       "files": "ファイル",
       "search_ph": "ファイル内を検索…",
-      "system": "システム"
+      "system": "システム",
+      "home": "ホーム",
+      "shared_short": "共有"
     },
     "tree": {
       "collapse_drive": "マイドライブを折りたたむ",
@@ -6900,6 +7335,39 @@
       "truncated": "大きなファイル — プレビューは省略されています。",
       "cannot_load": "プレビューを利用できません（バイナリまたは読み取り不能なファイル）。",
       "empty": "空のファイル。"
+    },
+    "home": {
+      "suggestions": "候補",
+      "activity": "アクティビティ"
+    },
+    "activity": {
+      "empty": "最近のアクティビティはありません",
+      "unknown_item": "削除された項目",
+      "action": {
+        "uploaded": "アップロード",
+        "created": "作成",
+        "renamed": "名前を変更",
+        "moved": "移動",
+        "copied": "コピー",
+        "shared": "共有",
+        "starred": "スター付き",
+        "trashed": "ゴミ箱に移動",
+        "deleted": "削除",
+        "restored": "復元",
+        "edited_paint": "画像を編集"
+      }
+    },
+    "sort": {
+      "by": "並べ替え",
+      "a_to_z": "A → Z",
+      "z_to_a": "Z → A",
+      "smallest": "小さい順",
+      "largest": "大きい順",
+      "oldest": "古い順",
+      "newest": "新しい順"
+    },
+    "row": {
+      "modified": "更新日"
     }
   }
 }

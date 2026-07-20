@@ -3,7 +3,8 @@
  * Buildé séparément (vite.module.config) : core via `@kubuno/sdk`, infra fichiers
  * via `@kubuno/drive`, @ui via `@ui` — tous externes, résolus par l'import map.
  */
-import { lazy } from 'react'
+import { createElement, lazy } from 'react'
+import { Home, Star, Users, Folder, HardDrive } from 'lucide-react'
 import {
   RouteRegistry,
   SlotRegistry,
@@ -33,6 +34,8 @@ import FilesDashboardWidget from './FilesDashboardWidget'
 import FilesRecentWidget from './FilesRecentWidget'
 import FilesFilterPanel from './FilesFilterPanel'
 import FilesOpenDialog from './FilesOpenDialog'
+import DriveImageSource from './DriveImageSource'
+import { ImageSourceRegistry } from './imageSourceSdk'
 import FilesSaveDialog from './FilesSaveDialog'
 import FilesFolderPickerDialog from './FilesFolderPickerDialog'
 import FilesFloatingAudioPlayer from './FilesFloatingAudioPlayer'
@@ -51,6 +54,14 @@ export function register() {
   // The header gear button opens the per-user Drive settings while in /drive.
   // (WebDAV, formerly a core `settings-sections` panel, is now a tab there.)
   ModuleSettingsRegistry.register('drive')
+
+  // Contribute the "Drive" tab to the core image picker (available app-wide).
+  ImageSourceRegistry?.add({
+    id: 'drive', label: 'Drive', order: 20, group: 'library',
+    searchable: true, searchPlaceholder: 'Rechercher dans Drive…',
+    icon: createElement(HardDrive, { size: 18 }),
+    Component: DriveImageSource,
+  })
 
   // Declare the notification activities shown in the core Settings → Notifications matrix.
   NotificationRegistry.register({
@@ -76,13 +87,44 @@ export function register() {
   SlotRegistry.register('app-dialogs',           'drive', FilesPaintEditor)
   SlotRegistry.register('files-info-extra',      'drive', TagInfoSection)
 
-  useSidebarStore.getState().register({
+  // Barre de navigation basse (mobile) : le shell rend ces onglets à la place de
+  // ses destinations génériques tant qu'on est dans /drive.
+  // NB : objet passé via une variable — `mobileTabs` n'existe pas encore dans les
+  // types npm @kubuno/sdk 0.1.2 (le host à jour le lit au runtime). Inliner le
+  // littéral déclencherait le contrôle des propriétés excédentaires de TS.
+  const mobileTabs = [
+    { id: 'home',    labelKey: 'drive:nav.home',         Icon: Home,   path: '/drive/home' },
+    { id: 'starred', labelKey: 'drive:nav.favorites',    Icon: Star,   path: '/drive/starred' },
+    { id: 'shared',  labelKey: 'drive:nav.shared_short', Icon: Users,  path: '/drive/shared' },
+    { id: 'files',   labelKey: 'drive:nav.files',        Icon: Folder, path: '/drive', end: true },
+  ]
+
+  // NB : configs passées via des VARIABLES — `mobileTabs` n'existe pas encore dans
+  // les types npm @kubuno/sdk 0.1.2 (le host à jour le lit au runtime), et un
+  // littéral inline déclencherait le contrôle des propriétés excédentaires de TS.
+  const driveSidebar = {
     moduleId:    'drive',
     routePrefix: '/drive',
     NewActions:  FilesNewActions,
     SidebarBody: FilesTreeSidebar,
     collapsedBody: true,
-  })
+    mobileTabs,
+  }
+  useSidebarStore.getState().register(driveSidebar)
+
+  // Settings/storage pages: same nav, but NO "New" action — the mobile FAB is
+  // built from it, and a "New folder" button floating over the preferences form
+  // makes no sense. A more specific routePrefix wins in resolveActiveSidebarConfig.
+  for (const routePrefix of ['/drive/settings', '/drive/storage']) {
+    const settingsSidebar = {
+      moduleId:    `drive${routePrefix.replace(/\//g, '-')}`,
+      routePrefix,
+      SidebarBody: FilesTreeSidebar,
+      collapsedBody: true,
+      mobileTabs,
+    }
+    useSidebarStore.getState().register(settingsSidebar)
+  }
 
   useToolbarStore.getState().register({
     moduleId:    'drive',
@@ -111,8 +153,13 @@ export function register() {
   const RemoteBrowser     = lazy(() => import('./RemoteExplorer'))
   const SystemBrowser     = lazy(() => import('./SystemExplorer'))
   const DualPaneExplorer  = lazy(() => import('./DualPaneExplorer'))
+  const DrivePlayerPage   = lazy(() => import('./FilesStandalonePages'))
+  const DrivePaintPage    = lazy(() => import('./FilesStandalonePages').then(m => ({ default: m.DrivePaintPage })))
+
+  const DriveHome = lazy(() => import('./MobileHome'))
 
   RouteRegistry.register('drive',          FilesApp)
+  RouteRegistry.register('drive/home',     DriveHome)
   RouteRegistry.register('drive/split',    DualPaneExplorer)
   RouteRegistry.register('drive/recent',   FilesApp, { recent:  true })
   RouteRegistry.register('drive/starred',  FilesApp, { starred: true })
@@ -122,6 +169,9 @@ export function register() {
   RouteRegistry.register('drive/storage',  FilesStoragePage)
   RouteRegistry.register('drive/remote/:id', RemoteBrowser)
   RouteRegistry.register('drive/system',     SystemBrowser)
+  // Pop-out desktop : lecteur audio / éditeur Paint dans leur propre fenêtre OS.
+  RouteRegistry.register('drive/player',     DrivePlayerPage)
+  RouteRegistry.register('drive/paint',      DrivePaintPage)
   // Storage mounts published by other active modules (e.g. p2pnas → "My Cloud").
   const ModuleMountBrowser = lazy(() => import('./ModuleMountExplorer'))
   RouteRegistry.register('drive/m/:moduleId/:mountKey', ModuleMountBrowser)

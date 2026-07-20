@@ -427,6 +427,7 @@ export default function FilesPaintEditor() {
     <FloatingWindow
       title={`Paint — ${file.name}`}
       onClose={closeEditor}
+      popout={{ route: `/drive/paint?file=${file.id}`, label: `Paint — ${file.name}`, width: 1140, height: 820 }}
       defaultWidth={1080}
       defaultHeight={720}
       minWidth={640}

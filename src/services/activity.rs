@@ -109,6 +109,50 @@ pub async fn list_file_activity(
     Ok(rows)
 }
 
+/// One activity row enriched with the item it concerns, for the account-wide
+/// feed (the per-item endpoints already know which item they describe).
+#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+pub struct ActivityFeedEntry {
+    pub id:           i64,
+    pub user_id:      Uuid,
+    pub user_display: String,
+    pub action:       String,
+    pub details:      Value,
+    pub created_at:   DateTime<Utc>,
+    pub file_id:      Option<Uuid>,
+    pub folder_id:    Option<Uuid>,
+    pub item_name:    Option<String>,
+    pub mime_type:    Option<String>,
+}
+
+/// Account-wide activity, newest first: every logged action on a file OR folder
+/// the user owns. Restricted to owned items — the log itself is not per-user, so
+/// filtering on `owner_id` (not on who acted) is what keeps it private.
+pub async fn list_user_activity(
+    db:      &PgPool,
+    user_id: Uuid,
+    limit:   i64,
+) -> crate::errors::Result<Vec<ActivityFeedEntry>> {
+    let rows = sqlx::query_as::<_, ActivityFeedEntry>(
+        "SELECT a.id, a.user_id, a.user_display, a.action, a.details, a.created_at,
+                a.file_id, a.folder_id,
+                COALESCE(f.name, d.name) AS item_name,
+                f.mime_type              AS mime_type
+         FROM drive.activity_log a
+         LEFT JOIN drive.files   f ON f.id = a.file_id
+         LEFT JOIN drive.folders d ON d.id = a.folder_id
+         WHERE (f.id IS NOT NULL AND f.owner_id = $1 AND NOT f.is_trashed)
+            OR (d.id IS NOT NULL AND d.owner_id = $1 AND NOT d.is_trashed)
+         ORDER BY a.created_at DESC
+         LIMIT $2",
+    )
+    .bind(user_id)
+    .bind(limit)
+    .fetch_all(db)
+    .await?;
+    Ok(rows)
+}
+
 pub async fn list_folder_activity(
     db:        &PgPool,
     folder_id: Uuid,
