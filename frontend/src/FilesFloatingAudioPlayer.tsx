@@ -229,6 +229,7 @@ function AudioPlayerCore() {
       title={file.name}
       icon={<Music size={15} className="text-green-500" />}
       onClose={close}
+      popout={{ route: `/drive/player?file=${file.id}`, label: file.name, width: 380, height: 640 }}
       defaultWidth={340}
       minWidth={280}
       titleActions={

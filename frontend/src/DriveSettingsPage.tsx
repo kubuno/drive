@@ -6,6 +6,7 @@ import { api, useAuthStore } from '@kubuno/sdk'
 import { FolderOpen, Save, ArrowLeft, ExternalLink, Check, Info } from 'lucide-react'
 import { Toggle, Button, Radio, RangeSlider } from '@ui'
 import { useModulePrefs } from './userPrefs'
+import { useIsMobile } from './openable'
 import FilesWebDavSettings from './FilesWebDavSettings'
 
 // ── Per-user preferences (backend, cross-device via core users.preferences) ─────
@@ -28,6 +29,19 @@ const DEFAULT_PREFS: DrivePrefs = {
 function SettingsRow({ label, description, children }: {
   label: string; description?: string; children: React.ReactNode
 }) {
+  // The desktop row is a 240px label column + control beside it, which leaves
+  // nothing for the control on a 390px screen. On mobile the label stacks above
+  // a full-width control instead.
+  const isMobile = useIsMobile()
+  if (isMobile) {
+    return (
+      <div className="py-4 border-b border-[#e8eaed] last:border-0">
+        <p className="text-[15px] text-[#202124]">{label}</p>
+        {description && <p className="text-xs text-text-tertiary mt-0.5 leading-relaxed">{description}</p>}
+        <div className="mt-3">{children}</div>
+      </div>
+    )
+  }
   return (
     <div className="flex items-start gap-8 py-4 border-b border-[#e8eaed] last:border-0">
       <div className="w-60 flex-shrink-0">
@@ -274,6 +288,7 @@ export default function DriveSettingsPage() {
   const { t } = useTranslation('drive')
   const isAdmin = useAuthStore(s => s.user?.role === 'admin')
   const [tab, setTab] = useState<Tab>('preferences')
+  const isMobile = useIsMobile()
 
   // Admin-only tabs (instance-wide settings) are hidden for non-admins.
   const tabs: { id: Tab; label: string; adminOnly?: boolean }[] = [
@@ -286,24 +301,33 @@ export default function DriveSettingsPage() {
 
   return (
     <div className="flex flex-col h-full bg-white overflow-hidden">
-      {/* Breadcrumb header */}
-      <div className="flex items-center gap-2 px-6 py-2.5 border-b border-[#e8eaed] flex-shrink-0" style={{ background: '#f8f9fa' }}>
-        <Link to="/drive" className="flex items-center gap-1.5 text-sm text-[#1a73e8] hover:underline">
-          <ArrowLeft size={14} />
-          Drive
-        </Link>
-        <span className="text-text-tertiary text-sm">/</span>
-        <div className="flex items-center gap-1.5">
-          <FolderOpen size={15} className="text-text-secondary" />
-          <span className="text-sm text-text-primary">{t('drive_settings_title', { defaultValue: 'Réglages' })}</span>
+      {/* Breadcrumb header — a back row on mobile (the trail has nowhere to go). */}
+      {isMobile ? (
+        <div className="flex items-center gap-2 px-1 py-1 border-b border-[#e8eaed] flex-shrink-0" style={{ background: '#f8f9fa' }}>
+          <Link to="/drive" className="flex items-center gap-2 h-11 px-2 rounded-lg text-text-primary active:bg-surface-2 transition-colors">
+            <ArrowLeft size={20} className="shrink-0" />
+            <span className="text-lg font-medium">{t('drive_settings_title', { defaultValue: 'Réglages' })}</span>
+          </Link>
         </div>
-      </div>
+      ) : (
+        <div className="flex items-center gap-2 px-6 py-2.5 border-b border-[#e8eaed] flex-shrink-0" style={{ background: '#f8f9fa' }}>
+          <Link to="/drive" className="flex items-center gap-1.5 text-sm text-[#1a73e8] hover:underline">
+            <ArrowLeft size={14} />
+            Drive
+          </Link>
+          <span className="text-text-tertiary text-sm">/</span>
+          <div className="flex items-center gap-1.5">
+            <FolderOpen size={15} className="text-text-secondary" />
+            <span className="text-sm text-text-primary">{t('drive_settings_title', { defaultValue: 'Réglages' })}</span>
+          </div>
+        </div>
+      )}
 
-      {/* Tab bar (Gmail-style) */}
-      <div className="flex items-end border-b border-[#e8eaed] px-4 flex-shrink-0 overflow-x-auto" style={{ background: '#fff' }}>
+      {/* Tab bar (Gmail-style) — taller targets and edge-to-edge scroll on touch. */}
+      <div className={`flex items-end border-b border-[#e8eaed] flex-shrink-0 overflow-x-auto ${isMobile ? 'px-1' : 'px-4'}`} style={{ background: '#fff' }}>
         {visibleTabs.map(tb => (
           <button key={tb.id} onClick={() => setTab(tb.id)}
-            className={`px-4 py-3 text-sm border-b-2 -mb-px transition-colors whitespace-nowrap ${
+            className={`border-b-2 -mb-px transition-colors whitespace-nowrap ${isMobile ? 'px-4 h-12 text-[15px]' : 'px-4 py-3 text-sm'} ${
               tab === tb.id ? 'border-[#1a73e8] text-[#1a73e8] font-medium' : 'border-transparent text-[#5f6368] hover:text-[#202124] hover:bg-[#f1f3f4]'}`}>
             {tb.label}
           </button>
@@ -312,7 +336,7 @@ export default function DriveSettingsPage() {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto px-8 py-6">
+        <div className={`max-w-3xl mx-auto ${isMobile ? 'px-4 py-4' : 'px-8 py-6'}`}>
           {tab === 'preferences' && <PreferencesTab />}
           {tab === 'webdav'  && <WebDavTab />}
           {tab === 'storage' && isAdmin && <StorageTab />}

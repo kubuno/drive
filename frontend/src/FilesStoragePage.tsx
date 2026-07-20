@@ -47,7 +47,13 @@ function categoryIcon(cat: Category, size = 16) {
   }
 }
 
-function StatsBar({ files, totalBytes }: { files: FileItem[]; totalBytes: number }) {
+/**
+ * Single quota bar: category segments are scaled so their combined width equals
+ * the `pct` of quota used — the one bar shows BOTH how full the quota is and its
+ * composition (the plain fill bar it replaced was redundant). Falls back to a
+ * solid `barColor` fill when the file breakdown is empty (folders-only, etc.).
+ */
+function StatsBar({ files, totalBytes, pct, barColor }: { files: FileItem[]; totalBytes: number; pct: number; barColor: string }) {
   const cats = [...CATEGORIES, { label: 'Autre', color: '#9e9e9e', match: () => true } as Category]
   const byCategory = cats.map(cat => {
     const catFiles = cat.label === 'Autre'
@@ -55,23 +61,29 @@ function StatsBar({ files, totalBytes }: { files: FileItem[]; totalBytes: number
       : files.filter(f => cat.match(f.mime_type))
     return { ...cat, bytes: catFiles.reduce((s, f) => s + f.size_bytes, 0) }
   }).filter(c => c.bytes > 0)
+  const denom = totalBytes > 0 ? totalBytes : 1
 
   return (
-    <div className="mt-4">
-      <div className="flex h-2 rounded-full overflow-hidden bg-surface-3 mb-3">
-        {byCategory.map(c => (
-          <div key={c.label} title={`${c.label} — ${formatSize(c.bytes)}`}
-               style={{ width: `${(c.bytes / totalBytes) * 100}%`, background: c.color }} />
-        ))}
+    <div className="mt-3">
+      <div className="flex h-2 rounded-full overflow-hidden bg-surface-3">
+        {byCategory.length > 0
+          ? byCategory.map(c => (
+              <div key={c.label} title={`${c.label} — ${formatSize(c.bytes)}`}
+                   className="transition-all duration-500"
+                   style={{ width: `${(c.bytes / denom) * pct}%`, background: c.color }} />
+            ))
+          : <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: barColor }} />}
       </div>
-      <div className="flex flex-wrap gap-x-5 gap-y-1">
-        {byCategory.map(c => (
-          <div key={c.label} className="flex items-center gap-1.5 text-xs text-text-secondary">
-            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: c.color }} />
-            {c.label} — {formatSize(c.bytes)}
-          </div>
-        ))}
-      </div>
+      {byCategory.length > 0 && (
+        <div className="flex flex-wrap gap-x-5 gap-y-1 mt-3">
+          {byCategory.map(c => (
+            <div key={c.label} className="flex items-center gap-1.5 text-xs text-text-secondary">
+              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: c.color }} />
+              {c.label} — {formatSize(c.bytes)}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -236,11 +248,8 @@ export default function FilesStoragePage() {
           {formatSize(usedBytes)}
           <span className="text-base font-normal text-text-secondary ml-2">{t('storage.used_suffix', { quota: formatSize(quotaBytes) })}</span>
         </p>
-        <div className="mt-3 h-2 bg-surface-3 rounded-full overflow-hidden">
-          <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: barColor }} />
-        </div>
-        <p className="text-xs text-text-tertiary mt-1">{t('storage.percent_used', { pct })}</p>
-        {files.length > 0 && <StatsBar files={files} totalBytes={totalFileBytes || usedBytes} />}
+        <StatsBar files={files} totalBytes={totalFileBytes || usedBytes} pct={pct} barColor={barColor} />
+        <p className="text-xs text-text-tertiary mt-2">{t('storage.percent_used', { pct })}</p>
         <div className="mt-5 flex gap-2">
           <Button size="sm" variant="secondary" icon={<Trash2 size={14} />} onClick={() => navigate('/drive/trash')}>
             {t('storage.free_space')}

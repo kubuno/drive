@@ -1,4 +1,4 @@
-import { useRef, useCallback } from "react"
+import { useRef, useCallback, useEffect, useState } from "react"
 import type { MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from "react"
 
 // Pointer-aware activation (local copy; consolidate into @ui on next @kubuno/ui
@@ -12,6 +12,27 @@ export function isCoarsePointer(): boolean {
     (window.matchMedia("(pointer: coarse)").matches ||
       window.matchMedia("(hover: none)").matches)
   )
+}
+
+/** True below the `lg` breakpoint — the width at which the shell swaps to its
+ *  mobile chrome (bottom nav, off-canvas drawer, FAB). Local copy of `@ui`'s
+ *  `useIsMobile` until @kubuno/ui is republished (npm 0.1.2 predates it). */
+export function useIsMobile(): boolean {
+  const query = "(max-width: 1023px)"
+  const [mobile, setMobile] = useState(
+    () => typeof window !== "undefined" && typeof window.matchMedia === "function"
+      ? window.matchMedia(query).matches
+      : false,
+  )
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return
+    const mql = window.matchMedia(query)
+    const onChange = (e: MediaQueryListEvent) => setMobile(e.matches)
+    setMobile(mql.matches)
+    mql.addEventListener("change", onChange)
+    return () => mql.removeEventListener("change", onChange)
+  }, [])
+  return mobile
 }
 
 type AnyMouseEvent = { stopPropagation(): void; preventDefault(): void }

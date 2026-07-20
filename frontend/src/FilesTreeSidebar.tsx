@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link as RouterLink, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -14,17 +14,165 @@ import { useFilesStore, type FilesSearchFilters } from '@kubuno/drive'
 import { useDriveExtras, tagColorHex, type SavedSearch } from './driveExtras'
 import { useFilesContextMenuStore } from './filesContextMenuStore'
 import { SidebarNavItem, useModulesStore, ModuleServiceRegistry } from '@kubuno/sdk'
+import { formatSize } from '@kubuno/drive'
+import { useIsMobile } from './openable'
+import { hashTo, fromHash } from './hashRoute'
+
+// ── Shared sidebar affordances ────────────────────────────────────────────────
+// House rule: the sidebar contains no <button>. Anything clickable is an <a>.
+// Navigation carries a real href (react-router <Link>); a pure action uses an
+// anchor with role="button" that cancels the default and handles Space (Enter is
+// already native on an anchor, wiring it would fire the action twice).
+
+const FOCUS_RING = 'outline-none focus-visible:ring-2 focus-visible:ring-primary'
+
+/**
+ * Hover background driven in JavaScript instead of a `hover:bg-*` utility.
+ *
+ * A module bundle emits its Tailwind utilities inside the `kubuno-module`
+ * cascade layer, which loses against the host's `utilities` layer: a
+ * `hover:bg-*` class coming from a module simply never paints in the shell's
+ * left sidebar (the computed background stays transparent on hover). Static
+ * background classes do win, so only the `hover:` variants need this fallback.
+ *
+ * Resetting to an empty string on leave hands control back to the static
+ * active-state class — that is intentional.
+ */
+const hoverBg = (color: string) => ({
+  onMouseEnter: (e: React.MouseEvent<HTMLElement>) => { e.currentTarget.style.backgroundColor = color },
+  onMouseLeave: (e: React.MouseEvent<HTMLElement>) => { e.currentTarget.style.backgroundColor = '' },
+})
+
+/**
+ * Row hover tint. Same value as the core's SidebarNavItem so a drive row and a
+ * mail row highlight identically — the left panel must feel like ONE sidebar,
+ * whichever module renders it.
+ */
+const ROW_HOVER = 'color-mix(in srgb, var(--color-primary) 12%, white)'
+
+/**
+ * Expand/collapse chevron of a tree node — a pure action, never a navigation.
+ * Kept as a sibling of the node's navigation link: an <a> must never nest in an <a>.
+ */
+function ExpandToggle({ expanded, onToggle, label }: {
+  expanded: boolean; onToggle: () => void; label: string
+}) {
+  return (
+    <a
+      href="#"
+      role="button"
+      aria-label={label}
+      aria-expanded={expanded}
+      className={`shrink-0 inline-flex items-center justify-center p-0.5 rounded cursor-pointer ${FOCUS_RING}`}
+      style={{ transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 150ms' }}
+      {...hoverBg('rgba(0,0,0,0.1)')}
+      onClick={e => { e.preventDefault(); e.stopPropagation(); onToggle() }}
+      onKeyDown={e => { if (e.key === ' ') { e.preventDefault(); onToggle() } }}
+    >
+      <ChevronRight size={14} className="text-text-tertiary" />
+    </a>
+  )
+}
+
+// ── Mobile drawer ─────────────────────────────────────────────────────────────
+
+type TFn = (key: string, opts?: Record<string, unknown>) => string
+
+/** Row of the mobile drawer: a 52px tap target, icon + label, tinted when active. */
+function DrawerLink({ icon, label, active, to }: {
+  icon: React.ReactNode; label: string; active?: boolean; to: string
+}) {
+  return (
+    <RouterLink
+      to={to}
+      className={`w-full flex items-center gap-4 h-[52px] px-4 rounded-r-full text-left text-[15px] transition-colors cursor-pointer ${FOCUS_RING}
+                  ${active ? 'bg-primary-light text-primary font-medium' : 'text-text-primary active:bg-surface-2'}`}
+    >
+      <span className={`shrink-0 ${active ? 'text-primary' : 'text-text-secondary'}`}>{icon}</span>
+      <span className="flex-1 min-w-0 truncate">{label}</span>
+    </RouterLink>
+  )
+}
+
+function MobileDrawerNav({ t, pathname, isInDrive, isRecent, isTrashed, isSystem, isAdmin, moduleMounts, remotes }: {
+  t: TFn
+  pathname: string
+  isInDrive: boolean; isRecent: boolean; isTrashed: boolean; isSystem: boolean
+  isAdmin: boolean
+  moduleMounts: Array<{ moduleId: string; key: string; name: string }>
+  remotes: RemoteConnection[]
+}) {
+  const user = useAuthStore(s => s.user)
+  const pct = user && user.quota_bytes > 0
+    ? Math.min(100, Math.round((user.used_bytes / user.quota_bytes) * 100))
+    : null
+  const barColor = pct == null ? '' : pct > 90 ? 'bg-danger' : pct > 70 ? 'bg-warning' : 'bg-primary'
+
+  return (
+    <div className="flex-1 flex flex-col overflow-y-auto py-2 pr-2">
+      <nav className="space-y-0.5">
+        <DrawerLink icon={<HardDrive size={22} />} label={t('tree.my_drive', { defaultValue: 'Mon Drive' })}
+          active={isInDrive} to="/drive" />
+        <DrawerLink icon={<Clock size={22} />} label={t('nav.recent')}
+          active={isRecent} to="/drive/recent" />
+        {moduleMounts.map(mt => (
+          <DrawerLink key={`${mt.moduleId}:${mt.key}`} icon={<Cloud size={22} />} label={mt.name}
+            active={pathname === `/drive/m/${mt.moduleId}/${mt.key}`}
+            to={`/drive/m/${mt.moduleId}/${mt.key}`} />
+        ))}
+        {remotes.map(r => (
+          <DrawerLink key={r.id} icon={<Server size={22} />} label={r.name}
+            active={pathname === `/drive/remote/${r.id}`}
+            to={`/drive/remote/${r.id}`} />
+        ))}
+        <DrawerLink icon={<Trash2 size={22} />} label={t('nav.trash')}
+          active={isTrashed} to="/drive/trash" />
+        {isAdmin && (
+          <DrawerLink icon={<ServerCog size={22} />} label={t('nav.system', { defaultValue: 'Système' })}
+            active={isSystem} to="/drive/system" />
+        )}
+        <DrawerLink icon={<Settings2 size={22} />} label={t('nav.storage_settings')}
+          active={pathname === '/drive/settings'} to="/drive/settings" />
+      </nav>
+
+      {/* Storage gauge — the header one is desktop-only, so this is the ONLY
+          place a phone user sees their quota. */}
+      {pct != null && user && (
+        <div className="mt-auto pt-4 px-4 pb-2">
+          <div className="flex items-center gap-2 mb-2 text-text-secondary">
+            <Cloud size={20} />
+            <span className="text-[15px]">{t('storage.title')}</span>
+          </div>
+          <div className="h-1.5 w-full bg-black/10 rounded-full overflow-hidden mb-2">
+            <div className={`h-full ${barColor} rounded-full transition-all duration-500`} style={{ width: `${pct}%` }} />
+          </div>
+          <p className="text-xs text-text-secondary mb-3">
+            {formatSize(user.used_bytes)} / {formatSize(user.quota_bytes)}
+          </p>
+          <RouterLink
+            to="/drive/storage"
+            className={`w-full h-10 flex items-center justify-center rounded-full border border-border text-primary text-sm font-medium active:bg-surface-2 transition-colors cursor-pointer ${FOCUS_RING}`}
+          >
+            {t('storage.manage', { defaultValue: 'Gérer le stockage' })}
+          </RouterLink>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Folder tree node ──────────────────────────────────────────────────────────
 
 function TreeNode({
-  folder, depth, activeFolderId, contextMenuFolderId, refreshKey, onNavigate, onContextMenu,
+  folder, depth, activeFolderId, contextMenuFolderId, refreshKey, linkFor, onContextMenu,
 }: {
   folder: Folder
   depth: number
   activeFolderId: string | null
   contextMenuFolderId: string | null
   refreshKey: number
-  onNavigate: (id: string | null) => void
+  /** Builds the real href of a folder — the row navigates through a <Link>. */
+  linkFor: (id: string | null) => string
   onContextMenu: (folder: Folder, x: number, y: number) => void
 }) {
   const { t } = useTranslation('drive')
@@ -53,26 +201,28 @@ function TreeNode({
     <div>
       <div
         className={`flex items-center gap-1 py-1 rounded-full cursor-pointer select-none
-          ${isActive ? 'bg-primary-light' : isContextTarget ? 'bg-surface-3' : 'hover:bg-surface-2'} ${pendingBoxClass(pendingKind)}`}
+          ${isActive ? 'bg-primary-light' : isContextTarget ? 'bg-surface-3' : ''} ${pendingBoxClass(pendingKind)}`}
         style={{ paddingLeft: `${8 + depth * 16}px`, paddingRight: '8px', ...pendingBoxStyle(pendingKind) }}
-        onClick={() => onNavigate(folder.id)}
+        {...(isActive || isContextTarget ? {} : hoverBg(ROW_HOVER))}
         onContextMenu={handleContextMenu}
       >
-        <button
-          className="shrink-0 p-0.5 rounded hover:bg-black/10"
-          style={{ transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 150ms' }}
-          onClick={e => { e.stopPropagation(); setExpanded(v => !v) }}
-          aria-label={expanded ? t('common.collapse') : t('common.expand')}
+        <ExpandToggle
+          expanded={expanded}
+          onToggle={() => setExpanded(v => !v)}
+          label={expanded ? t('common.collapse') : t('common.expand')}
+        />
+        <RouterLink
+          to={linkFor(folder.id)}
+          className={`flex-1 min-w-0 flex items-center gap-1 self-stretch -my-1 py-1 pr-2 -mr-2 rounded-full cursor-pointer ${FOCUS_RING}`}
         >
-          <ChevronRight size={14} className="text-text-tertiary" />
-        </button>
-        <FolderGlyph folder={folder} size={15} className="shrink-0" color={isActive ? '#1a73e8' : undefined} />
-        <span
-          className="text-sm truncate ml-1 flex-1"
-          style={{ color: isActive ? '#041e49' : '#5f6368', fontWeight: isActive ? 600 : 400 }}
-        >
-          {folder.name}
-        </span>
+          <FolderGlyph folder={folder} size={15} className="shrink-0" color={isActive ? '#1a73e8' : undefined} />
+          <span
+            className="text-sm truncate ml-1 flex-1"
+            style={{ color: isActive ? '#041e49' : '#5f6368', fontWeight: isActive ? 600 : 400 }}
+          >
+            {folder.name}
+          </span>
+        </RouterLink>
       </div>
 
       {expanded && children.map(child => (
@@ -83,7 +233,7 @@ function TreeNode({
           activeFolderId={activeFolderId}
           contextMenuFolderId={contextMenuFolderId}
           refreshKey={refreshKey}
-          onNavigate={onNavigate}
+          linkFor={linkFor}
           onContextMenu={onContextMenu}
         />
       ))}
@@ -102,18 +252,19 @@ function TreeNode({
 // ── Mon Drive section (expandable root) ───────────────────────────────────────
 
 function DriveRootSection({
-  activeFolderId, contextMenuFolderId, isInDrive, refreshKey, onNavigate, onContextMenu, onHeaderContextMenu,
+  activeFolderId, contextMenuFolderId, isInDrive, refreshKey, linkFor, onContextMenu, onHeaderContextMenu,
 }: {
   activeFolderId: string | null
   contextMenuFolderId: string | null
   isInDrive: boolean
   refreshKey: number
-  onNavigate: (id: string | null) => void
+  /** Builds the real href of a folder (null = the drive root). */
+  linkFor: (id: string | null) => string
   onContextMenu: (folder: Folder, x: number, y: number) => void
   onHeaderContextMenu?: (e: React.MouseEvent) => void
 }) {
   const { t } = useTranslation('drive')
-  // Enroulé par défaut (demande utilisateur).
+  // Collapsed by default (user request).
   const [expanded, setExpanded] = useState(false)
 
   const { data } = useQuery({
@@ -129,29 +280,31 @@ function DriveRootSection({
     <div>
       <div
         className={`flex items-center gap-1 px-3 py-2 rounded-full cursor-pointer select-none
-          ${isRootActive ? 'bg-primary-light' : 'hover:bg-surface-2'}`}
-        onClick={() => onNavigate(null)}
+          ${isRootActive ? 'bg-primary-light' : ''}`}
+        {...(isRootActive ? {} : hoverBg(ROW_HOVER))}
         onContextMenu={onHeaderContextMenu}
       >
-        <button
-          className="shrink-0 p-0.5 rounded hover:bg-black/10"
-          style={{ transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 150ms' }}
-          onClick={e => { e.stopPropagation(); setExpanded(v => !v) }}
-          aria-label={expanded ? t('tree.collapse_drive') : t('tree.expand_drive')}
-        >
-          <ChevronRight size={14} className="text-text-tertiary" />
-        </button>
-        <FolderOpen
-          size={20}
-          className="shrink-0"
-          style={{ color: isRootActive ? '#1a73e8' : '#5f6368' }}
+        <ExpandToggle
+          expanded={expanded}
+          onToggle={() => setExpanded(v => !v)}
+          label={expanded ? t('tree.collapse_drive') : t('tree.expand_drive')}
         />
-        <span
-          className="text-sm font-medium truncate ml-1 flex-1"
-          style={{ color: isRootActive ? '#041e49' : '#5f6368', fontWeight: isRootActive ? 600 : 500 }}
+        <RouterLink
+          to={linkFor(null)}
+          className={`flex-1 min-w-0 flex items-center gap-1 self-stretch -my-2 py-2 pr-3 -mr-3 rounded-full cursor-pointer ${FOCUS_RING}`}
         >
-          {t('tree.my_drive')}
-        </span>
+          <FolderOpen
+            size={20}
+            className="shrink-0"
+            style={{ color: isRootActive ? '#1a73e8' : '#5f6368' }}
+          />
+          <span
+            className="text-sm font-medium truncate ml-1 flex-1"
+            style={{ color: isRootActive ? '#041e49' : '#5f6368', fontWeight: 600 }}
+          >
+            {t('tree.my_drive')}
+          </span>
+        </RouterLink>
       </div>
 
       {expanded && (
@@ -164,7 +317,7 @@ function DriveRootSection({
               activeFolderId={activeFolderId}
               contextMenuFolderId={contextMenuFolderId}
               refreshKey={refreshKey}
-              onNavigate={onNavigate}
+              linkFor={linkFor}
               onContextMenu={onContextMenu}
             />
           ))}
@@ -184,14 +337,15 @@ const REMOTE_STATUS_COLOR: Record<RemoteConnection['status'], string> = {
 }
 
 function RemoteTreeNode({
-  remoteId, entry, depth, activeRemoteId, activePath, onNavigate,
+  remoteId, entry, depth, activeRemoteId, activePath, linkFor,
 }: {
   remoteId: string
   entry: RemoteEntry
   depth: number
   activeRemoteId: string | null
   activePath: string
-  onNavigate: (remoteId: string, path: string) => void
+  /** Builds the real href of a remote folder. */
+  linkFor: (remoteId: string, path: string) => string
 }) {
   const { t } = useTranslation('drive')
   const [expanded, setExpanded] = useState(false)
@@ -209,27 +363,29 @@ function RemoteTreeNode({
     <div>
       <div
         className={`flex items-center gap-1 py-1 rounded-full cursor-pointer select-none
-          ${isActive ? 'bg-primary-light' : 'hover:bg-surface-2'}`}
+          ${isActive ? 'bg-primary-light' : ''}`}
         style={{ paddingLeft: `${8 + depth * 16}px`, paddingRight: '8px' }}
-        onClick={() => onNavigate(remoteId, entry.path)}
+        {...(isActive ? {} : hoverBg(ROW_HOVER))}
       >
-        <button
-          className="shrink-0 p-0.5 rounded hover:bg-black/10"
-          style={{ transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 150ms' }}
-          onClick={e => { e.stopPropagation(); setExpanded(v => !v) }}
-          aria-label={expanded ? t('common.collapse') : t('common.expand')}
+        <ExpandToggle
+          expanded={expanded}
+          onToggle={() => setExpanded(v => !v)}
+          label={expanded ? t('common.collapse') : t('common.expand')}
+        />
+        <RouterLink
+          to={linkFor(remoteId, entry.path)}
+          className={`flex-1 min-w-0 flex items-center gap-1 self-stretch -my-1 py-1 pr-2 -mr-2 rounded-full cursor-pointer ${FOCUS_RING}`}
         >
-          <ChevronRight size={14} className="text-text-tertiary" />
-        </button>
-        <FolderIcon size={15} className="shrink-0" style={{ color: isActive ? '#1a73e8' : '#5f6368' }} fill="currentColor" />
-        <span className="text-sm truncate ml-1 flex-1" style={{ color: isActive ? '#041e49' : '#5f6368', fontWeight: isActive ? 600 : 400 }}>
-          {entry.name}
-        </span>
+          <FolderIcon size={15} className="shrink-0" style={{ color: isActive ? '#1a73e8' : '#5f6368' }} fill="currentColor" />
+          <span className="text-sm truncate ml-1 flex-1" style={{ color: isActive ? '#041e49' : '#5f6368', fontWeight: isActive ? 600 : 400 }}>
+            {entry.name}
+          </span>
+        </RouterLink>
       </div>
       {expanded && childDirs.map(child => (
         <RemoteTreeNode
           key={child.path} remoteId={remoteId} entry={child} depth={depth + 1}
-          activeRemoteId={activeRemoteId} activePath={activePath} onNavigate={onNavigate}
+          activeRemoteId={activeRemoteId} activePath={activePath} linkFor={linkFor}
         />
       ))}
     </div>
@@ -237,12 +393,13 @@ function RemoteTreeNode({
 }
 
 function RemoteSection({
-  remote, activeRemoteId, activePath, onNavigate, onHeaderContextMenu,
+  remote, activeRemoteId, activePath, linkFor, onHeaderContextMenu,
 }: {
   remote: RemoteConnection
   activeRemoteId: string | null
   activePath: string
-  onNavigate: (remoteId: string, path: string) => void
+  /** Builds the real href of a remote folder. */
+  linkFor: (remoteId: string, path: string) => string
   onHeaderContextMenu?: (e: React.MouseEvent) => void
 }) {
   const { t } = useTranslation('drive')
@@ -261,36 +418,38 @@ function RemoteSection({
     <div>
       <div
         className={`flex items-center gap-1 px-3 py-2 rounded-full cursor-pointer select-none
-          ${isRootActive ? 'bg-primary-light' : 'hover:bg-surface-2'}`}
-        onClick={() => onNavigate(remote.id, '')}
+          ${isRootActive ? 'bg-primary-light' : ''}`}
+        {...(isRootActive ? {} : hoverBg(ROW_HOVER))}
         onContextMenu={onHeaderContextMenu}
         title={t(`rs.status_${remote.status}`, { defaultValue: remote.status })}
       >
-        <button
-          className="shrink-0 p-0.5 rounded hover:bg-black/10"
-          style={{ transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 150ms' }}
-          onClick={e => { e.stopPropagation(); setExpanded(v => !v) }}
-          aria-label={expanded ? t('common.collapse') : t('common.expand')}
+        <ExpandToggle
+          expanded={expanded}
+          onToggle={() => setExpanded(v => !v)}
+          label={expanded ? t('common.collapse') : t('common.expand')}
+        />
+        <RouterLink
+          to={linkFor(remote.id, '')}
+          className={`flex-1 min-w-0 flex items-center gap-1 self-stretch -my-2 py-2 pr-3 -mr-3 rounded-full cursor-pointer ${FOCUS_RING}`}
         >
-          <ChevronRight size={14} className="text-text-tertiary" />
-        </button>
-        <span className="relative shrink-0">
-          <Server size={20} style={{ color: isRootActive ? '#1a73e8' : '#5f6368' }} />
-          <span
-            className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-white"
-            style={{ backgroundColor: REMOTE_STATUS_COLOR[remote.status] }}
-          />
-        </span>
-        <span className="text-sm font-medium truncate ml-1 flex-1" style={{ color: isRootActive ? '#041e49' : '#5f6368', fontWeight: isRootActive ? 600 : 500 }}>
-          {remote.name}
-        </span>
+          <span className="relative shrink-0">
+            <Server size={20} style={{ color: isRootActive ? '#1a73e8' : '#5f6368' }} />
+            <span
+              className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-white"
+              style={{ backgroundColor: REMOTE_STATUS_COLOR[remote.status] }}
+            />
+          </span>
+          <span className="text-sm font-medium truncate ml-1 flex-1" style={{ color: isRootActive ? '#041e49' : '#5f6368', fontWeight: 600 }}>
+            {remote.name}
+          </span>
+        </RouterLink>
       </div>
       {expanded && (
         <div className="pl-4">
           {dirs.map(d => (
             <RemoteTreeNode
               key={d.path} remoteId={remote.id} entry={d} depth={0}
-              activeRemoteId={activeRemoteId} activePath={activePath} onNavigate={onNavigate}
+              activeRemoteId={activeRemoteId} activePath={activePath} linkFor={linkFor}
             />
           ))}
           {data && dirs.length === 0 && (
@@ -310,7 +469,7 @@ type MountFolder = { id: string; name: string }
 type MountSource = { list: (parentId: string | null) => Promise<{ folders: MountFolder[]; files: unknown[] }> }
 
 function ModuleTreeNode({
-  source, moduleId, mountKey, folder, depth, activePath, onNavigate,
+  source, moduleId, mountKey, folder, depth, activePath, linkFor,
 }: {
   source: MountSource
   moduleId: string
@@ -318,7 +477,8 @@ function ModuleTreeNode({
   folder: MountFolder
   depth: number
   activePath: string | null
-  onNavigate: (path: string) => void
+  /** Builds the real href of a mount folder. */
+  linkFor: (path: string) => string
 }) {
   const { t } = useTranslation('drive')
   const [expanded, setExpanded] = useState(false)
@@ -336,27 +496,29 @@ function ModuleTreeNode({
     <div>
       <div
         className={`flex items-center gap-1 py-1 rounded-full cursor-pointer select-none
-          ${isActive ? 'bg-primary-light' : 'hover:bg-surface-2'}`}
+          ${isActive ? 'bg-primary-light' : ''}`}
         style={{ paddingLeft: `${8 + depth * 16}px`, paddingRight: '8px' }}
-        onClick={() => onNavigate(folder.id)}
+        {...(isActive ? {} : hoverBg(ROW_HOVER))}
       >
-        <button
-          className="shrink-0 p-0.5 rounded hover:bg-black/10"
-          style={{ transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 150ms' }}
-          onClick={e => { e.stopPropagation(); setExpanded(v => !v) }}
-          aria-label={expanded ? t('common.collapse') : t('common.expand')}
+        <ExpandToggle
+          expanded={expanded}
+          onToggle={() => setExpanded(v => !v)}
+          label={expanded ? t('common.collapse') : t('common.expand')}
+        />
+        <RouterLink
+          to={linkFor(folder.id)}
+          className={`flex-1 min-w-0 flex items-center gap-1 self-stretch -my-1 py-1 pr-2 -mr-2 rounded-full cursor-pointer ${FOCUS_RING}`}
         >
-          <ChevronRight size={14} className="text-text-tertiary" />
-        </button>
-        <FolderIcon size={15} className="shrink-0" style={{ color: isActive ? '#1a73e8' : '#5f6368' }} fill="currentColor" />
-        <span className="text-sm truncate ml-1 flex-1" style={{ color: isActive ? '#041e49' : '#5f6368', fontWeight: isActive ? 600 : 400 }}>
-          {folder.name}
-        </span>
+          <FolderIcon size={15} className="shrink-0" style={{ color: isActive ? '#1a73e8' : '#5f6368' }} fill="currentColor" />
+          <span className="text-sm truncate ml-1 flex-1" style={{ color: isActive ? '#041e49' : '#5f6368', fontWeight: isActive ? 600 : 400 }}>
+            {folder.name}
+          </span>
+        </RouterLink>
       </div>
       {expanded && childDirs.map(child => (
         <ModuleTreeNode
           key={child.id} source={source} moduleId={moduleId} mountKey={mountKey}
-          folder={child} depth={depth + 1} activePath={activePath} onNavigate={onNavigate}
+          folder={child} depth={depth + 1} activePath={activePath} linkFor={linkFor}
         />
       ))}
     </div>
@@ -364,14 +526,15 @@ function ModuleTreeNode({
 }
 
 function ModuleMountSection({
-  moduleId, mountKey, name, isActiveMount, activePath, onNavigate, onHeaderContextMenu,
+  moduleId, mountKey, name, isActiveMount, activePath, linkFor, onHeaderContextMenu,
 }: {
   moduleId: string
   mountKey: string
   name: string
   isActiveMount: boolean
   activePath: string
-  onNavigate: (path: string) => void
+  /** Builds the real href of a mount folder ('' = the mount root). */
+  linkFor: (path: string) => string
   onHeaderContextMenu?: (e: React.MouseEvent) => void
 }) {
   const { t } = useTranslation('drive')
@@ -394,29 +557,31 @@ function ModuleMountSection({
     <div>
       <div
         className={`flex items-center gap-1 px-3 py-2 rounded-full cursor-pointer select-none
-          ${isRootActive ? 'bg-primary-light' : 'hover:bg-surface-2'}`}
-        onClick={() => onNavigate('')}
+          ${isRootActive ? 'bg-primary-light' : ''}`}
+        {...(isRootActive ? {} : hoverBg(ROW_HOVER))}
         onContextMenu={onHeaderContextMenu}
       >
-        <button
-          className="shrink-0 p-0.5 rounded hover:bg-black/10"
-          style={{ transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 150ms' }}
-          onClick={e => { e.stopPropagation(); setExpanded(v => !v) }}
-          aria-label={expanded ? t('common.collapse') : t('common.expand')}
+        <ExpandToggle
+          expanded={expanded}
+          onToggle={() => setExpanded(v => !v)}
+          label={expanded ? t('common.collapse') : t('common.expand')}
+        />
+        <RouterLink
+          to={linkFor('')}
+          className={`flex-1 min-w-0 flex items-center gap-1 self-stretch -my-2 py-2 pr-3 -mr-3 rounded-full cursor-pointer ${FOCUS_RING}`}
         >
-          <ChevronRight size={14} className="text-text-tertiary" />
-        </button>
-        <Cloud size={20} className="shrink-0" style={{ color: isRootActive ? '#1a73e8' : '#5f6368' }} />
-        <span className="text-sm font-medium truncate ml-1 flex-1" style={{ color: isRootActive ? '#041e49' : '#5f6368', fontWeight: isRootActive ? 600 : 500 }}>
-          {name}
-        </span>
+          <Cloud size={20} className="shrink-0" style={{ color: isRootActive ? '#1a73e8' : '#5f6368' }} />
+          <span className="text-sm font-medium truncate ml-1 flex-1" style={{ color: isRootActive ? '#041e49' : '#5f6368', fontWeight: 600 }}>
+            {name}
+          </span>
+        </RouterLink>
       </div>
       {expanded && source && (
         <div className="pl-4">
           {dirs.map(d => (
             <ModuleTreeNode
               key={d.id} source={source} moduleId={moduleId} mountKey={mountKey}
-              folder={d} depth={0} activePath={activePath} onNavigate={onNavigate}
+              folder={d} depth={0} activePath={activePath} linkFor={linkFor}
             />
           ))}
           {data && dirs.length === 0 && (
@@ -431,19 +596,20 @@ function ModuleMountSection({
 // ── Nav item (flat section) ───────────────────────────────────────────────────
 
 function NavItem({
-  icon, label, isActive, onClick,
+  icon, label, isActive, to,
 }: {
   icon: React.ReactNode
   label: string
   isActive: boolean
-  onClick: () => void
+  to: string
 }) {
   return (
-    <button
-      onClick={onClick}
+    <RouterLink
+      to={to}
       className={`w-full flex items-center gap-3 px-3 py-2 rounded-full text-sm
-        transition-colors text-left select-none
-        ${isActive ? 'bg-primary-light' : 'hover:bg-surface-2'}`}
+        transition-colors text-left select-none cursor-pointer ${FOCUS_RING}
+        ${isActive ? 'bg-primary-light' : ''}`}
+      {...(isActive ? {} : hoverBg(ROW_HOVER))}
     >
       <span className="flex-shrink-0" style={{ color: isActive ? '#1a73e8' : '#5f6368' }}>
         {icon}
@@ -451,7 +617,7 @@ function NavItem({
       <span className="truncate flex-1" style={{ color: isActive ? '#041e49' : '#5f6368', fontWeight: isActive ? 600 : 400 }}>
         {label}
       </span>
-    </button>
+    </RouterLink>
   )
 }
 
@@ -459,7 +625,8 @@ function NavItem({
 
 export default function FilesTreeSidebar({ collapsed = false }: { collapsed?: boolean }) {
   const { t } = useTranslation('drive')
-  const { pathname } = useLocation()
+  const isMobile = useIsMobile()
+  const { pathname, hash } = useLocation()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const { currentFolderId, refreshKey, openNewFolder, openRemotesPanel,
@@ -474,8 +641,18 @@ export default function FilesTreeSidebar({ collapsed = false }: { collapsed?: bo
       setSearchFilters(s.filters as Partial<FilesSearchFilters>)
     }
     applySearch()
-    navigate('/drive')
   }
+
+  // A saved search is an addressable view without a route of its own, so it is
+  // linked as `/drive/#search/<id>`. The state is read back from the hash, which
+  // makes a pasted link and the browser Back button both restore the view.
+  useEffect(() => {
+    const target = fromHash(hash)
+    if (!target || target.kind !== 'search') return
+    const saved = savedSearches.find(s => s.id === target.id)
+    if (saved) applySaved(saved)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hash, savedSearches])
   const { openFolderMenu, contextMenuFolderId, setContextMenuFolderId } = useFilesContextMenuStore()
   const qc = useQueryClient()
   const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm()
@@ -504,8 +681,10 @@ export default function FilesTreeSidebar({ collapsed = false }: { collapsed?: bo
   const activeModuleId = moduleMatch ? moduleMatch[1] : null
   const activeMountKey = moduleMatch ? moduleMatch[2] : null
   const activeMountPath = moduleMatch ? (searchParams.get('path') ?? '') : ''
+  const moduleMountLink = (moduleId: string, key: string, path: string) =>
+    `/drive/m/${moduleId}/${key}${path ? `?path=${encodeURIComponent(path)}` : ''}`
   const goToModuleMount = (moduleId: string, key: string, path: string) =>
-    navigate(`/drive/m/${moduleId}/${key}${path ? `?path=${encodeURIComponent(path)}` : ''}`)
+    navigate(moduleMountLink(moduleId, key, path))
 
   // Menu contextuel local (Mon Drive / montages distants).
   const [ctx, setCtx] = useState<{ x: number; y: number; items: MenuItem[] } | null>(null)
@@ -519,8 +698,9 @@ export default function FilesTreeSidebar({ collapsed = false }: { collapsed?: bo
   const remoteMatch    = pathname.match(/^\/drive\/remote\/([^/]+)/)
   const activeRemoteId = remoteMatch ? remoteMatch[1] : null
   const activeRemotePath = activeRemoteId ? (searchParams.get('path') ?? '') : ''
-  const goToRemote = (remoteId: string, path: string) =>
-    navigate(`/drive/remote/${remoteId}?path=${encodeURIComponent(path)}`)
+  const remoteLink = (remoteId: string, path: string) =>
+    `/drive/remote/${remoteId}?path=${encodeURIComponent(path)}`
+  const goToRemote = (remoteId: string, path: string) => navigate(remoteLink(remoteId, path))
 
   const isSpecial = ['/drive/recent', '/drive/starred', '/drive/shared', '/drive/trash', '/drive/settings', '/drive/storage', '/drive/remote', '/drive/split', '/drive/system', '/drive/m'].some(
     p => pathname === p || pathname.startsWith(p + '/'),
@@ -532,39 +712,50 @@ export default function FilesTreeSidebar({ collapsed = false }: { collapsed?: bo
   const isTrashed = pathname === '/drive/trash'
   const isSystem  = pathname === '/drive/system'
 
+  // Mobile : le tiroir remplace la sidebar. Il ne rend PAS l'arborescence (des
+  // chevrons de 16px ne se manipulent pas au pouce) mais les destinations que la
+  // barre du bas n'a pas déjà — plus la jauge de stockage, invisible ailleurs sur
+  // mobile (FilesStorageGaugeHeader est `hidden lg:flex`).
+  if (isMobile && !collapsed) {
+    return (
+      <MobileDrawerNav
+        t={t} pathname={pathname}
+        isInDrive={isInDrive} isRecent={isRecent} isTrashed={isTrashed} isSystem={isSystem}
+        isAdmin={isAdmin} moduleMounts={moduleMounts} remotes={remotes}
+      />
+    )
+  }
+
   // Mode replié : nav en icônes vers les destinations principales (pas l'arbre).
   if (collapsed) {
     return (
       <nav className="flex-1 overflow-y-auto px-2 py-2 space-y-0.5">
         <SidebarNavItem collapsed label={t('tree.my_drive', { defaultValue: 'Mon Drive' })}
-          icon={<HardDrive size={20} />} active={isInDrive} onClick={() => navigate('/drive')} />
+          icon={<HardDrive size={20} />} active={isInDrive} to="/drive" />
         {moduleMounts.map(mt => (
           <SidebarNavItem key={`${mt.moduleId}:${mt.key}`} collapsed label={mt.name}
             icon={<Cloud size={20} />} active={pathname === `/drive/m/${mt.moduleId}/${mt.key}`}
-            onClick={() => navigate(`/drive/m/${mt.moduleId}/${mt.key}`)} />
+            to={`/drive/m/${mt.moduleId}/${mt.key}`} />
         ))}
         <SidebarNavItem collapsed label={t('nav.shared')}
-          icon={<Share2 size={20} />} active={isShared} onClick={() => navigate('/drive/shared')} />
+          icon={<Share2 size={20} />} active={isShared} to="/drive/shared" />
         <SidebarNavItem collapsed label={t('nav.recent')}
-          icon={<Clock size={20} />} active={isRecent} onClick={() => navigate('/drive/recent')} />
+          icon={<Clock size={20} />} active={isRecent} to="/drive/recent" />
         <SidebarNavItem collapsed label={t('tree.starred')}
-          icon={<Star size={20} />} active={isStarred} onClick={() => navigate('/drive/starred')} />
+          icon={<Star size={20} />} active={isStarred} to="/drive/starred" />
         <SidebarNavItem collapsed label={t('nav.trash')}
-          icon={<Trash2 size={20} />} active={isTrashed} onClick={() => navigate('/drive/trash')} />
+          icon={<Trash2 size={20} />} active={isTrashed} to="/drive/trash" />
         <SidebarNavItem collapsed label={t('dual.title', { defaultValue: 'Deux volets' })}
-          icon={<Columns2 size={20} />} active={pathname === '/drive/split'} onClick={() => navigate('/drive/split')} />
+          icon={<Columns2 size={20} />} active={pathname === '/drive/split'} to="/drive/split" />
         {isAdmin && (
           <SidebarNavItem collapsed label={t('nav.system', { defaultValue: 'Système' })}
-            icon={<ServerCog size={20} />} active={isSystem} onClick={() => navigate('/drive/system')} />
+            icon={<ServerCog size={20} />} active={isSystem} to="/drive/system" />
         )}
       </nav>
     )
   }
 
-  const goToFolder = (id: string | null) => {
-    if (id) navigate(`/drive?folder=${id}`)
-    else navigate('/drive')
-  }
+  const folderLink = (id: string | null) => (id ? `/drive?folder=${id}` : '/drive')
 
   const handleContextMenu = (folder: Folder, x: number, y: number) => {
     setContextMenuFolderId(folder.id)
@@ -605,7 +796,7 @@ export default function FilesTreeSidebar({ collapsed = false }: { collapsed?: bo
           contextMenuFolderId={contextMenuFolderId}
           isInDrive={isInDrive}
           refreshKey={refreshKey}
-          onNavigate={goToFolder}
+          linkFor={folderLink}
           onContextMenu={handleContextMenu}
           onHeaderContextMenu={e => openCtx(e, driveMenuItems())}
         />
@@ -620,7 +811,7 @@ export default function FilesTreeSidebar({ collapsed = false }: { collapsed?: bo
             name={mt.name}
             isActiveMount={activeModuleId === mt.moduleId && activeMountKey === mt.key}
             activePath={activeMountPath}
-            onNavigate={path => goToModuleMount(mt.moduleId, mt.key, path)}
+            linkFor={path => moduleMountLink(mt.moduleId, mt.key, path)}
             onHeaderContextMenu={e => openCtx(e, moduleMountMenuItems(mt))}
           />
         ))}
@@ -632,7 +823,7 @@ export default function FilesTreeSidebar({ collapsed = false }: { collapsed?: bo
             remote={remote}
             activeRemoteId={activeRemoteId}
             activePath={activeRemotePath}
-            onNavigate={goToRemote}
+            linkFor={remoteLink}
             onHeaderContextMenu={e => openCtx(e, remoteMenuItems(remote))}
           />
         ))}
@@ -643,38 +834,38 @@ export default function FilesTreeSidebar({ collapsed = false }: { collapsed?: bo
           icon={<Share2 size={20} />}
           label={t('nav.shared')}
           isActive={isShared}
-          onClick={() => navigate('/drive/shared')}
+          to="/drive/shared"
         />
         <NavItem
           icon={<Clock size={20} />}
           label={t('nav.recent')}
           isActive={isRecent}
-          onClick={() => navigate('/drive/recent')}
+          to="/drive/recent"
         />
         <NavItem
           icon={<Star size={20} />}
           label={t('tree.starred')}
           isActive={isStarred}
-          onClick={() => navigate('/drive/starred')}
+          to="/drive/starred"
         />
         <NavItem
           icon={<Trash2 size={20} />}
           label={t('nav.trash')}
           isActive={isTrashed}
-          onClick={() => navigate('/drive/trash')}
+          to="/drive/trash"
         />
         <NavItem
           icon={<Columns2 size={20} />}
           label={t('dual.title', { defaultValue: 'Deux volets' })}
           isActive={pathname === '/drive/split'}
-          onClick={() => navigate('/drive/split')}
+          to="/drive/split"
         />
         {isAdmin && (
           <NavItem
             icon={<ServerCog size={20} />}
             label={t('nav.system', { defaultValue: 'Système' })}
             isActive={isSystem}
-            onClick={() => navigate('/drive/system')}
+            to="/drive/system"
           />
         )}
 
@@ -688,18 +879,28 @@ export default function FilesTreeSidebar({ collapsed = false }: { collapsed?: bo
             {savedSearches.map(s => (
               <div
                 key={s.id}
-                onClick={() => applySaved(s)}
-                className="group w-full flex items-center gap-3 px-3 py-2 rounded-full text-sm hover:bg-surface-2 cursor-pointer text-left select-none"
+                className="group w-full flex items-center gap-3 px-3 py-2 rounded-full text-sm text-left select-none"
+                {...hoverBg(ROW_HOVER)}
               >
-                <Search size={18} className="flex-shrink-0" style={{ color: s.color ? tagColorHex(s.color) : '#5f6368' }} />
-                <span className="truncate flex-1" style={{ color: '#5f6368' }}>{s.name}</span>
-                <button
-                  onClick={(e) => { e.stopPropagation(); void deleteSavedSearch(s.id) }}
-                  className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-danger-light text-danger transition-opacity"
+                {/* Addressable view, no route of its own → real hash link. */}
+                <RouterLink
+                  to={hashTo('search', s.id)}
+                  className={`flex items-center gap-3 flex-1 min-w-0 self-stretch -my-2 py-2 pr-3 -mr-3 rounded-full cursor-pointer ${FOCUS_RING}`}
+                >
+                  <Search size={18} className="flex-shrink-0" style={{ color: s.color ? tagColorHex(s.color) : '#5f6368' }} />
+                  <span className="truncate flex-1" style={{ color: '#5f6368' }}>{s.name}</span>
+                </RouterLink>
+                <a
+                  href="#"
+                  role="button"
+                  onClick={e => { e.preventDefault(); e.stopPropagation(); void deleteSavedSearch(s.id) }}
+                  onKeyDown={e => { if (e.key === ' ') { e.preventDefault(); void deleteSavedSearch(s.id) } }}
+                  className={`opacity-0 group-hover:opacity-100 p-0.5 rounded text-danger transition-opacity cursor-pointer ${FOCUS_RING}`}
+                  {...hoverBg('var(--color-danger-light)')}
                   title="Supprimer la recherche"
                 >
                   <X size={14} />
-                </button>
+                </a>
               </div>
             ))}
           </>
