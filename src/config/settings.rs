@@ -17,7 +17,7 @@ pub struct Settings {
 }
 
 /// Fournisseur d'embeddings OPTIONNEL (compatible OpenAI). Désactivé par défaut.
-/// Découplé de tout module : l'URL peut pointer vers Ollama, OpenAI, jarvis…
+/// Decoupled from any module: the URL can target Ollama, OpenAI, the assistant module…
 /// La recherche plein-texte fonctionne entièrement sans cette section.
 #[derive(Debug, Clone, Deserialize, Default)]
 pub struct EmbeddingsSettings {

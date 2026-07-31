@@ -1,5 +1,5 @@
 //! Client d'embeddings OPTIONNEL, générique (compatible OpenAI : POST {url}/embeddings).
-//! Découplé de tout module (pointable vers Ollama, OpenAI, jarvis…). Fail-open :
+//! Decoupled from any module (can target Ollama, OpenAI, the assistant module…). Fail-open:
 //! toute erreur désactive le sémantique pour la requête, sans casser le plein-texte.
 
 use crate::config::EmbeddingsSettings;

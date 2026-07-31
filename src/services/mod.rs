@@ -1,6 +1,7 @@
 pub mod access;
 pub mod activity;
 pub mod archives;
+pub mod comments;
 pub mod embeddings;
 pub mod extract;
 pub mod files;

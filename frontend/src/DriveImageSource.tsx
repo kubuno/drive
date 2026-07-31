@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ChevronRight, Folder, Image as ImageIcon, LayoutGrid, List, Loader2 } from 'lucide-react'
 import { filesApi, type FileItem, type FilesSearchFilters } from '@kubuno/drive'
-import type { ImageSourceProps } from './imageSourceSdk'
+import type { ImageSourceProps } from '@kubuno/sdk'
 
 /**
  * The "Drive" tab of the core image picker. Registered by this module, so the

@@ -4,14 +4,16 @@ import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, useAuthStore } from '@kubuno/sdk'
 import { FolderOpen, Save, ArrowLeft, ExternalLink, Check, Info } from 'lucide-react'
-import { Toggle, Button, Radio, RangeSlider } from '@ui'
+import { Toggle, Button, Radio, RangeSlider, useSaveShortcut} from '@ui'
 import { useModulePrefs } from './userPrefs'
 import { useIsMobile } from './openable'
 import FilesWebDavSettings from './FilesWebDavSettings'
 
 // ── Per-user preferences (backend, cross-device via core users.preferences) ─────
 
-interface DrivePrefs {
+// `type`, not `interface`: only a type alias gets the implicit index signature
+// that `useModulePrefs<T extends Record<string, unknown>>` requires.
+type DrivePrefs = {
   view:          string   // 'grid' | 'list'
   density:       string   // 'compact' | 'normal' | 'comfortable'
   sort:          string   // 'name' | 'modified_desc' | 'size_desc' | 'type'
@@ -76,6 +78,9 @@ function PreferencesTab() {
 
   const set = <K extends keyof DrivePrefs>(key: K, value: DrivePrefs[K]) =>
     setPrefs(p => ({ ...p, [key]: value }))
+
+  // Ctrl+S saves immediately (disabled while a save is in flight).
+  useSaveShortcut(() => { void save() }, !busy)
 
   const save = async () => {
     setBusy(true)

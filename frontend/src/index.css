@@ -8,3 +8,139 @@
 @import "tailwindcss/preflight.css" layer(base);
 @import "tailwindcss/utilities.css" layer(kubuno-module) source("../");
 @import "./theme.css";
+
+/* ── pdf.js selectable text layer (PDF preview) ──────────────────────────────
+ * Transparent text runs overlaid on the rendered page canvas so users can
+ * select/copy text. Faithful port of pdf_viewer.css (.textLayer) for v6: the
+ * spans are sized by `--font-height` / `--scale-x` inline vars set by
+ * TextLayer, consumed via `--total-scale-factor` (normally provided by
+ * `.pdfViewer .page`, declared here since we host the layer ourselves).
+ * Without these rules the text boxes don't match the painted glyphs and
+ * selection drifts away from the cursor. */
+.textLayer {
+  --user-unit: 1;
+  --total-scale-factor: calc(var(--scale-factor) * var(--user-unit));
+  --scale-round-x: 1px;
+  --scale-round-y: 1px;
+  --min-font-size: 1;
+  --text-scale-factor: calc(var(--total-scale-factor) * var(--min-font-size));
+  --min-font-size-inv: calc(1 / var(--min-font-size));
+
+  color-scheme: only light;
+  position: absolute;
+  text-align: initial;
+  inset: 0;
+  overflow: clip;
+  opacity: 1;
+  line-height: 1;
+  letter-spacing: normal;
+  word-spacing: normal;
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
+  forced-color-adjust: none;
+  transform-origin: 0 0;
+  caret-color: CanvasText;
+  z-index: 10;
+  /* The previewer root is `select-none`; re-enable selection on the text layer. */
+  user-select: text;
+  -webkit-user-select: text;
+}
+.textLayer :is(span, br) {
+  color: transparent;
+  position: absolute;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0% 0%;
+  user-select: text;
+  -webkit-user-select: text;
+}
+.textLayer > :not(.markedContent),
+.textLayer .markedContent span:not(.markedContent) {
+  z-index: 1;
+  --font-height: 0;
+  font-size: calc(var(--text-scale-factor) * var(--font-height));
+  --scale-x: 1;
+  --rotate: 0deg;
+  transform: rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv));
+}
+.textLayer .markedContent { display: contents; }
+.textLayer span[role="img"] { user-select: none; cursor: default; }
+.textLayer ::selection { background: rgba(0, 100, 255, 0.30); }
+.textLayer br::selection { background: transparent; }
+.textLayer .endOfContent {
+  display: block;
+  position: absolute;
+  inset: 100% 0 0;
+  z-index: 0;
+  cursor: default;
+  user-select: none;
+}
+.textLayer.selecting .endOfContent { top: 0; }
+
+/* ── PDF preview: hover-visible custom scrollbars ────────────────────────────
+ * Chrome's overlay scrollbars ignore ::-webkit-scrollbar styling entirely, so
+ * the previewer's scrollable zones (thumbnails rail, pages area) hide their
+ * native bars and paint their own thumbs (ScrollThumbs component), faded in
+ * while the wrapping zone is hovered. */
+.pdf-noscrollbar { scrollbar-width: none; }
+.pdf-noscrollbar::-webkit-scrollbar { display: none; }
+.pdf-scroll-track {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.28);
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 29;
+  pointer-events: none;
+}
+.pdf-scroll-track.v { top: 0; bottom: 0; right: 4px; width: 1px; }
+.pdf-scroll-track.h { left: 0; right: 0; bottom: 4px; height: 1px; }
+.pdf-scroll-thumb {
+  position: absolute;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.35);
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 30;
+}
+.pdf-scroll-thumb.v { right: 2px; width: 6px; }
+.pdf-scroll-thumb.h { bottom: 2px; height: 6px; }
+.pdf-scroll-wrap:hover .pdf-scroll-track,
+.pdf-scroll-wrap:hover .pdf-scroll-thumb,
+.pdf-scroll-thumb.dragging { opacity: 1; }
+.pdf-scroll-thumb:hover, .pdf-scroll-thumb:active { background: rgba(255, 255, 255, 0.55); }
+
+/* ── PDF preview: slot contributors inside the dark menus ────────────────────
+ * Contributors (PdfWriter, Code, Mail…) style themselves for the light context
+ * menus. Inside the previewer's dark dropdowns their look is IMPOSED so they
+ * are indistinguishable from native MenuDropdown items (same padding, type
+ * size, icon slot and hover as the dark palette). */
+.pdf-dark-openwith {
+  --color-text-primary: #d6d6d6;
+  --color-text-secondary: #9a9a9a;
+  --color-text-tertiary: #8e8e8e;
+  --color-surface-1: #454545;
+  --color-surface-2: #454545;
+}
+.pdf-dark-openwith button {
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  gap: 8px !important;
+  padding: 6px 24px 6px 16px !important;
+  font-size: 13px !important;
+  line-height: 20px !important;
+  color: #d6d6d6 !important;
+  text-align: left !important;
+  border-radius: 0 !important;
+  background: transparent;
+}
+.pdf-dark-openwith button:hover { background: #454545 !important; }
+.pdf-dark-openwith button > svg {
+  /* Native items left-align a 14px glyph inside a 20px slot: 14px icon
+     + 6px right margin reproduces the slot, then the 8px gap matches. */
+  width: 14px !important;
+  height: 14px !important;
+  margin-right: 6px !important;
+  flex-shrink: 0;
+  color: #5a9bdc !important;
+}

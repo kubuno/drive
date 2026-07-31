@@ -1,6 +1,7 @@
 pub mod access;
 pub mod activity;
 pub mod archive;
+pub mod comments;
 pub mod files;
 pub mod folders;
 pub mod health;

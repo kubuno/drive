@@ -1,4 +1,5 @@
 pub mod access;
+pub mod comment;
 pub mod file;
 pub mod folder;
 pub mod lock;
@@ -9,6 +10,7 @@ pub mod upload;
 pub mod version;
 
 pub use access::*;
+pub use comment::*;
 pub use file::*;
 pub use folder::{Folder, FolderAncestor, FolderSize, CreateFolderDto, RenameFolderDto, MoveFolderDto, SetFolderColorDto};
 pub use lock::*;
