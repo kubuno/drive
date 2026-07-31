@@ -35,25 +35,25 @@ function NewSubmenu() {
     <div className="relative" onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
       {/* Trigger */}
       <button
-        className="flex items-center justify-between w-full px-3 py-2 text-sm
-                   text-text-primary hover:bg-surface-1 cursor-pointer"
+        className="group flex items-center justify-between w-full px-2.5 py-1.5 text-sm rounded-md
+                   text-text-primary hover:bg-primary hover:text-white cursor-pointer"
         onMouseEnter={handleEnter}
       >
         <span className="flex items-center gap-3">
-          <Plus size={16} className="text-text-secondary" />
+          <Plus size={16} className="text-primary group-hover:text-white" />
           {t('actions.new')}
         </span>
-        <ChevronRight size={14} className="text-text-tertiary" />
+        <ChevronRight size={14} className="text-text-tertiary group-hover:text-white" />
       </button>
 
       {/* Submenu panel */}
       {open && (
         <div
-          className="absolute left-full top-0 z-[210] bg-white border border-border rounded-[5px]
-                     shadow-lg py-1 min-w-[200px]"
+          className="kb-frosted absolute left-full top-0 z-[210] min-w-[200px] p-[5px]"
           onMouseEnter={handleEnter}
           onMouseLeave={handleLeave}
         >
+          <div className="kb-frost-layer" aria-hidden />
           <ContextMenuItem
             icon={<FolderPlus size={16} />}
             label={t('newfolder.title')}

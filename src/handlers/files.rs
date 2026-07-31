@@ -189,19 +189,28 @@ pub async fn replace_content(
     Ok(Json(serde_json::json!({ "ok": true, "size_bytes": new_size })))
 }
 
+#[derive(Debug, Deserialize)]
+pub struct DownloadQuery {
+    /// `inline=1` serves the file for in-browser display (preview in a new
+    /// tab) instead of forcing a download.
+    pub inline: Option<u8>,
+}
+
 /// Téléchargement du fichier
 pub async fn download(
     State(state): State<AppState>,
     Extension(user): Extension<FilesUser>,
     Path(file_id): Path<Uuid>,
+    Query(query): Query<DownloadQuery>,
     headers: axum::http::HeaderMap,
 ) -> Result<Response> {
     // Readable = owned OR internally shared with the user (« Partagés avec moi »).
     let file = files::get_file_readable(&state.db, user.id, file_id).await?;
     let data = state.storage.get(&file.storage_path).await?;
 
-    // Count only full downloads; range requests are previews/streaming.
-    if !headers.contains_key(axum::http::header::RANGE) {
+    // Count only full downloads; range requests are previews/streaming, and
+    // `inline=1` is an in-app preview, not a user download.
+    if !headers.contains_key(axum::http::header::RANGE) && query.inline != Some(1) {
         let db = state.db.clone();
         let uid = user.id;
         tokio::spawn(async move {
@@ -209,8 +218,10 @@ pub async fn download(
         });
     }
 
+    let mode = if query.inline == Some(1) { "inline" } else { "attachment" };
     let disposition = format!(
-        "attachment; filename=\"{}\"",
+        "{}; filename=\"{}\"",
+        mode,
         file.name.replace('"', "\\\"")
     );
 

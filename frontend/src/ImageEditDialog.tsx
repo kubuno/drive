@@ -9,7 +9,8 @@ import {
   X,
   Crop,
   Maximize2,
-  Download,
+  Contrast,
+  ChevronDown,
   Image as ImageIcon,
 } from 'lucide-react'
 
@@ -45,7 +46,7 @@ interface TransformBody {
   quality?: number
 }
 
-// Small styled tool button used for rotation / mirror / grayscale toggles.
+// Small styled tool button used in the compact toolbar (icon-only or icon+label).
 function ToolButton({
   active,
   onClick,
@@ -62,7 +63,7 @@ function ToolButton({
       type="button"
       title={title}
       onClick={onClick}
-      className={`flex items-center gap-2 rounded-lg border p-2 text-sm transition-colors hover:bg-surface-2 ${
+      className={`flex items-center gap-1.5 rounded-lg border p-2 text-sm transition-colors hover:bg-surface-2 ${
         active
           ? 'bg-primary/10 text-primary border-primary'
           : 'border-border text-text-secondary'
@@ -72,6 +73,34 @@ function ToolButton({
     </button>
   )
 }
+
+// Compact labelled number input used inside the dropdown panels.
+function NumField({
+  label,
+  min,
+  value,
+  onChange,
+}: {
+  label: string
+  min: number
+  value: number
+  onChange: (v: number) => void
+}) {
+  return (
+    <label className="flex flex-col gap-1 text-xs text-text-tertiary">
+      {label}
+      <input
+        type="number"
+        min={min}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-24 rounded-lg border border-border bg-surface-1 px-2 py-1 text-sm text-text-primary"
+      />
+    </label>
+  )
+}
+
+type PanelId = 'resize' | 'crop' | 'format'
 
 export default function ImageEditDialog({ file, onClose, onSaved }: Props) {
   const [preview, setPreview] = useState<string>('')
@@ -96,6 +125,11 @@ export default function ImageEditDialog({ file, onClose, onSaved }: Props) {
   const [format, setFormat] = useState<'' | OutputFormat>('')
   const [quality, setQuality] = useState<number>(85)
 
+  // Which dropdown panel is open (the toolbar stays on a single line; the
+  // detailed controls live in these small anchored panels).
+  const [panel, setPanel] = useState<PanelId | null>(null)
+  const togglePanel = (id: PanelId) => setPanel((p) => (p === id ? null : id))
+
   const [saving, setSaving] = useState<boolean>(false)
   const [error, setError] = useState<string>('')
 
@@ -103,7 +137,7 @@ export default function ImageEditDialog({ file, onClose, onSaved }: Props) {
   useEffect(() => {
     let url = ''
     const token = useAuthStore.getState().accessToken
-    fetch(`/api/v1/drive/${file.id}/download`, {
+    fetch(`/api/v1/drive/${file.id}/download?inline=1`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => r.blob())
@@ -174,10 +208,15 @@ export default function ImageEditDialog({ file, onClose, onSaved }: Props) {
     onClose,
   ])
 
+  const formatLabel = format === '' ? 'Conserver' : format.toUpperCase()
+  const panelCls =
+    'absolute left-0 top-full mt-1 z-20 w-64 rounded-lg border border-border bg-white shadow-xl p-3'
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    // z-[60]: must sit ABOVE the fullscreen previewer (z-50).
+    <div className="fixed inset-0 z-[60] flex items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 p-6 max-h-[90vh] overflow-auto">
+      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 p-6 max-h-[90vh] overflow-visible">
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -209,203 +248,179 @@ export default function ImageEditDialog({ file, onClose, onSaved }: Props) {
             <img
               src={preview}
               alt={file.name}
-              className="max-h-64 object-contain"
+              className="max-h-72 object-contain"
             />
           ) : (
-            <div className="flex h-64 w-full items-center justify-center text-sm text-text-tertiary">
+            <div className="flex h-72 w-full items-center justify-center text-sm text-text-tertiary">
               Chargement de l&apos;aperçu…
             </div>
           )}
         </div>
 
-        {/* Rotation & mirror */}
-        <div className="mt-5">
-          <p className="mb-2 text-sm font-medium text-text-secondary">
-            Orientation
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <ToolButton
-              active={rotate !== 0}
-              onClick={rotateLeft}
-              title="Rotation à gauche (-90°)"
-            >
-              <RotateCcw size={16} />
-              Gauche
-            </ToolButton>
-            <ToolButton
-              active={rotate !== 0}
-              onClick={rotateRight}
-              title="Rotation à droite (+90°)"
-            >
-              <RotateCw size={16} />
-              Droite
-            </ToolButton>
-            <ToolButton
-              active={flipH}
-              onClick={() => setFlipH((v) => !v)}
-              title="Miroir horizontal"
-            >
-              <FlipHorizontal size={16} />
-              Miroir H
-            </ToolButton>
-            <ToolButton
-              active={flipV}
-              onClick={() => setFlipV((v) => !v)}
-              title="Miroir vertical"
-            >
-              <FlipVertical size={16} />
-              Miroir V
-            </ToolButton>
-            <ToolButton
-              active={grayscale}
-              onClick={() => setGrayscale((v) => !v)}
-              title="Niveaux de gris"
-            >
-              <Download size={16} />
-              Niveaux de gris
-            </ToolButton>
-          </div>
-          {rotate !== 0 && (
-            <p className="mt-2 text-xs text-text-tertiary">
-              Rotation appliquée : {rotate}°
-            </p>
-          )}
-        </div>
+        {/* Click-away layer for the dropdown panels */}
+        {panel && (
+          <div className="fixed inset-0 z-10" onClick={() => setPanel(null)} />
+        )}
 
-        {/* Resize */}
-        <div className="mt-5 rounded-lg border border-border p-3">
-          <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
-            <input
-              type="checkbox"
-              checked={resizeOn}
-              onChange={(e) => setResizeOn(e.target.checked)}
-            />
-            <Maximize2 size={16} className="text-text-tertiary" />
-            Redimensionner
-          </label>
-          {resizeOn && (
-            <div className="mt-3 space-y-3">
-              <div className="flex flex-wrap items-end gap-3">
-                <label className="flex flex-col gap-1 text-xs text-text-tertiary">
-                  Largeur (px)
-                  <input
-                    type="number"
-                    min={1}
-                    value={width}
-                    onChange={(e) => setWidth(Number(e.target.value))}
-                    className="w-28 rounded-lg border border-border bg-surface-1 px-2 py-1 text-sm text-text-primary"
-                  />
-                </label>
-                <label className="flex flex-col gap-1 text-xs text-text-tertiary">
-                  Hauteur (px)
-                  <input
-                    type="number"
-                    min={1}
-                    value={height}
-                    onChange={(e) => setHeight(Number(e.target.value))}
-                    className="w-28 rounded-lg border border-border bg-surface-1 px-2 py-1 text-sm text-text-primary"
-                  />
-                </label>
-              </div>
-              <label className="flex items-center gap-2 text-sm text-text-secondary">
-                <input
-                  type="checkbox"
-                  checked={keepAspect}
-                  onChange={(e) => setKeepAspect(e.target.checked)}
-                />
-                Conserver les proportions
-              </label>
-            </div>
-          )}
-        </div>
-
-        {/* Crop */}
-        <div className="mt-4 rounded-lg border border-border p-3">
-          <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
-            <input
-              type="checkbox"
-              checked={cropOn}
-              onChange={(e) => setCropOn(e.target.checked)}
-            />
-            <Crop size={16} className="text-text-tertiary" />
-            Activer le recadrage
-          </label>
-          {cropOn && (
-            <div className="mt-3 flex flex-wrap items-end gap-3">
-              <label className="flex flex-col gap-1 text-xs text-text-tertiary">
-                X
-                <input
-                  type="number"
-                  min={0}
-                  value={cropX}
-                  onChange={(e) => setCropX(Number(e.target.value))}
-                  className="w-24 rounded-lg border border-border bg-surface-1 px-2 py-1 text-sm text-text-primary"
-                />
-              </label>
-              <label className="flex flex-col gap-1 text-xs text-text-tertiary">
-                Y
-                <input
-                  type="number"
-                  min={0}
-                  value={cropY}
-                  onChange={(e) => setCropY(Number(e.target.value))}
-                  className="w-24 rounded-lg border border-border bg-surface-1 px-2 py-1 text-sm text-text-primary"
-                />
-              </label>
-              <label className="flex flex-col gap-1 text-xs text-text-tertiary">
-                Largeur
-                <input
-                  type="number"
-                  min={1}
-                  value={cropW}
-                  onChange={(e) => setCropW(Number(e.target.value))}
-                  className="w-24 rounded-lg border border-border bg-surface-1 px-2 py-1 text-sm text-text-primary"
-                />
-              </label>
-              <label className="flex flex-col gap-1 text-xs text-text-tertiary">
-                Hauteur
-                <input
-                  type="number"
-                  min={1}
-                  value={cropH}
-                  onChange={(e) => setCropH(Number(e.target.value))}
-                  className="w-24 rounded-lg border border-border bg-surface-1 px-2 py-1 text-sm text-text-primary"
-                />
-              </label>
-            </div>
-          )}
-        </div>
-
-        {/* Output format & quality */}
-        <div className="mt-5">
-          <p className="mb-2 text-sm font-medium text-text-secondary">
-            Format de sortie
-          </p>
-          <select
-            value={format}
-            onChange={(e) => setFormat(e.target.value as '' | OutputFormat)}
-            className="w-full rounded-lg border border-border bg-surface-1 px-3 py-2 text-sm text-text-primary"
+        {/* Compact toolbar — every control on ONE line; the detailed options
+            (dimensions, crop box, format/quality) open in dropdown panels.
+            z-20 keeps the buttons clickable above the click-away layer so a
+            click on another dropdown switches panels directly. */}
+        <div className="relative z-20 mt-4 flex items-center gap-1.5">
+          <ToolButton onClick={rotateLeft} title="Rotation à gauche (-90°)">
+            <RotateCcw size={16} />
+          </ToolButton>
+          <ToolButton onClick={rotateRight} title="Rotation à droite (+90°)">
+            <RotateCw size={16} />
+          </ToolButton>
+          <ToolButton
+            active={flipH}
+            onClick={() => setFlipH((v) => !v)}
+            title="Miroir horizontal"
           >
-            <option value="">Conserver</option>
-            <option value="jpeg">JPEG</option>
-            <option value="png">PNG</option>
-            <option value="webp">WebP</option>
-          </select>
-          {showQuality && (
-            <div className="mt-3">
-              <div className="mb-1 flex items-center justify-between text-xs text-text-tertiary">
-                <span>Qualité</span>
-                <span className="text-text-secondary">{quality}</span>
+            <FlipHorizontal size={16} />
+          </ToolButton>
+          <ToolButton
+            active={flipV}
+            onClick={() => setFlipV((v) => !v)}
+            title="Miroir vertical"
+          >
+            <FlipVertical size={16} />
+          </ToolButton>
+          <ToolButton
+            active={grayscale}
+            onClick={() => setGrayscale((v) => !v)}
+            title="Niveaux de gris"
+          >
+            <Contrast size={16} />
+          </ToolButton>
+
+          <div className="mx-1 h-6 w-px bg-border" />
+
+          {/* Resize (dropdown) */}
+          <div className="relative">
+            <ToolButton
+              active={resizeOn}
+              onClick={() => togglePanel('resize')}
+              title="Redimensionner"
+            >
+              <Maximize2 size={16} />
+              Taille
+              <ChevronDown size={12} className="opacity-60" />
+            </ToolButton>
+            {panel === 'resize' && (
+              <div className={panelCls}>
+                <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+                  <input
+                    type="checkbox"
+                    checked={resizeOn}
+                    onChange={(e) => setResizeOn(e.target.checked)}
+                  />
+                  Redimensionner
+                </label>
+                <div className="mt-3 flex items-end gap-3">
+                  <NumField label="Largeur (px)" min={1} value={width}
+                    onChange={(v) => { setWidth(v); setResizeOn(true) }} />
+                  <NumField label="Hauteur (px)" min={1} value={height}
+                    onChange={(v) => { setHeight(v); setResizeOn(true) }} />
+                </div>
+                <label className="mt-3 flex items-center gap-2 text-sm text-text-secondary">
+                  <input
+                    type="checkbox"
+                    checked={keepAspect}
+                    onChange={(e) => setKeepAspect(e.target.checked)}
+                  />
+                  Conserver les proportions
+                </label>
               </div>
-              <RangeSlider
-                min={1}
-                max={100}
-                value={quality}
-                onChange={(v) => setQuality(v)}
-                className="w-full"
-                aria-label="Qualité"
-              />
-            </div>
+            )}
+          </div>
+
+          {/* Crop (dropdown) */}
+          <div className="relative">
+            <ToolButton
+              active={cropOn}
+              onClick={() => togglePanel('crop')}
+              title="Recadrer"
+            >
+              <Crop size={16} />
+              Recadrer
+              <ChevronDown size={12} className="opacity-60" />
+            </ToolButton>
+            {panel === 'crop' && (
+              <div className={panelCls}>
+                <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+                  <input
+                    type="checkbox"
+                    checked={cropOn}
+                    onChange={(e) => setCropOn(e.target.checked)}
+                  />
+                  Activer le recadrage
+                </label>
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  <NumField label="X" min={0} value={cropX}
+                    onChange={(v) => { setCropX(v); setCropOn(true) }} />
+                  <NumField label="Y" min={0} value={cropY}
+                    onChange={(v) => { setCropY(v); setCropOn(true) }} />
+                  <NumField label="Largeur" min={1} value={cropW}
+                    onChange={(v) => { setCropW(v); setCropOn(true) }} />
+                  <NumField label="Hauteur" min={1} value={cropH}
+                    onChange={(v) => { setCropH(v); setCropOn(true) }} />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="mx-1 h-6 w-px bg-border" />
+
+          {/* Output format & quality (dropdown) */}
+          <div className="relative">
+            <ToolButton
+              active={format !== ''}
+              onClick={() => togglePanel('format')}
+              title="Format de sortie"
+            >
+              {formatLabel}
+              <ChevronDown size={12} className="opacity-60" />
+            </ToolButton>
+            {panel === 'format' && (
+              <div className={panelCls}>
+                <p className="mb-2 text-sm font-medium text-text-secondary">
+                  Format de sortie
+                </p>
+                {([['', 'Conserver'], ['jpeg', 'JPEG'], ['png', 'PNG'], ['webp', 'WebP']] as const).map(([val, label]) => (
+                  <label key={val} className="flex items-center gap-2 py-1 text-xs text-text-secondary cursor-pointer">
+                    <input
+                      type="radio"
+                      name="img-format"
+                      checked={format === val}
+                      onChange={() => setFormat(val)}
+                    />
+                    {label}
+                  </label>
+                ))}
+                {showQuality && (
+                  <div className="mt-3 border-t border-border pt-3">
+                    <div className="mb-1 flex items-center justify-between text-xs text-text-tertiary">
+                      <span>Qualité</span>
+                      <span className="text-text-secondary">{quality}</span>
+                    </div>
+                    <RangeSlider
+                      min={1}
+                      max={100}
+                      value={quality}
+                      onChange={(v) => setQuality(v)}
+                      className="w-full"
+                      aria-label="Qualité"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {rotate !== 0 && (
+            <span className="ml-auto text-xs text-text-tertiary">{rotate}°</span>
           )}
         </div>
 
@@ -416,7 +431,7 @@ export default function ImageEditDialog({ file, onClose, onSaved }: Props) {
         )}
 
         {/* Actions */}
-        <div className="mt-6 flex justify-end gap-3">
+        <div className="mt-5 flex justify-end gap-3">
           <Button variant="secondary" onClick={onClose} disabled={saving}>
             Annuler
           </Button>

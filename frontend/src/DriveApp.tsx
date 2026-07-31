@@ -19,10 +19,12 @@ import {
 import { filesApi, formatSize, type Folder, type FolderAncestor, type FileItem, type SearchHit } from '@kubuno/drive'
 import { StorageExplorer, localSource, FolderGlyph, FilesTextViewer, isTextFile, type FileContextAction } from '@kubuno/drive'
 import { useFilesStore, type FilesSearchFilters } from '@kubuno/drive'
+import { FilesOpenWithContext } from '@kubuno/drive'
 import { useFilesPaintStore } from '@kubuno/drive'
 import { useAuthStore } from '@kubuno/sdk'
 import { api } from '@kubuno/sdk'
 import { prompt } from '@kubuno/sdk'
+import { useSearchStore } from '@kubuno/sdk'
 import type { User } from '@kubuno/sdk'
 import { ViewMenu, VIEW_SPECS, type ViewMode } from '@kubuno/drive'
 import { NewFolderModal } from '@kubuno/drive'
@@ -50,7 +52,8 @@ import { useImageCacheStore } from '@kubuno/sdk'
 import { getFileIcon, FOLDER_COLORS } from '@kubuno/drive'
 import { useFilesContextMenuStore } from './filesContextMenuStore'
 import { useFilesDialogStore } from '@kubuno/drive'
-import { PdfViewerModal } from '@kubuno/sdk'
+import FilePreviewOverlay from './FilePreviewOverlay'
+import ImagePreviewOverlay from './ImagePreviewOverlay'
 import { useImportConflicts } from '@kubuno/drive'
 import ArchiveBrowser from './ArchiveBrowser'
 import { useMarqueeSelection } from '@kubuno/drive'
@@ -71,6 +74,24 @@ type MenuTarget =
 
 type RenameTarget = { type: 'folder'; item: Folder } | { type: 'file'; item: FileItem } | null
 type MoveTarget   = { type: 'folder'; item: Folder } | { type: 'file'; item: FileItem } | null
+
+// URL query parameter that persists the active search so F5 replays it.
+const SEARCH_PARAM = 'search-q'
+
+/** True for archive files (by MIME or extension). */
+function isArchiveFile(f: FileItem): boolean {
+  const nm = f.name.toLowerCase()
+  return f.mime_type.includes('zip') || f.mime_type.includes('tar') || f.mime_type.includes('gzip')
+    || nm.endsWith('.zip') || nm.endsWith('.tar') || nm.endsWith('.tar.gz') || nm.endsWith('.tgz')
+}
+
+/** True for files that open in a native full-screen / floating preview — the
+ *  set the previewer's ←/→ navigation cycles through. */
+function isPreviewable(f: FileItem): boolean {
+  return f.mime_type.startsWith('image/') || f.mime_type.startsWith('video/')
+    || f.mime_type.startsWith('audio/') || f.mime_type === 'application/pdf'
+    || is3dFile(f) || isFontFile(f) || isArchiveFile(f) || isTextFile(f)
+}
 
 // ── Drag & drop helpers ───────────────────────────────────────────────────────
 
@@ -387,10 +408,8 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
   const activeModules = useModulesStore(s => s.activeModules)
   const activeIds     = useMemo(() => new Set(activeModules.map(m => m.module_id)), [activeModules])
 
-  const ImageViewer   = useMemo(
-    () => SlotRegistry.getActiveOverride<{ file: FileItem; imageFiles: FileItem[]; onClose: () => void }>('files-image-viewer', activeIds),
-    [activeIds],
-  )
+  // (L'override « files-image-viewer » du module photos n'est plus utilisé ici :
+  // l'aperçu des images passe par ImagePreviewOverlay, bâti sur FilePreviewShell.)
   // Use media module video player (floating window) if media module is active
   const VideoPlayer = useMemo(
     () => SlotRegistry.getActiveOverride<{ file: FileItem; onClose: () => void; initialPosition?: number; onInitialPositionConsumed?: () => void; onTimeUpdate?: (t: number) => void }>('files-video-player', activeIds),
@@ -438,10 +457,8 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
   // Modals / menu state
   const [menu,         setMenu]         = useState<MenuTarget>(null)
 
-  // Items du sous-menu « Ouvrir avec » pour le fichier ciblé (apps + contributeurs).
-  const openWithItems = useMemo<MenuItem[]>(() => {
-    if (!menu || menu.type !== 'file') return []
-    const file = menu.item as FileItem
+  // Items du sous-menu « Ouvrir avec » pour un fichier donné (apps + contributeurs).
+  const openWithItemsFor = useCallback((file: FileItem): MenuItem[] => {
     const out: MenuItem[] = FileTypeRegistry.openersFor(file).map((decl) => ({
       type: 'action' as const,
       label: decl.label,
@@ -454,7 +471,12 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
       .filter((e) => !e.match || e.match(file))
       .forEach((e) => { const C = e.Component; out.push({ type: 'custom', render: () => <C key={e.moduleId} /> }) })
     return out
-  }, [menu, activeIds])
+  }, [activeIds, routerNavigate])
+
+  const openWithItems = useMemo<MenuItem[]>(
+    () => (menu && menu.type === 'file' ? openWithItemsFor(menu.item as FileItem) : []),
+    [menu, openWithItemsFor],
+  )
 
   // Actions Drive injectées dans StorageExplorer (My Drive) → parité avec les
   // vues custom. visible() lit l'état des verrous au moment de l'ouverture du menu.
@@ -554,6 +576,30 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
     window.open(filesApi.downloadUrl(file.id), '_blank')
   }, [openAudio, routerNavigate])
 
+  // Opens a file directly in its NATIVE preview (skipping the « open with »
+  // preference). Used by the previewer's ←/→ navigation so it can move to the
+  // next/previous previewable file of any type, handing off to the right viewer.
+  const openPreview = useCallback((file: FileItem) => {
+    void api.post(`/drive/${file.id}/view`).catch(() => {})
+    const isImg  = file.mime_type.startsWith('image/')
+    const isVid  = file.mime_type.startsWith('video/')
+    const isAud  = file.mime_type.startsWith('audio/')
+    const isPdf  = file.mime_type === 'application/pdf'
+    const is3d   = is3dFile(file)
+    const isFont = isFontFile(file)
+    const isArch = isArchiveFile(file)
+    const isTxt  = !isImg && !isVid && !isAud && !isPdf && !is3d && !isFont && !isArch && isTextFile(file)
+    // Exactly one visual viewer is active at a time; clear the others.
+    setLightboxFile(isImg  ? file : null)
+    setModel3dFile (is3d   ? file : null)
+    setFontFile    (isFont ? file : null)
+    setPdfFile     (isPdf  ? file : null)
+    setArchiveFile (isArch ? file : null)
+    setTextFile    (isTxt  ? file : null)
+    if (isVid) openVideoFile(file)
+    if (isAud) openAudio(file)
+  }, [openAudio, openVideoFile])
+
   // Drag state
   const [isDragOver,       setIsDragOver]       = useState(false)
   const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null)
@@ -590,6 +636,40 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
     if (id) setSearchParams({ folder: id })
     else setSearchParams({})
   }
+
+  // ── Recherche persistante dans l'URL (`search-q`) ───────────────────────────
+  // Objectif : après un F5, rejouer la même recherche. L'URL est la source de
+  // vérité. On restaure au montage / navigation (URL → état) et on reflète
+  // chaque frappe (état → URL), sans toucher aux autres paramètres (`folder`…).
+  const urlSearchQ = searchParams.get(SEARCH_PARAM) ?? ''
+  // Reflète la requête dans le champ de recherche du shell (seed contrôlé).
+  const seedShellField = useCallback((q: string) => {
+    ;(useSearchStore.getState() as { setQuery?: (q: string) => void }).setQuery?.(q)
+  }, [])
+
+  // URL → état : restauration au montage et sur navigation (retour/avant).
+  useEffect(() => {
+    if (urlSearchQ === useFilesStore.getState().searchQuery) return
+    useFilesStore.getState().setSearchQuery(urlSearchQ)
+    seedShellField(urlSearchQ)
+  }, [urlSearchQ, seedShellField])
+
+  // état → URL : chaque frappe (ou effacement) est écrite dans l'URL. On saute
+  // le tout premier rendu pour laisser la restauration URL → état s'appliquer
+  // sans qu'un état encore vide n'efface le `search-q` présent dans l'URL.
+  const searchUrlFirstRun = useRef(true)
+  useEffect(() => {
+    if (searchUrlFirstRun.current) { searchUrlFirstRun.current = false; return }
+    seedShellField(searchQuery)
+    if (searchQuery === urlSearchQ) return
+    setSearchParams(prev => {
+      const n = new URLSearchParams(prev)
+      if (searchQuery.trim()) n.set(SEARCH_PARAM, searchQuery)
+      else n.delete(SEARCH_PARAM)
+      return n
+    }, { replace: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery])
 
   // ── Queries ───────────────────────────────────────────────────────────────
 
@@ -654,6 +734,14 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
     ...folders.map(f => f.id),
     ...filteredFiles.map(f => f.id),
   ], [folders, filteredFiles])
+
+  // Previewable files for the previewer's ←/→ navigation: the current search
+  // results while searching, otherwise the current folder view (in display order).
+  const [searchPreviewFiles, setSearchPreviewFiles] = useState<FileItem[]>([])
+  const previewNavFiles = useMemo(
+    () => (isSearchMode ? searchPreviewFiles : filteredFiles.filter(isPreviewable)),
+    [isSearchMode, searchPreviewFiles, filteredFiles],
+  )
 
   const allItemsSelected = orderedIds.length > 0 && orderedIds.every(id => selectedIds.has(id))
   const selectAll   = () => setSelectedIds(new Set(orderedIds))
@@ -1220,6 +1308,7 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
             searchFilters={searchFilters}
             onClear={clearSearch}
             onOpen={openFile}
+            onResults={setSearchPreviewFiles}
           />
         )}
 
@@ -1532,6 +1621,9 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
 
       {/* Context menu */}
       {menu && (
+        /* Provider requis : les contributeurs « Ouvrir avec » (slot files-open-with)
+           lisent le fichier cible via useFilesOpenWith() — sans lui ils rendent null. */
+        <FilesOpenWithContext.Provider value={menu.type === 'file' ? (menu.item as FileItem) : null}>
         <MenuDropdown
           pos={{ top: menu.y, left: menu.x }}
           onClose={() => { setMenu(null); setContextMenuFolderId(null) }}
@@ -1600,6 +1692,7 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
             },
           })}
         />
+        </FilesOpenWithContext.Provider>
       )}
 
       {/* Marquee selection overlay */}
@@ -1655,19 +1748,20 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
       {/* Conflit d'upload */}
       {conflictDialog}
 
-      {/* Lightbox image — remplacé par PhotosImageViewer si le module photos est actif */}
+      {/* Aperçu image (FilePreviewShell) */}
       {lightboxFile && (
-        ImageViewer
-          ? <ImageViewer
-              file={lightboxFile}
-              imageFiles={filteredFiles.filter(f => f.mime_type.startsWith('image/'))}
-              onClose={() => setLightboxFile(null)}
-            />
-          : <FilesLightbox
-              file={lightboxFile}
-              imageFiles={filteredFiles.filter(f => f.has_thumbnail && f.mime_type.startsWith('image/'))}
-              onClose={() => setLightboxFile(null)}
-            />
+        <ImagePreviewOverlay
+          file={lightboxFile}
+          files={previewNavFiles}
+          onClose={() => setLightboxFile(null)}
+          onNavigate={openPreview}
+          onRename={(f) => setRenameTarget({ type: 'file', item: f })}
+          onMove={(f) => setMoveTarget({ type: 'file', item: f })}
+          onShare={(f) => setAdvShareTarget({ kind: 'file', id: f.id, name: f.name })}
+          onEditTags={(f) => setTagDialogTarget({ kind: 'file', id: f.id, name: f.name })}
+          openWithItems={openWithItemsFor}
+          onEditImage={(f) => setImageEditFile(f)}
+        />
       )}
 
       {/* Lecteur vidéo — remplacé par le module media si actif */}
@@ -1702,12 +1796,18 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
         />
       )}
 
-      {/* Visionneuse PDF */}
+      {/* Visionneuse PDF (aperçu plein écran façon Drive) */}
       {pdfFile && (
-        <PdfViewerModal
-          url={filesApi.downloadUrl(pdfFile.id)}
-          filename={pdfFile.name}
+        <FilePreviewOverlay
+          file={pdfFile}
+          files={previewNavFiles}
           onClose={() => setPdfFile(null)}
+          onNavigate={openPreview}
+          onRename={(f) => setRenameTarget({ type: 'file', item: f })}
+          onMove={(f) => setMoveTarget({ type: 'file', item: f })}
+          onShare={(f) => setAdvShareTarget({ kind: 'file', id: f.id, name: f.name })}
+          onEditTags={(f) => setTagDialogTarget({ kind: 'file', id: f.id, name: f.name })}
+          openWithItems={openWithItemsFor}
         />
       )}
 
@@ -1763,7 +1863,7 @@ function SearchResultRow({ file, onOpen }: { file: SearchHit; onOpen: (file: Fil
           <button
             type="button"
             onClick={() => onOpen(file)}
-            className="text-[15px] font-medium text-primary hover:underline truncate text-left"
+            className="text-[15px] text-primary hover:underline truncate text-left"
           >
             {file.name}
           </button>
@@ -1813,11 +1913,14 @@ function SearchResultsView({
   searchFilters,
   onClear,
   onOpen,
+  onResults,
 }: {
   searchQuery: string
   searchFilters: FilesSearchFilters
   onClear: () => void
   onOpen: (file: FileItem) => void
+  /** Reports the current previewable results so the previewer can navigate them. */
+  onResults?: (files: FileItem[]) => void
 }) {
   const { t } = useTranslation('drive')
   const PAGE_SIZE = 20
@@ -1857,6 +1960,12 @@ function SearchResultsView({
   const results   = data?.results ?? []
   const total     = data?.total ?? 0
   const semantic  = data?.semantic ?? false
+
+  // Report previewable results (this page) upward for ←/→ file navigation.
+  useEffect(() => {
+    onResults?.((results as unknown as FileItem[]).filter(isPreviewable))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [results])
   const isLoading = hasCriteria && isFetching && !data
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
@@ -2251,7 +2360,7 @@ function FileCard({
       {/* En-tête : icône de type + nom + étoile + menu (la checkbox couvre l'icône au survol) */}
       <div className={`flex items-center gap-2 ${dense ? 'px-2 h-8' : 'px-3 h-10'}`}>
         <span className="shrink-0 flex items-center [&_svg]:w-[18px] [&_svg]:h-[18px]">{getFileIcon(file.mime_type, file.name)}</span>
-        <span className={`${dense ? 'text-xs' : 'text-[13px]'} font-medium truncate flex-1 ${trashed ? 'text-text-secondary line-through' : 'text-text-primary'}`} title={file.name}>{file.name}</span>
+        <span className={`${dense ? 'text-xs' : 'text-xs'} truncate flex-1 ${trashed ? 'text-text-secondary line-through' : 'text-text-primary'}`} title={file.name}>{file.name}</span>
         {!trashed && <TagDots itemId={file.id} />}
         {!trashed && <LockBadge fileId={file.id} />}
         {file.is_starred && !trashed && <Star size={12} className="shrink-0 fill-yellow-400 text-yellow-400" />}
@@ -2321,7 +2430,7 @@ function FileCard({
           <span
             className="block font-semibold uppercase"
             style={{
-              fontSize: '9px', lineHeight: 1, padding: '2px 5px', letterSpacing: '0.04em',
+              fontSize: '10px', lineHeight: 1, padding: '2px 5px', letterSpacing: '0.04em',
               borderRadius: '6px', color: 'var(--color-text-secondary)',
             }}
           >
@@ -2624,95 +2733,3 @@ function FilesVideoPlayer({ file, onClose }: { file: FileItem; onClose: () => vo
   )
 }
 
-// ── Lightbox images ───────────────────────────────────────────────────────────
-
-function FilesLightbox({
-  file,
-  imageFiles,
-  onClose,
-}: {
-  file: FileItem
-  imageFiles: FileItem[]
-  onClose: () => void
-}) {
-  const { t } = useTranslation('drive')
-  const initialIdx = imageFiles.findIndex(f => f.id === file.id)
-  const [idx, setIdx] = useState(initialIdx < 0 ? 0 : initialIdx)
-  const current = imageFiles[idx] ?? file
-  const thumbVer = useImageCacheStore(s => s.versions[current.id] ?? 0)
-  const thumbSrc = thumbVer ? `${filesApi.thumbnailUrl(current.id)}?v=${thumbVer}` : filesApi.thumbnailUrl(current.id)
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape')      onClose()
-      if (e.key === 'ArrowLeft')   setIdx(i => Math.max(0, i - 1))
-      if (e.key === 'ArrowRight')  setIdx(i => Math.min(imageFiles.length - 1, i + 1))
-    }
-    document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
-  }, [onClose, imageFiles.length])
-
-  return (
-    <div className="fixed inset-0 z-50 bg-black/92 flex flex-col" onClick={onClose}>
-      {/* En-tête */}
-      <div
-        className="flex items-center justify-between px-4 py-3 bg-black/60 shrink-0"
-        onClick={e => e.stopPropagation()}
-      >
-        <div>
-          <p className="text-white text-sm font-medium truncate max-w-[60vw]">{current.name}</p>
-          <p className="text-white/50 text-xs">{formatSize(current.size_bytes)}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          {imageFiles.length > 1 && (
-            <span className="text-white/50 text-xs">{idx + 1} / {imageFiles.length}</span>
-          )}
-          <a
-            href={filesApi.downloadUrl(current.id)}
-            download={current.name}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
-            onClick={e => e.stopPropagation()}
-          >
-            <Download size={14} />
-            {t('common.download')}
-          </a>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-white/10 rounded-full text-white transition-colors"
-          >
-            <X size={18} />
-          </button>
-        </div>
-      </div>
-
-      {/* Image principale */}
-      <div className="flex-1 flex items-center justify-center relative overflow-hidden" onClick={e => e.stopPropagation()}>
-        {idx > 0 && (
-          <button
-            onClick={() => setIdx(i => i - 1)}
-            className="absolute left-3 z-10 p-2 bg-black/40 hover:bg-black/60 rounded-full text-white transition-colors"
-          >
-            <ChevronLeft size={22} />
-          </button>
-        )}
-
-        <img
-          key={`${current.id}-${thumbVer}`}
-          src={thumbSrc}
-          alt={current.name}
-          className="max-h-full max-w-full object-contain"
-          draggable={false}
-        />
-
-        {idx < imageFiles.length - 1 && (
-          <button
-            onClick={() => setIdx(i => i + 1)}
-            className="absolute right-3 z-10 p-2 bg-black/40 hover:bg-black/60 rounded-full text-white transition-colors"
-          >
-            <ChevronRight size={22} />
-          </button>
-        )}
-      </div>
-    </div>
-  )
-}

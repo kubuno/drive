@@ -19,6 +19,7 @@ import {
   useSearchStore,
   i18n,
   SDK_VERSION,
+  ImageSourceRegistry,
 } from '@kubuno/sdk'
 import { useFilesStore, useFilesDialogStore, filesApi } from '@kubuno/drive'
 import './index.css'
@@ -35,7 +36,6 @@ import FilesRecentWidget from './FilesRecentWidget'
 import FilesFilterPanel from './FilesFilterPanel'
 import FilesOpenDialog from './FilesOpenDialog'
 import DriveImageSource from './DriveImageSource'
-import { ImageSourceRegistry } from './imageSourceSdk'
 import FilesSaveDialog from './FilesSaveDialog'
 import FilesFolderPickerDialog from './FilesFolderPickerDialog'
 import FilesFloatingAudioPlayer from './FilesFloatingAudioPlayer'
@@ -56,7 +56,7 @@ export function register() {
   ModuleSettingsRegistry.register('drive')
 
   // Contribute the "Drive" tab to the core image picker (available app-wide).
-  ImageSourceRegistry?.add({
+  ImageSourceRegistry.add({
     id: 'drive', label: 'Drive', order: 20, group: 'library',
     searchable: true, searchPlaceholder: 'Rechercher dans Drive…',
     icon: createElement(HardDrive, { size: 18 }),

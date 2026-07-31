@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
-import { FloatingWindow, RangeSlider } from '@ui'
+import { FloatingWindow, RangeSlider, useSaveShortcut } from '@ui'
 import { ColorPicker, useAppPickerTheme } from '@ui'
 import { useFilesPaintStore } from '@kubuno/drive'
 import { filesApi } from '@kubuno/drive'
@@ -114,9 +114,9 @@ export default function FilesPaintEditor() {
   const { t } = useTranslation('drive')
   const { open, file, closeEditor } = useFilesPaintStore()
   const qc = useQueryClient()
-  // Le groupe « Jarvis » (IA) n'apparaît QUE si le module jarvis est installé et actif.
+  // The « Assistant » (AI) group only appears when the assistant module is installed and active.
   // Les actions sont des placeholders pour l'instant (fonctionnalités à venir).
-  const jarvisActive = useModulesStore(s => s.activeModules.some(m => m.module_id === 'jarvis'))
+  const assistantActive = useModulesStore(s => s.activeModules.some(m => m.module_id === 'assistant'))
 
   const canvasRef   = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -370,6 +370,9 @@ export default function FilesPaintEditor() {
 
   // ── Save ─────────────────────────────────────────────────────────────────
 
+  // Ctrl+S / ⌘S saves immediately.
+  useSaveShortcut(() => { void handleSave() })
+
   const handleSave = async () => {
     const canvas = canvasRef.current; if (!canvas || !file) return
     setSaving(true)
@@ -437,7 +440,7 @@ export default function FilesPaintEditor() {
       <div className="flex flex-col h-full bg-[#f0f0f0] select-none">
 
         {/* ── Barre de menus (style Paint Windows 11) ───────────────────────── */}
-        <div className="flex items-center gap-0.5 px-2 h-10 bg-white border-b border-[#e5e5e5] shrink-0 text-[13px] text-[#1f1f1f]">
+        <div className="flex items-center gap-0.5 px-2 h-10 bg-white border-b border-[#e5e5e5] shrink-0 text-xs text-[#1f1f1f]">
           <PaintMenu label={t('paint.menu_file', { defaultValue: 'Fichier' })} items={[
             { label: t('common.save', { defaultValue: 'Enregistrer' }), shortcut: 'Ctrl+S', onClick: handleSave },
             { label: t('common.download', { defaultValue: 'Télécharger' }), onClick: handleDownload },
@@ -607,13 +610,13 @@ export default function FilesPaintEditor() {
             })()}
           </RibbonGroup>
 
-          {/* Jarvis (IA) — uniquement si le module jarvis est actif */}
-          {jarvisActive && (
-            <RibbonGroup label={t('paint.jarvis', { defaultValue: 'Jarvis' })}>
+          {/* Assistant (AI) — only when the assistant module is active */}
+          {assistantActive && (
+            <RibbonGroup label={t('paint.assistant', { defaultValue: 'Assistant' })}>
               <DropdownMenu.Root>
                 <DropdownMenu.Trigger asChild>
                   <button
-                    title={t('paint.jarvis', { defaultValue: 'Jarvis' })}
+                    title={t('paint.assistant', { defaultValue: 'Assistant' })}
                     className="h-8 px-1.5 flex items-center gap-0.5 rounded hover:bg-surface-2 border border-transparent transition-colors outline-none"
                   >
                     <Sparkles size={18} className="text-[#7c5cff]" />
@@ -626,14 +629,14 @@ export default function FilesPaintEditor() {
                     className="min-w-[230px] bg-white rounded-xl border border-border shadow-xl py-1.5 z-[9999]"
                   >
                     <div className="px-3 pt-1 pb-1 text-[11px] font-semibold text-text-tertiary">
-                      {t('paint.jarvis_generate', { defaultValue: 'Générer' })}
+                      {t('paint.assistant_generate', { defaultValue: 'Générer' })}
                     </div>
-                    <JarvisItem icon={<ImagePlus size={17} />} label={t('paint.jarvis_image_creator', { defaultValue: "Créateur d'image" })} onSelect={() => {}} />
+                    <AssistantItem icon={<ImagePlus size={17} />} label={t('paint.assistant_image_creator', { defaultValue: "Créateur d'image" })} onSelect={() => {}} />
                     <div className="px-3 pt-2 pb-1 text-[11px] font-semibold text-text-tertiary">
-                      {t('paint.jarvis_modify', { defaultValue: 'Modifier' })}
+                      {t('paint.assistant_modify', { defaultValue: 'Modifier' })}
                     </div>
-                    <JarvisItem icon={<Wand2 size={17} />} label={t('paint.jarvis_gen_eraser', { defaultValue: 'Gomme générative' })} onSelect={() => {}} />
-                    <JarvisItem icon={<Scissors size={17} />} label={t('paint.jarvis_remove_bg', { defaultValue: "Supprimer l'arrière-plan" })} onSelect={() => {}} />
+                    <AssistantItem icon={<Wand2 size={17} />} label={t('paint.assistant_gen_eraser', { defaultValue: 'Gomme générative' })} onSelect={() => {}} />
+                    <AssistantItem icon={<Scissors size={17} />} label={t('paint.assistant_remove_bg', { defaultValue: "Supprimer l'arrière-plan" })} onSelect={() => {}} />
                   </DropdownMenu.Content>
                 </DropdownMenu.Portal>
               </DropdownMenu.Root>
@@ -718,7 +721,7 @@ export default function FilesPaintEditor() {
 
 // ── Ribbon helpers ────────────────────────────────────────────────────────────
 
-function JarvisItem({ icon, label, onSelect }: { icon: React.ReactNode; label: string; onSelect: () => void }) {
+function AssistantItem({ icon, label, onSelect }: { icon: React.ReactNode; label: string; onSelect: () => void }) {
   return (
     <DropdownMenu.Item
       onSelect={onSelect}
@@ -735,7 +738,7 @@ function RibbonGroup({ label, children }: { label: string; children: React.React
   return (
     <div className="flex flex-col items-center border-r border-[#d0d0d0] px-2 shrink-0">
       <div className="flex items-start gap-1 flex-wrap flex-1">{children}</div>
-      <span className="text-[9px] text-text-tertiary mt-0.5 whitespace-nowrap">{label}</span>
+      <span className="text-[10px] text-text-tertiary mt-0.5 whitespace-nowrap">{label}</span>
     </div>
   )
 }
@@ -758,7 +761,7 @@ function PaintMenu({ label, items }: { label: string; items: (PaintMenuItem | 's
             <DropdownMenu.Separator key={i} className="my-1 h-px bg-border mx-2" />
           ) : (
             <DropdownMenu.Item key={i} disabled={it.disabled} onSelect={it.onClick}
-              className="flex items-center justify-between gap-6 px-3 py-1.5 text-[13px] text-text-primary
+              className="flex items-center justify-between gap-6 px-3 py-1.5 text-xs text-text-primary
                          data-[highlighted]:bg-surface-1 cursor-pointer outline-none
                          data-[disabled]:opacity-40 data-[disabled]:pointer-events-none">
               <span>{it.label}</span>

@@ -10,7 +10,7 @@ use tower_http::{
 };
 
 use crate::{
-    handlers::{access, activity, archive, files, folders, health, import_url, insights, ipc, locks, maintenance, public, remotes, resolve, saved_searches, scan, search, shares, sync, system, tags, transform, uploads, versions, webdav},
+    handlers::{access, activity, archive, comments, files, folders, health, import_url, insights, ipc, locks, maintenance, public, remotes, resolve, saved_searches, scan, search, shares, sync, system, tags, transform, uploads, versions, webdav},
     middleware::{require_auth, require_ipc_secret},
     state::AppState,
 };
@@ -88,6 +88,10 @@ pub fn build(state: AppState) -> Router {
         // Verrous de fichiers (locks coopératifs)
         .route("/locks",                        get(locks::list))
         .route("/:id/lock",                     get(locks::get).post(locks::lock).delete(locks::unlock))
+        // Commentaires ancrés sur les documents (aperçu PDF)
+        .route("/comments/:cid",                delete(comments::delete))
+        .route("/comments/:cid/resolve",        patch(comments::resolve))
+        .route("/:id/comments",                 get(comments::list).post(comments::create))
         // Recherches sauvegardées (smart folders)
         .route("/saved-searches",               get(saved_searches::list).post(saved_searches::create))
         .route("/saved-searches/:id",           patch(saved_searches::update).delete(saved_searches::delete))
