@@ -32,9 +32,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kubuno.android.R
 import com.kubuno.android.sync.db.FileEntity
 import com.kubuno.android.sync.db.FolderEntity
-import com.kubuno.android.ui.sheet.ActionSheet
 import com.kubuno.android.ui.sheet.FileInfoSheet
 import com.kubuno.android.ui.sheet.FolderInfoSheet
+import com.kubuno.android.ui.sheet.ItemActionSheet
+import com.kubuno.android.ui.sheet.ItemTarget
+import com.kubuno.android.ui.sheet.MoveSheet
+import com.kubuno.android.ui.sheet.RenameDialog
 import com.kubuno.android.ui.sheet.SortSheet
 import com.kubuno.android.ui.theme.KubunoTheme
 
@@ -53,6 +56,9 @@ fun BrowserScreen(
     var sortSheet by remember { mutableStateOf(false) }
     var fileSheet by remember { mutableStateOf<FileEntity?>(null) }
     var folderSheet by remember { mutableStateOf<FolderEntity?>(null) }
+    var actionTarget by remember { mutableStateOf<ItemTarget?>(null) }
+    var renameTarget by remember { mutableStateOf<ItemTarget?>(null) }
+    var moveTarget by remember { mutableStateOf<ItemTarget?>(null) }
 
     PullToRefreshBox(
         isRefreshing = refreshing,
@@ -93,7 +99,7 @@ fun BrowserScreen(
                             FolderCard(
                                 folder = folder,
                                 onOpen = { onOpenFolder(folder.id) },
-                                onMenu = { folderSheet = folder },
+                                onMenu = { actionTarget = folder.asTarget() },
                             )
                         }
                         if (content.files.isNotEmpty()) {
@@ -106,8 +112,8 @@ fun BrowserScreen(
                             FileCard(
                                 file = file,
                                 baseUrl = viewModel.serverBaseUrl,
-                                onOpen = { fileSheet = file },
-                                onMenu = { fileSheet = file },
+                                onOpen = { actionTarget = file.asTarget() },
+                                onMenu = { actionTarget = file.asTarget() },
                             )
                         }
                     }
@@ -120,7 +126,7 @@ fun BrowserScreen(
                                         folder = folder,
                                         zebra = index % 2 == 0,
                                         onOpen = { onOpenFolder(folder.id) },
-                                        onMenu = { folderSheet = folder },
+                                        onMenu = { actionTarget = folder.asTarget() },
                                     )
                                 }
                             }
@@ -135,8 +141,8 @@ fun BrowserScreen(
                                             file = file,
                                             baseUrl = viewModel.serverBaseUrl,
                                             zebra = index % 2 == 0,
-                                            onOpen = { fileSheet = file },
-                                            onMenu = { fileSheet = file },
+                                            onOpen = { actionTarget = file.asTarget() },
+                                            onMenu = { actionTarget = file.asTarget() },
                                         )
                                     }
                                 }
@@ -157,6 +163,50 @@ fun BrowserScreen(
             onDismiss = { sortSheet = false },
         )
     }
+
+    actionTarget?.let { target ->
+        ItemActionSheet(
+            target = target,
+            onDownload = {
+                content.files.firstOrNull { it.id == target.id }?.let(viewModel::download)
+            },
+            onRename = { renameTarget = target },
+            onMove = { moveTarget = target },
+            onToggleStar = { viewModel.setStarred(target.id, target.isFolder, !target.starred) },
+            onInfo = {
+                if (target.isFolder) folderSheet = content.folders.firstOrNull { it.id == target.id }
+                else fileSheet = content.files.firstOrNull { it.id == target.id }
+            },
+            onTrash = { viewModel.trash(target.id, target.isFolder) },
+            onRestore = { viewModel.restore(target.id, target.isFolder) },
+            onDismiss = { actionTarget = null },
+        )
+    }
+
+    renameTarget?.let { target ->
+        RenameDialog(
+            current = target.name,
+            onConfirm = { newName ->
+                viewModel.rename(target.id, target.isFolder, newName)
+                renameTarget = null
+            },
+            onDismiss = { renameTarget = null },
+        )
+    }
+
+    moveTarget?.let { target ->
+        MoveSheet(
+            itemName = target.name,
+            // Only the folders in view: a full tree picker lands with search.
+            folders = content.folders.filter { it.id != target.id }.map { it.id to it.name },
+            onPick = { destination ->
+                viewModel.move(target.id, target.isFolder, destination)
+                moveTarget = null
+            },
+            onDismiss = { moveTarget = null },
+        )
+    }
+
     fileSheet?.let { file ->
         FileInfoSheet(file = file, onDismiss = { fileSheet = null })
     }
@@ -164,6 +214,12 @@ fun BrowserScreen(
         FolderInfoSheet(folder = folder, onDismiss = { folderSheet = null })
     }
 }
+
+private fun FileEntity.asTarget() =
+    ItemTarget(id = id, name = name, isFolder = false, starred = starred, trashed = trashed)
+
+private fun FolderEntity.asTarget() =
+    ItemTarget(id = id, name = name, isFolder = true, starred = starred, trashed = trashed)
 
 @Composable
 private fun EmptyFolder() {

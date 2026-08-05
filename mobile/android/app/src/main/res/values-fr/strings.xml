@@ -33,6 +33,21 @@
     <string name="tab_shared">Partagés</string>
     <string name="tab_files">Fichiers</string>
 
+    <!-- Chrome de l'en-tête -->
+    <string name="menu">Menu</string>
+    <string name="search">Rechercher</string>
+    <string name="notifications">Notifications</string>
+    <string name="settings">Réglages</string>
+
+    <!-- Fil d'Ariane -->
+    <string name="breadcrumb_root">Mon Drive</string>
+    <string name="goto_folder">Aller à</string>
+
+    <!-- Actions « Nouveau » (FAB) -->
+    <string name="fab_new">Nouveau</string>
+    <string name="new_folder">Nouveau dossier</string>
+    <string name="upload_files">Importer des fichiers</string>
+
     <!-- Sections et lignes -->
     <string name="section_folders">Dossiers</string>
     <string name="section_files">Fichiers</string>
@@ -80,4 +95,26 @@
     <!-- Session -->
     <string name="home_logout">Se déconnecter</string>
     <string name="session_expired">Votre session a expiré. Veuillez vous reconnecter.</string>
+
+    <!-- Item actions -->
+    <string name="action_download">Télécharger</string>
+    <string name="action_rename">Renommer</string>
+    <string name="action_move">Déplacer</string>
+    <string name="action_star">Ajouter aux suivis</string>
+    <string name="action_unstar">Retirer des suivis</string>
+    <string name="action_trash">Mettre à la corbeille</string>
+    <string name="action_restore">Restaurer</string>
+    <string name="action_confirm">Confirmer</string>
+    <string name="action_cancel">Annuler</string>
+    <string name="new_folder_hint">Nom du dossier</string>
+    <string name="transfers_title">Transferts</string>
+    <string name="transfers_empty">Aucun transfert</string>
+    <string name="transfer_retry">Réessayer</string>
+    <string name="transfer_clear">Effacer les terminés</string>
+    <string name="state_queued">En attente</string>
+    <string name="state_running">En cours</string>
+    <string name="state_done">Terminé</string>
+    <string name="state_failed">Échec</string>
+    <string name="open_with">Ouvrir avec</string>
+    <string name="download_done">%1$s téléchargé</string>
 </resources>

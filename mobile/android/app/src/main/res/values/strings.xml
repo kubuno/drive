@@ -33,6 +33,21 @@
     <string name="tab_shared">Shared</string>
     <string name="tab_files">Files</string>
 
+    <!-- Header chrome -->
+    <string name="menu">Menu</string>
+    <string name="search">Search</string>
+    <string name="notifications">Notifications</string>
+    <string name="settings">Settings</string>
+
+    <!-- Breadcrumb -->
+    <string name="breadcrumb_root">My Drive</string>
+    <string name="goto_folder">Go to</string>
+
+    <!-- New actions (FAB) -->
+    <string name="fab_new">New</string>
+    <string name="new_folder">New folder</string>
+    <string name="upload_files">Upload files</string>
+
     <!-- Sections and rows -->
     <string name="section_folders">Folders</string>
     <string name="section_files">Files</string>
@@ -80,4 +95,26 @@
     <!-- Session -->
     <string name="home_logout">Sign out</string>
     <string name="session_expired">Your session has expired. Please sign in again.</string>
+
+    <!-- Item actions -->
+    <string name="action_download">Download</string>
+    <string name="action_rename">Rename</string>
+    <string name="action_move">Move</string>
+    <string name="action_star">Add to starred</string>
+    <string name="action_unstar">Remove from starred</string>
+    <string name="action_trash">Move to trash</string>
+    <string name="action_restore">Restore</string>
+    <string name="action_confirm">Confirm</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="new_folder_hint">Folder name</string>
+    <string name="transfers_title">Transfers</string>
+    <string name="transfers_empty">No transfers</string>
+    <string name="transfer_retry">Retry</string>
+    <string name="transfer_clear">Clear finished</string>
+    <string name="state_queued">Queued</string>
+    <string name="state_running">In progress</string>
+    <string name="state_done">Done</string>
+    <string name="state_failed">Failed</string>
+    <string name="open_with">Open with</string>
+    <string name="download_done">Downloaded %1$s</string>
 </resources>

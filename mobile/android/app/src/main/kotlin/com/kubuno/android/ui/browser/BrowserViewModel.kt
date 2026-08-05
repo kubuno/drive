@@ -4,10 +4,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
+import android.net.Uri
 import com.kubuno.android.api.KubunoClient
+import com.kubuno.android.data.AppPrefs
+import com.kubuno.android.sync.DriveActions
 import com.kubuno.android.sync.db.FileEntity
 import com.kubuno.android.sync.db.FolderEntity
 import com.kubuno.android.sync.db.KubunoDatabase
+import com.kubuno.android.sync.transfer.TransferQueue
 import com.kubuno.android.sync.work.SyncScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -35,7 +39,12 @@ class BrowserViewModel @Inject constructor(
     workManager: WorkManager,
     private val scheduler: SyncScheduler,
     private val client: KubunoClient,
+    private val actions: DriveActions,
+    private val transfers: TransferQueue,
+    prefs: AppPrefs,
 ) : ViewModel() {
+
+    val userLabel: String? = prefs.userDisplayName ?: prefs.userEmail
 
     /**
      * The open folder, null at the drive root. Driven by the shell's crumb stack
@@ -91,6 +100,42 @@ class BrowserViewModel @Inject constructor(
     }
 
     fun refresh() = scheduler.syncNow()
+
+    // ---- mutations: local first, replayed from the outbox ----------------
+
+    fun rename(id: String, isFolder: Boolean, newName: String) {
+        viewModelScope.launch { actions.rename(id, isFolder, newName) }
+    }
+
+    fun move(id: String, isFolder: Boolean, target: String?) {
+        viewModelScope.launch { actions.move(id, isFolder, target) }
+    }
+
+    fun trash(id: String, isFolder: Boolean) {
+        viewModelScope.launch { actions.trash(id, isFolder) }
+    }
+
+    fun restore(id: String, isFolder: Boolean) {
+        viewModelScope.launch { actions.restore(id, isFolder) }
+    }
+
+    fun setStarred(id: String, isFolder: Boolean, starred: Boolean) {
+        viewModelScope.launch { actions.setStarred(id, isFolder, starred) }
+    }
+
+    fun createFolder(name: String) {
+        viewModelScope.launch { actions.createFolder(_folderId.value, name) }
+    }
+
+    fun upload(uris: List<Uri>) {
+        viewModelScope.launch { uris.forEach { transfers.enqueueUpload(it, _folderId.value) } }
+    }
+
+    fun download(file: FileEntity) {
+        viewModelScope.launch {
+            transfers.enqueueDownload(file.id, file.name, file.size, file.mimeType)
+        }
+    }
 
     fun logout(onDone: () -> Unit) {
         viewModelScope.launch {

@@ -12,6 +12,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.kubuno.android.api.auth.AuthException
 import com.kubuno.android.api.auth.FailureKind
+import com.kubuno.android.sync.OutboxDrain
 import com.kubuno.android.sync.SyncEngine
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -23,10 +24,14 @@ import javax.inject.Singleton
 class SyncWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted params: WorkerParameters,
+    private val outbox: OutboxDrain,
     private val engine: SyncEngine,
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result = try {
+        // Push before pull, so local edits reach the server before the delta
+        // that would otherwise overwrite them.
+        outbox.drain()
         engine.pull()
         Result.success()
     } catch (e: AuthException) {

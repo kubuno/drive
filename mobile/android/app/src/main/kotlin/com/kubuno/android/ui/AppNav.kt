@@ -1,6 +1,8 @@
 package com.kubuno.android.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.People
@@ -22,10 +24,13 @@ import com.kubuno.android.ui.onboarding.LoginScreen
 import com.kubuno.android.ui.onboarding.OnboardingViewModel
 import com.kubuno.android.ui.onboarding.ServerScreen
 import com.kubuno.android.ui.onboarding.TotpScreen
+import com.kubuno.android.ui.sheet.NewFolderDialog
 import com.kubuno.android.ui.shell.Crumb
 import com.kubuno.android.ui.shell.DriveTab
 import com.kubuno.android.ui.shell.KubunoShell
 import com.kubuno.android.ui.starred.StarredScreen
+import com.kubuno.android.ui.transfers.TransfersScreen
+import com.kubuno.android.ui.transfers.TransfersViewModel
 
 private enum class Stage { SERVER, LOGIN, TOTP, SIGNED_IN }
 
@@ -73,8 +78,22 @@ private fun SignedInApp(onLoggedOut: () -> Unit) {
     val stack = remember { mutableStateListOf<Crumb>() }
     val currentFolderId = stack.lastOrNull()?.id
 
-    BackHandler(enabled = stack.isNotEmpty() || tab != DriveTab.FILES) {
+    val viewModel: BrowserViewModel = hiltViewModel()
+    val transfersViewModel: TransfersViewModel = hiltViewModel()
+    val content by viewModel.content.collectAsStateWithLifecycle()
+    val transfers by transfersViewModel.transfers.collectAsStateWithLifecycle()
+    var newFolderDialog by remember { mutableStateOf(false) }
+    var showTransfers by remember { mutableStateOf(false) }
+
+    LaunchedEffect(currentFolderId) { viewModel.openFolder(currentFolderId) }
+
+    val picker = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenMultipleDocuments()
+    ) { uris -> if (uris.isNotEmpty()) viewModel.upload(uris) }
+
+    BackHandler(enabled = showTransfers || stack.isNotEmpty() || tab != DriveTab.FILES) {
         when {
+            showTransfers -> showTransfers = false
             stack.isNotEmpty() -> stack.removeAt(stack.lastIndex)
             else -> tab = DriveTab.FILES
         }
@@ -83,7 +102,15 @@ private fun SignedInApp(onLoggedOut: () -> Unit) {
     KubunoShell(
         crumbs = if (tab == DriveTab.FILES) stack.toList() else emptyList(),
         currentTab = tab,
+        userLabel = viewModel.userLabel,
+        childFolders = if (tab == DriveTab.FILES && !showTransfers) {
+            content.folders.map { it.id to it.name }
+        } else emptyList(),
+        showFab = tab == DriveTab.FILES && !showTransfers,
+        activeTransfers = transfers.count { it.state == "queued" || it.state == "running" },
+        onOpenTransfers = { showTransfers = true },
         onSelectTab = { selected ->
+            showTransfers = false
             if (selected == DriveTab.FILES && tab == DriveTab.FILES) stack.clear()
             tab = selected
         },
@@ -95,20 +122,26 @@ private fun SignedInApp(onLoggedOut: () -> Unit) {
                 if (index >= 0) while (stack.lastIndex > index) stack.removeAt(stack.lastIndex)
             }
         },
-        onLogout = onLoggedOut,
+        onOpenFolder = { id ->
+            val name = content.folders.firstOrNull { it.id == id }?.name.orEmpty()
+            stack.add(Crumb(id, name))
+        },
+        onNewFolder = { newFolderDialog = true },
+        onUploadFiles = { picker.launch(arrayOf("*/*")) },
+        onLogout = { viewModel.logout(onLoggedOut) },
     ) {
+        if (showTransfers) {
+            TransfersScreen(viewModel = transfersViewModel)
+            return@KubunoShell
+        }
         when (tab) {
-            DriveTab.FILES -> {
-                val viewModel: BrowserViewModel = hiltViewModel()
-                LaunchedEffect(currentFolderId) { viewModel.openFolder(currentFolderId) }
-                BrowserScreen(
-                    viewModel = viewModel,
-                    onOpenFolder = { id ->
-                        val name = viewModel.content.value.folders.firstOrNull { it.id == id }?.name.orEmpty()
-                        stack.add(Crumb(id, name))
-                    },
-                )
-            }
+            DriveTab.FILES -> BrowserScreen(
+                viewModel = viewModel,
+                onOpenFolder = { id ->
+                    val name = content.folders.firstOrNull { it.id == id }?.name.orEmpty()
+                    stack.add(Crumb(id, name))
+                },
+            )
             DriveTab.STARRED -> StarredScreen(viewModel = hiltViewModel())
             DriveTab.SHARED -> TabEmptyState(
                 icon = Icons.Outlined.People,
@@ -119,5 +152,15 @@ private fun SignedInApp(onLoggedOut: () -> Unit) {
                 message = stringResource(R.string.empty_recent),
             )
         }
+    }
+
+    if (newFolderDialog) {
+        NewFolderDialog(
+            onConfirm = { name ->
+                viewModel.createFolder(name)
+                newFolderDialog = false
+            },
+            onDismiss = { newFolderDialog = false },
+        )
     }
 }
