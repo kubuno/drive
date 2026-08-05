@@ -1,32 +1,23 @@
 package com.kubuno.android.ui.browser
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.automirrored.outlined.InsertDriveFile
-import androidx.compose.material.icons.outlined.Audiotrack
-import androidx.compose.material.icons.outlined.Description
-import androidx.compose.material.icons.outlined.Folder
-import androidx.compose.material.icons.outlined.Image
-import androidx.compose.material.icons.outlined.MoreVert
-import androidx.compose.material.icons.outlined.Videocam
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material.icons.outlined.CloudUpload
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -35,149 +26,201 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
-import coil3.compose.LocalPlatformContext
 import com.kubuno.android.R
 import com.kubuno.android.sync.db.FileEntity
-import java.util.Locale
+import com.kubuno.android.sync.db.FolderEntity
+import com.kubuno.android.ui.sheet.ActionSheet
+import com.kubuno.android.ui.sheet.FileInfoSheet
+import com.kubuno.android.ui.sheet.FolderInfoSheet
+import com.kubuno.android.ui.sheet.SortSheet
+import com.kubuno.android.ui.theme.KubunoTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BrowserScreen(
     viewModel: BrowserViewModel,
     onOpenFolder: (String) -> Unit,
-    onBack: () -> Unit,
-    onLoggedOut: () -> Unit,
 ) {
-    val folders by viewModel.folders.collectAsStateWithLifecycle(emptyList())
-    val files by viewModel.files.collectAsStateWithLifecycle(emptyList())
-    val folderName by viewModel.folderName.collectAsStateWithLifecycle()
+    val content by viewModel.content.collectAsStateWithLifecycle()
+    val sortField by viewModel.sortField.collectAsStateWithLifecycle()
+    val sortDir by viewModel.sortDir.collectAsStateWithLifecycle()
+    val view by viewModel.view.collectAsStateWithLifecycle()
     val refreshing by viewModel.refreshing.collectAsStateWithLifecycle()
-    var menuOpen by remember { mutableStateOf(false) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(folderName ?: stringResource(R.string.app_name)) },
-                navigationIcon = {
-                    if (viewModel.folderId != null) {
-                        IconButton(onClick = onBack) {
-                            Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = null)
-                        }
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { menuOpen = true }) {
-                        Icon(Icons.Outlined.MoreVert, contentDescription = null)
-                    }
-                    DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.home_logout)) },
-                            onClick = {
-                                menuOpen = false
-                                viewModel.logout(onLoggedOut)
-                            },
-                        )
-                    }
-                },
-            )
-        },
-    ) { padding ->
-        PullToRefreshBox(
-            isRefreshing = refreshing,
-            onRefresh = viewModel::refresh,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-        ) {
-            if (folders.isEmpty() && files.isEmpty()) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        stringResource(R.string.browser_empty),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    var sortSheet by remember { mutableStateOf(false) }
+    var fileSheet by remember { mutableStateOf<FileEntity?>(null) }
+    var folderSheet by remember { mutableStateOf<FolderEntity?>(null) }
+
+    PullToRefreshBox(
+        isRefreshing = refreshing,
+        onRefresh = viewModel::refresh,
+        modifier = Modifier.fillMaxSize(),
+    ) {
+        if (content.isEmpty) {
+            EmptyFolder()
+        } else {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = 24.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                item(span = { GridItemSpan(2) }) {
+                    MobileControlBar(
+                        sortField = sortField,
+                        sortDir = sortDir,
+                        view = view,
+                        onSortClick = { sortSheet = true },
+                        onToggleDir = viewModel::toggleSortDir,
+                        onView = viewModel::setView,
                     )
                 }
-            } else {
-                LazyColumn(Modifier.fillMaxSize()) {
-                    items(folders, key = { "d:${it.id}" }) { folder ->
-                        ListItem(
-                            headlineContent = { Text(folder.name) },
-                            leadingContent = {
-                                Icon(
-                                    Icons.Outlined.Folder,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(40.dp),
-                                )
-                            },
-                            modifier = Modifier.clickableRow { onOpenFolder(folder.id) },
-                        )
+
+                if (content.folders.isNotEmpty()) {
+                    item(span = { GridItemSpan(2) }) {
+                        SectionTitle(stringResource(R.string.section_folders))
                     }
-                    items(files, key = { "f:${it.id}" }) { file ->
-                        ListItem(
-                            headlineContent = { Text(file.name) },
-                            supportingContent = { Text(formatBytes(file.size)) },
-                            leadingContent = { FileLeading(file, viewModel.serverBaseUrl) },
-                        )
+                }
+
+                when (view) {
+                    ViewMode.GRID -> {
+                        // Folder chips stay full width: two columns would truncate names.
+                        items(content.folders, key = { "d:${it.id}" }, span = { GridItemSpan(2) }) { folder ->
+                            FolderCard(
+                                folder = folder,
+                                onOpen = { onOpenFolder(folder.id) },
+                                onMenu = { folderSheet = folder },
+                            )
+                        }
+                        if (content.files.isNotEmpty()) {
+                            item(span = { GridItemSpan(2) }) {
+                                Spacer(Modifier.height(4.dp))
+                                SectionTitle(stringResource(R.string.section_files))
+                            }
+                        }
+                        items(content.files, key = { "f:${it.id}" }) { file ->
+                            FileCard(
+                                file = file,
+                                baseUrl = viewModel.serverBaseUrl,
+                                onOpen = { fileSheet = file },
+                                onMenu = { fileSheet = file },
+                            )
+                        }
+                    }
+
+                    ViewMode.LIST -> {
+                        item(span = { GridItemSpan(2) }) {
+                            ListContainer {
+                                content.folders.forEachIndexed { index, folder ->
+                                    FolderRow(
+                                        folder = folder,
+                                        zebra = index % 2 == 0,
+                                        onOpen = { onOpenFolder(folder.id) },
+                                        onMenu = { folderSheet = folder },
+                                    )
+                                }
+                            }
+                        }
+                        if (content.files.isNotEmpty()) {
+                            item(span = { GridItemSpan(2) }) {
+                                Spacer(Modifier.height(4.dp))
+                                SectionTitle(stringResource(R.string.section_files))
+                                ListContainer {
+                                    content.files.forEachIndexed { index, file ->
+                                        FileRow(
+                                            file = file,
+                                            baseUrl = viewModel.serverBaseUrl,
+                                            zebra = index % 2 == 0,
+                                            onOpen = { fileSheet = file },
+                                            onMenu = { fileSheet = file },
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
     }
+
+    if (sortSheet) {
+        SortSheet(
+            field = sortField,
+            dir = sortDir,
+            onField = { viewModel.setSort(it) },
+            onDir = { if (it != sortDir) viewModel.toggleSortDir() },
+            onDismiss = { sortSheet = false },
+        )
+    }
+    fileSheet?.let { file ->
+        FileInfoSheet(file = file, onDismiss = { fileSheet = null })
+    }
+    folderSheet?.let { folder ->
+        FolderInfoSheet(folder = folder, onDismiss = { folderSheet = null })
+    }
 }
 
 @Composable
-private fun FileLeading(file: FileEntity, baseUrl: String?) {
-    if (file.hasThumbnail && baseUrl != null) {
-        AsyncImage(
-            model = ImageRequest.Builder(LocalPlatformContext.current)
-                .data("$baseUrl/api/v1/drive/${file.id}/thumbnail")
-                .memoryCacheKey("${file.id}@${file.etag}")
-                .diskCacheKey("${file.id}@${file.etag}")
-                .build(),
-            contentDescription = null,
-            modifier = Modifier
-                .size(40.dp)
-                .clip(RoundedCornerShape(6.dp)),
-        )
-    } else {
+private fun EmptyFolder() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
         Icon(
-            iconForMime(file.mimeType),
+            Icons.Outlined.CloudUpload,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(40.dp),
+            tint = KubunoTheme.colors.textTertiary,
+            modifier = Modifier.size(52.dp),
+        )
+        Spacer(Modifier.height(12.dp))
+        Text(
+            stringResource(R.string.browser_empty),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            stringResource(R.string.browser_empty_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = KubunoTheme.colors.textTertiary,
         )
     }
 }
 
-private fun iconForMime(mime: String?): ImageVector = when {
-    mime == null -> Icons.AutoMirrored.Outlined.InsertDriveFile
-    mime.startsWith("image/") -> Icons.Outlined.Image
-    mime.startsWith("video/") -> Icons.Outlined.Videocam
-    mime.startsWith("audio/") -> Icons.Outlined.Audiotrack
-    mime.startsWith("text/") || mime.contains("pdf") -> Icons.Outlined.Description
-    else -> Icons.AutoMirrored.Outlined.InsertDriveFile
-}
-
-private fun formatBytes(bytes: Long): String {
-    if (bytes < 1024) return "$bytes B"
-    val units = arrayOf("KB", "MB", "GB", "TB")
-    var value = bytes.toDouble()
-    var unit = -1
-    while (value >= 1024 && unit < units.lastIndex) {
-        value /= 1024
-        unit++
+/** Shared empty state for the tabs whose data lands in a later milestone. */
+@Composable
+fun TabEmptyState(icon: androidx.compose.ui.graphics.vector.ImageVector, message: String, hint: String? = null) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Icon(
+            icon,
+            contentDescription = null,
+            tint = KubunoTheme.colors.textTertiary,
+            modifier = Modifier.size(52.dp),
+        )
+        Spacer(Modifier.height(12.dp))
+        Text(
+            message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        hint?.let {
+            Spacer(Modifier.height(4.dp))
+            Text(it, style = MaterialTheme.typography.bodySmall, color = KubunoTheme.colors.textTertiary)
+        }
     }
-    return String.format(Locale.getDefault(), if (value >= 100) "%.0f %s" else "%.1f %s", value, units[unit])
 }
 
-/** ListItem has no onClick; a plain clickable modifier keeps ripple + a11y. */
-private fun Modifier.clickableRow(onClick: () -> Unit): Modifier =
-    this.then(Modifier.clickable(onClick = onClick))

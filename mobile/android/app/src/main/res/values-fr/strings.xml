@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Libellés repris du bundle i18n du module drive. -->
 <resources>
     <string name="app_name">Kubuno</string>
 
@@ -26,10 +27,57 @@
     <string name="totp_submit">Vérifier</string>
     <string name="totp_error">Code invalide.</string>
 
-    <!-- Navigateur -->
-    <string name="home_logout">Se déconnecter</string>
-    <string name="browser_empty">Ce dossier est vide.</string>
+    <!-- Onglets du bas (drive nav.*) -->
+    <string name="tab_home">Accueil</string>
+    <string name="tab_starred">Favoris</string>
+    <string name="tab_shared">Partagés</string>
+    <string name="tab_files">Fichiers</string>
+
+    <!-- Sections et lignes -->
+    <string name="section_folders">Dossiers</string>
+    <string name="section_files">Fichiers</string>
+    <string name="row_modified">Modifié</string>
+    <string name="actions_more">Plus d\'actions</string>
+
+    <!-- États vides -->
+    <string name="browser_empty">Ce dossier est vide</string>
+    <string name="browser_empty_hint">Glissez-déposez des fichiers ici ou utilisez le bouton Importer.</string>
+    <string name="empty_starred">Aucun fichier suivi</string>
+    <string name="empty_starred_hint">Utilisez le menu d\'un fichier pour l\'ajouter aux suivis.</string>
+    <string name="empty_shared">Aucun fichier partagé avec vous</string>
+    <string name="empty_recent">Aucun fichier récent</string>
+
+    <!-- Tri et affichage -->
+    <string name="sort_by">Trier par</string>
+    <string name="sort_name">Nom</string>
+    <string name="sort_date">Date</string>
+    <string name="sort_size">Taille</string>
+    <string name="sort_type">Type</string>
+    <string name="sort_direction">Sens du tri</string>
+    <string name="sort_a_to_z">De A à Z</string>
+    <string name="sort_z_to_a">De Z à A</string>
+    <string name="sort_smallest">Du plus petit</string>
+    <string name="sort_largest">Du plus grand</string>
+    <string name="sort_oldest">Du plus ancien</string>
+    <string name="sort_newest">Du plus récent</string>
+    <string name="view_list">Liste</string>
+    <string name="view_grid">Grille</string>
+
+    <!-- Feuilles d'informations -->
+    <string name="ctx_info_file">Informations sur le fichier</string>
+    <string name="ctx_info_folder">Informations sur le dossier</string>
+    <string name="info_size">Taille</string>
+    <string name="info_type">Type</string>
+    <string name="info_path">Chemin</string>
+    <string name="info_checksum">Empreinte</string>
+
+    <!-- Unités de taille -->
+    <string name="unit_byte">o</string>
+    <string name="unit_kb">Ko</string>
+    <string name="unit_mb">Mo</string>
+    <string name="unit_gb">Go</string>
 
     <!-- Session -->
+    <string name="home_logout">Se déconnecter</string>
     <string name="session_expired">Votre session a expiré. Veuillez vous reconnecter.</string>
 </resources>

@@ -47,6 +47,9 @@ interface FileDao {
     )
     fun filesIn(folderId: String?): Flow<List<FileEntity>>
 
+    @Query("SELECT * FROM files WHERE starred = 1 AND trashed = 0 ORDER BY name COLLATE NOCASE")
+    fun starred(): Flow<List<FileEntity>>
+
     @Upsert
     suspend fun upsert(files: List<FileEntity>)
 
