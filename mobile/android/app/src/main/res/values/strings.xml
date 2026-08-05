@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Kubuno</string>
+
+    <!-- Onboarding: server -->
+    <string name="server_title">Connect to your Kubuno</string>
+    <string name="server_subtitle">Enter the address of your self-hosted instance.</string>
+    <string name="server_hint">cloud.example.com</string>
+    <string name="server_continue">Continue</string>
+    <string name="server_error_unreachable">Server unreachable. Check the address and your connection.</string>
+
+    <!-- Onboarding: login -->
+    <string name="login_title">Sign in</string>
+    <string name="login_login_label">Email or username</string>
+    <string name="login_password_label">Password</string>
+    <string name="login_submit">Sign in</string>
+    <string name="login_error_credentials">Invalid credentials.</string>
+    <string name="login_error_network">Network error. Try again.</string>
+    <string name="login_error_server">Server error. Try again later.</string>
+    <string name="login_change_server">Change server</string>
+
+    <!-- Onboarding: TOTP -->
+    <string name="totp_title">Two-factor authentication</string>
+    <string name="totp_subtitle">Enter the 6-digit code from your authenticator app.</string>
+    <string name="totp_code_label">Code</string>
+    <string name="totp_submit">Verify</string>
+    <string name="totp_error">Invalid code.</string>
+
+    <!-- Home (M1 placeholder) -->
+    <string name="home_connected_to">Connected to %1$s</string>
+    <string name="home_logout">Sign out</string>
+    <string name="home_drive_soon">Your files will appear here soon.</string>
+
+    <!-- Session -->
+    <string name="session_expired">Your session has expired. Please sign in again.</string>
+</resources>

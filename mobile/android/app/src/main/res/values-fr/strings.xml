@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Kubuno</string>
+
+    <!-- Onboarding : serveur -->
+    <string name="server_title">Connectez-vous à votre Kubuno</string>
+    <string name="server_subtitle">Saisissez l\'adresse de votre instance auto-hébergée.</string>
+    <string name="server_hint">cloud.exemple.fr</string>
+    <string name="server_continue">Continuer</string>
+    <string name="server_error_unreachable">Serveur injoignable. Vérifiez l\'adresse et votre connexion.</string>
+
+    <!-- Onboarding : connexion -->
+    <string name="login_title">Connexion</string>
+    <string name="login_login_label">E-mail ou nom d\'utilisateur</string>
+    <string name="login_password_label">Mot de passe</string>
+    <string name="login_submit">Se connecter</string>
+    <string name="login_error_credentials">Identifiants invalides.</string>
+    <string name="login_error_network">Erreur réseau. Réessayez.</string>
+    <string name="login_error_server">Erreur du serveur. Réessayez plus tard.</string>
+    <string name="login_change_server">Changer de serveur</string>
+
+    <!-- Onboarding : TOTP -->
+    <string name="totp_title">Authentification à deux facteurs</string>
+    <string name="totp_subtitle">Saisissez le code à 6 chiffres de votre application d\'authentification.</string>
+    <string name="totp_code_label">Code</string>
+    <string name="totp_submit">Vérifier</string>
+    <string name="totp_error">Code invalide.</string>
+
+    <!-- Accueil (placeholder M1) -->
+    <string name="home_connected_to">Connecté à %1$s</string>
+    <string name="home_logout">Se déconnecter</string>
+    <string name="home_drive_soon">Vos fichiers apparaîtront bientôt ici.</string>
+
+    <!-- Session -->
+    <string name="session_expired">Votre session a expiré. Veuillez vous reconnecter.</string>
+</resources>
