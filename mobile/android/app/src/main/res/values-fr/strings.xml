@@ -26,10 +26,9 @@
     <string name="totp_submit">Vérifier</string>
     <string name="totp_error">Code invalide.</string>
 
-    <!-- Accueil (placeholder M1) -->
-    <string name="home_connected_to">Connecté à %1$s</string>
+    <!-- Navigateur -->
     <string name="home_logout">Se déconnecter</string>
-    <string name="home_drive_soon">Vos fichiers apparaîtront bientôt ici.</string>
+    <string name="browser_empty">Ce dossier est vide.</string>
 
     <!-- Session -->
     <string name="session_expired">Votre session a expiré. Veuillez vous reconnecter.</string>

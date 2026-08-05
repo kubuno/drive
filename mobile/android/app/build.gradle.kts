@@ -67,9 +67,17 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
+    implementation(libs.androidx.hilt.work)
+    ksp(libs.androidx.hilt.compiler)
 
     implementation(libs.coroutines.android)
     implementation(libs.kotlinx.serialization.json)
+
+    implementation(libs.room.runtime)
+    implementation(libs.work.runtime.ktx)
+    implementation(libs.lifecycle.process)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
 
     testImplementation(libs.junit)
 }

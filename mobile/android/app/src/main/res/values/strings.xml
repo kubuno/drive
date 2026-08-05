@@ -26,10 +26,9 @@
     <string name="totp_submit">Verify</string>
     <string name="totp_error">Invalid code.</string>
 
-    <!-- Home (M1 placeholder) -->
-    <string name="home_connected_to">Connected to %1$s</string>
+    <!-- Browser -->
     <string name="home_logout">Sign out</string>
-    <string name="home_drive_soon">Your files will appear here soon.</string>
+    <string name="browser_empty">This folder is empty.</string>
 
     <!-- Session -->
     <string name="session_expired">Your session has expired. Please sign in again.</string>

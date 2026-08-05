@@ -1,8 +1,8 @@
-// Android library: Room store, delta sync engine, outbox, workers.
-// M1 ships this module as an empty shell; M2 fills it in.
+// Android library: Room store, delta sync engine, workers, realtime client.
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -27,5 +27,18 @@ kotlin {
 
 dependencies {
     api(project(":core-api"))
+
     implementation(libs.coroutines.android)
+
+    api(libs.room.runtime)
+    implementation(libs.room.ktx)
+    ksp(libs.room.compiler)
+
+    api(libs.work.runtime.ktx)
+    implementation(libs.lifecycle.process)
+
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.androidx.hilt.work)
+    ksp(libs.androidx.hilt.compiler)
 }
