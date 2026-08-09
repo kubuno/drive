@@ -89,6 +89,7 @@ fun KubunoShell(
     onOpenTransfers: () -> Unit,
     // Defaulted so the shell keeps compiling while AppNav wires the real screen.
     onOpenSettings: () -> Unit,
+    onManageAccount: () -> Unit,
     searchQuery: String?,
     onSearchOpen: () -> Unit,
     onSearchChange: (String) -> Unit,
@@ -120,6 +121,7 @@ fun KubunoShell(
                 activeTransfers = activeTransfers,
                 onOpenTransfers = onOpenTransfers,
                 onOpenSettings = onOpenSettings,
+                onManageAccount = onManageAccount,
                 onLogout = onLogout,
             )
 
@@ -192,6 +194,7 @@ private fun AppHeader(
     activeTransfers: Int,
     onOpenTransfers: () -> Unit,
     onOpenSettings: () -> Unit,
+    onManageAccount: () -> Unit,
     userEmail: String?,
     onLogout: () -> Unit,
 ) {
@@ -240,7 +243,7 @@ private fun AppHeader(
             email = userEmail,
             displayName = userLabel,
             avatarUrl = avatarUrl,
-            onManageAccount = { panelOpen = false; onOpenSettings() },
+            onManageAccount = { panelOpen = false; onManageAccount() },
             onLogout = { panelOpen = false; onLogout() },
             onDismiss = { panelOpen = false },
         )

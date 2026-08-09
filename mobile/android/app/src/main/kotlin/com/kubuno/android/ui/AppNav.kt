@@ -27,6 +27,7 @@ import com.kubuno.android.ui.browse.TrashScreen
 import com.kubuno.android.ui.shell.DriveDrawer
 import com.kubuno.android.ui.shell.DrawerDestination
 import kotlinx.coroutines.launch
+import com.kubuno.android.ui.account.AccountScreen
 import com.kubuno.android.R
 import com.kubuno.android.ui.browser.BrowserScreen
 import com.kubuno.android.ui.browser.BrowserViewModel
@@ -98,6 +99,7 @@ private fun SignedInApp(onLoggedOut: () -> Unit) {
     val rootFolders by browseViewModel.rootFolders.collectAsStateWithLifecycle()
     var newFolderDialog by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
+    var showAccount by remember { mutableStateOf(false) }
     var showTransfers by remember { mutableStateOf(false) }
     // Non-null means the header is in search mode; the string is the term.
     var searchQuery by remember { mutableStateOf<String?>(null) }
@@ -106,6 +108,7 @@ private fun SignedInApp(onLoggedOut: () -> Unit) {
     val scope = rememberCoroutineScope()
 
     fun closeOverlays() {
+        showAccount = false
         showSettings = false
         showTransfers = false
         searchQuery = null
@@ -118,12 +121,13 @@ private fun SignedInApp(onLoggedOut: () -> Unit) {
     ) { uris -> if (uris.isNotEmpty()) viewModel.upload(uris) }
 
     BackHandler(
-        enabled = drawerState.isOpen || searchQuery != null || showSettings || showTransfers ||
+        enabled = drawerState.isOpen || searchQuery != null || showAccount || showSettings || showTransfers ||
             drawerSection != DrawerDestination.MY_DRIVE || stack.isNotEmpty() || tab != DriveTab.FILES
     ) {
         when {
             drawerState.isOpen -> scope.launch { drawerState.close() }
             searchQuery != null -> searchQuery = null
+            showAccount -> showAccount = false
             showSettings -> showSettings = false
             showTransfers -> showTransfers = false
             drawerSection != DrawerDestination.MY_DRIVE -> drawerSection = DrawerDestination.MY_DRIVE
@@ -173,12 +177,13 @@ private fun SignedInApp(onLoggedOut: () -> Unit) {
             content.folders.map { it.id to it.name }
         } else emptyList(),
         showFab = tab == DriveTab.FILES && !showTransfers && !showSettings &&
-            searchQuery == null && drawerSection == DrawerDestination.MY_DRIVE,
+            searchQuery == null && !showAccount && drawerSection == DrawerDestination.MY_DRIVE,
         showBreadcrumb = tab == DriveTab.FILES && !showTransfers && !showSettings &&
-            searchQuery == null && drawerSection == DrawerDestination.MY_DRIVE,
+            searchQuery == null && !showAccount && drawerSection == DrawerDestination.MY_DRIVE,
         activeTransfers = transfers.count { it.state == "queued" || it.state == "running" },
         onOpenTransfers = { closeOverlays(); showTransfers = true },
         onOpenSettings = { closeOverlays(); showSettings = true },
+        onManageAccount = { closeOverlays(); showAccount = true },
         searchQuery = searchQuery,
         onSearchOpen = { closeOverlays(); searchQuery = "" },
         onSearchChange = { searchQuery = it; browseViewModel.search(it) },
@@ -213,6 +218,10 @@ private fun SignedInApp(onLoggedOut: () -> Unit) {
         // Settings and transfers take over the module surface rather than
         // becoming tabs: the four drive tabs are fixed by the web's design.
         when {
+            showAccount -> AccountScreen(
+                viewModel = hiltViewModel(),
+                onLogout = { viewModel.logout(onLoggedOut) },
+            )
             searchQuery != null -> SearchScreen(
                 viewModel = browseViewModel,
                 onOpenFolder = { id ->
@@ -225,7 +234,6 @@ private fun SignedInApp(onLoggedOut: () -> Unit) {
             drawerSection == DrawerDestination.TRASH -> TrashScreen(browseViewModel) {}
             showSettings -> SettingsScreen(
                 viewModel = hiltViewModel(),
-                onLogout = { viewModel.logout(onLoggedOut) },
                 onPurgeOffline = { viewModel.purgeOffline() },
             )
 

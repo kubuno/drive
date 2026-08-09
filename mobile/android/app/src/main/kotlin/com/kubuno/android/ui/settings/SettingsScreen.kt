@@ -69,9 +69,6 @@ class SettingsViewModel @Inject constructor(
 
     // The cached profile never changes while the screen is open: a re-login
     // rebuilds the whole signed-in tree.
-    val displayName: String? = prefs.userDisplayName
-    val email: String? = prefs.userEmail
-    val serverUrl: String? = prefs.serverUrl
 
     private val _autoUpload = MutableStateFlow(prefs.autoUploadEnabled)
     val autoUpload: StateFlow<Boolean> = _autoUpload.asStateFlow()
@@ -147,7 +144,6 @@ private fun mediaPermissions(includeVideos: Boolean): Array<String> =
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel,
-    onLogout: () -> Unit,
     onPurgeOffline: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -189,24 +185,6 @@ fun SettingsScreen(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 12.dp),
     ) {
-        SectionTitle(stringResource(R.string.settings_account))
-        ListContainer {
-            AccountRow(displayName = viewModel.displayName, email = viewModel.email)
-            RowDivider()
-            SettingsRow(
-                label = stringResource(R.string.settings_server),
-                value = viewModel.serverUrl,
-            )
-            RowDivider()
-            SettingsRow(
-                label = stringResource(R.string.home_logout),
-                danger = true,
-                onClick = onLogout,
-            )
-        }
-
-        Spacer(Modifier.height(20.dp))
-
         SectionTitle(stringResource(R.string.settings_autoupload))
         ListContainer {
             SwitchRow(
@@ -286,35 +264,6 @@ fun SettingsScreen(
 }
 
 /** Two-line identity row: the display name over the address it signs in with. */
-@Composable
-private fun AccountRow(displayName: String?, email: String?) {
-    val primary = displayName?.takeIf { it.isNotBlank() } ?: email ?: "—"
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(52.dp)
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Text(
-            primary,
-            fontSize = 15.sp,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        if (email != null && email != primary) {
-            Text(
-                email,
-                style = MaterialTheme.typography.bodySmall,
-                color = KubunoTheme.colors.textTertiary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-    }
-}
-
 /**
  * Generic settings line, 52dp like [com.kubuno.android.ui.sheet.SheetRow].
  * Without [onClick] it is a plain readout — no ripple, nothing to press.

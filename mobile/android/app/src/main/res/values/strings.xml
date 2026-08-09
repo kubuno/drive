@@ -151,4 +151,33 @@
     <!-- Account panel -->
     <string name="greeting">Hello %1$s!</string>
     <string name="manage_account">Manage your account</string>
+
+    <!-- Account screen -->
+    <string name="account_profile">Profile</string>
+    <string name="account_sessions">Sessions</string>
+    <string name="account_security">Security</string>
+    <string name="account_username">Username</string>
+    <string name="account_email">Email</string>
+    <string name="account_role">Role</string>
+    <string name="account_role_admin">Administrator</string>
+    <string name="account_role_user">User</string>
+    <string name="account_role_guest">Guest</string>
+    <string name="account_offline">Offline — showing the last known profile.</string>
+    <string name="account_error">Could not reach the server.</string>
+    <string name="account_retry">Try again</string>
+    <string name="account_sessions_empty">No active session</string>
+    <string name="account_session_current">This device</string>
+    <string name="account_session_last_used">Last active %1$s</string>
+    <string name="account_session_revoke">Sign this session out</string>
+    <string name="account_sessions_revoke_all">Sign out of every session</string>
+    <string name="account_sessions_revoke_all_message">Every session is signed out, this one included. You will have to sign in again.</string>
+    <string name="account_client_web">Browser</string>
+    <string name="account_client_native">Mobile app</string>
+    <string name="account_client_desktop">Desktop app</string>
+    <string name="account_client_api">API client</string>
+    <string name="account_client_unknown">Unknown client</string>
+    <string name="account_2fa">Two-factor authentication</string>
+    <string name="account_2fa_on">Enabled</string>
+    <string name="account_2fa_off">Disabled</string>
+    <string name="account_manage_on_web">Manage on the web</string>
 </resources>

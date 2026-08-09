@@ -151,4 +151,33 @@
     <!-- Account panel -->
     <string name="greeting">Bonjour %1$s !</string>
     <string name="manage_account">Gérer votre compte</string>
+
+    <!-- Écran Compte -->
+    <string name="account_profile">Profil</string>
+    <string name="account_sessions">Sessions</string>
+    <string name="account_security">Sécurité</string>
+    <string name="account_username">Nom d\'utilisateur</string>
+    <string name="account_email">E-mail</string>
+    <string name="account_role">Rôle</string>
+    <string name="account_role_admin">Administrateur</string>
+    <string name="account_role_user">Utilisateur</string>
+    <string name="account_role_guest">Invité</string>
+    <string name="account_offline">Hors ligne — profil connu en dernier.</string>
+    <string name="account_error">Serveur injoignable.</string>
+    <string name="account_retry">Réessayer</string>
+    <string name="account_sessions_empty">Aucune session active</string>
+    <string name="account_session_current">Cet appareil</string>
+    <string name="account_session_last_used">Dernière activité %1$s</string>
+    <string name="account_session_revoke">Déconnecter cette session</string>
+    <string name="account_sessions_revoke_all">Déconnecter toutes les sessions</string>
+    <string name="account_sessions_revoke_all_message">Toutes les sessions sont déconnectées, celle-ci comprise. Vous devrez vous reconnecter.</string>
+    <string name="account_client_web">Navigateur</string>
+    <string name="account_client_native">Application mobile</string>
+    <string name="account_client_desktop">Application bureau</string>
+    <string name="account_client_api">Client API</string>
+    <string name="account_client_unknown">Client inconnu</string>
+    <string name="account_2fa">Validation en deux étapes</string>
+    <string name="account_2fa_on">Activée</string>
+    <string name="account_2fa_off">Désactivée</string>
+    <string name="account_manage_on_web">Gérer sur le web</string>
 </resources>
