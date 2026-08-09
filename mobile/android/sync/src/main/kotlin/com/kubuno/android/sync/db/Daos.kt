@@ -199,3 +199,36 @@ interface PinDao {
     @Query("DELETE FROM local_copies")
     suspend fun clearCopies()
 }
+
+/**
+ * Queries backing the drawer destinations and search. All of them read the
+ * local store, so those screens work with the radios off.
+ */
+@Dao
+interface BrowseDao {
+    @Query("SELECT * FROM files WHERE trashed = 0 ORDER BY updatedAt DESC LIMIT 200")
+    fun recentFiles(): Flow<List<FileEntity>>
+
+    @Query("SELECT * FROM files WHERE trashed = 1 ORDER BY name COLLATE NOCASE")
+    fun trashedFiles(): Flow<List<FileEntity>>
+
+    @Query("SELECT * FROM folders WHERE trashed = 1 ORDER BY name COLLATE NOCASE")
+    fun trashedFolders(): Flow<List<FolderEntity>>
+
+    @Query(
+        """SELECT * FROM files
+           WHERE trashed = 0 AND name LIKE '%' || :term || '%'
+           ORDER BY name COLLATE NOCASE LIMIT 100"""
+    )
+    fun searchFiles(term: String): Flow<List<FileEntity>>
+
+    @Query(
+        """SELECT * FROM folders
+           WHERE trashed = 0 AND name LIKE '%' || :term || '%'
+           ORDER BY name COLLATE NOCASE LIMIT 50"""
+    )
+    fun searchFolders(term: String): Flow<List<FolderEntity>>
+
+    @Query("SELECT * FROM folders WHERE parentId IS NULL AND trashed = 0 ORDER BY name COLLATE NOCASE")
+    fun rootFolders(): Flow<List<FolderEntity>>
+}

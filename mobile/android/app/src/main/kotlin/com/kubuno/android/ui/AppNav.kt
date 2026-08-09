@@ -16,6 +16,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.runtime.rememberCoroutineScope
+import com.kubuno.android.ui.browse.BrowseViewModel
+import com.kubuno.android.ui.browse.RecentScreen
+import com.kubuno.android.ui.browse.SearchScreen
+import com.kubuno.android.ui.browse.TrashScreen
+import com.kubuno.android.ui.shell.DriveDrawer
+import com.kubuno.android.ui.shell.DrawerDestination
+import kotlinx.coroutines.launch
 import com.kubuno.android.R
 import com.kubuno.android.ui.browser.BrowserScreen
 import com.kubuno.android.ui.browser.BrowserViewModel
@@ -83,9 +94,22 @@ private fun SignedInApp(onLoggedOut: () -> Unit) {
     val transfersViewModel: TransfersViewModel = hiltViewModel()
     val content by viewModel.content.collectAsStateWithLifecycle()
     val transfers by transfersViewModel.transfers.collectAsStateWithLifecycle()
+    val browseViewModel: BrowseViewModel = hiltViewModel()
+    val rootFolders by browseViewModel.rootFolders.collectAsStateWithLifecycle()
     var newFolderDialog by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
     var showTransfers by remember { mutableStateOf(false) }
+    // Non-null means the header is in search mode; the string is the term.
+    var searchQuery by remember { mutableStateOf<String?>(null) }
+    var drawerSection by remember { mutableStateOf(DrawerDestination.MY_DRIVE) }
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+
+    fun closeOverlays() {
+        showSettings = false
+        showTransfers = false
+        searchQuery = null
+    }
 
     LaunchedEffect(currentFolderId) { viewModel.openFolder(currentFolderId) }
 
@@ -93,14 +117,51 @@ private fun SignedInApp(onLoggedOut: () -> Unit) {
         ActivityResultContracts.OpenMultipleDocuments()
     ) { uris -> if (uris.isNotEmpty()) viewModel.upload(uris) }
 
-    BackHandler(enabled = showSettings || showTransfers || stack.isNotEmpty() || tab != DriveTab.FILES) {
+    BackHandler(
+        enabled = drawerState.isOpen || searchQuery != null || showSettings || showTransfers ||
+            drawerSection != DrawerDestination.MY_DRIVE || stack.isNotEmpty() || tab != DriveTab.FILES
+    ) {
         when {
+            drawerState.isOpen -> scope.launch { drawerState.close() }
+            searchQuery != null -> searchQuery = null
             showSettings -> showSettings = false
             showTransfers -> showTransfers = false
+            drawerSection != DrawerDestination.MY_DRIVE -> drawerSection = DrawerDestination.MY_DRIVE
             stack.isNotEmpty() -> stack.removeAt(stack.lastIndex)
             else -> tab = DriveTab.FILES
         }
     }
+
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            DriveDrawer(
+                current = drawerSection,
+                rootFolders = rootFolders.map { it.id to it.name },
+                onDestination = { destination ->
+                    scope.launch { drawerState.close() }
+                    closeOverlays()
+                    drawerSection = destination
+                    when (destination) {
+                        DrawerDestination.MY_DRIVE -> { tab = DriveTab.FILES; stack.clear() }
+                        DrawerDestination.STARRED -> tab = DriveTab.STARRED
+                        DrawerDestination.SHARED -> tab = DriveTab.SHARED
+                        DrawerDestination.SETTINGS -> showSettings = true
+                        else -> Unit // Recent and Trash render in place
+                    }
+                },
+                onOpenFolder = { id ->
+                    scope.launch { drawerState.close() }
+                    closeOverlays()
+                    drawerSection = DrawerDestination.MY_DRIVE
+                    tab = DriveTab.FILES
+                    stack.clear()
+                    stack.add(Crumb(id, rootFolders.firstOrNull { it.id == id }?.name.orEmpty()))
+                },
+                onNew = { scope.launch { drawerState.close() }; newFolderDialog = true },
+            )
+        },
+    ) {
 
     KubunoShell(
         crumbs = if (tab == DriveTab.FILES) stack.toList() else emptyList(),
@@ -109,14 +170,25 @@ private fun SignedInApp(onLoggedOut: () -> Unit) {
         childFolders = if (tab == DriveTab.FILES && !showTransfers && !showSettings) {
             content.folders.map { it.id to it.name }
         } else emptyList(),
-        showFab = tab == DriveTab.FILES && !showTransfers && !showSettings,
-        showBreadcrumb = tab == DriveTab.FILES && !showTransfers && !showSettings,
+        showFab = tab == DriveTab.FILES && !showTransfers && !showSettings &&
+            searchQuery == null && drawerSection == DrawerDestination.MY_DRIVE,
+        showBreadcrumb = tab == DriveTab.FILES && !showTransfers && !showSettings &&
+            searchQuery == null && drawerSection == DrawerDestination.MY_DRIVE,
         activeTransfers = transfers.count { it.state == "queued" || it.state == "running" },
-        onOpenTransfers = { showSettings = false; showTransfers = true },
-        onOpenSettings = { showTransfers = false; showSettings = true },
+        onOpenTransfers = { closeOverlays(); showTransfers = true },
+        onOpenSettings = { closeOverlays(); showSettings = true },
+        searchQuery = searchQuery,
+        onSearchOpen = { closeOverlays(); searchQuery = "" },
+        onSearchChange = { searchQuery = it; browseViewModel.search(it) },
+        onSearchClose = { searchQuery = null; browseViewModel.search("") },
+        onOpenDrawer = { scope.launch { drawerState.open() } },
         onSelectTab = { selected ->
-            showTransfers = false
-            showSettings = false
+            closeOverlays()
+            drawerSection = when (selected) {
+                DriveTab.STARRED -> DrawerDestination.STARRED
+                DriveTab.SHARED -> DrawerDestination.SHARED
+                else -> DrawerDestination.MY_DRIVE
+            }
             if (selected == DriveTab.FILES && tab == DriveTab.FILES) stack.clear()
             tab = selected
         },
@@ -139,6 +211,16 @@ private fun SignedInApp(onLoggedOut: () -> Unit) {
         // Settings and transfers take over the module surface rather than
         // becoming tabs: the four drive tabs are fixed by the web's design.
         when {
+            searchQuery != null -> SearchScreen(
+                viewModel = browseViewModel,
+                onOpenFolder = { id ->
+                    searchQuery = null
+                    stack.clear()
+                    stack.add(Crumb(id, ""))
+                },
+            )
+            drawerSection == DrawerDestination.RECENT -> RecentScreen(browseViewModel)
+            drawerSection == DrawerDestination.TRASH -> TrashScreen(browseViewModel) {}
             showSettings -> SettingsScreen(
                 viewModel = hiltViewModel(),
                 onLogout = { viewModel.logout(onLoggedOut) },
@@ -166,6 +248,8 @@ private fun SignedInApp(onLoggedOut: () -> Unit) {
                 )
             }
         }
+    }
+
     }
 
     if (newFolderDialog) {

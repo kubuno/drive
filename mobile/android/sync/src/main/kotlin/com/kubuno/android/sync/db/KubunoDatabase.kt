@@ -25,4 +25,5 @@ abstract class KubunoDatabase : RoomDatabase() {
     abstract fun transferDao(): TransferDao
     abstract fun autoUploadDao(): AutoUploadDao
     abstract fun pinDao(): PinDao
+    abstract fun browseDao(): BrowseDao
 }

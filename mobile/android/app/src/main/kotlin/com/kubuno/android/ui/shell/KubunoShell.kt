@@ -42,6 +42,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -75,6 +82,11 @@ fun KubunoShell(
     onOpenTransfers: () -> Unit,
     // Defaulted so the shell keeps compiling while AppNav wires the real screen.
     onOpenSettings: () -> Unit,
+    searchQuery: String?,
+    onSearchOpen: () -> Unit,
+    onSearchChange: (String) -> Unit,
+    onSearchClose: () -> Unit,
+    onOpenDrawer: () -> Unit,
     onSelectTab: (DriveTab) -> Unit,
     onNavigateCrumb: (String?) -> Unit,
     onOpenFolder: (String) -> Unit,
@@ -91,6 +103,11 @@ fun KubunoShell(
         Column(Modifier.fillMaxSize()) {
             AppHeader(
                 userLabel = userLabel,
+                searchQuery = searchQuery,
+                onSearchOpen = onSearchOpen,
+                onSearchChange = onSearchChange,
+                onSearchClose = onSearchClose,
+                onOpenDrawer = onOpenDrawer,
                 activeTransfers = activeTransfers,
                 onOpenTransfers = onOpenTransfers,
                 onOpenSettings = onOpenSettings,
@@ -157,12 +174,29 @@ private fun HeaderIcon(
 @Composable
 private fun AppHeader(
     userLabel: String?,
+    searchQuery: String?,
+    onSearchOpen: () -> Unit,
+    onSearchChange: (String) -> Unit,
+    onSearchClose: () -> Unit,
+    onOpenDrawer: () -> Unit,
     activeTransfers: Int,
     onOpenTransfers: () -> Unit,
     onOpenSettings: () -> Unit,
     onLogout: () -> Unit,
 ) {
     var menu by remember { mutableStateOf(false) }
+
+    // Searching swaps the whole header for a back arrow and a field, exactly
+    // as the web does, rather than squeezing a field between the glyphs.
+    if (searchQuery != null) {
+        SearchHeader(
+            query = searchQuery,
+            onChange = onSearchChange,
+            onClose = onSearchClose,
+        )
+        return
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -170,7 +204,7 @@ private fun AppHeader(
             .height(64.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        HeaderIcon(Icons.Outlined.Menu, stringResource(R.string.menu))
+        HeaderIcon(Icons.Outlined.Menu, stringResource(R.string.menu), onOpenDrawer)
 
         Icon(
             painter = painterResource(R.drawable.ic_kubuno_logo),
@@ -181,7 +215,7 @@ private fun AppHeader(
 
         Box(Modifier.weight(1f))
 
-        HeaderIcon(Icons.Outlined.Search, stringResource(R.string.search))
+        HeaderIcon(Icons.Outlined.Search, stringResource(R.string.search), onSearchOpen)
         // The bell is where transfer activity surfaces: same slot the web uses
         // for notifications, and the count is what the user wants to watch.
         NotificationBell(count = activeTransfers, onClick = onOpenTransfers)
@@ -198,6 +232,47 @@ private fun AppHeader(
                     onClick = { menu = false; onLogout() },
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun SearchHeader(query: String, onChange: (String) -> Unit, onClose: () -> Unit) {
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(Unit) { focusRequester.requestFocus() }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .height(64.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        HeaderIcon(Icons.AutoMirrored.Outlined.ArrowBack, stringResource(R.string.back), onClose)
+        BasicTextField(
+            value = query,
+            onValueChange = onChange,
+            singleLine = true,
+            textStyle = MaterialTheme.typography.bodyLarge.copy(
+                color = MaterialTheme.colorScheme.onSurface,
+            ),
+            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+            modifier = Modifier
+                .weight(1f)
+                .focusRequester(focusRequester),
+            decorationBox = { inner ->
+                if (query.isEmpty()) {
+                    Text(
+                        stringResource(R.string.search_hint),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = KubunoTheme.colors.textTertiary,
+                    )
+                }
+                inner()
+            },
+        )
+        if (query.isNotEmpty()) {
+            HeaderIcon(Icons.Outlined.Close, stringResource(R.string.search_clear)) { onChange("") }
         }
     }
 }

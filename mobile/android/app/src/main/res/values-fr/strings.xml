@@ -137,4 +137,14 @@
     <string name="offline_size">Copies locales</string>
     <string name="offline_purge">Libérer l\'espace</string>
     <string name="about_license">Licence AGPLv3</string>
+
+    <!-- Drawer, search, trash -->
+    <string name="nav_recent">Récents</string>
+    <string name="nav_trash">Corbeille</string>
+    <string name="empty_trash">La corbeille est vide</string>
+    <string name="search_hint">Rechercher dans les fichiers…</string>
+    <string name="search_prompt">Saisissez au moins deux caractères</string>
+    <string name="search_no_results">Aucun résultat</string>
+    <string name="search_clear">Effacer</string>
+    <string name="back">Retour</string>
 </resources>
