@@ -29,6 +29,11 @@ class AppPrefs(context: Context) {
         get() = prefs.getString("user_email", null)
         set(value) = prefs.edit().putString("user_email", value).apply()
 
+    /** Server-relative path, e.g. /api/v1/users/<id>/avatar. */
+    var userAvatarUrl: String?
+        get() = prefs.getString("user_avatar", null)
+        set(value) = prefs.edit().putString("user_avatar", value).apply()
+
     // ---- camera-roll auto-upload ----------------------------------------
 
     var autoUploadEnabled: Boolean

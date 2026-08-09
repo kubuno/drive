@@ -167,6 +167,8 @@ private fun SignedInApp(onLoggedOut: () -> Unit) {
         crumbs = if (tab == DriveTab.FILES) stack.toList() else emptyList(),
         currentTab = tab,
         userLabel = viewModel.userLabel,
+        userEmail = viewModel.userEmail,
+        avatarUrl = viewModel.avatarUrl,
         childFolders = if (tab == DriveTab.FILES && !showTransfers && !showSettings) {
             content.folders.map { it.id to it.name }
         } else emptyList(),

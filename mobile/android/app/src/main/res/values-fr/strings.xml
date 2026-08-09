@@ -147,4 +147,8 @@
     <string name="search_no_results">Aucun résultat</string>
     <string name="search_clear">Effacer</string>
     <string name="back">Retour</string>
+
+    <!-- Account panel -->
+    <string name="greeting">Bonjour %1$s !</string>
+    <string name="manage_account">Gérer votre compte</string>
 </resources>

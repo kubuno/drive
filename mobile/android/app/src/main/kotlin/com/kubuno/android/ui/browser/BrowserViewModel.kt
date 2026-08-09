@@ -43,10 +43,20 @@ class BrowserViewModel @Inject constructor(
     private val actions: DriveActions,
     private val transfers: TransferQueue,
     private val offline: OfflineFiles,
-    prefs: AppPrefs,
+    private val prefs: AppPrefs,
 ) : ViewModel() {
 
     val userLabel: String? = prefs.userDisplayName ?: prefs.userEmail
+    val userEmail: String? get() = prefs.userEmail
+
+    /**
+     * Read on each access rather than captured: the profile is refreshed on
+     * every foreground, so a freshly fetched avatar shows without a restart.
+     */
+    val avatarUrl: String?
+        get() = prefs.userAvatarUrl?.let { path ->
+            if (path.startsWith("http")) path else client.serverBaseUrl()?.plus(path)
+        }
 
     /** Ids kept available offline, so rows can badge themselves. */
     val pinnedIds: StateFlow<Set<String>> = db.pinDao().all()

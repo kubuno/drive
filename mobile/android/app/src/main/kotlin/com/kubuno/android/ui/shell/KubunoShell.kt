@@ -55,6 +55,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.layout.ContentScale
+import coil3.compose.AsyncImage
+import coil3.compose.LocalPlatformContext
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import com.kubuno.android.R
 import com.kubuno.android.ui.sheet.ActionSheet
 import com.kubuno.android.ui.sheet.SheetRow
@@ -75,6 +80,8 @@ fun KubunoShell(
     crumbs: List<Crumb>,
     currentTab: DriveTab,
     userLabel: String?,
+    userEmail: String?,
+    avatarUrl: String?,
     childFolders: List<Pair<String, String>>,
     showFab: Boolean,
     showBreadcrumb: Boolean,
@@ -103,6 +110,8 @@ fun KubunoShell(
         Column(Modifier.fillMaxSize()) {
             AppHeader(
                 userLabel = userLabel,
+                userEmail = userEmail,
+                avatarUrl = avatarUrl,
                 searchQuery = searchQuery,
                 onSearchOpen = onSearchOpen,
                 onSearchChange = onSearchChange,
@@ -174,6 +183,7 @@ private fun HeaderIcon(
 @Composable
 private fun AppHeader(
     userLabel: String?,
+    avatarUrl: String?,
     searchQuery: String?,
     onSearchOpen: () -> Unit,
     onSearchChange: (String) -> Unit,
@@ -182,9 +192,10 @@ private fun AppHeader(
     activeTransfers: Int,
     onOpenTransfers: () -> Unit,
     onOpenSettings: () -> Unit,
+    userEmail: String?,
     onLogout: () -> Unit,
 ) {
-    var menu by remember { mutableStateOf(false) }
+    var panelOpen by remember { mutableStateOf(false) }
 
     // Searching swaps the whole header for a back arrow and a field, exactly
     // as the web does, rather than squeezing a field between the glyphs.
@@ -221,18 +232,18 @@ private fun AppHeader(
         NotificationBell(count = activeTransfers, onClick = onOpenTransfers)
         HeaderIcon(Icons.Outlined.Settings, stringResource(R.string.settings), onOpenSettings)
 
-        Box {
-            Avatar(userLabel) { menu = true }
-            DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.home_logout)) },
-                    leadingIcon = {
-                        Icon(Icons.AutoMirrored.Outlined.Logout, contentDescription = null)
-                    },
-                    onClick = { menu = false; onLogout() },
-                )
-            }
-        }
+        Avatar(userLabel, avatarUrl) { panelOpen = true }
+    }
+
+    if (panelOpen) {
+        UserPanel(
+            email = userEmail,
+            displayName = userLabel,
+            avatarUrl = avatarUrl,
+            onManageAccount = { panelOpen = false; onOpenSettings() },
+            onLogout = { panelOpen = false; onLogout() },
+            onDismiss = { panelOpen = false },
+        )
     }
 }
 
@@ -313,8 +324,14 @@ private fun NotificationBell(count: Int, onClick: () -> Unit) {
     }
 }
 
+/**
+ * Profile picture, falling back to initials.
+ *
+ * [avatarUrl] is server-relative, so it is joined to the current instance;
+ * Coil rides the authenticated OkHttp client, which the avatar endpoint needs.
+ */
 @Composable
-private fun Avatar(userLabel: String?, onClick: () -> Unit) {
+private fun Avatar(userLabel: String?, avatarUrl: String?, onClick: () -> Unit) {
     val initials = userLabel
         ?.split(' ', '@', '.')
         ?.filter { it.isNotBlank() }
@@ -337,6 +354,17 @@ private fun Avatar(userLabel: String?, onClick: () -> Unit) {
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onPrimary,
         )
+        if (avatarUrl != null) {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalPlatformContext.current)
+                    .data(avatarUrl)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
     }
 }
 

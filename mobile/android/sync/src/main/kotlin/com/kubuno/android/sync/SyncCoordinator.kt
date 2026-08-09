@@ -11,6 +11,10 @@ import com.kubuno.android.sync.work.AutoUploadWorker
 import com.kubuno.android.sync.work.SyncScheduler
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 /**
  * Wires the sync triggers to the app lifecycle: on foreground, sync once and
@@ -26,6 +30,8 @@ class SyncCoordinator @Inject constructor(
     private val prefs: AppPrefs,
 ) : DefaultLifecycleObserver {
 
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
     /** Idempotent; call once from Application.onCreate. */
     fun install() {
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
@@ -38,6 +44,27 @@ class SyncCoordinator @Inject constructor(
         if (!client.tokenManager.isLoggedIn()) return
         scheduler.syncNow()
         events.start { scheduler.syncNow() }
+        refreshProfile()
+    }
+
+    /**
+     * Refreshes the cached profile on every foreground. The login response is
+     * a snapshot: a display name or avatar changed elsewhere would otherwise
+     * stay stale for the life of the session.
+     */
+    private fun refreshProfile() {
+        scope.launch {
+            runCatching { client.authApi.me() }
+                .getOrNull()
+                ?.takeIf { it.isSuccessful }
+                ?.body()
+                ?.user
+                ?.let { user ->
+                    prefs.userDisplayName = user.displayName ?: user.username
+                    prefs.userEmail = user.email
+                    prefs.userAvatarUrl = user.avatarUrl
+                }
+        }
     }
 
     override fun onStop(owner: LifecycleOwner) {

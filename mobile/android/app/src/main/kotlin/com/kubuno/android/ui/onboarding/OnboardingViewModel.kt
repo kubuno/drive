@@ -108,6 +108,7 @@ class OnboardingViewModel @Inject constructor(
             is LoginOutcome.Success -> {
                 prefs.userDisplayName = outcome.user?.displayName ?: outcome.user?.username
                 prefs.userEmail = outcome.user?.email
+                prefs.userAvatarUrl = outcome.user?.avatarUrl
                 declareDevice()
                 _state.update { it.copy(loginBusy = false, totpBusy = false, done = true) }
             }
