@@ -185,4 +185,10 @@
     <string name="avatar_change">Changer la photo de profil</string>
     <string name="avatar_crop_title">Cadrez votre photo</string>
     <string name="avatar_failed">Impossible de mettre à jour la photo</string>
+
+    <!-- Multi-account -->
+    <string name="add_account">Ajouter un compte</string>
+    <string name="manage_device_accounts">Gérer les comptes sur cet appareil</string>
+    <string name="remove_account">Retirer ce compte</string>
+    <string name="remove_account_confirm">Retirer %1$s de cet appareil ? Les fichiers gardés hors-ligne seront supprimés ; rien n’est retiré du serveur.</string>
 </resources>

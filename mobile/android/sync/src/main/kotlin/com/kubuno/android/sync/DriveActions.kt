@@ -5,8 +5,6 @@ import com.kubuno.android.sync.db.KubunoDatabase
 import com.kubuno.android.sync.db.OutboxEntity
 import com.kubuno.android.sync.work.SyncScheduler
 import java.util.UUID
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -30,8 +28,7 @@ object Ops {
  * drains the queue before pulling the delta, which then reconciles whatever
  * the server actually did (it may, for instance, rename to "name (2)").
  */
-@Singleton
-class DriveActions @Inject constructor(
+class DriveActions(
     private val db: KubunoDatabase,
     private val scheduler: SyncScheduler,
 ) {

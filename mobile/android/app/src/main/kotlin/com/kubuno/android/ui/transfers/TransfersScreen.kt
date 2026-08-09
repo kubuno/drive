@@ -36,8 +36,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.kubuno.android.R
+import com.kubuno.android.account.AccountGraph
+import com.kubuno.android.account.ActiveAccount
 import com.kubuno.android.sync.db.TransferEntity
-import com.kubuno.android.sync.transfer.TransferQueue
 import com.kubuno.android.ui.browser.ListContainer
 import com.kubuno.android.ui.browser.TabEmptyState
 import com.kubuno.android.ui.format.SizeUnits
@@ -45,20 +46,37 @@ import com.kubuno.android.ui.format.formatSize
 import com.kubuno.android.ui.theme.KubunoTheme
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+/**
+ * Shows only the displayed account's queue — the other accounts keep
+ * transferring in the background, their rows just belong to their own screen.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class TransfersViewModel @Inject constructor(
-    private val queue: TransferQueue,
+    active: ActiveAccount,
 ) : ViewModel() {
-    val transfers: StateFlow<List<TransferEntity>> = queue.all()
+
+    private val graph: StateFlow<AccountGraph?> = active.graph
+
+    val transfers: StateFlow<List<TransferEntity>> = graph
+        .flatMapLatest { g -> g?.transfers?.all() ?: flowOf(emptyList()) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    fun retry(id: Long) = viewModelScope.launch { queue.retry(id) }
-    fun clearFinished() = viewModelScope.launch { queue.clearFinished() }
+    private fun withGraph(block: suspend (AccountGraph) -> Unit) {
+        val g = graph.value ?: return
+        viewModelScope.launch { block(g) }
+    }
+
+    fun retry(id: Long) = withGraph { it.transfers.retry(id) }
+    fun clearFinished() = withGraph { it.transfers.clearFinished() }
 }
 
 @Composable

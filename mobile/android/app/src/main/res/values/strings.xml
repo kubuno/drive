@@ -185,4 +185,10 @@
     <string name="avatar_change">Change profile picture</string>
     <string name="avatar_crop_title">Frame your picture</string>
     <string name="avatar_failed">Could not update the picture</string>
+
+    <!-- Multi-account -->
+    <string name="add_account">Add another account</string>
+    <string name="manage_device_accounts">Manage accounts on this device</string>
+    <string name="remove_account">Remove this account</string>
+    <string name="remove_account_confirm">Remove %1$s from this device? Files kept offline will be deleted; nothing is removed from the server.</string>
 </resources>

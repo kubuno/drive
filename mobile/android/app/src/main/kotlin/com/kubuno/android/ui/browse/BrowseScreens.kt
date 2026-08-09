@@ -19,12 +19,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.kubuno.android.R
-import com.kubuno.android.api.KubunoClient
-import com.kubuno.android.sync.DriveActions
+import com.kubuno.android.account.AccountGraph
+import com.kubuno.android.account.ActiveAccount
 import com.kubuno.android.sync.db.FileEntity
 import com.kubuno.android.sync.db.FolderEntity
-import com.kubuno.android.sync.db.KubunoDatabase
-import com.kubuno.android.sync.transfer.TransferQueue
 import com.kubuno.android.ui.browser.FileRow
 import com.kubuno.android.ui.browser.FolderRow
 import com.kubuno.android.ui.browser.ListContainer
@@ -58,55 +56,66 @@ data class BrowseList(
  * Everything reads Room, so all three keep working offline and answer as fast
  * as the user types — the server's own search endpoint would add a round trip
  * for results we already hold.
+ *
+ * The Room in question is whichever account is on screen: every list derives
+ * from [ActiveAccount.graph], so no query here can reach another account's data.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class BrowseViewModel @Inject constructor(
-    private val db: KubunoDatabase,
-    private val client: KubunoClient,
-    private val actions: DriveActions,
-    private val transfers: TransferQueue,
+    private val active: ActiveAccount,
 ) : ViewModel() {
 
-    val recent: StateFlow<List<FileEntity>> = db.browseDao().recentFiles()
+    private val graph: StateFlow<AccountGraph?> = active.graph
+
+    val recent: StateFlow<List<FileEntity>> = graph
+        .flatMapLatest { g -> g?.db?.browseDao()?.recentFiles() ?: flowOf(emptyList()) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     /** Top-level folders, offered in the drawer as direct jumps. */
-    val rootFolders: StateFlow<List<FolderEntity>> = db.browseDao().rootFolders()
+    val rootFolders: StateFlow<List<FolderEntity>> = graph
+        .flatMapLatest { g -> g?.db?.browseDao()?.rootFolders() ?: flowOf(emptyList()) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    val trash: StateFlow<BrowseList> =
-        combine(db.browseDao().trashedFolders(), db.browseDao().trashedFiles()) { folders, files ->
-            BrowseList(folders, files)
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), BrowseList())
-
-    private val _query = MutableStateFlow("")
-    val query: StateFlow<String> = _query
-
-    val results: StateFlow<BrowseList> = _query
-        .flatMapLatest { term ->
-            // Below two characters the result set is noise, not an answer.
-            if (term.trim().length < 2) flowOf(BrowseList())
+    val trash: StateFlow<BrowseList> = graph
+        .flatMapLatest { g ->
+            if (g == null) flowOf(BrowseList())
             else combine(
-                db.browseDao().searchFolders(term.trim()),
-                db.browseDao().searchFiles(term.trim()),
+                g.db.browseDao().trashedFolders(),
+                g.db.browseDao().trashedFiles(),
             ) { folders, files -> BrowseList(folders, files) }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), BrowseList())
 
-    val serverBaseUrl: String? get() = client.serverBaseUrl()
+    private val _query = MutableStateFlow("")
+    val query: StateFlow<String> = _query
+
+    val results: StateFlow<BrowseList> = combine(graph, _query) { g, term -> g to term }
+        .flatMapLatest { (g, term) ->
+            // Below two characters the result set is noise, not an answer.
+            if (g == null || term.trim().length < 2) flowOf(BrowseList())
+            else combine(
+                g.db.browseDao().searchFolders(term.trim()),
+                g.db.browseDao().searchFiles(term.trim()),
+            ) { folders, files -> BrowseList(folders, files) }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), BrowseList())
+
+    val serverBaseUrl: String? get() = active.record?.serverUrl
 
     fun search(term: String) { _query.value = term }
 
-    fun restore(id: String, isFolder: Boolean) =
-        viewModelScope.launch { actions.restore(id, isFolder) }
-
-    fun trashItem(id: String, isFolder: Boolean) =
-        viewModelScope.launch { actions.trash(id, isFolder) }
-
-    fun download(file: FileEntity) = viewModelScope.launch {
-        transfers.enqueueDownload(file.id, file.name, file.size, file.mimeType)
+    private fun withGraph(block: suspend (AccountGraph) -> Unit) {
+        val g = graph.value ?: return
+        viewModelScope.launch { block(g) }
     }
+
+    fun restore(id: String, isFolder: Boolean) = withGraph { it.actions.restore(id, isFolder) }
+
+    fun trashItem(id: String, isFolder: Boolean) = withGraph { it.actions.trash(id, isFolder) }
+
+    fun download(file: FileEntity) =
+        withGraph { it.transfers.enqueueDownload(file.id, file.name, file.size, file.mimeType) }
 }
 
 @Composable

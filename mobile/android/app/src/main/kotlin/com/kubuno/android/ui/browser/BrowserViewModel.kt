@@ -1,18 +1,14 @@
 package com.kubuno.android.ui.browser
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
-import android.net.Uri
-import com.kubuno.android.api.KubunoClient
-import com.kubuno.android.data.AppPrefs
-import com.kubuno.android.sync.DriveActions
-import com.kubuno.android.sync.OfflineFiles
+import com.kubuno.android.account.AccountGraph
+import com.kubuno.android.account.ActiveAccount
 import com.kubuno.android.sync.db.FileEntity
 import com.kubuno.android.sync.db.FolderEntity
-import com.kubuno.android.sync.db.KubunoDatabase
-import com.kubuno.android.sync.transfer.TransferQueue
 import com.kubuno.android.sync.work.SyncScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -22,6 +18,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -33,41 +30,33 @@ data class BrowserContent(
     val isEmpty: Boolean get() = folders.isEmpty() && files.isEmpty()
 }
 
+/**
+ * Reads whichever account is on screen.
+ *
+ * Everything derives from [ActiveAccount.graph]: switching account re-points
+ * the queries at another database and another server without recreating the
+ * screen, and no query here can reach a different account's data.
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class BrowserViewModel @Inject constructor(
-    private val db: KubunoDatabase,
+    private val active: ActiveAccount,
     workManager: WorkManager,
-    private val scheduler: SyncScheduler,
-    private val client: KubunoClient,
-    private val actions: DriveActions,
-    private val transfers: TransferQueue,
-    private val offline: OfflineFiles,
-    private val prefs: AppPrefs,
 ) : ViewModel() {
 
-    val userLabel: String? = prefs.userDisplayName ?: prefs.userEmail
-    val userEmail: String? get() = prefs.userEmail
+    private val graph: StateFlow<AccountGraph?> = active.graph
 
-    /**
-     * Read on each access rather than captured: the profile is refreshed on
-     * every foreground, so a freshly fetched avatar shows without a restart.
-     */
-    val avatarUrl: String?
-        get() = prefs.userAvatarUrl?.let { path ->
-            if (path.startsWith("http")) path else client.serverBaseUrl()?.plus(path)
-        }
+    val userLabel: String? get() = active.record?.label
+    val userEmail: String? get() = active.record?.email
+    val avatarUrl: String? get() = active.record?.let { it.absolute(it.avatarPath) }
+    val serverBaseUrl: String? get() = active.record?.serverUrl
 
-    /** Ids kept available offline, so rows can badge themselves. */
-    val pinnedIds: StateFlow<Set<String>> = db.pinDao().all()
+    val pinnedIds: StateFlow<Set<String>> = graph
+        .flatMapLatest { g -> g?.db?.pinDao()?.all() ?: flowOf(emptyList()) }
         .map { pins -> pins.map { it.fileId }.toSet() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
 
-    /**
-     * The open folder, null at the drive root. Driven by the shell's crumb stack
-     * rather than a nav argument, so one ViewModel serves every level and the
-     * sort/view choice survives navigation.
-     */
+    /** The open folder, null at the drive root. */
     private val _folderId = MutableStateFlow<String?>(null)
     val folderId: StateFlow<String?> = _folderId
 
@@ -82,96 +71,78 @@ class BrowserViewModel @Inject constructor(
     val view: StateFlow<ViewMode> = _view
 
     val content: StateFlow<BrowserContent> =
-        _folderId.flatMapLatest { id ->
-            combine(
-                db.folderDao().children(id),
-                db.fileDao().filesIn(id),
-                _sortField,
-                _sortDir,
-            ) { folders, files, field, dir ->
-                BrowserContent(sortFolders(folders, field, dir), sortFiles(files, field, dir))
+        combine(graph, _folderId, _sortField, _sortDir, ::Selection)
+            .flatMapLatest { (g, id, field, dir) ->
+                if (g == null) flowOf(BrowserContent())
+                else combine(
+                    g.db.folderDao().children(id),
+                    g.db.fileDao().filesIn(id),
+                ) { folders, files ->
+                    BrowserContent(sortFolders(folders, field, dir), sortFiles(files, field, dir))
+                }
             }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), BrowserContent())
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), BrowserContent())
 
-    val refreshing: StateFlow<Boolean> =
-        workManager.getWorkInfosForUniqueWorkFlow("drive-sync")
-            .map { infos -> infos.any { it.state == WorkInfo.State.RUNNING } }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+    val refreshing: StateFlow<Boolean> = graph
+        .flatMapLatest { g ->
+            if (g == null) flowOf(emptyList())
+            else workManager.getWorkInfosForUniqueWorkFlow(SyncScheduler.workName(g.id))
+        }
+        .map { infos -> infos.any { it.state == WorkInfo.State.RUNNING } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
-    val serverBaseUrl: String? get() = client.serverBaseUrl()
-
-    fun openFolder(id: String?) {
-        _folderId.value = id
-    }
-
-    fun setSort(field: SortField) {
-        _sortField.value = field
-    }
-
+    fun openFolder(id: String?) { _folderId.value = id }
+    fun setSort(field: SortField) { _sortField.value = field }
     fun toggleSortDir() {
         _sortDir.value = if (_sortDir.value == SortDir.ASC) SortDir.DESC else SortDir.ASC
     }
+    fun setView(mode: ViewMode) { _view.value = mode }
 
-    fun setView(mode: ViewMode) {
-        _view.value = mode
-    }
-
-    fun refresh() = scheduler.syncNow()
+    fun refresh() { graph.value?.scheduler?.syncNow() }
 
     // ---- mutations: local first, replayed from the outbox ----------------
 
-    fun rename(id: String, isFolder: Boolean, newName: String) {
-        viewModelScope.launch { actions.rename(id, isFolder, newName) }
+    private fun withGraph(block: suspend (AccountGraph) -> Unit) {
+        val g = graph.value ?: return
+        viewModelScope.launch { block(g) }
     }
 
-    fun move(id: String, isFolder: Boolean, target: String?) {
-        viewModelScope.launch { actions.move(id, isFolder, target) }
-    }
+    fun rename(id: String, isFolder: Boolean, newName: String) =
+        withGraph { it.actions.rename(id, isFolder, newName) }
 
-    fun trash(id: String, isFolder: Boolean) {
-        viewModelScope.launch { actions.trash(id, isFolder) }
-    }
+    fun move(id: String, isFolder: Boolean, target: String?) =
+        withGraph { it.actions.move(id, isFolder, target) }
 
-    fun restore(id: String, isFolder: Boolean) {
-        viewModelScope.launch { actions.restore(id, isFolder) }
-    }
+    fun trash(id: String, isFolder: Boolean) = withGraph { it.actions.trash(id, isFolder) }
 
-    fun setStarred(id: String, isFolder: Boolean, starred: Boolean) {
-        viewModelScope.launch { actions.setStarred(id, isFolder, starred) }
-    }
+    fun restore(id: String, isFolder: Boolean) = withGraph { it.actions.restore(id, isFolder) }
 
-    fun createFolder(name: String) {
-        viewModelScope.launch { actions.createFolder(_folderId.value, name) }
-    }
+    fun setStarred(id: String, isFolder: Boolean, starred: Boolean) =
+        withGraph { it.actions.setStarred(id, isFolder, starred) }
 
-    fun upload(uris: List<Uri>) {
-        viewModelScope.launch { uris.forEach { transfers.enqueueUpload(it, _folderId.value) } }
-    }
+    fun createFolder(name: String) = withGraph { it.actions.createFolder(_folderId.value, name) }
 
-    fun download(file: FileEntity) {
-        viewModelScope.launch {
-            transfers.enqueueDownload(file.id, file.name, file.size, file.mimeType)
-        }
-    }
+    fun upload(uris: List<Uri>) =
+        withGraph { g -> uris.forEach { g.transfers.enqueueUpload(it, _folderId.value) } }
 
-    fun togglePin(fileId: String, pinned: Boolean) {
-        viewModelScope.launch {
-            if (pinned) offline.unpin(fileId) else offline.pin(fileId)
-        }
+    fun download(file: FileEntity) =
+        withGraph { it.transfers.enqueueDownload(file.id, file.name, file.size, file.mimeType) }
+
+    fun togglePin(fileId: String, pinned: Boolean) = withGraph {
+        if (pinned) it.offline.unpin(fileId) else it.offline.pin(fileId)
     }
 
     /** Drops local copies but keeps the pins, so they refill on the next sync. */
-    fun purgeOffline() {
-        viewModelScope.launch { offline.purge() }
-    }
-
-    fun logout(onDone: () -> Unit) {
-        viewModelScope.launch {
-            client.tokenManager.logout()
-            onDone()
-        }
-    }
+    fun purgeOffline() = withGraph { it.offline.purge() }
 }
+
+/** What the listing depends on; combine() has no four-arg destructuring form. */
+private data class Selection(
+    val graph: AccountGraph?,
+    val folderId: String?,
+    val field: SortField,
+    val dir: SortDir,
+)
 
 private fun sortFolders(
     folders: List<FolderEntity>,

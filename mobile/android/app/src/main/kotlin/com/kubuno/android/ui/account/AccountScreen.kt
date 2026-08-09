@@ -60,10 +60,12 @@ import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.kubuno.android.R
+import com.kubuno.android.account.AccountGraph
+import com.kubuno.android.account.AccountRegistry
+import com.kubuno.android.account.ActiveAccount
 import com.kubuno.android.api.AuthApi
 import com.kubuno.android.api.model.SessionDto
 import com.kubuno.android.api.model.UserDto
-import com.kubuno.android.data.AppPrefs
 import com.kubuno.android.ui.browser.ListContainer
 import com.kubuno.android.ui.browser.RowDivider
 import com.kubuno.android.ui.browser.SectionTitle
@@ -114,27 +116,47 @@ data class AccountUiState(
     val avatarFailed: Boolean = false,
 )
 
+/**
+ * Talks to the server of whichever account is on screen.
+ *
+ * The API comes from that account's own client, so a `/me` or a session revoke
+ * can never leave for another instance; the fallback identity comes from the
+ * registry's cached record rather than from device-wide preferences.
+ */
 @HiltViewModel
 class AccountViewModel @Inject constructor(
-    private val api: AuthApi,
-    private val prefs: AppPrefs,
+    private val active: ActiveAccount,
+    private val registry: AccountRegistry,
 ) : ViewModel() {
 
-    /** Shown while `/me` is in flight, and kept if it never answers. */
-    val cachedDisplayName: String? = prefs.userDisplayName
-    val cachedEmail: String? = prefs.userEmail
-    val serverUrl: String? = prefs.serverUrl
+    private val graph: AccountGraph? get() = active.graph.value
 
-    private val _state = MutableStateFlow(
-        AccountUiState(avatarUrl = absolute(prefs.userAvatarUrl))
-    )
+    private val api: AuthApi? get() = graph?.client?.authApi
+
+    /** Shown while `/me` is in flight, and kept if it never answers. */
+    val cachedDisplayName: String? get() = active.record?.displayName
+    val cachedEmail: String? get() = active.record?.email
+    val serverUrl: String? get() = active.record?.serverUrl
+
+    private val _state = MutableStateFlow(AccountUiState(loading = false))
     val state: StateFlow<AccountUiState> = _state.asStateFlow()
 
     init {
-        refresh()
+        // Follows the displayed account: switching drops the previous profile
+        // and reloads against the other server rather than showing its data.
+        viewModelScope.launch {
+            active.graph.collect { g ->
+                _state.value = AccountUiState(
+                    loading = g != null,
+                    avatarUrl = g?.record?.let { it.absolute(it.avatarPath) },
+                )
+                if (g != null) refresh()
+            }
+        }
     }
 
     fun refresh() {
+        val g = graph ?: return
         _state.update { it.copy(loading = true, profileFailed = false, sessionsFailed = false) }
         viewModelScope.launch {
             // Independent reads: a broken session list must not hide the profile.
@@ -148,7 +170,7 @@ class AccountViewModel @Inject constructor(
                 it.copy(
                     loading = false,
                     user = user ?: it.user,
-                    avatarUrl = absolute(user?.avatarUrl ?: prefs.userAvatarUrl),
+                    avatarUrl = g.record.absolute(user?.avatarUrl ?: g.record.avatarPath),
                     sessions = sessions?.first ?: emptyList(),
                     currentDeviceId = sessions?.second,
                     profileFailed = user == null,
@@ -160,6 +182,7 @@ class AccountViewModel @Inject constructor(
 
     /** Signs one session out, then reloads so the list cannot drift. */
     fun revokeSession(id: String) {
+        val api = api ?: return
         if (_state.value.revoking != null) return
         _state.update { it.copy(revoking = id) }
         viewModelScope.launch {
@@ -175,6 +198,7 @@ class AccountViewModel @Inject constructor(
      * tokens are worthless either way.
      */
     fun revokeAllSessions(onSignedOut: () -> Unit) {
+        val api = api ?: return onSignedOut()
         _state.update { it.copy(revoking = ALL_SESSIONS) }
         viewModelScope.launch {
             runCatching { api.revokeAllSessions() }
@@ -183,11 +207,13 @@ class AccountViewModel @Inject constructor(
         }
     }
 
-    private suspend fun loadProfile(): UserDto? =
-        runCatching { api.me() }.getOrNull()
+    private suspend fun loadProfile(): UserDto? {
+        val api = api ?: return null
+        return runCatching { api.me() }.getOrNull()
             ?.takeIf { it.isSuccessful }
             ?.body()
             ?.user
+    }
 
     /**
      * `/me/devices` first: it returns the same sessions plus `current_device_id`,
@@ -195,6 +221,8 @@ class AccountViewModel @Inject constructor(
      * is the fallback — same rows, no "this device" badge.
      */
     private suspend fun loadSessions(): Pair<List<SessionDto>, String?>? {
+        val api = api ?: return null
+
         runCatching { api.myDevices() }.getOrNull()
             ?.takeIf { it.isSuccessful }
             ?.body()
@@ -217,6 +245,7 @@ class AccountViewModel @Inject constructor(
      * Coil layers and any HTTP cache in between.
      */
     fun uploadAvatar(cropped: ByteArray, original: ByteArray?) {
+        val g = graph ?: return
         if (_state.value.uploadingAvatar) return
         _state.update { it.copy(uploadingAvatar = true, avatarFailed = false) }
         viewModelScope.launch {
@@ -227,7 +256,9 @@ class AccountViewModel @Inject constructor(
             val originalPart = original?.let {
                 MultipartBody.Part.createFormData("original", "original.jpg", it.toRequestBody(jpeg))
             }
-            val response = runCatching { api.uploadAvatar(avatarPart, originalPart) }.getOrNull()
+            val response = runCatching {
+                g.client.authApi.uploadAvatar(avatarPart, originalPart)
+            }.getOrNull()
             val user = response?.takeIf { it.isSuccessful }?.body()?.user
             if (user == null) {
                 _state.update { it.copy(uploadingAvatar = false, avatarFailed = true) }
@@ -238,23 +269,22 @@ class AccountViewModel @Inject constructor(
                 it.copy(
                     uploadingAvatar = false,
                     user = user,
-                    avatarUrl = absolute(user.avatarUrl)?.plus("?v=" + System.currentTimeMillis()),
+                    avatarUrl = g.record.absolute(user.avatarUrl)
+                        ?.plus("?v=" + System.currentTimeMillis()),
                 )
             }
         }
     }
 
+    /** Refreshes the registry so the switcher and the shell show the same name. */
     private fun cache(user: UserDto) {
-        prefs.userDisplayName = user.displayName ?: user.username
-        prefs.userEmail = user.email
-        prefs.userAvatarUrl = user.avatarUrl
-    }
-
-    /** Avatar paths are server-relative; Coil rides the authenticated client. */
-    private fun absolute(path: String?): String? = when {
-        path == null -> null
-        path.startsWith("http") -> path
-        else -> prefs.serverUrl?.trimEnd('/')?.plus(path)
+        val id = graph?.id ?: return
+        registry.updateProfile(
+            id = id,
+            displayName = user.displayName ?: user.username,
+            email = user.email,
+            avatarPath = user.avatarUrl,
+        )
     }
 
     companion object {

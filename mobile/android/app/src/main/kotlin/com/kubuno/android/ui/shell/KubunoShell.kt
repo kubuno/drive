@@ -60,6 +60,8 @@ import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import com.kubuno.android.account.AccountId
+import com.kubuno.android.account.AccountRecord
 import com.kubuno.android.R
 import com.kubuno.android.ui.sheet.ActionSheet
 import com.kubuno.android.ui.sheet.SheetRow
@@ -82,6 +84,11 @@ fun KubunoShell(
     userLabel: String?,
     userEmail: String?,
     avatarUrl: String?,
+    accounts: List<AccountRecord>,
+    activeId: AccountId?,
+    onSwitchAccount: (AccountId) -> Unit,
+    onAddAccount: () -> Unit,
+    onManageDeviceAccounts: () -> Unit,
     childFolders: List<Pair<String, String>>,
     showFab: Boolean,
     showBreadcrumb: Boolean,
@@ -113,6 +120,11 @@ fun KubunoShell(
                 userLabel = userLabel,
                 userEmail = userEmail,
                 avatarUrl = avatarUrl,
+                accounts = accounts,
+                activeId = activeId,
+                onSwitchAccount = onSwitchAccount,
+                onAddAccount = onAddAccount,
+                onManageDeviceAccounts = onManageDeviceAccounts,
                 searchQuery = searchQuery,
                 onSearchOpen = onSearchOpen,
                 onSearchChange = onSearchChange,
@@ -186,6 +198,11 @@ private fun HeaderIcon(
 private fun AppHeader(
     userLabel: String?,
     avatarUrl: String?,
+    accounts: List<AccountRecord>,
+    activeId: AccountId?,
+    onSwitchAccount: (AccountId) -> Unit,
+    onAddAccount: () -> Unit,
+    onManageDeviceAccounts: () -> Unit,
     searchQuery: String?,
     onSearchOpen: () -> Unit,
     onSearchChange: (String) -> Unit,
@@ -243,6 +260,11 @@ private fun AppHeader(
             email = userEmail,
             displayName = userLabel,
             avatarUrl = avatarUrl,
+            accounts = accounts,
+            activeId = activeId,
+            onSwitchAccount = { panelOpen = false; onSwitchAccount(it) },
+            onAddAccount = { panelOpen = false; onAddAccount() },
+            onManageDeviceAccounts = { panelOpen = false; onManageDeviceAccounts() },
             onManageAccount = { panelOpen = false; onManageAccount() },
             onLogout = { panelOpen = false; onLogout() },
             onDismiss = { panelOpen = false },

@@ -5,11 +5,9 @@ import com.kubuno.android.api.KubunoClient
 import com.kubuno.android.sync.db.KubunoDatabase
 import com.kubuno.android.sync.db.LocalCopyEntity
 import com.kubuno.android.sync.db.PinEntity
-import dagger.hilt.android.qualifiers.ApplicationContext
+import com.kubuno.android.account.AccountId
 import java.io.File
 import java.io.IOException
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -20,13 +18,15 @@ import kotlinx.coroutines.flow.Flow
  * that etag with the one Room now holds and re-downloads what changed — the
  * pull is the only place that learns about a server-side edit.
  */
-@Singleton
-class OfflineFiles @Inject constructor(
-    @ApplicationContext private val context: Context,
+class OfflineFiles(
+    private val context: Context,
+    private val accountId: AccountId,
     private val db: KubunoDatabase,
     private val client: KubunoClient,
 ) {
-    private val root: File get() = File(context.filesDir, "offline")
+    // Scoped by account: two accounts can hold the same server file id, and a
+    // shared folder would let one erase the other’s copy.
+    private val root: File get() = File(context.filesDir, "offline/" + accountId.value)
 
     fun isPinned(fileId: String): Flow<Int?> = db.pinDao().isPinned(fileId)
 

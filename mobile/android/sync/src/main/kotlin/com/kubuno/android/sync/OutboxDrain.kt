@@ -8,8 +8,6 @@ import com.kubuno.android.api.model.RenameRequest
 import com.kubuno.android.sync.db.KubunoDatabase
 import com.kubuno.android.sync.db.OutboxEntity
 import java.io.IOException
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.boolean
@@ -25,8 +23,7 @@ import retrofit2.Response
  * succeed — and the following delta pull restores the server's truth over the
  * optimistic local edit.
  */
-@Singleton
-class OutboxDrain @Inject constructor(
+class OutboxDrain(
     private val db: KubunoDatabase,
     private val client: KubunoClient,
 ) {

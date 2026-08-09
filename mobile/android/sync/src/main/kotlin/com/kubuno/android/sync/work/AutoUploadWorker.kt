@@ -17,7 +17,10 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.kubuno.android.api.KubunoClient
 import com.kubuno.android.api.model.CreateFolderRequest
-import com.kubuno.android.data.AppPrefs
+import androidx.work.Data
+import com.kubuno.android.account.AccountGraphFactory
+import com.kubuno.android.account.AccountId
+import com.kubuno.android.data.AccountPrefs
 import com.kubuno.android.sync.SyncEngine
 import com.kubuno.android.sync.db.AutoUploadEntity
 import com.kubuno.android.sync.db.KubunoDatabase
@@ -50,15 +53,20 @@ import okhttp3.RequestBody.Companion.toRequestBody
 class AutoUploadWorker @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted params: WorkerParameters,
-    private val db: KubunoDatabase,
-    private val client: KubunoClient,
-    private val prefs: AppPrefs,
-    private val engine: SyncEngine,
+    private val graphs: AccountGraphFactory,
 ) : CoroutineWorker(context, params) {
 
+    private lateinit var db: KubunoDatabase
+    private lateinit var client: KubunoClient
+    private lateinit var prefs: AccountPrefs
+    private lateinit var engine: SyncEngine
+    private var accountId: AccountId = AccountId("")
+
     companion object {
-        private const val TRIGGER_WORK = "auto-upload-trigger"
-        private const val PERIODIC_WORK = "auto-upload-periodic"
+        // Per account: switching one account’s auto-upload off must not
+        // cancel the others’ jobs.
+        private fun triggerWork(id: AccountId) = "auto-upload-trigger:" + id.value
+        private fun periodicWork(id: AccountId) = "auto-upload-periodic:" + id.value
 
         /**
          * Re-arms the content-URI trigger and the safety-net periodic run.
@@ -69,29 +77,39 @@ class AutoUploadWorker @AssistedInject constructor(
          * very run doing the asking (and with it the whole chain). Appending
          * instead queues the next trigger behind the current run.
          */
-        fun schedule(workManager: WorkManager, prefs: AppPrefs, fromWorker: Boolean = false) {
+        fun schedule(
+            workManager: WorkManager,
+            accountId: AccountId,
+            prefs: AccountPrefs,
+            fromWorker: Boolean = false,
+        ) {
             if (!prefs.autoUploadEnabled) {
-                workManager.cancelUniqueWork(TRIGGER_WORK)
-                workManager.cancelUniqueWork(PERIODIC_WORK)
+                workManager.cancelUniqueWork(triggerWork(accountId))
+                workManager.cancelUniqueWork(periodicWork(accountId))
                 return
             }
+            val input = Data.Builder().putString(KEY_ACCOUNT_ID, accountId.value).build()
             workManager.enqueueUniqueWork(
-                TRIGGER_WORK,
+                triggerWork(accountId),
                 if (fromWorker) ExistingWorkPolicy.APPEND_OR_REPLACE else ExistingWorkPolicy.REPLACE,
                 OneTimeWorkRequestBuilder<AutoUploadWorker>()
                     .setConstraints(constraints(prefs, withTriggers = true))
+                    .setInputData(input)
+                    .addTag(accountTag(accountId))
                     .build(),
             )
             workManager.enqueueUniquePeriodicWork(
-                PERIODIC_WORK,
+                periodicWork(accountId),
                 ExistingPeriodicWorkPolicy.UPDATE,
                 PeriodicWorkRequestBuilder<AutoUploadWorker>(6, TimeUnit.HOURS)
                     .setConstraints(constraints(prefs, withTriggers = false))
+                    .setInputData(input)
+                    .addTag(accountTag(accountId))
                     .build(),
             )
         }
 
-        private fun constraints(prefs: AppPrefs, withTriggers: Boolean): Constraints =
+        private fun constraints(prefs: AccountPrefs, withTriggers: Boolean): Constraints =
             Constraints.Builder()
                 .setRequiredNetworkType(
                     if (prefs.autoUploadWifiOnly) NetworkType.UNMETERED else NetworkType.CONNECTED
@@ -110,6 +128,13 @@ class AutoUploadWorker @AssistedInject constructor(
     }
 
     override suspend fun doWork(): Result {
+        accountId = inputData.getString(KEY_ACCOUNT_ID)?.let(::AccountId) ?: return Result.failure()
+        val graph = graphs.graphOf(accountId) ?: return Result.failure()
+        db = graph.db
+        client = graph.client
+        prefs = graph.prefs
+        engine = graph.engine
+
         if (!prefs.autoUploadEnabled) return Result.success()
         if (!client.tokenManager.isLoggedIn()) return Result.success()
 
@@ -150,7 +175,7 @@ class AutoUploadWorker @AssistedInject constructor(
 
     /** The trigger fires once, so the next one has to be booked by hand. */
     private fun reschedule() =
-        schedule(WorkManager.getInstance(context), prefs, fromWorker = true)
+        schedule(WorkManager.getInstance(context), accountId, prefs, fromWorker = true)
 
     private data class MediaItem(
         val id: Long,
@@ -257,7 +282,7 @@ class AutoUploadWorker @AssistedInject constructor(
                 createdAt = System.currentTimeMillis(),
             )
         )
-        TransferWorker.enqueue(WorkManager.getInstance(context))
+        TransferWorker.enqueue(WorkManager.getInstance(context), accountId)
         return null
     }
 

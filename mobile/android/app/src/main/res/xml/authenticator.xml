@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- accountType is the shared contract: every Kubuno app looks accounts up by
+     this string. It must stay in sync with KubunoAccounts.TYPE. -->
+<account-authenticator xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accountType="com.kubuno"
+    android:label="@string/app_name"
+    android:icon="@mipmap/ic_launcher"
+    android:smallIcon="@mipmap/ic_launcher" />

@@ -17,12 +17,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.kubuno.android.R
-import com.kubuno.android.api.KubunoClient
-import com.kubuno.android.sync.DriveActions
-import com.kubuno.android.sync.OfflineFiles
+import com.kubuno.android.account.AccountGraph
+import com.kubuno.android.account.ActiveAccount
 import com.kubuno.android.sync.db.FileEntity
-import com.kubuno.android.sync.db.KubunoDatabase
-import com.kubuno.android.sync.transfer.TransferQueue
 import com.kubuno.android.ui.browser.FileRow
 import com.kubuno.android.ui.browser.ListContainer
 import com.kubuno.android.ui.browser.TabEmptyState
@@ -32,45 +29,57 @@ import com.kubuno.android.ui.sheet.ItemTarget
 import com.kubuno.android.ui.sheet.RenameDialog
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+/**
+ * Reads the starred files of whichever account is on screen; switching account
+ * re-points the queries without recreating the screen.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class StarredViewModel @Inject constructor(
-    db: KubunoDatabase,
-    private val client: KubunoClient,
-    private val actions: DriveActions,
-    private val transfers: TransferQueue,
-    private val offline: OfflineFiles,
+    private val active: ActiveAccount,
 ) : ViewModel() {
 
-    val files: StateFlow<List<FileEntity>> = db.fileDao().starred()
+    private val graph: StateFlow<AccountGraph?> = active.graph
+
+    val files: StateFlow<List<FileEntity>> = graph
+        .flatMapLatest { g -> g?.db?.fileDao()?.starred() ?: flowOf(emptyList()) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    val pinnedIds: StateFlow<Set<String>> = db.pinDao().all()
+    val pinnedIds: StateFlow<Set<String>> = graph
+        .flatMapLatest { g -> g?.db?.pinDao()?.all() ?: flowOf(emptyList()) }
         .map { pins -> pins.map { it.fileId }.toSet() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
 
-    val serverBaseUrl: String? get() = client.serverBaseUrl()
+    val serverBaseUrl: String? get() = active.record?.serverUrl
 
-    fun togglePin(fileId: String, pinned: Boolean) = viewModelScope.launch {
-        if (pinned) offline.unpin(fileId) else offline.pin(fileId)
+    private fun withGraph(block: suspend (AccountGraph) -> Unit) {
+        val g = graph.value ?: return
+        viewModelScope.launch { block(g) }
+    }
+
+    fun togglePin(fileId: String, pinned: Boolean) = withGraph {
+        if (pinned) it.offline.unpin(fileId) else it.offline.pin(fileId)
     }
 
     fun rename(id: String, newName: String) =
-        viewModelScope.launch { actions.rename(id, isFolder = false, newName = newName) }
+        withGraph { it.actions.rename(id, isFolder = false, newName = newName) }
 
     fun unstar(id: String) =
-        viewModelScope.launch { actions.setStarred(id, isFolder = false, starred = false) }
+        withGraph { it.actions.setStarred(id, isFolder = false, starred = false) }
 
-    fun trash(id: String) = viewModelScope.launch { actions.trash(id, isFolder = false) }
+    fun trash(id: String) = withGraph { it.actions.trash(id, isFolder = false) }
 
-    fun download(file: FileEntity) = viewModelScope.launch {
-        transfers.enqueueDownload(file.id, file.name, file.size, file.mimeType)
-    }
+    fun download(file: FileEntity) =
+        withGraph { it.transfers.enqueueDownload(file.id, file.name, file.size, file.mimeType) }
 }
 
 /** Starred files come straight from the local store, so this tab works offline. */

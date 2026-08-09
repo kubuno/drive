@@ -1,5 +1,10 @@
 package com.kubuno.android.ui
 
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
+import android.provider.Settings
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -13,8 +18,10 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kubuno.android.account.AccountId
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ModalNavigationDrawer
@@ -45,47 +52,83 @@ import com.kubuno.android.ui.starred.StarredScreen
 import com.kubuno.android.ui.transfers.TransfersScreen
 import com.kubuno.android.ui.transfers.TransfersViewModel
 
-private enum class Stage { SERVER, LOGIN, TOTP, SIGNED_IN }
+private enum class Stage { SERVER, LOGIN, TOTP }
 
+/**
+ * Picks between onboarding and the app.
+ *
+ * The account list decides: with none registered the device can only sign in.
+ * Adding another account is that very same flow re-entered on top of the app,
+ * which is why [adding] can hold it open while accounts already exist.
+ *
+ * @param startAddingAccount the activity was launched to add an account (from
+ *   the system's account settings, through `KubunoAuthenticator`).
+ * @param onAccountAdded reports the account that was just registered, so the
+ *   authenticator's caller can be answered.
+ */
 @Composable
-fun AppNav() {
+fun AppNav(
+    startAddingAccount: Boolean = false,
+    onAccountAdded: (AccountId) -> Unit = {},
+    nav: AppNavViewModel = hiltViewModel(),
+) {
     val onboarding: OnboardingViewModel = hiltViewModel()
     val onboardingState by onboarding.state.collectAsStateWithLifecycle()
-
-    var stage by remember {
-        mutableStateOf(
-            when {
-                !onboarding.client.hasServer() -> Stage.SERVER
-                onboarding.client.tokenManager.isLoggedIn() -> Stage.SIGNED_IN
-                else -> Stage.LOGIN
-            }
-        )
-    }
+    val accounts by nav.accounts.collectAsStateWithLifecycle()
+    var adding by remember { mutableStateOf(startAddingAccount) }
+    var stage by remember { mutableStateOf(Stage.SERVER) }
 
     LaunchedEffect(
         onboardingState.serverValidated,
         onboardingState.totpSession,
         onboardingState.done,
     ) {
+        if (onboardingState.done) {
+            // Sign-in already made the new account active, so leaving the flow
+            // lands straight on it.
+            nav.activeId.value?.let(onAccountAdded)
+            adding = false
+            onboarding.restart()
+            stage = Stage.SERVER
+            return@LaunchedEffect
+        }
         stage = when {
-            onboardingState.done -> Stage.SIGNED_IN
             onboardingState.totpSession != null -> Stage.TOTP
             onboardingState.serverValidated -> Stage.LOGIN
-            stage == Stage.SIGNED_IN -> Stage.SIGNED_IN
             else -> Stage.SERVER
         }
     }
 
-    when (stage) {
-        Stage.SERVER -> ServerScreen(onboarding)
-        Stage.LOGIN -> LoginScreen(onboarding)
-        Stage.TOTP -> TotpScreen(onboarding)
-        Stage.SIGNED_IN -> SignedInApp(onLoggedOut = { stage = Stage.LOGIN })
+    if (accounts.isEmpty() || adding) {
+        when (stage) {
+            Stage.SERVER -> ServerScreen(onboarding)
+            Stage.LOGIN -> LoginScreen(onboarding)
+            Stage.TOTP -> TotpScreen(onboarding)
+        }
+        // Backing out of "add account" returns to the app, never to a blank
+        // slate — there is nothing to go back to when it is the first sign-in.
+        BackHandler(enabled = adding) {
+            adding = false
+            onboarding.restart()
+        }
+        return
     }
+
+    SignedInApp(
+        nav = nav,
+        onAddAccount = {
+            onboarding.restart()
+            stage = Stage.SERVER
+            adding = true
+        },
+    )
 }
 
 @Composable
-private fun SignedInApp(onLoggedOut: () -> Unit) {
+private fun SignedInApp(nav: AppNavViewModel, onAddAccount: () -> Unit) {
+    val context = LocalContext.current
+    val accounts by nav.accounts.collectAsStateWithLifecycle()
+    val activeId by nav.activeId.collectAsStateWithLifecycle()
     var tab by remember { mutableStateOf(DriveTab.FILES) }
     // Folder navigation is a stack of crumbs; the last one is the open folder.
     val stack = remember { mutableStateListOf<Crumb>() }
@@ -115,6 +158,15 @@ private fun SignedInApp(onLoggedOut: () -> Unit) {
     }
 
     LaunchedEffect(currentFolderId) { viewModel.openFolder(currentFolderId) }
+
+    // Another account means another tree: folder ids are not comparable across
+    // instances, so the breadcrumb has to start over.
+    LaunchedEffect(activeId) {
+        closeOverlays()
+        stack.clear()
+        tab = DriveTab.FILES
+        drawerSection = DrawerDestination.MY_DRIVE
+    }
 
     val picker = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenMultipleDocuments()
@@ -173,6 +225,11 @@ private fun SignedInApp(onLoggedOut: () -> Unit) {
         userLabel = viewModel.userLabel,
         userEmail = viewModel.userEmail,
         avatarUrl = viewModel.avatarUrl,
+        accounts = accounts,
+        activeId = activeId,
+        onSwitchAccount = { nav.switchTo(it) },
+        onAddAccount = onAddAccount,
+        onManageDeviceAccounts = { openDeviceAccounts(context) },
         childFolders = if (tab == DriveTab.FILES && !showTransfers && !showSettings) {
             content.folders.map { it.id to it.name }
         } else emptyList(),
@@ -213,14 +270,14 @@ private fun SignedInApp(onLoggedOut: () -> Unit) {
         },
         onNewFolder = { newFolderDialog = true },
         onUploadFiles = { picker.launch(arrayOf("*/*")) },
-        onLogout = { viewModel.logout(onLoggedOut) },
+        onLogout = { nav.signOutActive() },
     ) {
         // Settings and transfers take over the module surface rather than
         // becoming tabs: the four drive tabs are fixed by the web's design.
         when {
             showAccount -> AccountScreen(
                 viewModel = hiltViewModel(),
-                onLogout = { viewModel.logout(onLoggedOut) },
+                onLogout = { nav.signOutActive() },
             )
             searchQuery != null -> SearchScreen(
                 viewModel = browseViewModel,
@@ -270,5 +327,22 @@ private fun SignedInApp(onLoggedOut: () -> Unit) {
             },
             onDismiss = { newFolderDialog = false },
         )
+    }
+}
+
+/**
+ * Opens the system's account settings, which is what Drive's "manage accounts
+ * on this device" does. There is no public Intent to pre-filter that screen by
+ * account type, so it opens on the full list. Failures are swallowed: a few
+ * builds (TV, some tablets) ship without the activity, and a crash would be a
+ * worse answer than nothing happening.
+ */
+private fun openDeviceAccounts(context: Context) {
+    try {
+        context.startActivity(
+            Intent(Settings.ACTION_SYNC_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        )
+    } catch (e: ActivityNotFoundException) {
+        Log.w("AppNav", "No account settings activity on this device", e)
     }
 }

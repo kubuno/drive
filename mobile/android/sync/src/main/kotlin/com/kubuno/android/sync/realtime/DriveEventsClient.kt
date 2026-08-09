@@ -4,8 +4,6 @@ import android.util.Log
 import com.kubuno.android.api.KubunoClient
 import com.kubuno.android.api.auth.AuthException
 import java.util.concurrent.TimeUnit
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -28,8 +26,7 @@ import okhttp3.WebSocketListener
  * token (the previous one may have rotated). Doze handling is out of scope:
  * background freshness is UnifiedPush's job (M5).
  */
-@Singleton
-class DriveEventsClient @Inject constructor(
+class DriveEventsClient(
     private val client: KubunoClient,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)

@@ -10,6 +10,9 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import androidx.work.Data
+import com.kubuno.android.account.AccountGraphFactory
+import com.kubuno.android.account.AccountId
 import com.kubuno.android.api.KubunoClient
 import com.kubuno.android.api.model.InitUploadRequest
 import com.kubuno.android.sync.SyncEngine
@@ -40,25 +43,40 @@ import okhttp3.RequestBody.Companion.toRequestBody
 class TransferWorker @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted params: WorkerParameters,
-    private val db: KubunoDatabase,
-    private val client: KubunoClient,
-    private val engine: SyncEngine,
+    private val graphs: AccountGraphFactory,
 ) : CoroutineWorker(context, params) {
 
-    companion object {
-        private const val WORK_NAME = "drive-transfers"
+    private lateinit var db: KubunoDatabase
+    private lateinit var client: KubunoClient
+    private lateinit var engine: SyncEngine
+    private var accountId: AccountId = AccountId("")
 
-        fun enqueue(workManager: WorkManager) {
+    companion object {
+
+        fun enqueue(workManager: WorkManager, accountId: AccountId) {
             val request = OneTimeWorkRequestBuilder<TransferWorker>()
                 .setConstraints(
                     Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
                 )
+                .setInputData(Data.Builder().putString(KEY_ACCOUNT_ID, accountId.value).build())
+                .addTag(accountTag(accountId))
                 .build()
-            workManager.enqueueUniqueWork(WORK_NAME, ExistingWorkPolicy.APPEND_OR_REPLACE, request)
+            workManager.enqueueUniqueWork(
+                workName(accountId), ExistingWorkPolicy.APPEND_OR_REPLACE, request,
+            )
         }
+
+        /** One queue per account, so a stalled transfer blocks only its own. */
+        fun workName(id: AccountId) = "drive-transfers:" + id.value
     }
 
     override suspend fun doWork(): Result {
+        accountId = inputData.getString(KEY_ACCOUNT_ID)?.let(::AccountId) ?: return Result.failure()
+        val graph = graphs.graphOf(accountId) ?: return Result.failure()
+        db = graph.db
+        client = graph.client
+        engine = graph.engine
+
         val pending = db.transferDao().active()
         if (pending.isEmpty()) return Result.success()
 
@@ -175,7 +193,7 @@ class TransferWorker @AssistedInject constructor(
         val response = client.driveApi.download(fileId)
         if (!response.isSuccessful) fail(response.code(), transfer)
 
-        val dir = File(context.filesDir, "downloads/$fileId").apply { mkdirs() }
+        val dir = File(context.filesDir, "downloads/" + accountId.value + "/" + fileId).apply { mkdirs() }
         val target = File(dir, transfer.name)
         val temp = File(dir, "${transfer.name}.part")
 

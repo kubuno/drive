@@ -8,10 +8,8 @@ import androidx.work.WorkManager
 import com.kubuno.android.sync.db.KubunoDatabase
 import com.kubuno.android.sync.db.TransferEntity
 import com.kubuno.android.sync.work.TransferWorker
-import dagger.hilt.android.qualifiers.ApplicationContext
+import com.kubuno.android.account.AccountId
 import java.util.UUID
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 
 /** Chunks stay just under the server's 10 MiB route limit, which counts the
@@ -21,9 +19,9 @@ const val CHUNK_SIZE: Long = 8L * 1024 * 1024
 /** Below this we use the single-shot upload; above it, a resumable session. */
 const val SIMPLE_UPLOAD_MAX: Long = 8L * 1024 * 1024
 
-@Singleton
-class TransferQueue @Inject constructor(
-    @ApplicationContext private val context: Context,
+class TransferQueue(
+    private val context: Context,
+    private val accountId: AccountId,
     private val db: KubunoDatabase,
     private val workManager: WorkManager,
 ) {
@@ -44,7 +42,7 @@ class TransferQueue @Inject constructor(
                 createdAt = System.currentTimeMillis(),
             )
         )
-        TransferWorker.enqueue(workManager)
+        TransferWorker.enqueue(workManager, accountId)
     }
 
     suspend fun enqueueDownload(fileId: String, name: String, size: Long, mimeType: String?) {
@@ -61,7 +59,7 @@ class TransferQueue @Inject constructor(
                 createdAt = System.currentTimeMillis(),
             )
         )
-        TransferWorker.enqueue(workManager)
+        TransferWorker.enqueue(workManager, accountId)
     }
 
     suspend fun retry(id: Long) {
@@ -76,7 +74,7 @@ class TransferQueue @Inject constructor(
                 idempotencyKey = UUID.randomUUID().toString(),
             )
         )
-        TransferWorker.enqueue(workManager)
+        TransferWorker.enqueue(workManager, accountId)
     }
 
     suspend fun remove(id: Long) = db.transferDao().remove(id)

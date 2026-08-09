@@ -38,8 +38,9 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.WorkManager
 import com.kubuno.android.BuildConfig
 import com.kubuno.android.R
-import com.kubuno.android.data.AppPrefs
-import com.kubuno.android.sync.db.KubunoDatabase
+import com.kubuno.android.account.AccountGraph
+import com.kubuno.android.account.ActiveAccount
+import com.kubuno.android.data.AccountPrefs
 import com.kubuno.android.sync.work.AutoUploadWorker
 import com.kubuno.android.ui.browser.ListContainer
 import com.kubuno.android.ui.browser.RowDivider
@@ -49,77 +50,88 @@ import com.kubuno.android.ui.format.formatSize
 import com.kubuno.android.ui.theme.KubunoTheme
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 /**
- * [AppPrefs] is plain SharedPreferences and emits nothing, so each switch gets
- * its own MutableStateFlow seeded from the stored value; the preference stays
- * the source of truth for the worker, the flow only drives recomposition.
+ * Auto-upload settings belong to the displayed account: the destination is a
+ * folder on *its* server and the media checkpoint says what *it* has seen, so
+ * they live in [AccountPrefs] behind [AccountGraph], not in the device-wide
+ * preferences.
+ *
+ * [AccountPrefs] is plain SharedPreferences and emits nothing, so each switch
+ * reads it again whenever the account changes or a write bumps [revision]; the
+ * preference stays the source of truth for the worker, the flow only drives
+ * recomposition.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val prefs: AppPrefs,
-    db: KubunoDatabase,
+    active: ActiveAccount,
     private val workManager: WorkManager,
 ) : ViewModel() {
 
-    // The cached profile never changes while the screen is open: a re-login
-    // rebuilds the whole signed-in tree.
+    private val graph: StateFlow<AccountGraph?> = active.graph
 
-    private val _autoUpload = MutableStateFlow(prefs.autoUploadEnabled)
-    val autoUpload: StateFlow<Boolean> = _autoUpload.asStateFlow()
+    /** Bumped after every write, since the preferences themselves are silent. */
+    private val revision = MutableStateFlow(0)
 
-    private val _wifiOnly = MutableStateFlow(prefs.autoUploadWifiOnly)
-    val wifiOnly: StateFlow<Boolean> = _wifiOnly.asStateFlow()
+    private val prefs: Flow<AccountPrefs?> = combine(graph, revision) { g, _ -> g?.prefs }
 
-    private val _whileCharging = MutableStateFlow(prefs.autoUploadWhileCharging)
-    val whileCharging: StateFlow<Boolean> = _whileCharging.asStateFlow()
+    private fun <T> pref(initial: T, read: (AccountPrefs) -> T): StateFlow<T> =
+        prefs.map { p -> p?.let(read) ?: initial }
+            // Eager: a write must land even if the screen is momentarily
+            // unsubscribed, otherwise the switch would snap back.
+            .stateIn(viewModelScope, SharingStarted.Eagerly, graph.value?.prefs?.let(read) ?: initial)
 
-    private val _videos = MutableStateFlow(prefs.autoUploadVideos)
-    val videos: StateFlow<Boolean> = _videos.asStateFlow()
+    val autoUpload: StateFlow<Boolean> = pref(false) { it.autoUploadEnabled }
+    val wifiOnly: StateFlow<Boolean> = pref(true) { it.autoUploadWifiOnly }
+    val whileCharging: StateFlow<Boolean> = pref(false) { it.autoUploadWhileCharging }
+    val videos: StateFlow<Boolean> = pref(false) { it.autoUploadVideos }
 
-    val uploadedCount: StateFlow<Int> = db.autoUploadDao().count()
+    val uploadedCount: StateFlow<Int> = graph
+        .flatMapLatest { g -> g?.db?.autoUploadDao()?.count() ?: flowOf(0) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
-    val offlineBytes: StateFlow<Long> = db.pinDao().offlineBytes()
+    val offlineBytes: StateFlow<Long> = graph
+        .flatMapLatest { g -> g?.db?.pinDao()?.offlineBytes() ?: flowOf(0L) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0L)
 
-    fun setAutoUpload(enabled: Boolean) {
+    fun setAutoUpload(enabled: Boolean) = edit { prefs ->
         // Anchor the cutoff the first time the feature is turned on, otherwise
         // the worker would walk the entire camera roll on its first run.
         if (enabled && prefs.autoUploadSince == 0L) {
             prefs.autoUploadSince = System.currentTimeMillis() / 1000
         }
         prefs.autoUploadEnabled = enabled
-        _autoUpload.value = enabled
-        reschedule()
     }
 
-    fun setWifiOnly(value: Boolean) {
-        prefs.autoUploadWifiOnly = value
-        _wifiOnly.value = value
-        reschedule()
-    }
+    fun setWifiOnly(value: Boolean) = edit { it.autoUploadWifiOnly = value }
 
-    fun setWhileCharging(value: Boolean) {
-        prefs.autoUploadWhileCharging = value
-        _whileCharging.value = value
-        reschedule()
-    }
+    fun setWhileCharging(value: Boolean) = edit { it.autoUploadWhileCharging = value }
 
-    fun setVideos(value: Boolean) {
-        prefs.autoUploadVideos = value
-        _videos.value = value
-        reschedule()
-    }
+    fun setVideos(value: Boolean) = edit { it.autoUploadVideos = value }
 
-    /** Constraints and content triggers are baked into the request, so every
-     *  change has to re-enqueue the work rather than just update a flag. */
-    private fun reschedule() = AutoUploadWorker.schedule(workManager, prefs)
+    /**
+     * Writes on the displayed account, then re-arms its worker. Constraints and
+     * content triggers are baked into the request, so every change has to
+     * re-enqueue the work rather than just update a flag — and it is enqueued
+     * per account, so one account's settings never touch another's jobs.
+     */
+    private fun edit(block: (AccountPrefs) -> Unit) {
+        val g = graph.value ?: return
+        block(g.prefs)
+        revision.value++
+        AutoUploadWorker.schedule(workManager, g.id, g.prefs)
+    }
 }
 
 @Composable

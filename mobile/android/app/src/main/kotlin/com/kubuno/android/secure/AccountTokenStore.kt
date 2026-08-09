@@ -1,6 +1,7 @@
 package com.kubuno.android.secure
 
 import android.content.Context
+import com.kubuno.android.account.AccountId
 import com.kubuno.android.api.auth.StoredTokens
 import com.kubuno.android.api.auth.TokenStore
 import java.io.File
@@ -17,22 +18,31 @@ private data class PersistedSession(
 )
 
 /**
- * Token persistence: Keystore-encrypted JSON in an app-private file.
+ * One encrypted session file per account, under `filesDir/sessions/<id>.bin`.
  *
- * Durability is part of the auth contract (see [TokenStore]): the write goes
- * to a temp file, is fsynced, then atomically renamed — losing a rotated
- * refresh token to a crash would burn the session (reuse_detected).
+ * A single blob holding every account would be a bad trade: this store wipes
+ * what it cannot decrypt (a corrupt file or a rotated Keystore key is
+ * unrecoverable), and doing that to a shared blob would sign every account out
+ * at once. Separate files keep that blast radius to one account.
+ *
+ * Durability is part of the auth contract: the write goes to a temp file, is
+ * fsynced, then atomically renamed. Losing a rotated refresh token to a crash
+ * would burn the session family server-side.
  */
-class FileTokenStore(context: Context) : TokenStore {
+class AccountTokenStore(
+    context: Context,
+    accountId: AccountId,
+) : TokenStore {
     private val json = Json { ignoreUnknownKeys = true }
-    private val file = File(context.filesDir, "session.bin")
-    private val tmp = File(context.filesDir, "session.bin.tmp")
+    private val dir = File(context.filesDir, "sessions").apply { mkdirs() }
+    private val file = File(dir, "${accountId.value}.bin")
+    private val tmp = File(dir, "${accountId.value}.bin.tmp")
     private val lock = Any()
 
     override fun load(): StoredTokens? = synchronized(lock) {
         if (!file.exists()) return null
         val plain = CryptoBox.decrypt(file.readBytes()) ?: run {
-            file.delete() // unreadable blob is useless — force re-login
+            file.delete()
             return null
         }
         runCatching {
@@ -51,7 +61,6 @@ class FileTokenStore(context: Context) : TokenStore {
             out.fd.sync()
         }
         if (!tmp.renameTo(file)) {
-            // Rename over an existing file can fail on some filesystems: delete then retry.
             file.delete()
             check(tmp.renameTo(file)) { "Could not persist session" }
         }

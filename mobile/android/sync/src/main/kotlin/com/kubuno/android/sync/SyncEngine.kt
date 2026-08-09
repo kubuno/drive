@@ -8,8 +8,6 @@ import com.kubuno.android.sync.db.FolderEntity
 import com.kubuno.android.sync.db.KubunoDatabase
 import com.kubuno.android.sync.db.MetaEntity
 import java.io.IOException
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Pull side of the sync: drains the drive's cursor-based delta feed into Room.
@@ -19,8 +17,7 @@ import javax.inject.Singleton
  * ONE Room transaction that also persists the new cursor, so an interrupted
  * sync can always resume from a consistent point.
  */
-@Singleton
-class SyncEngine @Inject constructor(
+class SyncEngine(
     private val db: KubunoDatabase,
     private val client: KubunoClient,
 ) {
