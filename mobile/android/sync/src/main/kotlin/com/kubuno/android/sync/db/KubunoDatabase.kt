@@ -10,8 +10,11 @@ import androidx.room.RoomDatabase
         FileEntity::class,
         OutboxEntity::class,
         TransferEntity::class,
+        AutoUploadEntity::class,
+        PinEntity::class,
+        LocalCopyEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = false,
 )
 abstract class KubunoDatabase : RoomDatabase() {
@@ -20,4 +23,6 @@ abstract class KubunoDatabase : RoomDatabase() {
     abstract fun fileDao(): FileDao
     abstract fun outboxDao(): OutboxDao
     abstract fun transferDao(): TransferDao
+    abstract fun autoUploadDao(): AutoUploadDao
+    abstract fun pinDao(): PinDao
 }

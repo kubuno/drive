@@ -143,3 +143,59 @@ interface FileDao {
     @Query("DELETE FROM files WHERE id = :id")
     suspend fun delete(id: String)
 }
+
+@Dao
+interface AutoUploadDao {
+    @Query("SELECT 1 FROM auto_upload_ledger WHERE mediaStoreId = :id LIMIT 1")
+    suspend fun hasMediaId(id: Long): Int?
+
+    @Query("SELECT 1 FROM auto_upload_ledger WHERE contentHash = :hash LIMIT 1")
+    suspend fun hasHash(hash: String): Int?
+
+    @Upsert
+    suspend fun record(entry: AutoUploadEntity)
+
+    @Query("SELECT COUNT(1) FROM auto_upload_ledger")
+    fun count(): Flow<Int>
+
+    @Query("DELETE FROM auto_upload_ledger")
+    suspend fun clear()
+}
+
+@Dao
+interface PinDao {
+    @Query("SELECT * FROM pins")
+    fun all(): Flow<List<PinEntity>>
+
+    @Query("SELECT fileId FROM pins")
+    suspend fun pinnedIds(): List<String>
+
+    @Query("SELECT 1 FROM pins WHERE fileId = :id LIMIT 1")
+    fun isPinned(id: String): Flow<Int?>
+
+    @Upsert
+    suspend fun pin(entry: PinEntity)
+
+    @Query("DELETE FROM pins WHERE fileId = :id")
+    suspend fun unpin(id: String)
+
+    // ---- local copies ----
+
+    @Query("SELECT * FROM local_copies WHERE fileId = :id")
+    suspend fun copyOf(id: String): LocalCopyEntity?
+
+    @Query("SELECT * FROM local_copies")
+    suspend fun allCopies(): List<LocalCopyEntity>
+
+    @Query("SELECT COALESCE(SUM(size), 0) FROM local_copies")
+    fun offlineBytes(): Flow<Long>
+
+    @Upsert
+    suspend fun recordCopy(entry: LocalCopyEntity)
+
+    @Query("DELETE FROM local_copies WHERE fileId = :id")
+    suspend fun removeCopy(id: String)
+
+    @Query("DELETE FROM local_copies")
+    suspend fun clearCopies()
+}

@@ -70,8 +70,11 @@ fun KubunoShell(
     userLabel: String?,
     childFolders: List<Pair<String, String>>,
     showFab: Boolean,
+    showBreadcrumb: Boolean,
     activeTransfers: Int,
     onOpenTransfers: () -> Unit,
+    // Defaulted so the shell keeps compiling while AppNav wires the real screen.
+    onOpenSettings: () -> Unit,
     onSelectTab: (DriveTab) -> Unit,
     onNavigateCrumb: (String?) -> Unit,
     onOpenFolder: (String) -> Unit,
@@ -90,6 +93,7 @@ fun KubunoShell(
                 userLabel = userLabel,
                 activeTransfers = activeTransfers,
                 onOpenTransfers = onOpenTransfers,
+                onOpenSettings = onOpenSettings,
                 onLogout = onLogout,
             )
 
@@ -100,7 +104,7 @@ fun KubunoShell(
                     .clip(MaterialTheme.shapes.large)
                     .background(MaterialTheme.colorScheme.surface),
             ) {
-                if (currentTab == DriveTab.FILES) {
+                if (showBreadcrumb) {
                     Breadcrumb(
                         crumbs = crumbs,
                         childFolders = childFolders,
@@ -128,11 +132,17 @@ fun KubunoShell(
 }
 
 @Composable
-private fun HeaderIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String) {
+private fun HeaderIcon(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    onClick: (() -> Unit)? = null,
+) {
     Box(
         modifier = Modifier
             .size(48.dp)
-            .clip(CircleShape),
+            .clip(CircleShape)
+            // Some header glyphs are still decorative: no ripple, no target.
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
@@ -149,6 +159,7 @@ private fun AppHeader(
     userLabel: String?,
     activeTransfers: Int,
     onOpenTransfers: () -> Unit,
+    onOpenSettings: () -> Unit,
     onLogout: () -> Unit,
 ) {
     var menu by remember { mutableStateOf(false) }
@@ -174,7 +185,7 @@ private fun AppHeader(
         // The bell is where transfer activity surfaces: same slot the web uses
         // for notifications, and the count is what the user wants to watch.
         NotificationBell(count = activeTransfers, onClick = onOpenTransfers)
-        HeaderIcon(Icons.Outlined.Settings, stringResource(R.string.settings))
+        HeaderIcon(Icons.Outlined.Settings, stringResource(R.string.settings), onOpenSettings)
 
         Box {
             Avatar(userLabel) { menu = true }

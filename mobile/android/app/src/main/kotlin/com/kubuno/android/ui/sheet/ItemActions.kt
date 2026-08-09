@@ -11,6 +11,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.CloudDone
+import androidx.compose.material.icons.outlined.CloudDownload
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.automirrored.outlined.DriveFileMove
 import androidx.compose.material.icons.outlined.Edit
@@ -45,6 +47,7 @@ data class ItemTarget(
     val isFolder: Boolean,
     val starred: Boolean,
     val trashed: Boolean,
+    val pinned: Boolean = false,
 )
 
 /**
@@ -58,6 +61,7 @@ fun ItemActionSheet(
     onRename: () -> Unit,
     onMove: () -> Unit,
     onToggleStar: () -> Unit,
+    onTogglePin: () -> Unit,
     onInfo: () -> Unit,
     onTrash: () -> Unit,
     onRestore: () -> Unit,
@@ -89,6 +93,18 @@ fun ItemActionSheet(
                 icon = if (target.starred) Icons.Filled.Star else Icons.Outlined.StarBorder,
                 onClick = { onDismiss(); onToggleStar() },
             )
+            // Folders are pinned by pinning their files, which needs a
+            // recursive walk the browser does not carry yet.
+            if (!target.isFolder) {
+                SheetRow(
+                    label = stringResource(
+                        if (target.pinned) R.string.action_unpin else R.string.action_pin
+                    ),
+                    icon = if (target.pinned) Icons.Outlined.CloudDone
+                    else Icons.Outlined.CloudDownload,
+                    onClick = { onDismiss(); onTogglePin() },
+                )
+            }
         }
         SheetRow(
             label = stringResource(

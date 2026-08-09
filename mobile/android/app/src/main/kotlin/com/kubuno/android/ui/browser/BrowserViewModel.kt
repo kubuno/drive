@@ -8,6 +8,7 @@ import android.net.Uri
 import com.kubuno.android.api.KubunoClient
 import com.kubuno.android.data.AppPrefs
 import com.kubuno.android.sync.DriveActions
+import com.kubuno.android.sync.OfflineFiles
 import com.kubuno.android.sync.db.FileEntity
 import com.kubuno.android.sync.db.FolderEntity
 import com.kubuno.android.sync.db.KubunoDatabase
@@ -41,10 +42,16 @@ class BrowserViewModel @Inject constructor(
     private val client: KubunoClient,
     private val actions: DriveActions,
     private val transfers: TransferQueue,
+    private val offline: OfflineFiles,
     prefs: AppPrefs,
 ) : ViewModel() {
 
     val userLabel: String? = prefs.userDisplayName ?: prefs.userEmail
+
+    /** Ids kept available offline, so rows can badge themselves. */
+    val pinnedIds: StateFlow<Set<String>> = db.pinDao().all()
+        .map { pins -> pins.map { it.fileId }.toSet() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
 
     /**
      * The open folder, null at the drive root. Driven by the shell's crumb stack
@@ -135,6 +142,17 @@ class BrowserViewModel @Inject constructor(
         viewModelScope.launch {
             transfers.enqueueDownload(file.id, file.name, file.size, file.mimeType)
         }
+    }
+
+    fun togglePin(fileId: String, pinned: Boolean) {
+        viewModelScope.launch {
+            if (pinned) offline.unpin(fileId) else offline.pin(fileId)
+        }
+    }
+
+    /** Drops local copies but keeps the pins, so they refill on the next sync. */
+    fun purgeOffline() {
+        viewModelScope.launch { offline.purge() }
     }
 
     fun logout(onDone: () -> Unit) {

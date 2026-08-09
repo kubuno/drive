@@ -12,6 +12,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.kubuno.android.api.auth.AuthException
 import com.kubuno.android.api.auth.FailureKind
+import com.kubuno.android.sync.OfflineFiles
 import com.kubuno.android.sync.OutboxDrain
 import com.kubuno.android.sync.SyncEngine
 import dagger.assisted.Assisted
@@ -26,6 +27,7 @@ class SyncWorker @AssistedInject constructor(
     @Assisted params: WorkerParameters,
     private val outbox: OutboxDrain,
     private val engine: SyncEngine,
+    private val offline: OfflineFiles,
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result = try {
@@ -33,6 +35,9 @@ class SyncWorker @AssistedInject constructor(
         // that would otherwise overwrite them.
         outbox.drain()
         engine.pull()
+        // The pull is what reveals a server-side edit, so pinned copies are
+        // reconciled right after it.
+        runCatching { offline.refresh() }
         Result.success()
     } catch (e: AuthException) {
         // Genuine: the session is dead, re-login is a user action — do not spin.

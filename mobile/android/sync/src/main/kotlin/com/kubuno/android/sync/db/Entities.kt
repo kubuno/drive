@@ -47,6 +47,41 @@ data class OutboxEntity(
     val createdAt: Long,
 )
 
+/**
+ * Camera-roll items already pushed, keyed by their MediaStore id.
+ *
+ * The content hash is kept as well: the same picture can reappear under a new
+ * MediaStore id (restore, re-import, gallery app rewriting the file), and the
+ * hash is what actually decides whether the server already holds it.
+ */
+@Entity(tableName = "auto_upload_ledger", indices = [Index("contentHash")])
+data class AutoUploadEntity(
+    @PrimaryKey val mediaStoreId: Long,
+    val contentHash: String,
+    val uploadedFileId: String?,
+    val uploadedAt: Long,
+)
+
+/** Files the user asked to keep available offline. */
+@Entity(tableName = "pins")
+data class PinEntity(
+    @PrimaryKey val fileId: String,
+    val pinnedAt: Long,
+)
+
+/**
+ * A pinned file's local copy. [etag] records which revision sits on disk, so a
+ * delta that changes it triggers a fresh download.
+ */
+@Entity(tableName = "local_copies")
+data class LocalCopyEntity(
+    @PrimaryKey val fileId: String,
+    val path: String,
+    val etag: String,
+    val size: Long,
+    val downloadedAt: Long,
+)
+
 /** Upload and download jobs, surfaced in the transfers screen. */
 @Entity(tableName = "transfers")
 data class TransferEntity(

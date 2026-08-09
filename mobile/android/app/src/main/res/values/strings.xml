@@ -117,4 +117,24 @@
     <string name="state_failed">Failed</string>
     <string name="open_with">Open with</string>
     <string name="download_done">Downloaded %1$s</string>
+
+    <!-- Offline pins -->
+    <string name="action_pin">Available offline</string>
+    <string name="action_unpin">Remove from offline</string>
+    <string name="pinned_badge">Available offline</string>
+
+    <!-- Settings -->
+    <string name="settings_account">Account</string>
+    <string name="settings_server">Server</string>
+    <string name="settings_autoupload">Automatic upload</string>
+    <string name="settings_offline">Offline storage</string>
+    <string name="settings_about">About</string>
+    <string name="autoupload_enabled">Automatic upload</string>
+    <string name="autoupload_wifi">Wi-Fi only</string>
+    <string name="autoupload_charging">Only while charging</string>
+    <string name="autoupload_videos">Include videos</string>
+    <string name="autoupload_count">Media uploaded: %1$d</string>
+    <string name="offline_size">Local copies</string>
+    <string name="offline_purge">Free up space</string>
+    <string name="about_license">AGPLv3 license</string>
 </resources>

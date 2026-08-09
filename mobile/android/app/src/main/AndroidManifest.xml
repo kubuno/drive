@@ -4,10 +4,25 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Camera-roll auto-upload reads the gallery; the granular media
+         permissions only exist from API 33, so the legacy one is capped. -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+
+    <!-- Progress notification for long transfers, and the foreground type
+         WorkManager needs to keep them alive. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+
     <application
         android:name=".KubunoApp"
         android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:allowBackup="false"
         android:supportsRtl="true"
         android:networkSecurityConfig="@xml/network_security_config"

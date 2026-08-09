@@ -19,6 +19,7 @@ import androidx.lifecycle.viewModelScope
 import com.kubuno.android.R
 import com.kubuno.android.api.KubunoClient
 import com.kubuno.android.sync.DriveActions
+import com.kubuno.android.sync.OfflineFiles
 import com.kubuno.android.sync.db.FileEntity
 import com.kubuno.android.sync.db.KubunoDatabase
 import com.kubuno.android.sync.transfer.TransferQueue
@@ -33,6 +34,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -42,11 +44,21 @@ class StarredViewModel @Inject constructor(
     private val client: KubunoClient,
     private val actions: DriveActions,
     private val transfers: TransferQueue,
+    private val offline: OfflineFiles,
 ) : ViewModel() {
+
     val files: StateFlow<List<FileEntity>> = db.fileDao().starred()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    val pinnedIds: StateFlow<Set<String>> = db.pinDao().all()
+        .map { pins -> pins.map { it.fileId }.toSet() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
+
     val serverBaseUrl: String? get() = client.serverBaseUrl()
+
+    fun togglePin(fileId: String, pinned: Boolean) = viewModelScope.launch {
+        if (pinned) offline.unpin(fileId) else offline.pin(fileId)
+    }
 
     fun rename(id: String, newName: String) =
         viewModelScope.launch { actions.rename(id, isFolder = false, newName = newName) }
@@ -65,6 +77,7 @@ class StarredViewModel @Inject constructor(
 @Composable
 fun StarredScreen(viewModel: StarredViewModel) {
     val files by viewModel.files.collectAsStateWithLifecycle()
+    val pinnedIds by viewModel.pinnedIds.collectAsStateWithLifecycle()
     var actionTarget by remember { mutableStateOf<ItemTarget?>(null) }
     var infoTarget by remember { mutableStateOf<FileEntity?>(null) }
     var renameTarget by remember { mutableStateOf<ItemTarget?>(null) }
@@ -89,8 +102,9 @@ fun StarredScreen(viewModel: StarredViewModel) {
                         file = file,
                         baseUrl = viewModel.serverBaseUrl,
                         zebra = index % 2 == 0,
-                        onOpen = { actionTarget = file.asTarget() },
-                        onMenu = { actionTarget = file.asTarget() },
+                        pinned = file.id in pinnedIds,
+                        onOpen = { actionTarget = file.asTarget(pinnedIds) },
+                        onMenu = { actionTarget = file.asTarget(pinnedIds) },
                     )
                 }
             }
@@ -105,6 +119,7 @@ fun StarredScreen(viewModel: StarredViewModel) {
             // Moving needs a folder picker the starred view does not carry.
             onMove = {},
             onToggleStar = { viewModel.unstar(target.id) },
+            onTogglePin = { viewModel.togglePin(target.id, target.pinned) },
             onInfo = { infoTarget = files.firstOrNull { it.id == target.id } },
             onTrash = { viewModel.trash(target.id) },
             onRestore = {},
@@ -123,5 +138,7 @@ fun StarredScreen(viewModel: StarredViewModel) {
     infoTarget?.let { FileInfoSheet(file = it, onDismiss = { infoTarget = null }) }
 }
 
-private fun FileEntity.asTarget() =
-    ItemTarget(id = id, name = name, isFolder = false, starred = starred, trashed = trashed)
+private fun FileEntity.asTarget(pinned: Set<String>) = ItemTarget(
+    id = id, name = name, isFolder = false,
+    starred = starred, trashed = trashed, pinned = id in pinned,
+)

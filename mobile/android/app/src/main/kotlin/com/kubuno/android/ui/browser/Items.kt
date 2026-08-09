@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.CloudDone
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -118,6 +119,7 @@ fun FileRow(
     file: FileEntity,
     baseUrl: String?,
     zebra: Boolean,
+    pinned: Boolean = false,
     onOpen: () -> Unit,
     onMenu: () -> Unit,
 ) {
@@ -150,6 +152,14 @@ fun FileRow(
                 color = KubunoTheme.colors.textTertiary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+            )
+        }
+        if (pinned) {
+            Icon(
+                Icons.Outlined.CloudDone,
+                contentDescription = stringResource(R.string.pinned_badge),
+                tint = KubunoTheme.colors.success,
+                modifier = Modifier.size(13.dp),
             )
         }
         if (file.starred) {
@@ -253,7 +263,13 @@ fun FolderCard(folder: FolderEntity, onOpen: () -> Unit, onMenu: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FileCard(file: FileEntity, baseUrl: String?, onOpen: () -> Unit, onMenu: () -> Unit) {
+fun FileCard(
+    file: FileEntity,
+    baseUrl: String?,
+    pinned: Boolean = false,
+    onOpen: () -> Unit,
+    onMenu: () -> Unit,
+) {
     val glyph = glyphFor(file.mimeType, file.name)
     Column(
         modifier = Modifier
@@ -281,6 +297,14 @@ fun FileCard(file: FileEntity, baseUrl: String?, onOpen: () -> Unit, onMenu: () 
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
             )
+            if (pinned) {
+                Icon(
+                    Icons.Outlined.CloudDone,
+                    contentDescription = stringResource(R.string.pinned_badge),
+                    tint = KubunoTheme.colors.success,
+                    modifier = Modifier.size(12.dp),
+                )
+            }
             if (file.starred) {
                 Icon(Icons.Filled.Star, contentDescription = null, tint = StarYellow, modifier = Modifier.size(12.dp))
             }

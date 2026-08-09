@@ -117,4 +117,24 @@
     <string name="state_failed">Échec</string>
     <string name="open_with">Ouvrir avec</string>
     <string name="download_done">%1$s téléchargé</string>
+
+    <!-- Offline pins -->
+    <string name="action_pin">Disponible hors-ligne</string>
+    <string name="action_unpin">Retirer du hors-ligne</string>
+    <string name="pinned_badge">Disponible hors-ligne</string>
+
+    <!-- Réglages -->
+    <string name="settings_account">Compte</string>
+    <string name="settings_server">Serveur</string>
+    <string name="settings_autoupload">Import automatique</string>
+    <string name="settings_offline">Stockage hors-ligne</string>
+    <string name="settings_about">À propos</string>
+    <string name="autoupload_enabled">Import automatique</string>
+    <string name="autoupload_wifi">Wi-Fi uniquement</string>
+    <string name="autoupload_charging">Seulement en charge</string>
+    <string name="autoupload_videos">Inclure les vidéos</string>
+    <string name="autoupload_count">Médias importés : %1$d</string>
+    <string name="offline_size">Copies locales</string>
+    <string name="offline_purge">Libérer l\'espace</string>
+    <string name="about_license">Licence AGPLv3</string>
 </resources>

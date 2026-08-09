@@ -52,6 +52,7 @@ fun BrowserScreen(
     val sortDir by viewModel.sortDir.collectAsStateWithLifecycle()
     val view by viewModel.view.collectAsStateWithLifecycle()
     val refreshing by viewModel.refreshing.collectAsStateWithLifecycle()
+    val pinnedIds by viewModel.pinnedIds.collectAsStateWithLifecycle()
 
     var sortSheet by remember { mutableStateOf(false) }
     var fileSheet by remember { mutableStateOf<FileEntity?>(null) }
@@ -112,8 +113,9 @@ fun BrowserScreen(
                             FileCard(
                                 file = file,
                                 baseUrl = viewModel.serverBaseUrl,
-                                onOpen = { actionTarget = file.asTarget() },
-                                onMenu = { actionTarget = file.asTarget() },
+                                pinned = file.id in pinnedIds,
+                                onOpen = { actionTarget = file.asTarget(pinnedIds) },
+                                onMenu = { actionTarget = file.asTarget(pinnedIds) },
                             )
                         }
                     }
@@ -141,8 +143,9 @@ fun BrowserScreen(
                                             file = file,
                                             baseUrl = viewModel.serverBaseUrl,
                                             zebra = index % 2 == 0,
-                                            onOpen = { actionTarget = file.asTarget() },
-                                            onMenu = { actionTarget = file.asTarget() },
+                                            pinned = file.id in pinnedIds,
+                                            onOpen = { actionTarget = file.asTarget(pinnedIds) },
+                                            onMenu = { actionTarget = file.asTarget(pinnedIds) },
                                         )
                                     }
                                 }
@@ -173,6 +176,7 @@ fun BrowserScreen(
             onRename = { renameTarget = target },
             onMove = { moveTarget = target },
             onToggleStar = { viewModel.setStarred(target.id, target.isFolder, !target.starred) },
+            onTogglePin = { viewModel.togglePin(target.id, target.pinned) },
             onInfo = {
                 if (target.isFolder) folderSheet = content.folders.firstOrNull { it.id == target.id }
                 else fileSheet = content.files.firstOrNull { it.id == target.id }
@@ -215,8 +219,10 @@ fun BrowserScreen(
     }
 }
 
-private fun FileEntity.asTarget() =
-    ItemTarget(id = id, name = name, isFolder = false, starred = starred, trashed = trashed)
+private fun FileEntity.asTarget(pinned: Set<String>) = ItemTarget(
+    id = id, name = name, isFolder = false,
+    starred = starred, trashed = trashed, pinned = id in pinned,
+)
 
 private fun FolderEntity.asTarget() =
     ItemTarget(id = id, name = name, isFolder = true, starred = starred, trashed = trashed)
