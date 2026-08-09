@@ -48,6 +48,17 @@ import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import androidx.compose.foundation.border
+import androidx.compose.material.icons.outlined.PhotoCamera
+import android.graphics.Bitmap
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import com.kubuno.android.R
 import com.kubuno.android.api.AuthApi
 import com.kubuno.android.api.model.SessionDto
@@ -62,6 +73,9 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import javax.inject.Inject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -95,6 +109,9 @@ data class AccountUiState(
     val sessionsFailed: Boolean = false,
     /** Session being revoked, so its row can stop accepting taps. */
     val revoking: String? = null,
+    /** True while the new picture is on its way to the server. */
+    val uploadingAvatar: Boolean = false,
+    val avatarFailed: Boolean = false,
 )
 
 @HiltViewModel
@@ -191,6 +208,42 @@ class AccountViewModel @Inject constructor(
         return null
     }
 
+    /**
+     * Sends the framed picture, plus the untouched original so a later re-crop
+     * can start from the full image the way the web does.
+     *
+     * The avatar URL never changes, so the freshly uploaded picture would keep
+     * losing to the cached one: a version stamp is appended to defeat both
+     * Coil layers and any HTTP cache in between.
+     */
+    fun uploadAvatar(cropped: ByteArray, original: ByteArray?) {
+        if (_state.value.uploadingAvatar) return
+        _state.update { it.copy(uploadingAvatar = true, avatarFailed = false) }
+        viewModelScope.launch {
+            val jpeg = "image/jpeg".toMediaType()
+            val avatarPart = MultipartBody.Part.createFormData(
+                "avatar", "avatar.jpg", cropped.toRequestBody(jpeg),
+            )
+            val originalPart = original?.let {
+                MultipartBody.Part.createFormData("original", "original.jpg", it.toRequestBody(jpeg))
+            }
+            val response = runCatching { api.uploadAvatar(avatarPart, originalPart) }.getOrNull()
+            val user = response?.takeIf { it.isSuccessful }?.body()?.user
+            if (user == null) {
+                _state.update { it.copy(uploadingAvatar = false, avatarFailed = true) }
+                return@launch
+            }
+            cache(user)
+            _state.update {
+                it.copy(
+                    uploadingAvatar = false,
+                    user = user,
+                    avatarUrl = absolute(user.avatarUrl)?.plus("?v=" + System.currentTimeMillis()),
+                )
+            }
+        }
+    }
+
     private fun cache(user: UserDto) {
         prefs.userDisplayName = user.displayName ?: user.username
         prefs.userEmail = user.email
@@ -215,8 +268,42 @@ fun AccountScreen(
     viewModel: AccountViewModel,
     onLogout: () -> Unit,
 ) {
+    val scope = rememberCoroutineScope()
     val state by viewModel.state.collectAsStateWithLifecycle()
     var confirmRevokeAll by remember { mutableStateOf(false) }
+
+    // Picking, framing and sending are three steps; the picked bitmap lives
+    // here between them so the crop surface can stay stateless.
+    val context = LocalContext.current
+    var picked by remember { mutableStateOf<Uri?>(null) }
+    var toCrop by remember { mutableStateOf<Bitmap?>(null) }
+    val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        picked = uri
+    }
+    LaunchedEffect(picked) {
+        val uri = picked ?: return@LaunchedEffect
+        toCrop = withContext(Dispatchers.IO) { loadBitmap(context, uri) }
+    }
+
+    toCrop?.let { bitmap ->
+        AvatarCropDialog(
+            bitmap = bitmap,
+            saving = state.uploadingAvatar,
+            onSave = { crop, viewportPx ->
+                val uri = picked
+                toCrop = null
+                picked = null
+                scope.launch {
+                    val (cropped, original) = withContext(Dispatchers.IO) {
+                        cropToSquare(bitmap, viewportPx, crop).toJpeg() to
+                            uri?.let { context.contentResolver.openInputStream(it)?.use { s -> s.readBytes() } }
+                    }
+                    viewModel.uploadAvatar(cropped, original)
+                }
+            },
+            onDismiss = { toCrop = null; picked = null },
+        )
+    }
 
     // Nothing at all yet: the very first load, with no cache to fall back on.
     if (state.loading && state.user == null && viewModel.cachedEmail == null) {
@@ -239,6 +326,8 @@ fun AccountScreen(
                 username = state.user?.username,
                 email = state.user?.email ?: viewModel.cachedEmail,
                 avatarUrl = state.avatarUrl,
+                uploading = state.uploadingAvatar,
+                onChangePhoto = { picker.launch("image/*") },
             )
             RowDivider()
             AccountRow(
@@ -372,6 +461,8 @@ private fun IdentityCard(
     username: String?,
     email: String?,
     avatarUrl: String?,
+    uploading: Boolean,
+    onChangePhoto: () -> Unit,
 ) {
     val primary = displayName?.takeIf { it.isNotBlank() } ?: username ?: email ?: EM_DASH
     Row(
@@ -381,11 +472,13 @@ private fun IdentityCard(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        Box(contentAlignment = Alignment.BottomEnd) {
         Box(
             modifier = Modifier
                 .size(72.dp)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary),
+                .background(MaterialTheme.colorScheme.primary)
+                .clickable(enabled = !uploading, onClick = onChangePhoto),
             contentAlignment = Alignment.Center,
         ) {
             Text(
@@ -405,6 +498,28 @@ private fun IdentityCard(
                     modifier = Modifier.fillMaxSize(),
                 )
             }
+        }
+        // Camera affordance, the same badge the web hangs off the portrait.
+        Box(
+            modifier = Modifier
+                .size(26.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surface)
+                .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                .clickable(enabled = !uploading, onClick = onChangePhoto),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (uploading) {
+                CircularProgressIndicator(Modifier.size(14.dp), strokeWidth = 2.dp)
+            } else {
+                Icon(
+                    Icons.Outlined.PhotoCamera,
+                    contentDescription = stringResource(R.string.avatar_change),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(15.dp),
+                )
+            }
+        }
         }
         Column(Modifier.weight(1f)) {
             Text(

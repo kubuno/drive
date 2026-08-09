@@ -180,4 +180,9 @@
     <string name="account_2fa_on">Activée</string>
     <string name="account_2fa_off">Désactivée</string>
     <string name="account_manage_on_web">Gérer sur le web</string>
+
+    <!-- Avatar -->
+    <string name="avatar_change">Changer la photo de profil</string>
+    <string name="avatar_crop_title">Cadrez votre photo</string>
+    <string name="avatar_failed">Impossible de mettre à jour la photo</string>
 </resources>

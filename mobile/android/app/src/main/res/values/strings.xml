@@ -180,4 +180,9 @@
     <string name="account_2fa_on">Enabled</string>
     <string name="account_2fa_off">Disabled</string>
     <string name="account_manage_on_web">Manage on the web</string>
+
+    <!-- Avatar -->
+    <string name="avatar_change">Change profile picture</string>
+    <string name="avatar_crop_title">Frame your picture</string>
+    <string name="avatar_failed">Could not update the picture</string>
 </resources>
