@@ -37,24 +37,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <!-- Account authenticator for the "com.kubuno" account type. Other
-             Kubuno apps signed with the same certificate reuse these accounts
-             and ask us for short-lived access tokens; no permission is needed
-             (AUTHENTICATE_ACCOUNTS/MANAGE_ACCOUNTS/USE_CREDENTIALS are no-ops,
-             and GET_ACCOUNTS stopped being required at API 23 < our minSdk).
-             exported="false": the system binds it by intent filter, and no app
-             ever talks to it directly. -->
-        <service
-            android:name=".account.KubunoAuthenticatorService"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="android.accounts.AccountAuthenticator" />
-            </intent-filter>
-            <meta-data
-                android:name="android.accounts.AccountAuthenticator"
-                android:resource="@xml/authenticator" />
-        </service>
+        <!-- The account authenticator (service + com.kubuno type) is declared by
+             the shared :core-account module, so every Kubuno app contributes the
+             same one and the manifest merger folds them together. -->
 
         <!-- WorkManager is configured on demand (Configuration.Provider). -->
         <provider

@@ -28,6 +28,7 @@ kotlin {
 
 dependencies {
     api(project(":core-api"))
+    api(project(":core-account"))
 
     implementation(libs.coroutines.android)
     implementation(libs.kotlinx.serialization.json)

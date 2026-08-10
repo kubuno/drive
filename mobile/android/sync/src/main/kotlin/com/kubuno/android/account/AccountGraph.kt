@@ -4,10 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import androidx.work.WorkManager
 import com.kubuno.android.api.KubunoClient
-import com.kubuno.android.api.SharedHttp
-import com.kubuno.android.api.auth.TokenStore
 import com.kubuno.android.data.AccountPrefs
-import com.kubuno.android.data.AppPrefs
 import com.kubuno.android.sync.DriveActions
 import com.kubuno.android.sync.OfflineFiles
 import com.kubuno.android.sync.OutboxDrain
@@ -53,10 +50,13 @@ class AccountGraph(
 
     /** Last known values, so a removed account still renders while tearing down. */
     private var fallback: AccountRecord = registry.get(id)!!
-    /** Releases sockets and closes the database; the data stays on disk. */
+    /**
+     * Releases what the graph owns and closes the database; the data stays on
+     * disk. The client is NOT shut down here — it belongs to the shared
+     * [AccountClients] cache, which the authenticator and sibling apps share.
+     */
     fun close() {
         events.stop()
-        client.shutdown()
         db.close()
     }
 }
@@ -72,11 +72,9 @@ class AccountGraph(
 class AccountGraphFactory @Inject constructor(
     @ApplicationContext private val context: Context,
     private val registry: AccountRegistry,
-    private val appPrefs: AppPrefs,
+    private val clients: AccountClients,
     private val workManager: WorkManager,
-    private val tokenStores: TokenStoreFactory,
 ) {
-    private val shared = SharedHttp()
     private val graphs = ConcurrentHashMap<String, AccountGraph>()
 
     fun graphOf(id: AccountId): AccountGraph? {
@@ -93,19 +91,17 @@ class AccountGraphFactory @Inject constructor(
     fun forget(id: AccountId) {
         graphs.remove(id.value)?.close()
         context.deleteDatabase(dbName(id))
-        File(context.filesDir, "sessions/${id.value}.bin").delete()
+        // The session file belongs to the shared client cache.
+        clients.forget(id)
         File(context.filesDir, "offline/${id.value}").deleteRecursively()
         File(context.filesDir, "downloads/${id.value}").deleteRecursively()
         AccountPrefs(context, id).erase()
     }
 
     private fun build(record: AccountRecord): AccountGraph {
-        val client = KubunoClient(
-            baseUrl = record.serverUrl,
-            tokenStore = tokenStores.create(record.id),
-            deviceKeyProvider = { appPrefs.deviceKey },
-            shared = shared,
-        )
+        // One client per account, shared with the authenticator and the other
+        // apps, so every refresh stays behind a single lock.
+        val client = clients.of(record.id)!!
         val db = Room.databaseBuilder(context, KubunoDatabase::class.java, dbName(record.id))
             // Pre-release schema: recreating one account's cache is cheap, and
             // the outbox is drained before any migration would matter.
@@ -136,9 +132,4 @@ class AccountGraphFactory @Inject constructor(
     }
 
     private fun dbName(id: AccountId) = "kubuno-${id.value}.db"
-}
-
-/** Lets :core-sync build per-account stores without depending on :app. */
-fun interface TokenStoreFactory {
-    fun create(id: AccountId): TokenStore
 }

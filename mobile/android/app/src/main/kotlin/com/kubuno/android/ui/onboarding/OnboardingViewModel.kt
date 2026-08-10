@@ -10,13 +10,11 @@ import com.kubuno.android.R
 import com.kubuno.android.account.AccountGraphFactory
 import com.kubuno.android.account.AccountId
 import com.kubuno.android.account.AccountRegistry
-import com.kubuno.android.account.TokenStoreFactory
+import com.kubuno.android.account.AccountClients
 import com.kubuno.android.api.KubunoClient
-import com.kubuno.android.api.SharedHttp
 import com.kubuno.android.api.auth.LoginOutcome
 import com.kubuno.android.api.auth.TokenManager
 import com.kubuno.android.api.model.DeclareDeviceRequest
-import com.kubuno.android.data.AppPrefs
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.IOException
@@ -57,15 +55,11 @@ class OnboardingViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val registry: AccountRegistry,
     private val graphs: AccountGraphFactory,
-    private val tokenStores: TokenStoreFactory,
-    private val appPrefs: AppPrefs,
+    private val clients: AccountClients,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(OnboardingUiState())
     val state: StateFlow<OnboardingUiState> = _state
-
-    /** Sockets for the throwaway clients; never shared with a live account. */
-    private val probeHttp = SharedHttp()
 
     /** Client for the instance being signed into, rebuilt at each attempt. */
     private var pending: PendingSignIn? = null
@@ -92,12 +86,7 @@ class OnboardingViewModel @Inject constructor(
             // the sign-in succeeds; an abandoned attempt leaves nothing behind
             // but an unused empty file.
             val candidate = AccountId(UUID.randomUUID().toString())
-            val client = KubunoClient(
-                baseUrl = url,
-                tokenStore = tokenStores.create(candidate),
-                deviceKeyProvider = { appPrefs.deviceKey },
-                shared = probeHttp,
-            )
+            val client = clients.probe(url, candidate)
             val reachable = try {
                 client.authApi.health().isSuccessful
             } catch (e: IOException) {
@@ -172,10 +161,10 @@ class OnboardingViewModel @Inject constructor(
                 )
                 if (record.id != attempt.accountId) {
                     // Move the freshly stored tokens onto the existing id.
-                    tokenStores.create(attempt.accountId).load()?.let { tokens ->
-                        tokenStores.create(record.id).save(tokens)
+                    clients.store(attempt.accountId).load()?.let { tokens ->
+                        clients.store(record.id).save(tokens)
                     }
-                    tokenStores.create(attempt.accountId).clear()
+                    clients.store(attempt.accountId).clear()
                 }
                 declareDevice(attempt)
                 attempt.client.shutdown()
