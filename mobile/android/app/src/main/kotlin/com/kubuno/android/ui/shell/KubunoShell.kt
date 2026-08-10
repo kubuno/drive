@@ -172,29 +172,6 @@ fun KubunoShell(
 }
 
 @Composable
-private fun HeaderIcon(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    onClick: (() -> Unit)? = null,
-) {
-    Box(
-        modifier = Modifier
-            .size(48.dp)
-            .clip(CircleShape)
-            // Some header glyphs are still decorative: no ripple, no target.
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            icon,
-            contentDescription = label,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(20.dp),
-        )
-    }
-}
-
-@Composable
 private fun AppHeader(
     userLabel: String?,
     avatarUrl: String?,
@@ -228,46 +205,34 @@ private fun AppHeader(
         return
     }
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .statusBarsPadding()
-            .height(64.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        HeaderIcon(Icons.Outlined.Menu, stringResource(R.string.menu), onOpenDrawer)
-
-        Icon(
-            painter = painterResource(R.drawable.ic_kubuno_logo),
-            contentDescription = stringResource(R.string.app_name),
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(width = 20.dp, height = 22.dp),
-        )
-
-        Box(Modifier.weight(1f))
-
-        HeaderIcon(Icons.Outlined.Search, stringResource(R.string.search), onSearchOpen)
-        // The bell is where transfer activity surfaces: same slot the web uses
-        // for notifications, and the count is what the user wants to watch.
-        NotificationBell(count = activeTransfers, onClick = onOpenTransfers)
-        HeaderIcon(Icons.Outlined.Settings, stringResource(R.string.settings), onOpenSettings)
-
-        Avatar(userLabel, avatarUrl) { panelOpen = true }
-    }
+    // The shared header (:core-ui). Drive tailors it: the bell carries the
+    // active-transfer count, and search opens the inline field below.
+    KubunoTopBar(
+        avatarLabel = userLabel,
+        avatarUrl = avatarUrl,
+        onAvatarClick = { panelOpen = true },
+        onOpenMenu = onOpenDrawer,
+        onSearch = onSearchOpen,
+        notificationCount = activeTransfers,
+        onNotifications = onOpenTransfers,
+        onSettings = onOpenSettings,
+    )
 
     if (panelOpen) {
-        UserPanel(
+        KubunoAccountPanel(
             email = userEmail,
             displayName = userLabel,
             avatarUrl = avatarUrl,
-            accounts = accounts,
-            activeId = activeId,
-            onSwitchAccount = { panelOpen = false; onSwitchAccount(it) },
-            onAddAccount = { panelOpen = false; onAddAccount() },
+            accounts = accounts.map {
+                UiAccount(it.id.value, it.label, it.host, it.absolute(it.avatarPath))
+            },
+            activeId = activeId?.value,
+            onSwitchAccount = { panelOpen = false; onSwitchAccount(AccountId(it)) },
             onManageDeviceAccounts = { panelOpen = false; onManageDeviceAccounts() },
-            onManageAccount = { panelOpen = false; onManageAccount() },
-            onLogout = { panelOpen = false; onLogout() },
             onDismiss = { panelOpen = false },
+            onAddAccount = { panelOpen = false; onAddAccount() },
+            onManageAccount = { panelOpen = false; onManageAccount() },
+            onSignOut = { panelOpen = false; onLogout() },
         )
     }
 }
@@ -309,86 +274,6 @@ private fun SearchHeader(query: String, onChange: (String) -> Unit, onClose: () 
         )
         if (query.isNotEmpty()) {
             HeaderIcon(Icons.Outlined.Close, stringResource(R.string.search_clear)) { onChange("") }
-        }
-    }
-}
-
-@Composable
-private fun NotificationBell(count: Int, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .size(48.dp)
-            .clip(CircleShape)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            Icons.Outlined.Notifications,
-            contentDescription = stringResource(R.string.notifications),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(20.dp),
-        )
-        if (count > 0) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(top = 10.dp, end = 8.dp)
-                    .size(16.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.error),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    if (count > 9) "9+" else "$count",
-                    fontSize = 10.sp,
-                    color = MaterialTheme.colorScheme.onError,
-                    fontWeight = FontWeight.SemiBold,
-                )
-            }
-        }
-    }
-}
-
-/**
- * Profile picture, falling back to initials.
- *
- * [avatarUrl] is server-relative, so it is joined to the current instance;
- * Coil rides the authenticated OkHttp client, which the avatar endpoint needs.
- */
-@Composable
-private fun Avatar(userLabel: String?, avatarUrl: String?, onClick: () -> Unit) {
-    val initials = userLabel
-        ?.split(' ', '@', '.')
-        ?.filter { it.isNotBlank() }
-        ?.take(2)
-        ?.joinToString("") { it.first().uppercase() }
-        ?.ifBlank { null }
-        ?: "?"
-    Box(
-        modifier = Modifier
-            .padding(end = 6.dp)
-            .size(36.dp)
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.primary)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            initials,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onPrimary,
-        )
-        if (avatarUrl != null) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalPlatformContext.current)
-                    .data(avatarUrl)
-                    .crossfade(true)
-                    .build(),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
-            )
         }
     }
 }
