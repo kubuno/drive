@@ -40,6 +40,10 @@ import com.kubuno.android.ui.sheet.MoveSheet
 import com.kubuno.android.ui.sheet.RenameDialog
 import com.kubuno.android.ui.sheet.SortSheet
 import com.kubuno.android.ui.theme.KubunoTheme
+import com.kubuno.android.viewer.FileViewer
+import com.kubuno.android.viewer.ViewerItem
+import com.kubuno.android.viewer.canPreview
+import androidx.activity.compose.BackHandler
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,6 +64,19 @@ fun BrowserScreen(
     var actionTarget by remember { mutableStateOf<ItemTarget?>(null) }
     var renameTarget by remember { mutableStateOf<ItemTarget?>(null) }
     var moveTarget by remember { mutableStateOf<ItemTarget?>(null) }
+    // The previewable files of the folder + the index tapped, for the viewer.
+    var viewerStart by remember { mutableStateOf<Pair<List<FileEntity>, Int>?>(null) }
+
+    // Tap opens the file: a preview for viewable types (like the web), the
+    // action sheet otherwise. Long-press / kebab always opens the sheet.
+    val openFile: (FileEntity) -> Unit = { file ->
+        if (canPreview(file.name, file.mimeType)) {
+            val previewable = content.files.filter { canPreview(it.name, it.mimeType) }
+            viewerStart = previewable to previewable.indexOfFirst { it.id == file.id }.coerceAtLeast(0)
+        } else {
+            actionTarget = file.asTarget(pinnedIds)
+        }
+    }
 
     PullToRefreshBox(
         isRefreshing = refreshing,
@@ -114,7 +131,7 @@ fun BrowserScreen(
                                 file = file,
                                 baseUrl = viewModel.serverBaseUrl,
                                 pinned = file.id in pinnedIds,
-                                onOpen = { actionTarget = file.asTarget(pinnedIds) },
+                                onOpen = { openFile(file) },
                                 onMenu = { actionTarget = file.asTarget(pinnedIds) },
                             )
                         }
@@ -144,7 +161,7 @@ fun BrowserScreen(
                                             baseUrl = viewModel.serverBaseUrl,
                                             zebra = index % 2 == 0,
                                             pinned = file.id in pinnedIds,
-                                            onOpen = { actionTarget = file.asTarget(pinnedIds) },
+                                            onOpen = { openFile(file) },
                                             onMenu = { actionTarget = file.asTarget(pinnedIds) },
                                         )
                                     }
@@ -155,6 +172,18 @@ fun BrowserScreen(
                 }
             }
         }
+    }
+
+    viewerStart?.let { (files, index) ->
+        BackHandler { viewerStart = null }
+        FileViewer(
+            items = files.map { ViewerItem(it.name, it.mimeType, it.size) },
+            initialIndex = index,
+            fetch = { i -> viewModel.fetchForViewer(files[i].id) },
+            onDownload = { i -> viewModel.download(files[i]) },
+            onOpenExternally = { i -> viewModel.download(files[i]) },
+            onClose = { viewerStart = null },
+        )
     }
 
     if (sortSheet) {

@@ -49,6 +49,24 @@ class OfflineFiles(
         return File(copy.path).takeIf { it.exists() }
     }
 
+    /**
+     * A local copy for viewing: the pinned copy if there is one, otherwise a
+     * fresh download into the cache. Not recorded as a pin — this is a
+     * throwaway for the file viewer, cleaned with the app's cache.
+     */
+    suspend fun cacheForViewing(fileId: String): File {
+        localFile(fileId)?.let { return it }
+        val file = db.fileDao().get(fileId) ?: throw IOException("unknown file $fileId")
+        val response = client.driveApi.download(fileId)
+        if (!response.isSuccessful) throw IOException("download failed (${response.code()})")
+        val dir = File(context.cacheDir, "viewer/$fileId").apply { mkdirs() }
+        val target = File(dir, file.name)
+        response.body()!!.byteStream().use { input ->
+            target.outputStream().use { output -> input.copyTo(output, 64 * 1024) }
+        }
+        return target
+    }
+
     /** Drops every local copy but keeps the pins, so they refill on next sync. */
     suspend fun purge() {
         db.pinDao().clearCopies()

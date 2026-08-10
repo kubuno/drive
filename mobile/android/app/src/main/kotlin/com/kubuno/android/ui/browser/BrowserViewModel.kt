@@ -128,6 +128,12 @@ class BrowserViewModel @Inject constructor(
     fun download(file: FileEntity) =
         withGraph { it.transfers.enqueueDownload(file.id, file.name, file.size, file.mimeType) }
 
+    /** Downloads (or reuses the pinned copy of) a file for the in-app viewer. */
+    suspend fun fetchForViewer(fileId: String): java.io.File {
+        val g = graph.value ?: error("Aucun compte")
+        return g.offline.cacheForViewing(fileId)
+    }
+
     fun togglePin(fileId: String, pinned: Boolean) = withGraph {
         if (pinned) it.offline.unpin(fileId) else it.offline.pin(fileId)
     }
