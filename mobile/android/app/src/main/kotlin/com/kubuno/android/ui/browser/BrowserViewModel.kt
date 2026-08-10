@@ -134,6 +134,12 @@ class BrowserViewModel @Inject constructor(
         return g.offline.cacheForViewing(fileId)
     }
 
+    /** Authenticated client + URL so the viewer streams media instead of downloading it. */
+    val mediaHttpClient: okhttp3.OkHttpClient? get() = graph.value?.client?.okHttpClient
+
+    fun streamUrl(fileId: String): String? =
+        serverBaseUrl?.trimEnd('/')?.let { "$it/api/v1/drive/$fileId/download" }
+
     fun togglePin(fileId: String, pinned: Boolean) = withGraph {
         if (pinned) it.offline.unpin(fileId) else it.offline.pin(fileId)
     }

@@ -23,10 +23,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import kotlinx.coroutines.launch
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kubuno.android.R
@@ -51,6 +54,8 @@ fun BrowserScreen(
     viewModel: BrowserViewModel,
     onOpenFolder: (String) -> Unit,
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val content by viewModel.content.collectAsStateWithLifecycle()
     val sortField by viewModel.sortField.collectAsStateWithLifecycle()
     val sortDir by viewModel.sortDir.collectAsStateWithLifecycle()
@@ -177,11 +182,19 @@ fun BrowserScreen(
     viewerStart?.let { (files, index) ->
         BackHandler { viewerStart = null }
         FileViewer(
-            items = files.map { ViewerItem(it.name, it.mimeType, it.size) },
+            items = files.map { ViewerItem(it.name, it.mimeType, it.size, viewModel.streamUrl(it.id)) },
             initialIndex = index,
+            mediaHttpClient = viewModel.mediaHttpClient,
             fetch = { i -> viewModel.fetchForViewer(files[i].id) },
             onDownload = { i -> viewModel.download(files[i]) },
-            onOpenExternally = { i -> viewModel.download(files[i]) },
+            onOpenExternally = { i ->
+                val file = files[i]
+                scope.launch {
+                    runCatching {
+                        openWith(context, viewModel.fetchForViewer(file.id), file.mimeType)
+                    }
+                }
+            },
             onClose = { viewerStart = null },
         )
     }
@@ -315,3 +328,18 @@ fun TabEmptyState(icon: androidx.compose.ui.graphics.vector.ImageVector, message
     }
 }
 
+
+/** Opens a cached file in another app via a FileProvider content URI. */
+private fun openWith(context: android.content.Context, file: java.io.File, mime: String?) {
+    val uri = androidx.core.content.FileProvider.getUriForFile(
+        context, "${context.packageName}.fileprovider", file,
+    )
+    val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+        setDataAndType(uri, mime ?: "*/*")
+        addFlags(
+            android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                android.content.Intent.FLAG_ACTIVITY_NEW_TASK,
+        )
+    }
+    runCatching { context.startActivity(intent) }
+}

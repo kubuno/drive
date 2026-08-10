@@ -19,11 +19,28 @@ android {
         versionName = "0.1.0"
     }
 
+    // Opt-in release signing, shared with the whole suite — the SAME certificate
+    // must sign every Kubuno app (the shared-account model trusts by signature).
+    // Pass -PkubunoKeystore=… + the passwords to sign; unsigned otherwise.
+    val keystorePath = (findProperty("kubunoKeystore") as String?)?.takeIf { it.isNotBlank() }
+    val keystoreFile = keystorePath?.let { rootProject.file(it) }
+    signingConfigs {
+        if (keystoreFile != null && keystoreFile.exists()) {
+            create("release") {
+                storeFile = keystoreFile
+                storePassword = findProperty("kubunoKeystorePassword") as String?
+                keyAlias = findProperty("kubunoKeyAlias") as String?
+                keyPassword = findProperty("kubunoKeyPassword") as String?
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // R8 is enabled in M5 together with the keep rules audit.
+            // R8 stays off for drive until its keep-rules audit (mail has it).
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.findByName("release")
         }
     }
 

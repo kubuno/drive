@@ -41,6 +41,18 @@
              the shared :core-account module, so every Kubuno app contributes the
              same one and the manifest merger folds them together. -->
 
+        <!-- Shares a cached file with the app that opens it ("open with" from
+             the viewer); a raw file:// path may not cross the app boundary. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
         <!-- WorkManager is configured on demand (Configuration.Provider). -->
         <provider
             android:name="androidx.startup.InitializationProvider"
