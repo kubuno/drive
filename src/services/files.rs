@@ -12,6 +12,24 @@ use crate::{
 
 // ── Helpers internes ──────────────────────────────────────────────────────────
 
+/// Version history aggregate, joined onto an **already restricted** set of rows
+/// aliased `b`.
+///
+/// It is deliberately a `LEFT JOIN LATERAL` applied *after* the paging, and not
+/// a grouped sub-select joined onto `drive.files`: the planner then runs one
+/// index lookup on `idx_files_versions_file` per row it is actually going to
+/// return (1000 at the very most, the listing ceiling), instead of aggregating
+/// the whole `drive.file_versions` table only to throw away everything past the
+/// `LIMIT`. The subquery has an aggregate and no `GROUP BY`, so it always yields
+/// exactly one row and the join never widens the result.
+const VERSION_STATS_JOIN: &str = "
+    LEFT JOIN LATERAL (
+        SELECT COUNT(*)::bigint                        AS version_count,
+               COALESCE(SUM(fv.size_bytes), 0)::bigint AS version_bytes
+        FROM drive.file_versions fv
+        WHERE fv.file_id = b.id
+    ) v ON TRUE";
+
 /// Résout le nom final d'un fichier selon la politique d'écrasement :
 /// - `overwrite=true`  : supprime le fichier existant portant ce nom (non corbeille), retourne le nom tel quel
 /// - `overwrite=false` : ajoute " (2)", " (3)"… si conflit (ne détruit rien)
@@ -64,6 +82,16 @@ pub async fn resolve_name(
 }
 
 /// Met à jour le quota consommé de l'utilisateur (delta positif = ajout, négatif = libération).
+///
+/// Every write path in this module funnels through here, which makes it the one
+/// place that has to signal a change. Two things happen, and they are
+/// independent on purpose:
+///
+/// * `core.users.used_bytes` is adjusted by the delta, exactly as before. It
+///   remains the authoritative figure quotas are enforced against.
+/// * The owner is marked for the usage reporter, which will re-derive and
+///   declare drive's **absolute** total for that account a few seconds later
+///   (see [`super::usage`]). Marking is non-blocking and cannot fail the caller.
 pub async fn update_used_bytes(db: &PgPool, owner_id: Uuid, delta: i64) {
     if let Err(e) = sqlx::query(
         "UPDATE core.users SET used_bytes = GREATEST(0, used_bytes + $1) WHERE id = $2"
@@ -75,6 +103,8 @@ pub async fn update_used_bytes(db: &PgPool, owner_id: Uuid, delta: i64) {
     {
         tracing::error!(owner_id = %owner_id, delta, error = %e, "Échec mise à jour used_bytes");
     }
+
+    super::usage::mark_dirty(owner_id);
 }
 
 /// Récupère le chemin virtuel d'un dossier (vide = racine).
@@ -267,14 +297,25 @@ pub async fn list_files(
     }
 
     let order = match query.sort_by.as_deref() {
-        Some("size")    => "ff.size_bytes",
-        Some("name")    => "ff.name",
-        Some("updated") => "ff.updated_at",
-        _ if is_recent  => "ff.updated_at",
-        _               => "ff.created_at",
+        Some("size")    => "size_bytes",
+        Some("name")    => "name",
+        Some("updated") => "updated_at",
+        _ if is_recent  => "updated_at",
+        _               => "created_at",
     };
     let order_dir = if query.sort_by.as_deref() == Some("name") { "ASC" } else { "DESC" };
-    q.push_str(&format!(" ORDER BY {order} {order_dir} LIMIT ${param_idx} OFFSET ${}", param_idx + 1));
+    q.push_str(&format!(" ORDER BY ff.{order} {order_dir} LIMIT ${param_idx} OFFSET ${}", param_idx + 1));
+
+    // Page first, then aggregate the history of the page only. The outer
+    // ORDER BY is repeated because a join is not required to preserve the order
+    // of its input.
+    let q = format!(
+        "SELECT b.*,
+                COALESCE(v.version_count, 0) AS version_count,
+                COALESCE(v.version_bytes, 0) AS version_bytes
+         FROM ({q}) b{VERSION_STATS_JOIN}
+         ORDER BY b.{order} {order_dir}"
+    );
 
     let mut builder = sqlx::query_as::<_, File>(&q)
         .bind(owner_id)
@@ -286,18 +327,29 @@ pub async fn list_files(
     if let Some(mt)     = query.mime_type          { builder = builder.bind(format!("{mt}%")); }
     if let Some(s)      = query.search             { builder = builder.bind(format!("%{s}%")); }
 
-    let files = builder.bind(limit).bind(offset).fetch_all(db).await?;
+    let files = builder
+        .bind(limit)
+        .bind(offset)
+        .fetch_all(db)
+        .await
+        .inspect_err(|e| tracing::error!(owner_id = %owner_id, error = %e, "Échec du listing des fichiers"))?;
     Ok(files)
 }
 
 pub async fn get_file(db: &PgPool, owner_id: Uuid, file_id: Uuid) -> Result<File> {
     sqlx::query_as::<_, File>(
-        "SELECT * FROM drive.files WHERE id = $1 AND owner_id = $2"
+        &format!(
+            "SELECT b.*,
+                    COALESCE(v.version_count, 0) AS version_count,
+                    COALESCE(v.version_bytes, 0) AS version_bytes
+             FROM (SELECT * FROM drive.files WHERE id = $1 AND owner_id = $2) b{VERSION_STATS_JOIN}"
+        )
     )
     .bind(file_id)
     .bind(owner_id)
     .fetch_optional(db)
-    .await?
+    .await
+    .inspect_err(|e| tracing::error!(file_id = %file_id, error = %e, "Échec de lecture du fichier"))?
     .ok_or_else(|| FilesError::NotFound(format!("Fichier {file_id} introuvable")))
 }
 
@@ -496,11 +548,23 @@ pub async fn delete_file_permanently(
         }
     }
 
+    // `drive.file_versions` cascades on the row, which would drop the history
+    // silently and leave its blobs on disk with their bytes still charged to the
+    // account. Purge it explicitly so both the disk and the quota follow.
+    let history = crate::services::versions::purge_versions(db, storage, owner_id, file_id).await?;
+    if history.removed > 0 {
+        tracing::debug!(
+            file_id = %file_id, removed = history.removed, freed = history.freed_bytes,
+            "Historique de versions purgé avec le fichier",
+        );
+    }
+
     sqlx::query("DELETE FROM drive.files WHERE id = $1 AND owner_id = $2")
         .bind(file_id)
         .bind(owner_id)
         .execute(db)
-        .await?;
+        .await
+        .inspect_err(|e| tracing::error!(file_id = %file_id, error = %e, "Échec de suppression du fichier"))?;
 
     update_used_bytes(db, owner_id, -file.size_bytes).await;
 

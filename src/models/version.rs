@@ -24,3 +24,24 @@ pub struct CreateVersionDto {
 pub struct SetVersioningDto {
     pub enabled: bool,
 }
+
+/// What purging a file's history actually gave back — the two figures the
+/// interface promised before asking for confirmation.
+#[derive(Debug, Clone, Copy, Serialize)]
+pub struct VersionsPurgeResult {
+    /// Revisions deleted.
+    pub removed:     i64,
+    /// Bytes returned to the account's quota.
+    pub freed_bytes: i64,
+}
+
+/// Account-wide weight of the version histories, for the storage screens.
+#[derive(Debug, Clone, Copy, Serialize, sqlx::FromRow)]
+pub struct VersionsSummary {
+    /// Files carrying at least one stored revision.
+    pub files_with_versions: i64,
+    /// Stored revisions, all files taken together.
+    pub total_versions:      i64,
+    /// Bytes those revisions occupy.
+    pub total_bytes:         i64,
+}

@@ -8,7 +8,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Columns2, Rows2 } from 'lucide-react'
+import { Columns2, GripHorizontal, GripVertical, Rows2 } from 'lucide-react'
 import { Dropdown } from '@ui'
 import { useNotificationStore } from '@kubuno/sdk'
 import {
@@ -102,8 +102,24 @@ export default function DualPaneExplorer() {
           <Pane source={leftSource} label={leftLabel} options={options} onPick={setLeftKey}
             onExternalDrop={(payload, target) => transfer(fromOf(payload.sourceKey), leftSource, payload, target)} />
         </div>
+        {/* Splitter — same control as the shell's panels: a 5px bar, plus a grip pill
+            that materialises on hover and tints, so the divider reads as draggable
+            instead of as a decorative rule. */}
         <div onPointerDown={onDividerDown}
-          className={`shrink-0 bg-border hover:bg-primary/40 transition-colors ${orient === 'h' ? 'w-1.5 cursor-col-resize' : 'h-1.5 cursor-row-resize'}`} />
+          /* z-20: the grip pill (14px) is wider than the 5px bar, so it overflows onto
+             the neighbouring pane — which would otherwise paint over its right half. */
+          className={`group relative z-20 flex shrink-0 items-center justify-center
+                      ${orient === 'h' ? 'w-[5px] cursor-col-resize' : 'h-[5px] cursor-row-resize'}`}>
+          <span className={`absolute rounded-full bg-border transition-colors group-hover:bg-primary/40
+                            ${orient === 'h' ? 'inset-y-0 inset-x-0' : 'inset-x-0 inset-y-0'}`} />
+          <span className={`relative flex items-center justify-center rounded-full border bg-surface-0 shadow-sm
+                            opacity-0 transition group-hover:opacity-100
+                            border-border text-text-tertiary
+                            group-hover:border-primary/40 group-hover:bg-primary-light group-hover:text-primary
+                            ${orient === 'h' ? 'h-9 w-3.5' : 'h-3.5 w-9'}`}>
+            {orient === 'h' ? <GripVertical size={13} /> : <GripHorizontal size={13} />}
+          </span>
+        </div>
         <div style={{ flexBasis: `${(1 - ratio) * 100}%` }} className="min-w-0 min-h-0 flex">
           <Pane source={rightSource} label={rightLabel} options={options} onPick={setRightKey}
             onExternalDrop={(payload, target) => transfer(fromOf(payload.sourceKey), rightSource, payload, target)} />

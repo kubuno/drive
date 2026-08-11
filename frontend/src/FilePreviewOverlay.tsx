@@ -10,8 +10,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { PDFDocumentProxy, PDFDocumentLoadingTask } from 'pdfjs-dist'
-import { filesApi, type FileItem } from '@kubuno/drive'
+import { type FileItem } from '@kubuno/drive'
 import { api, useAuthStore } from '@kubuno/sdk'
+import { fetchFileResponse, fileSourceUrl, isExternalFile } from './externalPreview'
 import { MenuDropdown, type MenuItem } from '@ui'
 import {
   X, Download, Printer, ChevronRight, ChevronDown, Minus, Plus, Loader2,
@@ -597,6 +598,9 @@ export default function FilePreviewOverlay({
   const accessToken = useAuthStore(s => s.accessToken)
   const me = useAuthStore(s => s.user)
   const current = file
+  // A foreign source (mail attachment…) has no Drive record: no view counter,
+  // no anchored comments — only the document itself.
+  const external = isExternalFile(current)
 
   // ── Document state ─────────────────────────────────────────────────────────
   const [doc,      setDoc]      = useState<PDFDocumentProxy | null>(null)
@@ -631,13 +635,9 @@ export default function FilePreviewOverlay({
     const load = async () => {
       try {
         // Record a view (best-effort) for access stats and the "frequent" list.
-        void api.post(`/drive/${current.id}/view`).catch(() => {})
+        if (!external) void api.post(`/drive/${current.id}/view`).catch(() => {})
         const pdfjs = await loadPdfjs()
-        const resp = await fetch(filesApi.downloadUrl(current.id), {
-          headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
-        })
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
-        const buf = await resp.arrayBuffer()
+        const buf = await (await fetchFileResponse(current)).arrayBuffer()
         if (cancelled) return
         const task = pdfjs.getDocument({ data: buf })
         loadingTaskRef.current = task
@@ -889,6 +889,7 @@ export default function FilePreviewOverlay({
   const { data: commentsData } = useQuery({
     queryKey: ['pdf-comments', current.id],
     queryFn:  () => api.get<{ comments: PdfComment[] }>(`/drive/${current.id}/comments`).then(r => r.data.comments),
+    enabled:  !external,
   })
   const comments = useMemo(() => (commentsData ?? []).filter(c => !c.resolved), [commentsData])
   const commentsByPage = useMemo(() => {
@@ -993,11 +994,13 @@ export default function FilePreviewOverlay({
     { type: 'action', label: t('preview.copy', { defaultValue: 'Copier' }), onClick: () => {
         void copyToClipboardText(selMenu.text); window.getSelection()?.removeAllRanges(); setSelMenu(null)
       } },
-    { type: 'action', label: t('preview.add_comment', { defaultValue: 'Ajouter un commentaire' }), onClick: () => {
-        setDraft({ rect: selMenu.rect, anchor: selMenu.anchor }); setOpenComment(null)
-        window.getSelection()?.removeAllRanges(); setSelMenu(null)
-      } },
-  ] : [], [selMenu, t, copyToClipboardText])
+    ...(external ? [] : [
+      { type: 'action', label: t('preview.add_comment', { defaultValue: 'Ajouter un commentaire' }), onClick: () => {
+          setDraft({ rect: selMenu.rect, anchor: selMenu.anchor }); setOpenComment(null)
+          window.getSelection()?.removeAllRanges(); setSelMenu(null)
+        } } as MenuItem,
+    ]),
+  ] : [], [selMenu, t, copyToClipboardText, external])
 
   // Resolves a link's internal destination to a page and scrolls there.
   const onLinkDest = useCallback(async (dest: unknown) => {
@@ -1053,8 +1056,8 @@ export default function FilePreviewOverlay({
   }, [doc])
 
   const handleDownload = useCallback(() => {
-    window.open(filesApi.downloadUrl(current.id), '_blank', 'noreferrer')
-  }, [current.id])
+    window.open(fileSourceUrl(current), '_blank', 'noreferrer')
+  }, [current])
 
   // ── Shell extensions ───────────────────────────────────────────────────────
 
@@ -1066,19 +1069,23 @@ export default function FilePreviewOverlay({
         { type: 'action', label: t('preview.view_outline_item', { defaultValue: 'Plan' }), checked: showThumbs && railMode === 'outline', disabled: outline.length === 0, onClick: () => { setShowThumbs(true); setRailMode('outline') } },
       ],
     },
-    { type: 'separator' },
-    {
-      type: 'submenu', label: t('preview.comments', { defaultValue: 'Commentaires' }), icon: <MessageSquare size={14} />,
-      items: [
-        { type: 'action', label: t('preview.comments_hide', { defaultValue: 'Masquer les commentaires' }), checked: !showComments, onClick: () => setShowComments(false) },
-        { type: 'action', label: t('preview.comments_show', { defaultValue: 'Afficher les commentaires' }), checked: showComments, onClick: () => setShowComments(true) },
-      ],
-    },
+    // Comments are stored against a Drive file — nothing to show for an
+    // external source.
+    ...(external ? [] : [
+      { type: 'separator' } as MenuItem,
+      {
+        type: 'submenu', label: t('preview.comments', { defaultValue: 'Commentaires' }), icon: <MessageSquare size={14} />,
+        items: [
+          { type: 'action', label: t('preview.comments_hide', { defaultValue: 'Masquer les commentaires' }), checked: !showComments, onClick: () => setShowComments(false) },
+          { type: 'action', label: t('preview.comments_show', { defaultValue: 'Afficher les commentaires' }), checked: showComments, onClick: () => setShowComments(true) },
+        ],
+      } as MenuItem,
+    ]),
     { type: 'separator' },
     { type: 'submenu', label: t('preview.zoom', { defaultValue: 'Zoomer' }), icon: <Search size={14} />, items: zoomMenuItems },
-  ], [t, showThumbs, railMode, outline.length, showComments, zoomMenuItems])
+  ], [t, showThumbs, railMode, outline.length, showComments, zoomMenuItems, external])
 
-  const insertMenu = useMemo(() => [{
+  const insertMenu = useMemo(() => external ? [] : [{
     id: 'insert',
     label: t('preview.menu_insert', { defaultValue: 'Insertion' }),
     items: [
@@ -1088,7 +1095,7 @@ export default function FilePreviewOverlay({
         onClick: () => { setCommentMode(true); setOpenComment(null); setDraft(null) },
       } as MenuItem,
     ],
-  }], [t])
+  }], [t, external])
 
   const toolsMenu = useMemo<MenuItem[]>(() => [
     { type: 'action', label: t('preview.search', { defaultValue: 'Rechercher' }), shortcut: 'Ctrl+F', icon: <Search size={14} />, onClick: openSearch },
@@ -1187,20 +1194,24 @@ export default function FilePreviewOverlay({
         <Search size={15} />
       </button>
 
-      <div className="w-px h-4 bg-white/20 mx-2" />
+      {!external && (
+        <>
+          <div className="w-px h-4 bg-white/20 mx-2" />
 
-      <button
-        onClick={() => (commentMode ? exitCommentMode() : (setCommentMode(true), setOpenComment(null)))}
-        className={`flex items-center gap-1.5 pl-2 pr-3 py-1 rounded-full transition-colors ${commentMode ? 'bg-white/20 text-white' : 'hover:bg-white/15'}`}
-      >
-        <MessageSquarePlus size={15} />
-        <span className="text-xs">{t('preview.comment', { defaultValue: 'Commenter' })}</span>
-        {comments.length > 0 && (
-          <span className="ml-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-white/25 text-[11px] leading-[18px] text-center">
-            {comments.length}
-          </span>
-        )}
-      </button>
+          <button
+            onClick={() => (commentMode ? exitCommentMode() : (setCommentMode(true), setOpenComment(null)))}
+            className={`flex items-center gap-1.5 pl-2 pr-3 py-1 rounded-full transition-colors ${commentMode ? 'bg-white/20 text-white' : 'hover:bg-white/15'}`}
+          >
+            <MessageSquarePlus size={15} />
+            <span className="text-xs">{t('preview.comment', { defaultValue: 'Commenter' })}</span>
+            {comments.length > 0 && (
+              <span className="ml-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-white/25 text-[11px] leading-[18px] text-center">
+                {comments.length}
+              </span>
+            )}
+          </button>
+        </>
+      )}
     </>
   ) : null
 

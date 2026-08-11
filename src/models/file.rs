@@ -22,6 +22,18 @@ pub struct File {
     pub versioning_enabled: bool,
     pub created_at:         DateTime<Utc>,
     pub updated_at:         DateTime<Utc>,
+
+    /// Number of revisions kept for this file, the current content excluded.
+    ///
+    /// Only the listing and the file detail compute it (see
+    /// [`crate::services::files::VERSION_STATS_JOIN`]); every other query
+    /// selecting a `File` leaves it at zero rather than paying for a join it
+    /// has no use for.
+    #[sqlx(default)]
+    pub version_count: i64,
+    /// Total bytes held by those revisions. Same origin as `version_count`.
+    #[sqlx(default)]
+    pub version_bytes: i64,
 }
 
 #[derive(Debug, Deserialize)]

@@ -5,6 +5,7 @@
  */
 import { createElement, lazy } from 'react'
 import { Home, Star, Users, Folder, HardDrive } from 'lucide-react'
+import DriveMiniPanel from './DriveMiniPanel'
 import {
   RouteRegistry,
   SlotRegistry,
@@ -18,6 +19,7 @@ import {
   useToolbarStore,
   useSearchStore,
   i18n,
+  useRightPanelStore,
   SDK_VERSION,
   ImageSourceRegistry,
 } from '@kubuno/sdk'
@@ -25,6 +27,7 @@ import { useFilesStore, useFilesDialogStore, filesApi } from '@kubuno/drive'
 import './index.css'
 import './i18n'
 import DriveLogo from './DriveLogo'
+import { openPreview, canPreview } from './previewService'
 import FilesNewActions from './FilesNewActions'
 import FilesTreeSidebar from './FilesTreeSidebar'
 import FilesPaintEditor from './FilesPaintEditor'
@@ -146,6 +149,15 @@ export function register() {
     FilterPanel: FilesFilterPanel,
   })
 
+  // Side panel: recents and starred, to grab a file from another module.
+  useRightPanelStore.getState().registerEntry({
+    moduleId:       'drive',
+    icon:           DriveLogo,
+    label:          'Drive',
+    panelComponent: DriveMiniPanel,
+    openPath:       '/drive',
+  })
+
   // Routes
   const FilesApp          = lazy(() => import('./DriveApp'))
   const DriveSettingsPage = lazy(() => import('./DriveSettingsPage'))
@@ -182,6 +194,19 @@ export function register() {
     openFilePicker:     (opts?: object) => useFilesDialogStore.getState().openFile(opts),
     pickFolder:         (opts?: object) => useFilesDialogStore.getState().pickFolder(opts),
     thumbnailUrl:       (id: string) => filesApi.thumbnailUrl(id),
+
+    // Viewer offered to other modules: preview any URL (mail attachments,
+    // chat files…) with Drive's own renderers. `canPreview` lets the caller
+    // fall back to a download without opening an empty overlay.
+    // Two shapes: a single source, or `{ items, index }` for a whole set (all
+    // the attachments of one e-mail) — the previewer then offers the same
+    // « n / N ‹ › » navigation as Drive, viewer switching included.
+    openPreview: (
+      source: { url: string; name: string; mime?: string }
+            | { items: Array<{ url: string; name: string; mime?: string }>; index?: number },
+    ) => openPreview(source),
+    canPreview:  (mime?: string, name?: string) => canPreview(mime, name),
+
     downloadUrl:        (id: string) => filesApi.downloadUrl(id),
 
     listFolders:  (parentId?: string | null) => filesApi.listFolders(parentId),

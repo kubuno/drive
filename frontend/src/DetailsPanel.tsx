@@ -2,13 +2,15 @@
 // general info, access statistics, image EXIF metadata, and an editable
 // user description. All data is fetched best-effort; failures stay silent.
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { api, useAuthStore } from '@kubuno/sdk'
-import { formatSize } from '@kubuno/drive'
+import { formatSize, VersionHistoryModal, type FileItem } from '@kubuno/drive'
 import { Button } from '@ui'
-import { X, Eye, Download, Calendar, Camera, MapPin, Image, Tag, Save } from 'lucide-react'
+import { X, Eye, Download, Calendar, Camera, MapPin, Image, Tag, Save, History } from 'lucide-react'
 import { TagDots } from './TagUI'
+import { hasReclaimableHistory, versionBytes, versionCount, type FileVersionStats } from './fileVersions'
 
-interface DetailFile {
+interface DetailFile extends FileVersionStats {
   id:            string
   name:          string
   mime_type:     string
@@ -78,7 +80,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 export default function DetailsPanel({ file, onClose, onEditTags }: Props) {
+  const { t } = useTranslation('drive')
   const [thumb, setThumb]   = useState<string>('')
+  const [historyFile, setHistoryFile] = useState<FileItem | null>(null)
   const [access, setAccess] = useState<AccessStats | null>(null)
   const [accessLoaded, setAccessLoaded] = useState(false)
   const [meta, setMeta]     = useState<MetaExtra | null>(null)
@@ -154,6 +158,17 @@ export default function DetailsPanel({ file, onClose, onEditTags }: Props) {
 
   if (!file) return null
 
+  // The panel only holds a projection of the file; the history modal wants the
+  // full resource, so it is fetched on demand rather than kept in sync here.
+  const openHistory = async () => {
+    try {
+      const { data } = await api.get<{ file: FileItem }>(`/drive/${file.id}`)
+      setHistoryFile(data.file)
+    } catch {
+      // Best-effort, like every other fetch in this panel.
+    }
+  }
+
   const saveDescription = async () => {
     setSaving(true)
     setSaved(false)
@@ -173,6 +188,7 @@ export default function DetailsPanel({ file, onClose, onEditTags }: Props) {
   const exifRows = EXIF_LABELS.filter(([key]) => typeof meta?.exif[key] === 'string')
 
   return (
+    <>
     <aside className="fixed top-0 right-0 h-full w-80 bg-white border-l border-border shadow-xl z-40 flex flex-col">
       {/* Sticky header */}
       <div className="sticky top-0 flex items-center justify-between px-4 py-3 border-b border-border bg-white">
@@ -229,6 +245,27 @@ export default function DetailsPanel({ file, onClose, onEditTags }: Props) {
             label="Modifié le"
             value={new Date(file.updated_at).toLocaleString('fr-FR')}
           />
+          {/* Kept revisions are billed to the quota, so the panel states what
+            * they weigh and opens the history that lets the user reclaim it.
+            * Most files have none and gain no extra row at all. */}
+          {hasReclaimableHistory(file) && (
+            <button
+              type="button"
+              onClick={() => void openHistory()}
+              title={t('version.open_history')}
+              className="flex items-center gap-2 w-full -mx-1.5 px-1.5 py-1 rounded-lg text-sm text-left
+                         hover:bg-surface-2 transition-colors cursor-pointer"
+            >
+              <History size={14} className="text-text-tertiary shrink-0" />
+              <span className="text-text-tertiary">{t('version.title')}</span>
+              <span className="text-text-primary ml-auto text-right">
+                {t('version.stats', {
+                  count: versionCount(file),
+                  size:  formatSize(versionBytes(file)),
+                })}
+              </span>
+            </button>
+          )}
         </Section>
 
         {/* 5. Access statistics */}
@@ -296,5 +333,7 @@ export default function DetailsPanel({ file, onClose, onEditTags }: Props) {
         </Section>
       </div>
     </aside>
+    <VersionHistoryModal file={historyFile} onClose={() => setHistoryFile(null)} />
+    </>
   )
 }

@@ -122,7 +122,6 @@ pub async fn compress_save(
     };
     let mime = if targz { "application/gzip" } else { "application/zip" };
     let archive_bytes = bytes::Bytes::from(bytes);
-    let size = archive_bytes.len() as i64;
 
     let file = files::create_with_bytes(
         &state.db,
@@ -136,7 +135,9 @@ pub async fn compress_save(
         false,
     ).await?;
 
-    files::update_used_bytes(&state.db, user.id, size).await;
+    // No `update_used_bytes` here: `create_with_bytes` writes the row through
+    // `insert_or_update_record`, which already charged the archive's size.
+    // Adding it again billed every archive twice.
 
     Ok(Json(json!({ "file": file })))
 }
@@ -246,7 +247,6 @@ pub async fn decompress(
                 dest_folder_id
             };
 
-            let size = item.data.len() as i64;
             let mime = mime_guess::from_path(file_name).first_or_octet_stream().to_string();
 
             if files::create_with_bytes(
@@ -260,7 +260,9 @@ pub async fn decompress(
                 None,
                 false,
             ).await.is_ok() {
-                files::update_used_bytes(&state.db, user.id, size).await;
+                // No `update_used_bytes` here: `create_with_bytes` already
+                // charged this entry's size. Extracting an archive of a thousand
+                // files billed it twice, a thousand times over.
                 extracted += 1;
             }
         }

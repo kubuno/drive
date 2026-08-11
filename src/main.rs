@@ -4,7 +4,7 @@ use uuid::Uuid;
 use kubuno_drive::{
     config::Settings,
     router,
-    services::{indexer, maintenance, watcher},
+    services::{indexer, maintenance, usage, watcher},
     state::AppState,
 };
 use reqwest::Client;
@@ -485,6 +485,16 @@ async fn main() -> Result<()> {
         let state_trash = state.clone();
         tokio::spawn(async move {
             maintenance::run_trash_cleaner(state_trash).await;
+        });
+    }
+
+    // Rapporteur de consommation — déclare au core ce que drive occupe, par
+    // compte. Synchronisation complète au démarrage puis toutes les 6 h, et
+    // déclaration incrémentale quelques secondes après chaque écriture.
+    {
+        let state_usage = state.clone();
+        tokio::spawn(async move {
+            usage::run_reporter(state_usage).await;
         });
     }
 

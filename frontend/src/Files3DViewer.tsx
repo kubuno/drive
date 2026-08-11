@@ -9,8 +9,7 @@ import * as THREE from 'three'
 import { X, Download, Box, Loader2, AlertTriangle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { FileItem } from '@kubuno/drive'
-import { filesApi } from '@kubuno/drive'
-import { api } from '@kubuno/sdk'
+import { fetchFileBuffer, fileSourceUrl } from './externalPreview'
 // ── Supported formats ─────────────────────────────────────────────────────────
 
 const MODEL_EXTENSIONS = ['glb', 'gltf', 'obj', 'stl', 'ply']
@@ -34,11 +33,12 @@ function getFormat(file: FileItem): 'glb' | 'gltf' | 'obj' | 'stl' | 'ply' | nul
 }
 
 // ── Authenticated data fetch ──────────────────────────────────────────────────
-// Downloads the file as ArrayBuffer via Axios (with Bearer token).
-// Three.js loaders then parse the buffer directly — no internal XHR needed,
-// which avoids any CSP connect-src restrictions on blob: URLs.
+// Downloads the file as ArrayBuffer (Bearer token injected; an external source
+// is fetched from its own URL). Three.js loaders then parse the buffer directly
+// — no internal XHR needed, which avoids any CSP connect-src restrictions on
+// blob: URLs.
 
-function useFileData(fileId: string) {
+function useFileData(file: FileItem) {
   const [data,    setData]    = useState<ArrayBuffer | null>(null)
   const [loading, setLoading] = useState(true)
   const [error,   setError]   = useState<string | null>(null)
@@ -49,9 +49,9 @@ function useFileData(fileId: string) {
     setError(null)
     setData(null)
 
-    api.get(`/drive/${fileId}/download`, { responseType: 'arraybuffer' })
-      .then(r => {
-        if (!cancelled) setData(r.data as ArrayBuffer)
+    fetchFileBuffer(file)
+      .then(buf => {
+        if (!cancelled) setData(buf)
       })
       .catch(() => {
         if (!cancelled) setError('Impossible de charger le fichier 3D.')
@@ -59,7 +59,8 @@ function useFileData(fileId: string) {
       .finally(() => { if (!cancelled) setLoading(false) })
 
     return () => { cancelled = true }
-  }, [fileId])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [file.id])
 
   return { data, loading, error }
 }
@@ -279,7 +280,7 @@ export default function Files3DViewer({ file, onClose }: { file: FileItem; onClo
   const [modelError, setModelError] = useState(false)
   const format = getFormat(file)
   const ext    = file.name.split('.').pop()?.toUpperCase() ?? '3D'
-  const { data, loading, error } = useFileData(file.id)
+  const { data, loading, error } = useFileData(file)
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -307,7 +308,7 @@ export default function Files3DViewer({ file, onClose }: { file: FileItem; onClo
             Auto-rotation
           </button>
           <a
-            href={filesApi.downloadUrl(file.id)}
+            href={fileSourceUrl(file)}
             download={file.name}
             className="p-2 rounded text-white/60 hover:text-white hover:bg-white/10 transition-colors"
             title={t('common.download')}

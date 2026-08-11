@@ -13,11 +13,16 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { filesApi, formatSize, FilesOpenWithContext, type FileItem } from '@kubuno/drive'
 import { api, useAuthStore, SlotRegistry, useModulesStore } from '@kubuno/sdk'
 import { MenuDropdown, type MenuItem } from '@ui'
+import { fileInlineUrl, fileSourceUrl, isExternalFile } from './externalPreview'
+import { useExternalPreviewActions } from './previewActions'
 import {
   X, Download, Printer, ChevronLeft, ChevronRight, ChevronDown, FileText,
   Share2, FolderInput, Pencil, Star, Tags, Info, PanelLeft, AppWindow, Link2,
-  List, ExternalLink, Bell, Search,
+  List, ExternalLink, Bell, Search, HardDriveDownload, Loader2, CheckCircle2, AlertCircle,
 } from 'lucide-react'
+import {
+  hasReclaimableHistory, versionBytes, versionCount, type FileVersionStats,
+} from './fileVersions'
 
 // ── Public types ─────────────────────────────────────────────────────────────
 
@@ -284,7 +289,22 @@ function PreviewDetailsPanel({ file, onClose, onManageAccess }: {
       <h3 className="text-white/90 text-xs font-medium mb-3">{t('preview.details_file', { defaultValue: 'Détails du fichier' })}</h3>
       <DetailRow label={t('preview.details_type', { defaultValue: 'Type' })}>{ext}</DetailRow>
       <DetailRow label={t('preview.details_size', { defaultValue: 'Taille' })}>{formatSize(file.size_bytes)}</DetailRow>
-      <DetailRow label={t('preview.details_storage', { defaultValue: 'Espace de stockage utilisé' })}>{formatSize(file.size_bytes)}</DetailRow>
+      {/* "Storage used" has to mean storage used. Revisions are charged to the
+          account's quota, so a file that keeps a history occupies more than its
+          own size, and showing only `size_bytes` here would understate the very
+          number the account is billed on — and hide the one thing it can free. */}
+      <DetailRow label={t('preview.details_storage', { defaultValue: 'Espace de stockage utilisé' })}>
+        {formatSize(file.size_bytes + versionBytes(file as FileItem & FileVersionStats))}
+      </DetailRow>
+      {hasReclaimableHistory(file as FileItem & FileVersionStats) && (
+        <DetailRow label={t('version.stats_label', { defaultValue: 'Historique des versions' })}>
+          {t('version.stats', {
+            defaultValue: '{{count}} version(s) · {{size}}',
+            count: versionCount(file as FileItem & FileVersionStats),
+            size:  formatSize(versionBytes(file as FileItem & FileVersionStats)),
+          })}
+        </DetailRow>
+      )}
       <DetailRow label={t('preview.details_location', { defaultValue: 'Emplacement' })}>
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 text-white/90">
           <FolderInput size={13} className="opacity-70" />
@@ -442,6 +462,17 @@ export default function FilePreviewShell({
   const qc = useQueryClient()
 
   const current = file
+  // External source (a mail attachment, a chat file…): the bytes are ours to
+  // display, but nothing else is — every Drive-owned action is hidden below.
+  const external = isExternalFile(current)
+  // Present only when the shell runs inside the external-preview host: it can
+  // import the source into Drive, after which `external` turns false and the
+  // whole Drive chrome comes back with no further branching.
+  const extActions   = useExternalPreviewActions()
+  const canSave      = external && !!extActions
+  const saveState    = extActions?.saveState ?? 'idle'
+  const saveToDrive  = extActions?.saveToDrive
+  const saveLabel    = t('preview.save_to_drive', { defaultValue: 'Enregistrer dans Drive' })
   const list = useMemo(
     () => (files.some(f => f.id === file.id) ? files : [file]),
     [files, file],
@@ -460,14 +491,15 @@ export default function FilePreviewShell({
 
   // ── Actions ────────────────────────────────────────────────────────────────
   const handleDownload = useCallback(() => {
-    window.open(filesApi.downloadUrl(current.id), '_blank', 'noreferrer')
-  }, [current.id])
+    window.open(fileSourceUrl(current), '_blank', 'noreferrer')
+  }, [current])
 
   const handleStar = useCallback(() => {
+    if (external) return
     void filesApi.starFile(current.id)
       .then(() => qc.invalidateQueries({ queryKey: ['files'] }))
       .catch(() => {})
-  }, [current.id, qc])
+  }, [current.id, qc, external])
 
   // Public share link: reuse an existing tokenized share, else create one.
   const [linkCopied, setLinkCopied] = useState(false)
@@ -571,37 +603,52 @@ export default function FilePreviewShell({
           icon: <ExternalLink size={14} />,
           // `inline=1`: the backend serves Content-Disposition inline so the
           // browser DISPLAYS the file instead of saving it.
-          onClick: () => window.open(`${filesApi.downloadUrl(current.id)}?inline=1`, '_blank', 'noreferrer'),
+          onClick: () => window.open(fileInlineUrl(current), '_blank', 'noreferrer'),
         },
         ...(openWith.length > 0 ? [{ type: 'separator' } as MenuItem, ...openWith] : []),
       ],
     },
     { type: 'separator' },
-    {
-      type: 'submenu', label: t('preview.share', { defaultValue: 'Partager' }), icon: <Share2 size={14} />,
-      items: [
-        { type: 'action', label: t('preview.share', { defaultValue: 'Partager' }), icon: <Share2 size={14} />, onClick: () => onShare(current) },
-        ...shareMoreItems,
-      ],
-    },
+    // Sharing, renaming, moving, starring and labels only make sense for files
+    // Drive owns — an external source has none of that.
+    ...(external ? [] : [
+      {
+        type: 'submenu', label: t('preview.share', { defaultValue: 'Partager' }), icon: <Share2 size={14} />,
+        items: [
+          { type: 'action', label: t('preview.share', { defaultValue: 'Partager' }), icon: <Share2 size={14} />, onClick: () => onShare(current) },
+          ...shareMoreItems,
+        ],
+      } as MenuItem,
+    ]),
     { type: 'action', label: t('common.download'), shortcut: 'Ctrl+D',           icon: <Download size={14} />,    onClick: handleDownload },
-    { type: 'separator' },
-    { type: 'action', label: t('common.rename'),                                 icon: <Pencil size={14} />,      onClick: () => onRename(current) },
-    { type: 'action', label: t('ctx.move',     { defaultValue: 'Déplacer' }),    icon: <FolderInput size={14} />, onClick: () => onMove(current) },
-    {
-      type: 'action', icon: <Star size={14} />, onClick: handleStar,
-      label: current.is_starred
-        ? t('ctx.unstar', { defaultValue: 'Retirer des suivis' })
-        : t('ctx.star',   { defaultValue: 'Ajouter aux suivis' }),
-    },
-    { type: 'action', label: t('preview.labels', { defaultValue: 'Étiquettes…' }), icon: <Tags size={14} />, onClick: () => onEditTags(current) },
-    { type: 'separator' },
-    { type: 'action', label: t('preview.details', { defaultValue: 'Détails' }), shortcut: 'D', icon: <Info size={14} />, onClick: () => setShowDetails(v => !v) },
+    // External source: importing it into Drive is the ONLY Drive-side action
+    // that makes sense — everything else needs a file Drive already owns.
+    ...(canSave ? [
+      {
+        type: 'action', icon: <HardDriveDownload size={14} />, disabled: saveState === 'saving',
+        label: saveLabel, onClick: () => saveToDrive?.(),
+      } as MenuItem,
+    ] : []),
+    ...(external ? [] : [
+      { type: 'separator' } as MenuItem,
+      { type: 'action', label: t('common.rename'),                              icon: <Pencil size={14} />,      onClick: () => onRename(current) } as MenuItem,
+      { type: 'action', label: t('ctx.move',    { defaultValue: 'Déplacer' }),   icon: <FolderInput size={14} />, onClick: () => onMove(current) } as MenuItem,
+      {
+        type: 'action', icon: <Star size={14} />, onClick: handleStar,
+        label: current.is_starred
+          ? t('ctx.unstar', { defaultValue: 'Retirer des suivis' })
+          : t('ctx.star',   { defaultValue: 'Ajouter aux suivis' }),
+      } as MenuItem,
+      { type: 'action', label: t('preview.labels', { defaultValue: 'Étiquettes…' }), icon: <Tags size={14} />, onClick: () => onEditTags(current) } as MenuItem,
+      { type: 'separator' } as MenuItem,
+      { type: 'action', label: t('preview.details', { defaultValue: 'Détails' }), shortcut: 'D', icon: <Info size={14} />, onClick: () => setShowDetails(v => !v) } as MenuItem,
+    ]),
     ...(ext.onPrint ? [
       { type: 'separator' } as MenuItem,
       { type: 'action', label: t('preview.print', { defaultValue: 'Imprimer' }), shortcut: 'Ctrl+P', icon: <Printer size={14} />, onClick: () => { void ext.onPrint!() } } as MenuItem,
     ] : []),
-  ], [t, openWith, current, onShare, onRename, onMove, onEditTags, handleDownload, handleStar, shareMoreItems, ext.onPrint])
+  ], [t, openWith, current, onShare, onRename, onMove, onEditTags, handleDownload, handleStar,
+      shareMoreItems, ext.onPrint, external, canSave, saveLabel, saveState, saveToDrive])
 
   const toolsMenuItems = useMemo<MenuItem[]>(() => [
     ...(ext.toolsMenu?.length ? [...ext.toolsMenu, { type: 'separator' } as MenuItem] : []),
@@ -638,13 +685,15 @@ export default function FilePreviewShell({
       title: t('preview.sc_actions', { defaultValue: 'Actions' }),
       rows: [
         { label: t('preview.sc_download', { defaultValue: 'Télécharger l’élément' }),             keys: ['Ctrl', 'D'] },
-        { label: t('preview.sc_star',     { defaultValue: 'Activer/Désactiver le suivi' }),       keys: ['S'] },
-        { label: t('preview.sc_details',  { defaultValue: 'Afficher/Masquer le volet Détails' }), keys: ['D'] },
+        ...(external ? [] : [
+          { label: t('preview.sc_star',    { defaultValue: 'Activer/Désactiver le suivi' }),       keys: ['S'] },
+          { label: t('preview.sc_details', { defaultValue: 'Afficher/Masquer le volet Détails' }), keys: ['D'] },
+        ]),
         { label: t('preview.shortcuts',   { defaultValue: 'Raccourcis clavier' }),                keys: ['Ctrl', '/'] },
       ],
     },
     ...(ext.shortcutSections ?? []),
-  ], [t, ext.shortcutSections])
+  ], [t, ext.shortcutSections, external])
 
   // ── Keyboard ───────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -662,7 +711,7 @@ export default function FilePreviewShell({
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p' && ext.onPrint) { e.preventDefault(); void ext.onPrint(); return }
       if ((e.ctrlKey || e.metaKey) && e.key === '/') { e.preventDefault(); setShortcutsOpen(true); return }
       if (typing) return
-      if (e.key === 'd' || e.key === 'D') { setShowDetails(v => !v); return }
+      if (!external && (e.key === 'd' || e.key === 'D')) { setShowDetails(v => !v); return }
       if (e.key === 's' || e.key === 'S') { handleStar(); return }
       if (e.key === 'ArrowLeft')  prevFile()
       if (e.key === 'ArrowRight') nextFile()
@@ -670,7 +719,7 @@ export default function FilePreviewShell({
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [menuOpen, onClose, handleDownload, handleStar, prevFile, nextFile, ext.onKey, ext.onPrint])
+  }, [menuOpen, onClose, handleDownload, handleStar, prevFile, nextFile, ext.onKey, ext.onPrint, external])
 
   const shellApi = useMemo<PreviewShellApi>(() => ({
     requestClose: () => {
@@ -715,13 +764,15 @@ export default function FilePreviewShell({
           <div className="min-w-0">
             <div className="flex items-center gap-2 min-w-0">
               <span className="text-white text-[15px] truncate max-w-[42vw]">{current.name}</span>
-              <button
-                onClick={() => onMove(current)}
-                title={t('ctx.move', { defaultValue: 'Déplacer' })}
-                className="p-1 rounded hover:bg-white/10 text-white/60 hover:text-white transition-colors shrink-0"
-              >
-                <FolderInput size={15} />
-              </button>
+              {!external && (
+                <button
+                  onClick={() => onMove(current)}
+                  title={t('ctx.move', { defaultValue: 'Déplacer' })}
+                  className="p-1 rounded hover:bg-white/10 text-white/60 hover:text-white transition-colors shrink-0"
+                >
+                  <FolderInput size={15} />
+                </button>
+              )}
             </div>
             <div className="flex items-center gap-0.5 mt-0.5 -ml-1">
               <button className={menuBtnCls('file')} onClick={openMenu('file')} onMouseEnter={switchMenu('file')}>
@@ -757,21 +808,45 @@ export default function FilePreviewShell({
               <ChevronDown size={14} className="text-white/70" />
             </button>
           )}
-          <div className="flex items-stretch rounded-full overflow-hidden">
+          {canSave && (
+            // Gmail-style: import first, THEN the Drive actions become legitimate.
             <button
-              onClick={() => onShare(current)}
-              className="flex items-center gap-1.5 pl-3.5 pr-2.5 py-2 text-xs bg-blue-600 hover:bg-blue-500 text-white transition-colors"
+              onClick={() => saveToDrive?.()}
+              disabled={saveState === 'saving'}
+              className="flex items-center gap-1.5 px-3.5 py-2 text-xs bg-white/10 hover:bg-white/20 disabled:opacity-60 text-white rounded-full transition-colors"
             >
-              <Share2 size={14} />
-              {t('preview.share', { defaultValue: 'Partager' })}
+              {saveState === 'saving'
+                ? <Loader2 size={14} className="animate-spin" />
+                : <HardDriveDownload size={14} />}
+              {saveLabel}
             </button>
+          )}
+          {external ? (
+            // No Drive sharing for a foreign source — offer the download instead.
             <button
-              onClick={openMenu('sharemore')}
-              className="flex items-center px-1.5 bg-blue-600 hover:bg-blue-500 text-white border-l border-blue-400/40 transition-colors"
+              onClick={handleDownload}
+              className="flex items-center gap-1.5 px-3.5 py-2 text-xs bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors"
             >
-              <ChevronDown size={14} />
+              <Download size={14} />
+              {t('common.download')}
             </button>
-          </div>
+          ) : (
+            <div className="flex items-stretch rounded-full overflow-hidden">
+              <button
+                onClick={() => onShare(current)}
+                className="flex items-center gap-1.5 pl-3.5 pr-2.5 py-2 text-xs bg-blue-600 hover:bg-blue-500 text-white transition-colors"
+              >
+                <Share2 size={14} />
+                {t('preview.share', { defaultValue: 'Partager' })}
+              </button>
+              <button
+                onClick={openMenu('sharemore')}
+                className="flex items-center px-1.5 bg-blue-600 hover:bg-blue-500 text-white border-l border-blue-400/40 transition-colors"
+              >
+                <ChevronDown size={14} />
+              </button>
+            </div>
+          )}
           {list.length > 1 && (
             <>
               <div className="w-px h-6 bg-white/15 mx-1" />
@@ -847,10 +922,24 @@ export default function FilePreviewShell({
         </button>
       )}
 
-      {/* Footer hint: size (subtle, just above the toggle) */}
-      <div className="absolute bottom-14 left-3 text-white/35 text-[11px] pointer-events-none">
-        {formatSize(current.size_bytes)}
-      </div>
+      {/* Footer hint: size (subtle, just above the toggle). Unknown for an
+          external source, which carries no Drive metadata. */}
+      {!external && (
+        <div className="absolute bottom-14 left-3 text-white/35 text-[11px] pointer-events-none">
+          {formatSize(current.size_bytes)}
+        </div>
+      )}
+
+      {/* « Enregistrer dans Drive » status. Kept outside the `external` branch:
+          on success the file is a REAL Drive file already, and the pill is the
+          only thing left telling the user the import went through. */}
+      {extActions && saveState !== 'idle' && (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 rounded-full bg-neutral-800 border border-white/10 shadow-2xl text-white text-xs">
+          {saveState === 'saving' && <><Loader2 size={14} className="animate-spin text-white/70" />{t('preview.save_to_drive_running', { defaultValue: 'Enregistrement dans Drive…' })}</>}
+          {saveState === 'saved'  && <><CheckCircle2 size={14} className="text-emerald-400" />{t('preview.save_to_drive_done', { defaultValue: 'Enregistré dans Drive' })}</>}
+          {saveState === 'error'  && <><AlertCircle size={14} className="text-red-400" />{t('preview.save_to_drive_failed', { defaultValue: 'Échec de l’enregistrement' })}</>}
+        </div>
+      )}
 
       {/* Viewer-owned overlays (banners, cards, local dropdowns…) */}
       {ext.overlays}

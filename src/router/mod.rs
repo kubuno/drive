@@ -67,7 +67,10 @@ pub fn build(state: AppState) -> Router {
         .route("/:id/activity",                 get(activity::file_activity))
         .route("/:id/info-extra",               get(activity::file_info_extra))
         // Versions
-        .route("/:id/versions",                 get(versions::list).post(versions::create))
+        .route("/versions/summary",             get(versions::summary))
+        .route("/:id/versions",                 get(versions::list)
+                                                    .post(versions::create)
+                                                    .delete(versions::purge))
         .route("/:id/versions/:vid/restore",    post(versions::restore))
         .route("/:id/versions/:vid",            delete(versions::delete))
         // Partages

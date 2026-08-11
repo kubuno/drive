@@ -50,6 +50,33 @@ pub async fn delete(
     Ok(Json(json!({ "ok": true })))
 }
 
+/// `DELETE /:id/versions` — drops the whole history, keeps the current file.
+pub async fn purge(
+    State(state): State<AppState>,
+    Extension(user): Extension<FilesUser>,
+    Path(file_id): Path<Uuid>,
+) -> Result<Json<Value>> {
+    let result = versions::purge_versions(&state.db, &state.storage, user.id, file_id).await?;
+    crate::events::notify_change(&state.settings, user.id);
+    Ok(Json(json!({
+        "removed":     result.removed,
+        "freed_bytes": result.freed_bytes,
+    })))
+}
+
+/// `GET /versions/summary` — what the account's histories weigh in total.
+pub async fn summary(
+    State(state): State<AppState>,
+    Extension(user): Extension<FilesUser>,
+) -> Result<Json<Value>> {
+    let s = versions::versions_summary(&state.db, user.id).await?;
+    Ok(Json(json!({
+        "files_with_versions": s.files_with_versions,
+        "total_versions":      s.total_versions,
+        "total_bytes":         s.total_bytes,
+    })))
+}
+
 pub async fn set_file_versioning(
     State(state): State<AppState>,
     Extension(user): Extension<FilesUser>,

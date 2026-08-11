@@ -19,5 +19,7 @@ pub mod sync;
 pub mod tags;
 pub mod thumbnails;
 pub mod uploads;
+// Déclaration de la consommation de ce module au core (provenance du stockage).
+pub mod usage;
 pub mod versions;
 pub mod watcher;

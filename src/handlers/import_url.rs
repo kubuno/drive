@@ -15,7 +15,7 @@ use uuid::Uuid;
 use crate::{
     errors::{FilesError, Result},
     middleware::FilesUser,
-    services::files::{folder_virt_path, insert_or_update_record, resolve_for_write, update_used_bytes},
+    services::files::{folder_virt_path, insert_or_update_record, resolve_for_write},
     state::AppState,
 };
 
@@ -163,7 +163,9 @@ pub async fn import_from_url(
         &safe_name, &mime, size, &dest_str, Some(&hash), None, existing,
     ).await?;
 
-    update_used_bytes(&state.db, user.id, size).await;
+    // No `update_used_bytes` here: `insert_or_update_record` already adjusted the
+    // quota — by the full size on an insert, by the difference on an overwrite.
+    // Adding the size again billed every imported file twice.
 
     tracing::info!(
         url = %url,

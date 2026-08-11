@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Download, Type, ChevronDown } from 'lucide-react'
-import { filesApi, type FileItem } from '@kubuno/drive'
-import { api } from '@kubuno/sdk'
+import { type FileItem } from '@kubuno/drive'
 import { FloatingWindow } from '@ui'
+import { fetchFileBuffer, fileSourceUrl } from './externalPreview'
 
 // ── Font detection ─────────────────────────────────────────────────────────────
 
@@ -62,20 +62,21 @@ export default function FilesFontViewer({ file, onClose }: Props) {
 
   useEffect(() => {
     let cancelled = false
-    // Octets récupérés via axios (token Bearer injecté) puis passés à FontFace en
-    // BufferSource : un FontFace `url()` natif est fetché SANS l'en-tête Authorization
-    // (les interceptors axios ne s'y appliquent pas) → 401, d'où la police qui ne
-    // chargeait plus. Le buffer évite aussi la contrainte CSP font-src.
-    api.get<ArrayBuffer>(`/drive/${file.id}/download`, { responseType: 'arraybuffer' })
-      .then(async resp => {
+    // Bytes fetched with the Bearer token injected, then handed to FontFace as a
+    // BufferSource: a native `url()` FontFace is fetched WITHOUT the
+    // Authorization header → 401, which is why the font stopped loading. The
+    // buffer also sidesteps the font-src CSP directive.
+    fetchFileBuffer(file)
+      .then(async buf => {
         if (cancelled) return
-        const loaded = await new FontFace(fontFamily, resp.data as ArrayBuffer).load()
+        const loaded = await new FontFace(fontFamily, buf).load()
         document.fonts.add(loaded)
         fontRef.current = loaded
         setLoaded(true)
       })
       .catch(() => { if (!cancelled) setError(true) })
     return () => { cancelled = true; if (fontRef.current) document.fonts.delete(fontRef.current) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [file.id, fontFamily])
 
   const ext = file.name.split('.').pop()?.toUpperCase() ?? 'FONT'
@@ -110,7 +111,7 @@ export default function FilesFontViewer({ file, onClose }: Props) {
       </div>
 
       <a
-        href={filesApi.downloadUrl(file.id)}
+        href={fileSourceUrl(file)}
         download={file.name}
         className="p-2 text-text-tertiary hover:text-text-primary rounded-lg hover:bg-surface-1"
         title={t('common.download')}

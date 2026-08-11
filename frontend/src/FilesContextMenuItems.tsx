@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { FolderPlus, Upload, RefreshCw, Plus, ChevronRight, ClipboardPaste, Pencil, Files as FilesIcon, BarChart3 } from 'lucide-react'
 import { useDriveExtras } from './driveExtras'
 import { useLocation } from 'react-router-dom'
@@ -18,23 +19,36 @@ function NewSubmenu() {
   const activeModules = useModulesStore(s => s.activeModules)
   const activeIds     = new Set(activeModules.map(m => m.module_id))
 
-  const [open, setOpen] = useState(false)
+  /* The panel is PORTALLED to <body> and positioned from the trigger's rect, rather
+   * than being `absolute` inside the parent menu. A frosted ancestor establishes a
+   * backdrop root, so a nested `backdrop-filter` has nothing left to sample wherever
+   * the submenu extends past its parent — it rendered translucent but perfectly sharp.
+   * Same reason `MenuDropdown` portals its own cascading submenus. */
+  const [pos, setPos]   = useState<{ top: number; left: number } | null>(null)
+  const open            = pos !== null
   const timeoutRef      = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const triggerRef      = useRef<HTMLButtonElement>(null)
 
   const hasContributors = SlotRegistry.getSlot('files-context-new-actions').some(e => activeIds.has(e.moduleId))
 
+  const SUB_W = 200
   const handleEnter = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current)
-    setOpen(true)
+    const r = triggerRef.current?.getBoundingClientRect()
+    if (!r) return
+    // Cascade right, flipping left when the viewport would clip it.
+    const flip = r.right + SUB_W > window.innerWidth - 8 && r.left - SUB_W > 8
+    setPos({ top: r.top - 5, left: flip ? r.left - SUB_W : r.right })
   }
   const handleLeave = () => {
-    timeoutRef.current = setTimeout(() => setOpen(false), 120)
+    timeoutRef.current = setTimeout(() => setPos(null), 120)
   }
 
   return (
     <div className="relative" onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
       {/* Trigger */}
       <button
+        ref={triggerRef}
         className="group flex items-center justify-between w-full px-2.5 py-1.5 text-sm rounded-md
                    text-text-primary hover:bg-primary hover:text-white cursor-pointer"
         onMouseEnter={handleEnter}
@@ -46,14 +60,14 @@ function NewSubmenu() {
         <ChevronRight size={14} className="text-text-tertiary group-hover:text-white" />
       </button>
 
-      {/* Submenu panel */}
-      {open && (
+      {/* Submenu panel — portalled out of the frosted parent, see handleEnter. */}
+      {open && createPortal(
         <div
-          className="kb-frosted absolute left-full top-0 z-[210] min-w-[200px] p-[5px]"
+          className="kb-frosted fixed z-[210] p-[5px]"
+          style={{ top: pos.top, left: pos.left, minWidth: SUB_W }}
           onMouseEnter={handleEnter}
           onMouseLeave={handleLeave}
         >
-          <div className="kb-frost-layer" aria-hidden />
           <ContextMenuItem
             icon={<FolderPlus size={16} />}
             label={t('newfolder.title')}
@@ -65,7 +79,8 @@ function NewSubmenu() {
               <Slot name="files-context-new-actions" />
             </>
           )}
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   )

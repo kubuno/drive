@@ -7,11 +7,15 @@ import { api } from '@kubuno/sdk'
 import { filesApi, formatSize, type FileItem } from '@kubuno/drive'
 import {
   Image, Film, Music, FileText, Archive, File as FileIcon, Folder as FolderIcon,
-  Loader2, Trash2, ChevronLeft, ChevronRight,
+  Loader2, Trash2, ChevronLeft, ChevronRight, History, Eraser,
 } from 'lucide-react'
 import { Button, Checkbox, Tabs } from '@ui'
 import { useConfirm } from '@kubuno/sdk'
 import { ConfirmDialog } from '@ui'
+import {
+  fetchVersionsSummary, hasReclaimableHistory, purgeFileVersions, versionBytes, versionCount,
+  VERSIONS_SUMMARY_KEY, type FileVersionStats,
+} from './fileVersions'
 
 const PAGE_SIZE = 25
 
@@ -136,7 +140,28 @@ function SelectionBar({ count, onArchive, onDelete, busy }: {
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
-type Tab = 'files' | 'folders'
+type Tab = 'files' | 'folders' | 'versions'
+
+/**
+ * Account-wide version banner. Kept revisions are billed to the quota, so the
+ * page states what they weigh — and hands the user straight to the list where
+ * they can be reclaimed, rather than merely informing.
+ */
+function VersionsBanner({ size, count, onManage }: { size: string; count: number; onManage: () => void }) {
+  const { t } = useTranslation('drive')
+  return (
+    <div className="flex items-center gap-3 px-4 py-3 mb-6 rounded-xl bg-surface-1 border border-border">
+      <History size={18} className="text-text-tertiary shrink-0" />
+      <div className="min-w-0">
+        <p className="text-sm text-text-primary">{t('version.summary_line', { size, count })}</p>
+        <p className="text-xs text-text-tertiary mt-0.5">{t('version.summary_hint')}</p>
+      </div>
+      <Button size="sm" variant="secondary" className="ml-auto shrink-0" onClick={onManage}>
+        {t('version.summary_manage')}
+      </Button>
+    </div>
+  )
+}
 
 export default function FilesStoragePage() {
   const navigate = useNavigate()
@@ -152,16 +177,24 @@ export default function FilesStoragePage() {
   const [selFolders, setSelFolders] = useState<Set<string>>(new Set())
 
   const filesQ = useQuery({
+    // The listing carries the per-file version counters, so the "Versions" tab
+    // reuses it instead of asking the backend a second time.
     queryKey: ['files-by-size'],
-    queryFn:  () => filesApi.listFilesBySize(1000).then(d => d.files),
+    queryFn:  () => filesApi.listFilesBySize(1000).then(d => d.files as Array<FileItem & FileVersionStats>),
   })
   const foldersQ = useQuery({
     queryKey: ['folders-by-size'],
     queryFn:  () => filesApi.listFoldersBySize(1000).then(d => d.folders),
   })
+  const versionsQ = useQuery({
+    queryKey: VERSIONS_SUMMARY_KEY,
+    queryFn:  fetchVersionsSummary,
+  })
 
   const files   = filesQ.data ?? []
   const folders = foldersQ.data ?? []
+  const versionSummary = versionsQ.data
+  const versionedFiles = useMemo(() => files.filter(hasReclaimableHistory), [files])
 
   const usedBytes  = user?.used_bytes  ?? 0
   const quotaBytes = user?.quota_bytes ?? 0
@@ -177,8 +210,37 @@ export default function FilesStoragePage() {
     qc.invalidateQueries({ queryKey: ['folders-by-size'] })
     qc.invalidateQueries({ queryKey: ['files'] })
     qc.invalidateQueries({ queryKey: ['folders'] })
+    qc.invalidateQueries({ queryKey: VERSIONS_SUMMARY_KEY })
     refreshUser()
     setSelFiles(new Set()); setSelFolders(new Set())
+  }
+
+  // Purge one file's history from the storage page. Same contract as the context
+  // menu: the dialog states the number of revisions and the bytes handed back.
+  const purgeVersionsOf = async (file: FileItem & FileVersionStats) => {
+    const ok = await confirm({
+      title:        t('version.purge_title'),
+      message:      t('version.purge_msg', {
+        count: versionCount(file),
+        name:  file.name,
+        size:  formatSize(versionBytes(file)),
+      }),
+      variant:      'danger',
+      confirmLabel: t('version.purge_confirm'),
+    })
+    if (!ok) return
+    try {
+      await purgeFileVersions(file.id)
+      afterMutation()
+    } catch {
+      await confirm({
+        title:        t('version.purge_failed_title'),
+        message:      t('version.purge_failed'),
+        variant:      'warning',
+        hideCancel:   true,
+        confirmLabel: t('common.ok', { defaultValue: 'OK' }),
+      })
+    }
   }
 
   const deleteMut = useMutation({
@@ -257,11 +319,25 @@ export default function FilesStoragePage() {
         </div>
       </div>
 
+      {/* What every version history of the account weighs */}
+      {versionSummary && versionSummary.total_versions > 0 && (
+        <VersionsBanner
+          size={formatSize(versionSummary.total_bytes)}
+          count={versionSummary.files_with_versions}
+          onManage={() => setTab('versions')}
+        />
+      )}
+
       {/* Onglets */}
       <Tabs
         tabs={[
           { id: 'files',   label: `${t('storage.tab_files')} (${files.length})`,     icon: FileIcon },
           { id: 'folders', label: `${t('storage.tab_folders')} (${folders.length})`, icon: FolderIcon },
+          // Kept while the tab is open even once emptied, so purging the last
+          // history does not yank the tab out from under the user.
+          ...(versionedFiles.length > 0 || tab === 'versions'
+            ? [{ id: 'versions' as const, label: `${t('version.tab')} (${versionedFiles.length})`, icon: History }]
+            : []),
         ]}
         value={tab}
         onChange={t => setTab(t as Tab)}
@@ -306,6 +382,38 @@ export default function FilesStoragePage() {
               </>
             )}
           </>
+        ) : tab === 'versions' ? (
+          versionedFiles.length === 0 ? (
+            <p className="text-sm text-text-tertiary text-center py-12">{t('version.none')}</p>
+          ) : (
+            <>
+              <div className="flex items-center gap-3 px-4 py-2 bg-surface-1">
+                <span className="flex-1 text-xs font-medium text-text-tertiary uppercase tracking-wide">{t('storage.col_name')}</span>
+                <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide w-44 text-right">{t('version.col_history')}</span>
+                <span className="w-24" />
+              </div>
+              <div className="divide-y divide-border">
+                {versionedFiles.map(file => {
+                  const cat = categorize(file)
+                  return (
+                    <div key={file.id} className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-surface-1">
+                      <span style={{ color: cat.color }} className="shrink-0">{categoryIcon(cat, 16)}</span>
+                      <span className="flex-1 text-sm text-text-primary truncate" title={file.name}>{file.name}</span>
+                      <span className="text-sm text-text-secondary tabular-nums shrink-0 w-44 text-right">
+                        {t('version.stats', { count: versionCount(file), size: formatSize(versionBytes(file)) })}
+                      </span>
+                      <span className="w-24 flex justify-end shrink-0">
+                        <Button size="sm" variant="danger" icon={<Eraser size={14} />}
+                          onClick={() => void purgeVersionsOf(file)}>
+                          {t('version.purge_confirm')}
+                        </Button>
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            </>
+          )
         ) : (
           <>
             <SelectionBar count={selFolders.size} busy={busy}

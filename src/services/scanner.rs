@@ -138,6 +138,13 @@ pub async fn scan_owner(db: &PgPool, storage_base: &Path, owner_id: Uuid) -> Res
                 .bind(f.id)
                 .execute(db)
                 .await?;
+                // The scanner is a write path like any other: a file that grew
+                // on disk consumes more quota. Skipping this is how the counter
+                // drifted by 1.25 GiB — every out-of-band edit (WebDAV, sync
+                // agent, an administrator's `cp`) landed in `drive.files`
+                // without ever reaching `core.users.used_bytes`. The delta is
+                // signed: a file that shrank gives bytes back.
+                crate::services::files::update_used_bytes(db, owner_id, size - f.size_bytes).await;
                 stats.files_updated += 1;
             }
         } else {
@@ -161,7 +168,7 @@ pub async fn scan_owner(db: &PgPool, storage_base: &Path, owner_id: Uuid) -> Res
                 .and_then(|e| e.to_str())
                 .map(|e| e.to_lowercase());
 
-            sqlx::query(
+            let inserted = sqlx::query(
                 "INSERT INTO drive.files
                     (owner_id, folder_id, name, extension, mime_type, size_bytes, storage_path)
                  VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -177,8 +184,16 @@ pub async fn scan_owner(db: &PgPool, storage_base: &Path, owner_id: Uuid) -> Res
             .execute(db)
             .await?;
 
-            stats.files_added += 1;
-            tracing::info!(owner_id = %owner_id, name = name, "Fichier disque → ajouté en DB");
+            // `ON CONFLICT DO NOTHING` can swallow the insert, so the quota must
+            // follow what the database actually did, not what was attempted:
+            // counting a row that was never written would inflate the account by
+            // the size of a file it does not have — and this loop runs on every
+            // scan, so the error would accumulate.
+            if inserted.rows_affected() > 0 {
+                crate::services::files::update_used_bytes(db, owner_id, size).await;
+                stats.files_added += 1;
+                tracing::info!(owner_id = %owner_id, name = name, "Fichier disque → ajouté en DB");
+            }
         }
     }
 

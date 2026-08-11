@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback, useState } from 'react'
+import { useRef, useEffect, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { createPortal } from 'react-dom'
 import {
@@ -7,7 +7,29 @@ import {
 import { FloatingWindow } from '@ui'
 import { useWindowZStore } from '@ui'
 import { useFilesMediaPlayerStore } from '@kubuno/drive'
-import { filesApi, formatSize } from '@kubuno/drive'
+import { formatSize, type FileItem } from '@kubuno/drive'
+import { fileSourceUrl, isExternalFile } from './externalPreview'
+
+// ── Playback controller ───────────────────────────────────────────────────────
+// The UI below is driven through this shape. Drive passes the shared zustand
+// store (so playback survives navigation and other modules can observe it);
+// an external source passes a LOCAL controller instead — see ExternalAudioPlayer.
+
+interface PlayerController {
+  file:            FileItem | null
+  isMinimized:     boolean
+  isPlaying:       boolean
+  position:        number
+  duration:        number
+  restorePosition: number
+  minimize:        () => void
+  restore:         () => void
+  close:           () => void
+  _clearRestorePosition: () => void
+  _setPlaying:  (v: boolean) => void
+  _setPosition: (v: number) => void
+  _setDuration: (v: number) => void
+}
 // ── Progress bar ──────────────────────────────────────────────────────────────
 
 function ProgressBar({
@@ -71,7 +93,7 @@ function fmt(secs: number): string {
 // ── Inner content (shared between expanded and mini) ──────────────────────────
 // The single <audio> element lives here so it never unmounts while the store has a file.
 
-function AudioPlayerCore() {
+function AudioPlayerCore({ ctl }: { ctl: PlayerController }) {
   const { t } = useTranslation('drive')
   const {
     file, isMinimized,
@@ -79,7 +101,7 @@ function AudioPlayerCore() {
     isPlaying, position, duration,
     restorePosition, _clearRestorePosition,
     _setPlaying, _setPosition, _setDuration,
-  } = useFilesMediaPlayerStore()
+  } = ctl
 
   const audioRef = useRef<HTMLAudioElement>(null)
   const [zIdx]   = useState(() => useWindowZStore.getState().next())
@@ -88,7 +110,7 @@ function AudioPlayerCore() {
   useEffect(() => {
     const el = audioRef.current
     if (!el || !file) return
-    el.src = filesApi.downloadUrl(file.id)
+    el.src = fileSourceUrl(file)
     const pos = restorePosition
     const startPlayback = () => {
       if (pos > 0) {
@@ -229,7 +251,11 @@ function AudioPlayerCore() {
       title={file.name}
       icon={<Music size={15} className="text-green-500" />}
       onClose={close}
-      popout={{ route: `/drive/player?file=${file.id}`, label: file.name, width: 380, height: 640 }}
+      // Popping out replays the file from its Drive id — impossible for an
+      // external source (a mail attachment…), so the button is dropped.
+      popout={isExternalFile(file)
+        ? undefined
+        : { route: `/drive/player?file=${file.id}`, label: file.name, width: 380, height: 640 }}
       defaultWidth={340}
       minWidth={280}
       titleActions={
@@ -253,7 +279,9 @@ function AudioPlayerCore() {
         {/* File info */}
         <div className="text-center w-full">
           <p className="text-sm font-semibold text-text-primary truncate" title={file.name}>{file.name}</p>
-          <p className="text-xs text-text-tertiary mt-0.5">{formatSize(file.size_bytes)}</p>
+          {!isExternalFile(file) && (
+            <p className="text-xs text-text-tertiary mt-0.5">{formatSize(file.size_bytes)}</p>
+          )}
         </div>
 
         {/* Progress */}
@@ -278,7 +306,7 @@ function AudioPlayerCore() {
 
         {/* Download */}
         <a
-          href={filesApi.downloadUrl(file.id)}
+          href={fileSourceUrl(file)}
           download={file.name}
           className="flex items-center gap-1.5 px-4 py-1.5 text-xs text-text-secondary hover:text-text-primary border border-border rounded-full hover:bg-surface-1 transition-colors"
         >
@@ -291,7 +319,34 @@ function AudioPlayerCore() {
 }
 
 export default function FilesFloatingAudioPlayer() {
-  const file = useFilesMediaPlayerStore(s => s.file)
-  if (!file) return null
-  return <AudioPlayerCore />
+  const ctl = useFilesMediaPlayerStore()
+  if (!ctl.file) return null
+  return <AudioPlayerCore ctl={ctl} />
+}
+
+/**
+ * Same player, for a source Drive does not own (a mail attachment…). It keeps
+ * its state LOCAL on purpose: the shared store is watched by other modules —
+ * the media module redirects anything opened through it to its own player,
+ * rebuilding the stream URL from the Drive file id, which an external source
+ * has not. Playback therefore lives and dies with this component.
+ */
+export function ExternalAudioPlayer({ file, onClose }: { file: FileItem; onClose: () => void }) {
+  const [isMinimized, setMinimized] = useState(false)
+  const [isPlaying,   setPlaying]   = useState(false)
+  const [position,    setPosition]  = useState(0)
+  const [duration,    setDuration]  = useState(0)
+
+  const ctl = useMemo<PlayerController>(() => ({
+    file, isMinimized, isPlaying, position, duration, restorePosition: 0,
+    minimize: () => setMinimized(true),
+    restore:  () => setMinimized(false),
+    close:    onClose,
+    _clearRestorePosition: () => {},
+    _setPlaying:  setPlaying,
+    _setPosition: setPosition,
+    _setDuration: setDuration,
+  }), [file, isMinimized, isPlaying, position, duration, onClose])
+
+  return <AudioPlayerCore ctl={ctl} />
 }

@@ -6,8 +6,8 @@ use uuid::Uuid;
 
 use crate::{
     errors::{FilesError, Result},
-    models::{File, FileVersion, Folder},
-    services::files::get_file,
+    models::{File, FileVersion, Folder, VersionsPurgeResult, VersionsSummary},
+    services::files::{get_file, update_used_bytes},
 };
 
 // ── Lecture ───────────────────────────────────────────────────────────────────
@@ -86,23 +86,39 @@ pub async fn create_version(
     .fetch_one(db)
     .await?;
 
+    // A revision is a full copy of the blob, so it costs the account exactly the
+    // size of the file it froze. It is charged because the account can now see
+    // it and give it back (`DELETE /:id/versions`, `PATCH /:id/versioning`).
+    update_used_bytes(db, owner_id, file.size_bytes).await;
+
     // Retention: keep at most MAX_VERSIONS, pruning the oldest beyond the limit.
     const MAX_VERSIONS: i64 = 50;
-    let stale: Vec<(Uuid, String)> = sqlx::query_as(
-        "SELECT id, storage_path FROM drive.file_versions
+    let stale: Vec<(Uuid, String, i64)> = sqlx::query_as(
+        "SELECT id, storage_path, size_bytes FROM drive.file_versions
          WHERE file_id = $1 ORDER BY version_number DESC OFFSET $2",
     )
     .bind(file_id)
     .bind(MAX_VERSIONS)
     .fetch_all(db)
     .await
+    .inspect_err(|e| tracing::error!(file_id = %file_id, error = %e, "Échec de lecture des versions à élaguer"))
     .unwrap_or_default();
-    for (vid, path) in stale {
-        let _ = storage.delete(&path).await;
-        let _ = sqlx::query("DELETE FROM drive.file_versions WHERE id = $1")
+    let mut pruned = 0i64;
+    for (vid, path, size) in stale {
+        if let Err(e) = storage.delete(&path).await {
+            tracing::warn!(path = %path, error = %e, "Impossible de supprimer le blob d'une version élaguée");
+        }
+        match sqlx::query("DELETE FROM drive.file_versions WHERE id = $1")
             .bind(vid)
             .execute(db)
-            .await;
+            .await
+        {
+            Ok(_)  => pruned += size,
+            Err(e) => tracing::error!(version_id = %vid, error = %e, "Échec de suppression d'une version élaguée"),
+        }
+    }
+    if pruned > 0 {
+        update_used_bytes(db, owner_id, -pruned).await;
     }
 
     Ok(version)
@@ -135,18 +151,23 @@ pub async fn restore_version(
     hasher.update(&data);
     let hash = hex::encode(hasher.finalize());
 
-    let updated = sqlx::query_as::<_, File>(
+    sqlx::query(
         "UPDATE drive.files
          SET size_bytes = $1, content_hash = $2
-         WHERE id = $3 RETURNING *"
+         WHERE id = $3"
     )
     .bind(size)
     .bind(&hash)
     .bind(file_id)
-    .fetch_one(db)
-    .await?;
+    .execute(db)
+    .await
+    .inspect_err(|e| tracing::error!(file_id = %file_id, error = %e, "Échec d'écriture de la version restaurée"))?;
 
-    Ok(updated)
+    update_used_bytes(db, owner_id, size - file.size_bytes).await;
+
+    // Re-read rather than `RETURNING *`: the caller gets the file with its
+    // version counters, which the restore has just changed.
+    get_file(db, owner_id, file_id).await
 }
 
 // ── Suppression ───────────────────────────────────────────────────────────────
@@ -167,9 +188,76 @@ pub async fn delete_version(
     sqlx::query("DELETE FROM drive.file_versions WHERE id = $1")
         .bind(version_id)
         .execute(db)
-        .await?;
+        .await
+        .inspect_err(|e| tracing::error!(version_id = %version_id, error = %e, "Échec de suppression d'une version"))?;
+
+    update_used_bytes(db, owner_id, -version.size_bytes).await;
 
     Ok(())
+}
+
+/// Deletes a file's **whole** history, keeping the current content.
+///
+/// The single statement below both selects and removes, so a revision created
+/// while the purge runs is either fully included or untouched — never a row
+/// deleted whose blob survives, nor the reverse.
+///
+/// The freed bytes are handed back to the quota through
+/// [`update_used_bytes`]: without it the account would perform the one gesture
+/// the interface offers it and watch its gauge stay exactly where it was.
+pub async fn purge_versions(
+    db: &PgPool,
+    storage: &Arc<dyn StorageBackend>,
+    owner_id: Uuid,
+    file_id: Uuid,
+) -> Result<VersionsPurgeResult> {
+    // Ownership check — also turns an unknown id into a 404.
+    get_file(db, owner_id, file_id).await?;
+
+    let removed: Vec<(String, i64)> = sqlx::query_as(
+        "DELETE FROM drive.file_versions WHERE file_id = $1
+         RETURNING storage_path, size_bytes",
+    )
+    .bind(file_id)
+    .fetch_all(db)
+    .await
+    .inspect_err(|e| tracing::error!(file_id = %file_id, error = %e, "Échec de purge de l'historique"))?;
+
+    if removed.is_empty() {
+        return Ok(VersionsPurgeResult { removed: 0, freed_bytes: 0 });
+    }
+
+    let mut freed = 0i64;
+    for (path, size) in &removed {
+        // A blob whose delete fails is still counted as freed: its row is gone,
+        // so nothing will ever charge for it again, and the periodic full
+        // recount reconciles the disk. Leaving it charged would be a debt the
+        // account has no way to settle.
+        if let Err(e) = storage.delete(path).await {
+            tracing::warn!(path = %path, error = %e, "Impossible de supprimer le blob d'une version purgée");
+        }
+        freed += *size;
+    }
+
+    update_used_bytes(db, owner_id, -freed).await;
+
+    Ok(VersionsPurgeResult { removed: removed.len() as i64, freed_bytes: freed })
+}
+
+/// What every version history of the account weighs, all files together.
+pub async fn versions_summary(db: &PgPool, owner_id: Uuid) -> Result<VersionsSummary> {
+    sqlx::query_as::<_, VersionsSummary>(
+        "SELECT COUNT(DISTINCT file_id)::bigint          AS files_with_versions,
+                COUNT(*)::bigint                         AS total_versions,
+                COALESCE(SUM(size_bytes), 0)::bigint     AS total_bytes
+         FROM drive.file_versions
+         WHERE owner_id = $1",
+    )
+    .bind(owner_id)
+    .fetch_one(db)
+    .await
+    .inspect_err(|e| tracing::error!(owner_id = %owner_id, error = %e, "Échec du calcul de la synthèse des versions"))
+    .map_err(Into::into)
 }
 
 // ── Activation ────────────────────────────────────────────────────────────────

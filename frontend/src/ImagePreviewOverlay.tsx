@@ -5,8 +5,9 @@
 // Ctrl+wheel, +/− keys), printing and the « Ajuster l'image » editor hook.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { filesApi, type FileItem } from '@kubuno/drive'
+import { type FileItem } from '@kubuno/drive'
 import { useImageCacheStore } from '@kubuno/sdk'
+import { fileInlineUrl, fileSourceUrl, isExternalFile } from './externalPreview'
 import { MenuDropdown, type MenuItem } from '@ui'
 import {
   Download, Printer, ChevronDown, Minus, Plus, Loader2, ImageOff, Search, Wand2,
@@ -40,9 +41,11 @@ export default function ImagePreviewOverlay({
 
   // Full-resolution source: the real file served inline (`inline=1` also tells
   // the backend NOT to count a download). The explorer's cache-bust version
-  // still refreshes the picture after edits / « Actualiser ».
+  // still refreshes the picture after edits / « Actualiser ». An external source
+  // (mail attachment…) is used as-is: no Drive route, no cache to bust.
+  const external = isExternalFile(current)
   const thumbVer = useImageCacheStore(s => s.global + (s.versions[current.id] ?? 0))
-  const src = `${filesApi.downloadUrl(current.id)}?inline=1&v=${thumbVer}`
+  const src = external ? fileInlineUrl(current) : `${fileInlineUrl(current)}&v=${thumbVer}`
 
   // ── Image natural size / load state ────────────────────────────────────────
   const [natural, setNatural] = useState<{ w: number; h: number } | null>(null)
@@ -102,8 +105,8 @@ export default function ImagePreviewOverlay({
 
   // ── Actions ────────────────────────────────────────────────────────────────
   const handleDownload = useCallback(() => {
-    window.open(filesApi.downloadUrl(current.id), '_blank', 'noreferrer')
-  }, [current.id])
+    window.open(fileSourceUrl(current), '_blank', 'noreferrer')
+  }, [current])
 
   // Prints the image from a same-origin iframe (full width, no margins).
   const printingRef = useRef(false)
