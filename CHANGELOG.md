@@ -9,6 +9,8 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 ## [Unreleased]
 
+## [0.1.6] - 2026-08-19
+
 ### Added
 
 - **"Home" landing screen.** A new **Accueil** entry tops the sidebar (above
@@ -81,4 +83,5 @@ number at release time, and CI publishes that section as the GitHub Release note
   become unreachable behind the header's magnifying-glass search mode; it is pinned
   inline again.
 
-[Unreleased]: https://github.com/kubuno/drive/compare/v0.1.5...HEAD
+[Unreleased]: https://github.com/kubuno/drive/compare/v0.1.6...HEAD
+[0.1.6]: https://github.com/kubuno/drive/releases/tag/v0.1.6
