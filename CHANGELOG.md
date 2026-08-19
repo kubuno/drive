@@ -27,8 +27,8 @@ number at release time, and CI publishes that section as the GitHub Release note
   keeps the stored one — correcting a host no longer means retyping credentials.
 - **"List the server's shares"** in the SMB form. It asks the server and shows
   each share's real name beside its description, which is the distinction that
-  makes a mount work: a share called `home_martinien` may be described as
-  "Home Martinien", and entering the description fails with "share not found".
+  makes a mount work: a share called `backups` may be described as
+  "Nightly Backups", and entering the description fails with "share not found".
 - **Platform fonts shipped with the module**: 20 open-licensed font files (Google Sans
   Text, Google Sans, Roboto, Google Sans Flex, Roboto Flex, Inter, DM Mono — variable
   where a variable release exists) are embedded in the binary and seeded into
@@ -36,7 +36,7 @@ number at release time, and CI publishes that section as the GitHub Release note
   included. The seed is idempotent and refreshes a seeded file **in place** when the
   embedded binary changed (protected files cannot be replaced through the API, so
   corrections can only arrive this way).
-- **Google-Fonts-style public endpoints**: `GET /fonts/css2?family=…&display=swap`
+- **Self-hosted font endpoints**: `GET /fonts/css2?family=…&display=swap`
   generates `@font-face` rules from the actual binaries in `System/Fonts` (family,
   weight and stretch ranges read from their `name`/`fvar`/`OS-2` tables, cached), and
   `GET /fonts/files/:id` serves the bytes with ETag/304 and day-long caching. Both are
@@ -79,7 +79,7 @@ number at release time, and CI publishes that section as the GitHub Release note
   than failing silently.
 
 
-- The Google-Fonts-style toolbar of the Fonts view (search, sort, selection bag) had
+- The Fonts view's toolbar (search, sort, selection bag) had
   become unreachable behind the header's magnifying-glass search mode; it is pinned
   inline again.
 
