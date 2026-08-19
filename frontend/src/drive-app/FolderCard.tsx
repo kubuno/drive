@@ -2,12 +2,11 @@ import React from 'react'
 import { Star, Trash2, MoreVertical } from 'lucide-react'
 import { FolderGlyph, type Folder } from '@kubuno/drive'
 import { usePendingKind, pendingBoxClass, pendingBoxStyle } from '@kubuno/sdk'
-import { FloatCheckbox } from '@ui'
 import { openable, useLongPress } from '../openable'
 import { TagDots } from '../TagUI'
 
 export default function FolderCard({
-  folder, isDragTarget, selected, preSelected, focused, trashed, onSelect, onToggle, onOpen, onContextMenu, onDragStart, onDragOver, onDragLeave, onDrop,
+  folder, isDragTarget, selected, preSelected, focused, trashed, onSelect, onOpen, onContextMenu, onDragStart, onDragOver, onDragLeave, onDrop,
 }: {
   folder: Folder
   isDragTarget: boolean
@@ -16,7 +15,6 @@ export default function FolderCard({
   focused?: boolean
   trashed?: boolean
   onSelect: (id: string, e: React.MouseEvent) => void
-  onToggle: (id: string) => void
   onOpen: () => void
   onContextMenu: (e: React.MouseEvent) => void
   onDragStart: () => void
@@ -55,11 +53,6 @@ export default function FolderCard({
       onDrop={onDrop}
     >
       {/* Checkbox */}
-      <FloatCheckbox
-        selected={selected}
-        onToggle={() => onToggle(folder.id)}
-        className="absolute -top-1.5 -left-1.5 z-10"
-      />
       <FolderGlyph folder={folder} size={20} className={`shrink-0 ${trashed ? 'opacity-50' : ''}`} />
       <span className={`text-sm truncate flex-1 ${trashed ? 'text-text-secondary line-through' : 'text-text-primary'}`}>{folder.name}</span>
       {!trashed && <TagDots itemId={folder.id} />}

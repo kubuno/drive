@@ -10,7 +10,7 @@ use tower_http::{
 };
 
 use crate::{
-    handlers::{access, activity, archive, comments, files, folders, health, import_url, insights, ipc, locks, maintenance, public, remotes, resolve, saved_searches, scan, search, shares, sync, system, tags, transform, uploads, versions, webdav},
+    handlers::{access, activity, archive, comments, files, folders, fonts, health, import_url, insights, ipc, locks, maintenance, public, remotes, resolve, saved_searches, scan, search, shares, sync, system, tags, transform, uploads, versions, webdav},
     middleware::{require_auth, require_ipc_secret},
     state::AppState,
 };
@@ -111,7 +111,9 @@ pub fn build(state: AppState) -> Router {
         .route("/stats/overview",               get(insights::overview))
         // Connexions distantes (remote storage)
         .route("/remotes",                           get(remotes::list_connections).post(remotes::create_connection))
-        .route("/remotes/:id",                       delete(remotes::delete_connection))
+        .route("/smb/shares",                        post(remotes::smb_shares))
+        .route("/remotes/:id",                       patch(remotes::update_connection).delete(remotes::delete_connection))
+        .route("/remotes/:id/config",                get(remotes::get_connection_config))
         .route("/remotes/:id/test",                  post(remotes::test_connection))
         .route("/remotes/:id/browse",                get(remotes::list_remote_root))
         .route("/remotes/:id/browse/*path",          get(remotes::list_remote_dir))
@@ -163,10 +165,12 @@ pub fn build(state: AppState) -> Router {
         .route("/webdav/*path", axum::routing::any(webdav::webdav_dispatch))
         .with_state(state.clone());
 
-    // Routes publiques (partages par token)
+    // Routes publiques (partages par token + polices de la plateforme)
     let public = Router::new()
         .route("/share/:token",          get(public::get_share_info))
         .route("/share/:token/download", get(public::download_shared))
+        .route("/fonts/css2",            get(fonts::css2))
+        .route("/fonts/files/:id",       get(fonts::file))
         .with_state(state.clone());
 
     // IPC — accès inter-modules (protégé par X-Internal-Secret)

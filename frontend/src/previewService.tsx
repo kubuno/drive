@@ -7,7 +7,9 @@ import {
   filesApi, useFilesDialogStore, FilesTextViewer, MoveModal, RenameModal, ShareModal,
   type FileItem,
 } from '@kubuno/drive'
-import { i18n, FileTypeRegistry, SlotRegistry, useModulesStore } from '@kubuno/sdk'
+// `navigate` is aliased: `ExternalPreviewHost` has a local `navigate` of its own
+// (moving between the previewed files), and shadowing would be confusing.
+import { i18n, FileTypeRegistry, SlotRegistry, useModulesStore, navigate as shellNavigate } from '@kubuno/sdk'
 import { AppWindow } from 'lucide-react'
 import type { MenuItem } from '@ui'
 import {
@@ -56,14 +58,12 @@ function unmount() {
 
 // ── Host navigation ──────────────────────────────────────────────────────────
 // Opening a file in another app (« Ouvrir avec ») leaves the previewer for a
-// route of the host application. The host router listens to popstate, so a
-// pushState + a synthetic popstate moves it — the previewer closing first.
+// route of the host application: the previewer closes first, then the core's
+// `navigate` moves the host router (real router navigation when it is mounted).
 
 function hostNavigate(path: string, replace = false) {
   unmount()
-  if (replace) window.history.replaceState({}, '', path)
-  else         window.history.pushState({}, '', path)
-  window.dispatchEvent(new PopStateEvent('popstate'))
+  shellNavigate(path, { replace })
 }
 
 const hrefOf = (to: To) =>

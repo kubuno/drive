@@ -9,6 +9,7 @@ import DriveMiniPanel from './DriveMiniPanel'
 import {
   RouteRegistry,
   SlotRegistry,
+  ExtensionRegistry,
   WidgetRegistry,
   ModuleServiceRegistry,
   ModuleSettingsRegistry,
@@ -28,10 +29,10 @@ import './index.css'
 import './i18n'
 import DriveLogo from './DriveLogo'
 import { openPreview, canPreview } from './previewService'
-import FilesNewActions from './FilesNewActions'
+import { filesNewActionItems } from './FilesNewActions'
 import FilesTreeSidebar from './FilesTreeSidebar'
 import FilesPaintEditor from './FilesPaintEditor'
-import FilesContextMenuItems from './FilesContextMenuItems'
+import { filesContextMenuItems } from './FilesContextMenuItems'
 import { TagInfoSection } from './TagUI'
 import FilesStorageGaugeHeader from './FilesStorageGaugeHeader'
 import FilesDashboardWidget from './FilesDashboardWidget'
@@ -40,6 +41,7 @@ import FilesFilterPanel from './FilesFilterPanel'
 import FilesOpenDialog from './FilesOpenDialog'
 import DriveImageSource from './DriveImageSource'
 import FilesSaveDialog from './FilesSaveDialog'
+import RemoteStoragePanel from './RemoteStoragePanel'
 import FilesFolderPickerDialog from './FilesFolderPickerDialog'
 import FilesFloatingAudioPlayer from './FilesFloatingAudioPlayer'
 
@@ -79,13 +81,30 @@ export function register() {
     ],
   })
 
-  SlotRegistry.register('sidebar-new-actions',   'drive', FilesNewActions)
-  SlotRegistry.register('context-menu-items',    'drive', FilesContextMenuItems)
+  // Sidebar "New" button: contribute MenuItem[] DATA to the generic
+  // 'shell.new-actions' extension point (consumed by the shell's MenuDropdown).
+  ExtensionRegistry.register('shell.new-actions', 'drive', {
+    moduleId: 'drive',
+    items: filesNewActionItems,
+  })
+
+  // Background context menu: MenuItem[] DATA for the shell's MenuDropdown
+  // (literal point name — no @kubuno/sdk republish needed for the constant).
+  ExtensionRegistry.register('shell.context-menu-items', 'drive', {
+    moduleId: 'drive',
+    items: filesContextMenuItems,
+  })
+
   SlotRegistry.register('topbar-actions',        'drive', FilesStorageGaugeHeader)
   SlotRegistry.register('dashboard-stats-cards', 'drive', FilesDashboardWidget)
   SlotRegistry.register('app-dialogs',           'drive', FilesOpenDialog)
   SlotRegistry.register('app-dialogs',           'drive', FilesSaveDialog)
   SlotRegistry.register('app-dialogs',           'drive', FilesFolderPickerDialog)
+  // Shell-level, not inside DriveApp: the sidebar's mount context menu opens
+  // this from ANY drive route, and DriveApp only exists on a few of them — so
+  // "Gérer les montages" set the flag and nothing appeared until the user
+  // navigated back to Mon Drive.
+  SlotRegistry.register('app-dialogs',           'drive', RemoteStoragePanel)
   SlotRegistry.register('app-dialogs',           'drive', FilesFloatingAudioPlayer)
   SlotRegistry.register('app-dialogs',           'drive', FilesPaintEditor)
   SlotRegistry.register('files-info-extra',      'drive', TagInfoSection)
@@ -108,7 +127,6 @@ export function register() {
   const driveSidebar = {
     moduleId:    'drive',
     routePrefix: '/drive',
-    NewActions:  FilesNewActions,
     SidebarBody: FilesTreeSidebar,
     collapsedBody: true,
     mobileTabs,
@@ -168,7 +186,7 @@ export function register() {
   const DrivePlayerPage   = lazy(() => import('./FilesStandalonePages'))
   const DrivePaintPage    = lazy(() => import('./FilesStandalonePages').then(m => ({ default: m.DrivePaintPage })))
 
-  const DriveHome = lazy(() => import('./MobileHome'))
+  const DriveHome = lazy(() => import('./DriveHome'))
 
   RouteRegistry.register('drive',          FilesApp)
   RouteRegistry.register('drive/home',     DriveHome)

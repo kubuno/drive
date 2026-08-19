@@ -28,7 +28,7 @@ pub async fn create(
     Path(file_id): Path<Uuid>,
     Json(dto): Json<CreateVersionDto>,
 ) -> Result<Json<Value>> {
-    let v = versions::create_version(&state.db, &state.storage, user.id, file_id, dto.comment).await?;
+    let v = versions::create_version(&state.db, &state.storage, user.id, file_id, dto.comment, state.instance().max_file_versions).await?;
     Ok(Json(json!({ "version": v })))
 }
 
@@ -37,7 +37,7 @@ pub async fn restore(
     Extension(user): Extension<FilesUser>,
     Path((file_id, version_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<Value>> {
-    let file = versions::restore_version(&state.db, &state.storage, user.id, file_id, version_id).await?;
+    let file = versions::restore_version(&state.db, &state.storage, user.id, file_id, version_id, state.instance().max_file_versions).await?;
     Ok(Json(json!({ "file": file })))
 }
 

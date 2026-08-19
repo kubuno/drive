@@ -114,11 +114,9 @@ const SKIP_KEYS: &[&str] = &[
 fn harvest_json_text(value: &serde_json::Value, out: &mut String, depth: usize) {
     if depth > 64 || out.len() >= MAX_EXTRACT_BYTES { return; }
     match value {
-        serde_json::Value::String(s) => {
-            if is_meaningful_text(s) {
-                out.push_str(s.trim());
-                out.push(' ');
-            }
+        serde_json::Value::String(s) if is_meaningful_text(s) => {
+            out.push_str(s.trim());
+            out.push(' ');
         }
         serde_json::Value::Array(arr) => {
             for v in arr {

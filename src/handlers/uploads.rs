@@ -18,8 +18,12 @@ pub async fn init(
     Extension(user): Extension<FilesUser>,
     Json(dto): Json<InitUploadDto>,
 ) -> Result<Json<Value>> {
+    // Both instance policies are checked BEFORE the session is opened: a refusal
+    // after the client has pushed a gigabyte of chunks is a refusal nobody
+    // thanks you for.
+    state.check_upload_name(&dto.filename)?;
     let chunk_size = state.settings.files.chunk_size;
-    let max = state.settings.files.max_upload_bytes;
+    let max = state.max_upload_bytes();
     let session = uploads::init_upload(&state.db, &state.storage, user.id, dto, max, chunk_size).await?;
     Ok(Json(json!({ "upload": session })))
 }

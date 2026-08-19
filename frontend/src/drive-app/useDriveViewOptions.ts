@@ -6,8 +6,6 @@ import type { SortDir, SortField } from './types'
 export interface DriveViewOptions {
   viewMode: ViewMode
   setViewMode: (v: ViewMode) => void
-  compact: boolean
-  setCompact: (v: boolean) => void
   showHidden: boolean
   setShowHidden: (v: boolean) => void
   sortField: SortField
@@ -20,7 +18,6 @@ export interface DriveViewOptions {
 
 export function useDriveViewOptions(): DriveViewOptions {
   const [viewMode, setViewMode]     = useState<ViewMode>('lg')
-  const [compact, setCompact]       = useState(false)
   const [showHidden, setShowHidden] = useState(false)
   // Sort & filter
   const [sortField, setSortField]   = useState<SortField>('date')
@@ -29,7 +26,6 @@ export function useDriveViewOptions(): DriveViewOptions {
 
   return {
     viewMode, setViewMode,
-    compact, setCompact,
     showHidden, setShowHidden,
     sortField, setSortField,
     sortDir, setSortDir,

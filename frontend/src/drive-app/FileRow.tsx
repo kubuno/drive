@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { Star, Trash2, RotateCcw, MoreVertical } from 'lucide-react'
 import { filesApi, formatSize, getFileIcon, type FileItem } from '@kubuno/drive'
 import { useImageCacheStore, usePendingKind, pendingBoxClass, pendingBoxStyle } from '@kubuno/sdk'
-import { FloatCheckbox } from '@ui'
 import { openable, useLongPress } from '../openable'
 import { TagDots } from '../TagUI'
 import type { FileVersionStats } from '../fileVersions'
@@ -12,11 +11,11 @@ import VersionBadge from './VersionBadge'
 
 // ── FileRow (list view) ───────────────────────────────────────────────────────
 
-export default function FileRow({ file, trashed, selected, preSelected, focused, canMove, onSelect, onToggle, onContextMenu, onRestore, onDelete, onOpen, onDragStart, density = 'normal', hideMeta = false }: {
+export default function FileRow({ file, trashed, selected, preSelected, focused, canMove, onSelect, onContextMenu, onRestore, onDelete, onOpen, onDragStart, density = 'normal', hideMeta = false }: {
   file: FileItem
   trashed: boolean
   selected: boolean; preSelected?: boolean; focused?: boolean; canMove: boolean
-  onSelect: (id: string, e: React.MouseEvent) => void; onToggle: (id: string) => void
+  onSelect: (id: string, e: React.MouseEvent) => void
   onContextMenu: (e: React.MouseEvent) => void
   onRestore: () => void
   onDelete: () => void
@@ -43,10 +42,6 @@ export default function FileRow({ file, trashed, selected, preSelected, focused,
       onContextMenu={onContextMenu}
       {...openable<React.MouseEvent>({ select: (e) => { e.preventDefault(); onSelect(file.id, e) }, open: (e: React.MouseEvent) => { e.preventDefault(); if (!trashed) onOpen() } })}
     >
-      <span data-no-drag onClick={e => { e.stopPropagation(); onToggle(file.id) }}
-        className={`shrink-0 transition-opacity ${selected || preSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-        <FloatCheckbox selected={selected || !!preSelected} onToggle={() => onToggle(file.id)} />
-      </span>
       <div className={`shrink-0 ${thumb} flex items-center justify-center rounded overflow-hidden bg-surface-2`}>
         {file.has_thumbnail
           ? <img src={thumbSrc} alt={file.name} className="w-full h-full object-cover" />

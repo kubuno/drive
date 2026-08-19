@@ -20,13 +20,31 @@ pub struct ShareAccessQuery {
     pub password: Option<String>,
 }
 
+/// The two instance switches this surface enforces LIVE, on every request,
+/// rather than only at creation time. Turning public links off, or forbidding
+/// download through them, has to close the links already handed out — a policy
+/// that only applies to tomorrow's links leaves yesterday's exposure intact,
+/// which is the opposite of what an administrator reaches for the switch to do.
+fn public_access_denied(state: &AppState) -> Option<FilesError> {
+    (!state.instance().public_links_enabled).then(|| {
+        FilesError::NotFound("Partage introuvable ou expiré".into())
+    })
+}
+
 pub async fn get_share_info(
     State(state): State<AppState>,
     Path(token): Path<String>,
     Query(q): Query<ShareAccessQuery>,
 ) -> Result<Json<Value>> {
+    // Answered as "not found", never as "disabled": an anonymous visitor must
+    // not learn from us that a token is valid but administratively closed.
+    if let Some(err) = public_access_denied(&state) {
+        return Err(err);
+    }
     let share = shares::get_share_by_token(&state.db, &token).await?;
     let password_protected = share.password_hash.is_some();
+    // The live policy can withdraw a permission the row still carries.
+    let can_download = share.can_download && state.instance().share_public_download_enabled;
     let unlocked = shares::share_password_ok(&share, q.password.as_deref());
 
     // Resolve the target's display name and, for files, lightweight metadata.
@@ -52,7 +70,7 @@ pub async fn get_share_info(
             "item_kind":          item_kind,
             "size_bytes":         size_bytes,
             "mime_type":          mime_type,
-            "can_download":       share.can_download,
+            "can_download":       can_download,
             "password_protected": password_protected,
             "unlocked":           unlocked,
             "expires_at":         share.expires_at,
@@ -67,10 +85,18 @@ pub async fn download_shared(
     Path(token): Path<String>,
     Query(q): Query<ShareAccessQuery>,
 ) -> Result<Response> {
+    if let Some(err) = public_access_denied(&state) {
+        return Err(err);
+    }
     let share = shares::get_share_by_token(&state.db, &token).await?;
 
     if !share.can_download {
         return Err(FilesError::Forbidden);
+    }
+    if !state.instance().share_public_download_enabled {
+        return Err(FilesError::PolicyDisabled(
+            "Le téléchargement par lien public est désactivé sur cette instance".into(),
+        ));
     }
     // Enforce password protection before serving any bytes.
     if !shares::share_password_ok(&share, q.password.as_deref()) {

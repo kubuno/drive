@@ -30,6 +30,8 @@ export interface FontSpecimenData {
   license?: string
   licenseUrl?: string
   embeddable?: string
+  /** Platform font shipped with the module — undeletable, flagged in the UI. */
+  isProtected?: boolean
   variants: SpecimenVariant[]
 }
 
@@ -70,7 +72,7 @@ function SpecimenTab({ data }: { data: FontSpecimenData }) {
   const [stylesText, setStylesText] = useState('')
   const [stylesSize, setStylesSize] = useState(48)
   const previewText = stylesText.trim() || DEFAULT_PREVIEW
-  const chips = [data.category, `${styles.length} style${styles.length > 1 ? 's' : ''}`, ...data.scripts].filter(Boolean)
+  const chips = [data.category, `${styles.length} style${styles.length > 1 ? 's' : ''}`, ...data.scripts, data.isProtected ? 'Police système' : ''].filter(Boolean)
   const styleOpts: DropdownOption[] = styles.map(v => ({ value: v.id, label: styleLabel(v) }))
   const RAMP = [48, 36, 32, 24, 18, 16]
 

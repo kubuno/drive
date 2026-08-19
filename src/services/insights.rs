@@ -125,7 +125,7 @@ pub async fn find_duplicates(db: &PgPool, owner_id: Uuid) -> Result<Vec<Duplicat
     }
     // Largest reclaimable space first; drop accidental singletons.
     groups.retain(|g| g.count > 1);
-    groups.sort_by(|a, b| b.wasted_bytes.cmp(&a.wasted_bytes));
+    groups.sort_by_key(|g| std::cmp::Reverse(g.wasted_bytes));
     Ok(groups)
 }
 

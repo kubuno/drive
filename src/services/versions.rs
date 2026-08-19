@@ -52,6 +52,7 @@ pub async fn create_version(
     owner_id: Uuid,
     file_id: Uuid,
     comment: Option<String>,
+    max_versions: i64,
 ) -> Result<FileVersion> {
     let file = get_file(db, owner_id, file_id).await?;
 
@@ -91,14 +92,14 @@ pub async fn create_version(
     // it and give it back (`DELETE /:id/versions`, `PATCH /:id/versioning`).
     update_used_bytes(db, owner_id, file.size_bytes).await;
 
-    // Retention: keep at most MAX_VERSIONS, pruning the oldest beyond the limit.
-    const MAX_VERSIONS: i64 = 50;
+    // Retention: keep at most `max_versions` (the instance setting), pruning the
+    // oldest beyond the limit.
     let stale: Vec<(Uuid, String, i64)> = sqlx::query_as(
         "SELECT id, storage_path, size_bytes FROM drive.file_versions
          WHERE file_id = $1 ORDER BY version_number DESC OFFSET $2",
     )
     .bind(file_id)
-    .bind(MAX_VERSIONS)
+    .bind(max_versions)
     .fetch_all(db)
     .await
     .inspect_err(|e| tracing::error!(file_id = %file_id, error = %e, "Échec de lecture des versions à élaguer"))
@@ -134,12 +135,13 @@ pub async fn restore_version(
     owner_id: Uuid,
     file_id: Uuid,
     version_id: Uuid,
+    max_versions: i64,
 ) -> Result<File> {
     let file    = get_file(db, owner_id, file_id).await?;
     let version = get_version(db, owner_id, file_id, version_id).await?;
 
     // Sauvegarder l'état actuel avant de restaurer
-    create_version(db, storage, owner_id, file_id, Some("Avant restauration".into())).await?;
+    create_version(db, storage, owner_id, file_id, Some("Avant restauration".into()), max_versions).await?;
 
     // Charger la version et l'écrire à l'emplacement courant
     let data = storage.get(&version.storage_path).await?;

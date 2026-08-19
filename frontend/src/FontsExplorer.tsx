@@ -83,6 +83,10 @@ export default function FontsExplorer({ folderId, onExit }: { folderId: string; 
       routePrefix: '/drive/system',
       placeholder: 'Rechercher des polices…',
       SearchComponent: FontsSearchBar,
+      // Keep the Google-Fonts-style toolbar (search + sort + selection bag →
+      // embed page) PERMANENTLY visible in the header, like mail: behind the
+      // magnifying-glass search mode it was effectively invisible.
+      inline: true,
     })
     return () => {
       useSearchStore.getState().unregister('drive-fonts')
@@ -197,6 +201,10 @@ export default function FontsExplorer({ folderId, onExit }: { folderId: string; 
 
   const itemByKey = (k: string) => items.find(i => i.key === k)
   const selectedFileIds = (keys: string[]) => [...new Set(keys.flatMap(k => itemByKey(k)?.fileIds ?? []))]
+  // Platform fonts (shipped with the module, `is_protected`) cannot be deleted:
+  // the backend refuses anyway, the UI simply never offers it.
+  const protectedIds = useMemo(() => new Set(entries.filter(e => e.file.is_protected).map(e => e.file.id)), [entries])
+  const deletableFileIds = (keys: string[]) => selectedFileIds(keys).filter(id => !protectedIds.has(id))
 
   // ── Selection ──────────────────────────────────────────────────────────────
   const onCardClick = (key: string, e: React.MouseEvent) => {
@@ -255,7 +263,7 @@ export default function FontsExplorer({ folderId, onExit }: { folderId: string; 
 
   // ── Delete ───────────────────────────────────────────────────────────────────
   const deleteKeys = async (keys: string[]) => {
-    const ids = selectedFileIds(keys)
+    const ids = deletableFileIds(keys)
     if (!ids.length) return
     const labels = keys.map(k => itemByKey(k)?.label).filter(Boolean)
     const ok = await confirm({
@@ -286,13 +294,16 @@ export default function FontsExplorer({ folderId, onExit }: { folderId: string; 
       out.push({ type: 'action', label: 'Ouvrir la famille', icon: <FolderOpen size={15} />, onClick: () => setActiveFamily(it.family!.name) })
       out.push({ type: 'separator' })
     }
-    out.push({ type: 'action', label: multi ? `Supprimer (${selectedFileIds(keys).length})` : 'Supprimer', icon: <Trash2 size={15} />, danger: true, onClick: () => deleteKeys(keys) })
-    out.push({ type: 'separator' })
+    const delCount = deletableFileIds(keys).length
+    if (delCount > 0) {
+      out.push({ type: 'action', label: multi ? `Supprimer (${delCount})` : 'Supprimer', icon: <Trash2 size={15} />, danger: true, onClick: () => deleteKeys(keys) })
+      out.push({ type: 'separator' })
+    }
     out.push({ type: 'action', label: 'Importer des polices…', icon: <Upload size={15} />, onClick: onImportClick })
     return out
   }
 
-  const selCount = selectedFileIds([...selected]).length
+  const selCount = deletableFileIds([...selected]).length
 
   // Build the specimen-page data for an opened family (from its parsed metadata).
   const specimenData = (fam: Family): FontSpecimenData => {
@@ -310,11 +321,13 @@ export default function FontsExplorer({ folderId, onExit }: { folderId: string; 
       license:     rep.meta?.license,
       licenseUrl:  rep.meta?.licenseUrl,
       embeddable:  rep.meta?.embeddable,
+      isProtected: fam.variants.every(v => v.file.is_protected),
       variants:    fam.variants.map(v => ({ id: v.file.id, cssFamily: v.cssFamily, weight: v.meta?.weight ?? 400, italic: v.meta?.italic ?? false })),
     }
   }
   const deleteFamily = async (fam: Family) => {
-    const ids = fam.variants.map(v => v.file.id)
+    const ids = fam.variants.filter(v => !v.file.is_protected).map(v => v.file.id)
+    if (!ids.length) return
     const ok = await confirm({
       title: 'Supprimer ?',
       message: `La famille « ${fam.name} » (${ids.length} fichier${ids.length > 1 ? 's' : ''}) sera définitivement supprimée.`,
@@ -429,7 +442,7 @@ export default function FontsExplorer({ folderId, onExit }: { folderId: string; 
           // Family detail view — Google-Fonts-like specimen page.
           <FontSpecimenPage
             data={specimenData(current)}
-            onDelete={() => deleteFamily(current)}
+            onDelete={current.variants.some(v => !v.file.is_protected) ? () => deleteFamily(current) : undefined}
             onDownload={() => downloadFamily(current)}
           />
         ) : viewMode === 'row' ? (

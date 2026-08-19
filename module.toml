@@ -84,3 +84,212 @@ publishes = [
     "ShareCreated",
     "ShareRevoked",
 ]
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  Drive — admin panel pages
+# ══════════════════════════════════════════════════════════════════════════════
+# Each becomes an entry of the admin menu (Modules → Drive), at its own address
+# (/admin/modules/drive/<id>). A setting's `category` becomes a tab inside its
+# group.
+
+[[setting_groups]]
+id          = "storage"
+label       = "Corbeille et versions"
+icon        = "Trash2"
+position    = 1
+description  = "Combien de temps un fichier supprimé survit, et combien de révisions d'un fichier sont conservées."
+
+[[setting_groups]]
+id          = "sharing"
+label       = "Partage"
+icon        = "Share2"
+position    = 2
+description  = "Ce que les utilisateurs peuvent faire avec les liens de partage public : durée de vie, mot de passe, téléchargement."
+
+[[setting_groups]]
+id          = "uploads"
+label       = "Téléversement"
+icon        = "Upload"
+position    = 3
+description  = "Ce qui entre dans l'instance : taille maximale d'un fichier et extensions refusées."
+
+[[setting_groups]]
+id          = "features"
+label       = "Fonctionnalités"
+icon        = "ToggleLeft"
+position    = 4
+description  = "Les surfaces d'accès annexes — client de bureau (WebDAV), import depuis une URL, stockages tiers — que l'on peut fermer sans toucher au module."
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  Drive — instance settings
+# ══════════════════════════════════════════════════════════════════════════════
+# Edited in the admin console, stored in core.settings, read back through
+# /internal/modules/settings and mapped onto InstanceConfig in
+# src/config/instance.rs. Every setting here is READ by code that acts on it: a
+# knob that changes nothing is worse than an absent one.
+
+[[settings]]
+key         = "trash_retention_days"
+scope       = "global"
+type        = "int"
+default     = 30
+label       = "Rétention de la corbeille"
+description = "Nombre de jours pendant lesquels un fichier mis à la corbeille est conservé avant sa suppression définitive automatique. La purge tourne toutes les heures."
+category    = "Corbeille"
+group       = "storage"
+min         = 1
+max         = 3650
+unit        = "jours"
+risk        = "warning"
+
+[[settings]]
+key         = "max_file_versions"
+scope       = "global"
+type        = "int"
+default     = 50
+label       = "Versions conservées par fichier"
+description = "Nombre maximum de révisions gardées pour un fichier versionné. Au-delà, les plus anciennes sont supprimées à chaque nouvelle version. Chaque version occupe l'espace du fichier qu'elle fige."
+category    = "Versions"
+group       = "storage"
+min         = 1
+max         = 1000
+unit        = "versions"
+
+[[settings]]
+key         = "share_public_links_enabled"
+scope       = "global"
+type        = "bool"
+default     = true
+label       = "Autoriser les liens de partage public"
+description = "Désactivé, les utilisateurs ne peuvent plus créer de liens accessibles par toute personne disposant de l'URL. Les partages internes, adressés à un membre précis de l'instance, ne sont pas affectés."
+category    = "Liens publics"
+group       = "sharing"
+risk        = "warning"
+
+[[settings]]
+key         = "share_max_expiry_days"
+scope       = "global"
+type        = "int"
+default     = 0
+label       = "Expiration maximale d'un lien public"
+description = "Durée de vie maximale, en jours, d'un lien de partage public. 0 = pas de limite. Au-dessus de 0, un lien créé sans date d'expiration — ou avec une date plus lointaine — est ramené à cette durée."
+category    = "Liens publics"
+group       = "sharing"
+min         = 0
+max         = 3650
+unit        = "jours"
+depends_on  = "share_public_links_enabled"
+
+[[settings]]
+key         = "share_default_expiry_days"
+scope       = "global"
+type        = "int"
+default     = 0
+label       = "Expiration par défaut d'un lien public"
+description = "Durée de vie appliquée à un lien créé SANS date d'expiration. 0 = aucune, le lien ne s'éteint pas de lui-même. Plus souple que l'expiration maximale, qui, elle, ramène aussi les demandes explicites."
+category    = "Liens publics"
+group       = "sharing"
+min         = 0
+max         = 3650
+unit        = "jours"
+depends_on  = "share_public_links_enabled"
+
+[[settings]]
+key         = "share_require_password"
+scope       = "global"
+type        = "bool"
+default     = false
+label       = "Exiger un mot de passe sur les liens publics"
+description = "Activé, un lien de partage public créé sans mot de passe est refusé. Les liens déjà créés sans mot de passe ne sont pas modifiés : révoquez-les si l'exigence est rétroactive dans votre organisation."
+category    = "Liens publics"
+group       = "sharing"
+risk        = "warning"
+depends_on  = "share_public_links_enabled"
+
+[[settings]]
+key         = "share_public_download_enabled"
+scope       = "global"
+type        = "bool"
+default     = true
+label       = "Autoriser le téléchargement par lien public"
+description = "Désactivé, un lien public ne révèle plus que le nom et la taille de l'élément : le téléchargement est refusé, y compris pour les liens déjà distribués."
+category    = "Liens publics"
+group       = "sharing"
+risk        = "warning"
+depends_on  = "share_public_links_enabled"
+
+[[settings]]
+key         = "share_max_downloads"
+scope       = "global"
+type        = "int"
+default     = 0
+label       = "Nombre maximal de téléchargements par lien"
+description = "Plafond du compteur de téléchargements d'un lien public. 0 = illimité. Au-dessus de 0, un lien créé sans plafond — ou avec un plafond plus haut — est ramené à cette valeur ; le lien cesse de répondre une fois le compte atteint."
+category    = "Liens publics"
+group       = "sharing"
+min         = 0
+max         = 1000000
+unit        = "téléchargements"
+depends_on  = "share_public_links_enabled"
+
+# ── Téléversement ─────────────────────────────────────────────────────────────
+
+[[settings]]
+key         = "max_upload_mb"
+scope       = "global"
+type        = "int"
+default     = 0
+label       = "Taille maximale d'un fichier"
+description = "Plafond appliqué à chaque fichier déposé (dépôt simple, dépôt par morceaux, import depuis une URL, client de bureau). 0 = on s'en tient à la limite du serveur. Ce réglage ne peut qu'ABAISSER cette limite : la limite de corps HTTP est fixée au démarrage du module."
+category    = "Limites"
+group       = "uploads"
+min         = 0
+max         = 1048576
+unit        = "Mio"
+
+[[settings]]
+key         = "blocked_extensions"
+scope       = "global"
+type        = "string"
+default     = ""
+multiline   = true
+label       = "Extensions refusées"
+description = "Une extension par ligne (le point est facultatif, la casse est ignorée). Un fichier dont l'extension figure ici est refusé au dépôt, à l'import depuis une URL et par le client de bureau. Un nom composé est jugé sur sa DERNIÈRE extension : « facture.pdf.exe » compte comme « exe »."
+placeholder = "exe\nbat\ncmd\nscr\nmsi"
+category    = "Types de fichiers"
+group       = "uploads"
+risk        = "warning"
+
+# ── Fonctionnalités ───────────────────────────────────────────────────────────
+
+[[settings]]
+key         = "webdav_enabled"
+scope       = "global"
+type        = "bool"
+default     = true
+label       = "Accès par client de bureau (WebDAV)"
+description = "Désactivé, la surface WebDAV ne répond plus et aucun nouveau jeton n'est délivré — les clients de bureau et les montages réseau perdent l'accès. L'interface web n'est pas affectée."
+category    = "Accès"
+group       = "features"
+risk        = "warning"
+
+[[settings]]
+key         = "import_url_enabled"
+scope       = "global"
+type        = "bool"
+default     = true
+label       = "Import de fichier depuis une URL"
+description = "Autorise un utilisateur à faire télécharger une adresse par le SERVEUR pour l'enregistrer dans ses fichiers. Désactivez-le sur une instance qui ne doit émettre aucun trafic sortant."
+category    = "Accès"
+group       = "features"
+risk        = "warning"
+
+[[settings]]
+key         = "remote_storage_enabled"
+scope       = "global"
+type        = "bool"
+default     = true
+label       = "Stockages tiers"
+description = "Autorise les utilisateurs à rattacher un stockage externe et à y naviguer. Désactivé, les connexions déjà déclarées deviennent inertes : elles restent visibles et supprimables, mais plus rien n'est lu ni écrit dessus."
+category    = "Accès"
+group       = "features"

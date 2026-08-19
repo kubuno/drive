@@ -3,8 +3,11 @@
 // embed-code panel. Reached from the bag button in the header search bar.
 //
 // Unlike Google Fonts (which links to fonts.googleapis.com), the embed code is
-// self-hosted: @font-face rules point at the font files on the CURRENT Kubuno
-// instance (location.origin), so nothing depends on Google.
+// self-hosted: the primary method is a <link> to the instance's own
+// Google-Fonts-style CSS endpoint (/api/v1/drive/fonts/css2), which generates
+// the @font-face rules server-side from the System/Fonts binaries; a raw
+// @font-face block pointing at the font files is kept as an alternative for
+// stylesheets that cannot reference the endpoint. Nothing depends on Google.
 import { useState } from 'react'
 import { Trash2, Download, Code2, ArrowLeft, Copy, Check } from 'lucide-react'
 import clsx from 'clsx'
@@ -52,18 +55,29 @@ function CodeBlock({ code }: { code: string }) {
 function EmbedView({ families, onBack }: { families: CartFamily[]; onBack: () => void }) {
   const css = embedCss(families)
   const usage = families.map(f => `.${f.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')} {\n  font-family: '${f.name}', sans-serif;\n}`).join('\n\n')
+  // Google-Fonts-style endpoint of THIS instance: generates the @font-face
+  // rules server-side (weight/stretch ranges read from the binaries).
+  const css2Url = `${window.location.origin}/api/v1/drive/fonts/css2?${families
+    .map(f => `family=${encodeURIComponent(f.name).replace(/%20/g, '+')}`)
+    .join('&')}&display=swap`
+  const linkSnippet = `<link rel="stylesheet" href="${css2Url}">`
+  const importSnippet = `@import url('${css2Url}');`
   return (
     <div className="max-w-4xl">
       <button onClick={onBack} className="flex items-center gap-2 text-text-secondary hover:text-text-primary mb-6">
         <ArrowLeft size={20} /><span className="text-3xl font-semibold text-text-primary">Code d’intégration</span>
       </button>
       <p className="text-[15px] text-text-secondary mb-6 max-w-2xl">
-        Auto-hébergé : ces règles pointent vers les fichiers de polices de <span className="font-medium text-text-primary">votre</span> instance Kubuno ({window.location.host}) — aucune dépendance à un service externe.
+        Auto-hébergé : ces règles pointent vers les polices de <span className="font-medium text-text-primary">votre</span> instance Kubuno ({window.location.host}) — aucune dépendance à un service externe.
       </p>
-      <h3 className="text-sm font-medium text-text-primary mb-2">Collez dans une balise <code className="text-xs">&lt;style&gt;</code> ou une feuille CSS</h3>
-      <CodeBlock code={css} />
+      <h3 className="text-sm font-medium text-text-primary mb-2">Dans le <code className="text-xs">&lt;head&gt;</code> de votre page</h3>
+      <CodeBlock code={linkSnippet} />
+      <h3 className="text-sm font-medium text-text-primary mt-8 mb-2">Ou en tête d’une feuille CSS</h3>
+      <CodeBlock code={importSnippet} />
       <h3 className="text-sm font-medium text-text-primary mt-8 mb-2">Puis appliquez la police</h3>
       <CodeBlock code={usage} />
+      <h3 className="text-sm font-medium text-text-primary mt-8 mb-2">Alternative sans l’endpoint : règles <code className="text-xs">@font-face</code> brutes</h3>
+      <CodeBlock code={css} />
     </div>
   )
 }

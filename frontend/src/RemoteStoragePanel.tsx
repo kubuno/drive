@@ -1,14 +1,16 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  X, Server, Plus, Trash2, Zap, CheckCircle2, AlertCircle, WifiOff,
-  Loader2, ChevronDown, ChevronUp, HardDrive,
+  Server, Plus, Pencil, Trash2, Zap, CheckCircle2, AlertCircle, WifiOff,
+  Loader2, ChevronDown, ChevronUp, HardDrive, ListTree,
 } from 'lucide-react'
 import { filesApi, formatSize, type RemoteConnection, type CreateRemoteDto } from '@kubuno/drive'
 import { useFilesStore } from '@kubuno/drive'
-import { Button, Dropdown, Input, Textarea } from '@ui'
+import { Button, Dropdown, FloatingWindow, Input, Textarea } from '@ui'
 import { useConfirm } from '@kubuno/sdk'
+import { getRemoteConfig, listSmbShares, updateRemote } from './remotesApi'
+import { ProviderIcon } from './remoteProviderIcons'
 import { ConfirmDialog } from '@ui'
 
 // ── Provider catalog ──────────────────────────────────────────────────────────
@@ -16,7 +18,6 @@ import { ConfirmDialog } from '@ui'
 type ProviderDef = {
   value:   string
   label:   string
-  emoji:   string
   fields:  FieldDef[]
 }
 
@@ -33,7 +34,6 @@ const PROVIDERS: ProviderDef[] = [
   {
     value: 'webdav',
     label: 'WebDAV',
-    emoji: '🌐',
     fields: [
       { key: 'url',      label: 'rs.f_server_url', type: 'text',     placeholder: 'https://dav.example.com/remote.php/dav/files/user/', required: true },
       { key: 'username', label: 'rs.f_username',   type: 'text',     placeholder: '', phKey: 'rs.ph_username' },
@@ -44,7 +44,6 @@ const PROVIDERS: ProviderDef[] = [
   {
     value: 'nextcloud',
     label: 'Nextcloud',
-    emoji: '☁️',
     fields: [
       { key: 'url',      label: 'rs.f_nextcloud_url',     type: 'text',     placeholder: 'https://nextcloud.example.com', required: true },
       { key: 'username', label: 'rs.f_username',          type: 'text',     placeholder: '', phKey: 'rs.ph_username' },
@@ -55,7 +54,6 @@ const PROVIDERS: ProviderDef[] = [
   {
     value: 'owncloud',
     label: 'ownCloud',
-    emoji: '☁️',
     fields: [
       { key: 'url',      label: 'rs.f_owncloud_url', type: 'text',     placeholder: 'https://owncloud.example.com', required: true },
       { key: 'username', label: 'rs.f_username',     type: 'text',     placeholder: '', phKey: 'rs.ph_username' },
@@ -66,7 +64,6 @@ const PROVIDERS: ProviderDef[] = [
   {
     value: 'sftp',
     label: 'SFTP',
-    emoji: '🔐',
     fields: [
       { key: 'host',        label: 'rs.f_host',     type: 'text',     placeholder: 'sftp.example.com', required: true },
       { key: 'port',        label: 'rs.f_port',     type: 'number',   placeholder: '22' },
@@ -79,7 +76,6 @@ const PROVIDERS: ProviderDef[] = [
   {
     value: 'ftp',
     label: 'FTP',
-    emoji: '📂',
     fields: [
       { key: 'host',      label: 'rs.f_host',     type: 'text',     placeholder: 'ftp.example.com', required: true },
       { key: 'port',      label: 'rs.f_port',     type: 'number',   placeholder: '21' },
@@ -91,7 +87,6 @@ const PROVIDERS: ProviderDef[] = [
   {
     value: 'smb',
     label: 'SMB / Windows',
-    emoji: '🪟',
     fields: [
       { key: 'host',       label: 'rs.f_host_ip',    type: 'text',     placeholder: '192.168.1.10', required: true },
       { key: 'share_name', label: 'rs.f_share_name', type: 'text',     placeholder: 'Documents', required: true },
@@ -104,7 +99,6 @@ const PROVIDERS: ProviderDef[] = [
   {
     value: 'nfs',
     label: 'NFS',
-    emoji: '🗄️',
     fields: [
       { key: 'host',        label: 'rs.f_host_ip',     type: 'text', placeholder: '192.168.1.10', required: true },
       { key: 'export_path', label: 'rs.f_nfs_export',  type: 'text', placeholder: '/srv/partage', required: true },
@@ -114,7 +108,6 @@ const PROVIDERS: ProviderDef[] = [
   {
     value: 'gdrive',
     label: 'Google Drive',
-    emoji: '🔵',
     fields: [
       { key: 'client_id',     label: 'rs.f_client_id',     type: 'text',     placeholder: '1234…apps.googleusercontent.com', required: true },
       { key: 'client_secret', label: 'rs.f_client_secret', type: 'password', placeholder: 'GOC…', required: true },
@@ -126,7 +119,6 @@ const PROVIDERS: ProviderDef[] = [
   {
     value: 'dropbox',
     label: 'Dropbox',
-    emoji: '📦',
     fields: [
       { key: 'access_token', label: 'rs.f_access_token', type: 'password', placeholder: 'sl.…', required: true },
       { key: 'base_path',    label: 'rs.f_base_path',    type: 'text',     placeholder: '/' },
@@ -165,6 +157,7 @@ function ConnectionRow({ conn }: { conn: RemoteConnection }) {
   const { t, i18n } = useTranslation('drive')
   const qc = useQueryClient()
   const [expanded, setExpanded] = useState(false)
+  const [editing,  setEditing]  = useState(false)
   const def = providerDef(conn.provider)
   const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm()
 
@@ -185,7 +178,7 @@ function ConnectionRow({ conn }: { conn: RemoteConnection }) {
       {/* Header row */}
       <div className="flex items-center gap-3 p-3">
         <div className="w-9 h-9 rounded-lg bg-surface-2 flex items-center justify-center text-lg flex-shrink-0">
-          {def.emoji}
+          <ProviderIcon provider={conn.provider} size={20} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -208,6 +201,13 @@ function ConnectionRow({ conn }: { conn: RemoteConnection }) {
             className="p-1.5 rounded-lg hover:bg-surface-2 text-text-secondary hover:text-primary transition-colors disabled:opacity-50"
           >
             {testMutation.isPending ? <Loader2 size={15} className="animate-spin" /> : <Zap size={15} />}
+          </button>
+          <button
+            onClick={() => setEditing(v => !v)}
+            title={t('rs.edit_title_short')}
+            className="p-1.5 rounded-lg hover:bg-surface-2 text-text-secondary hover:text-primary transition-colors"
+          >
+            <Pencil size={15} />
           </button>
           <button
             onClick={() => setExpanded(v => !v)}
@@ -259,6 +259,17 @@ function ConnectionRow({ conn }: { conn: RemoteConnection }) {
         </div>
       )}
 
+      {/* Inline edit — in place on the row, not in a modal. */}
+      {editing && (
+        <div className="px-3 pb-3">
+          <ConnectionForm
+            existing={conn}
+            onCancel={() => setEditing(false)}
+            onSaved={() => setEditing(false)}
+          />
+        </div>
+      )}
+
       {/* Expanded details */}
       {expanded && (
         <div className="border-t border-border px-3 py-2 space-y-1 text-xs text-text-secondary bg-surface-1">
@@ -292,14 +303,67 @@ function ConnectionRow({ conn }: { conn: RemoteConnection }) {
 
 // ── Add connection form ───────────────────────────────────────────────────────
 
-function AddConnectionForm({ onCancel, onSaved }: { onCancel: () => void; onSaved: () => void }) {
+/**
+ * Creates a mount, or edits an existing one.
+ *
+ * Editing prefills what the owner typed — host, share, username, domain, paths —
+ * and leaves ONLY the secrets blank, because those never leave the server. A
+ * blank secret therefore means "keep the current one", which is what lets a user
+ * fix a typo in the host without re-typing the password. The provider is frozen:
+ * swapping it would mean a different set of fields, i.e. another mount.
+ *
+ * A mount whose config cannot be decrypted has nothing to prefill; the form then
+ * falls back to a full re-entry and says so.
+ */
+function ConnectionForm({ existing, onCancel, onSaved }: {
+  existing?: RemoteConnection
+  onCancel:  () => void
+  onSaved:   () => void
+}) {
   const { t } = useTranslation('drive')
   const qc = useQueryClient()
-  const [name,     setName]     = useState('')
-  const [provider, setProvider] = useState('webdav')
+  const editing = existing !== undefined
+  const [name,     setName]     = useState(existing?.name ?? '')
+  const [provider, setProvider] = useState(existing?.provider ?? 'webdav')
   const [fields,   setFields]   = useState<Record<string, string>>({})
+  const [prefilled, setPrefilled] = useState(false)
+
+  const { data: stored, isLoading: loadingCfg, error: cfgError } = useQuery({
+    queryKey: ['remote-config', existing?.id],
+    queryFn:  () => getRemoteConfig(existing!.id),
+    enabled:  editing,
+    retry:    false,
+    staleTime: 0,
+    gcTime:   0,
+  })
+
+  // Prefill once: re-running on every render would fight the user's typing.
+  useEffect(() => {
+    if (!stored || prefilled) return
+    const next: Record<string, string> = {}
+    for (const [k, v] of Object.entries(stored.config)) {
+      if (v !== null && v !== undefined) next[k] = String(v)
+    }
+    setFields(next)
+    setPrefilled(true)
+  }, [stored, prefilled])
+
+  const secretsSet = stored?.secrets_set ?? []
+  const unreadable = (cfgError as { code?: string } | null)?.code === 'MOUNT_CONFIG_UNREADABLE'
 
   const def = providerDef(provider)
+
+  // Share discovery: a server's share NAME and its COMMENT differ, and typing
+  // the comment is what fails with "partage introuvable".
+  const shares = useMutation({
+    mutationFn: () => listSmbShares({
+      host:     (fields.host ?? '').trim(),
+      username: (fields.username ?? '').trim() || undefined,
+      password: (fields.password ?? '').trim() || undefined,
+      domain:   (fields.domain ?? '').trim() || undefined,
+      mountId:  existing?.id,
+    }),
+  })
 
   const setField = (key: string, value: string) =>
     setFields(prev => ({ ...prev, [key]: value }))
@@ -319,8 +383,9 @@ function AddConnectionForm({ onCancel, onSaved }: { onCancel: () => void; onSave
             : v.trim()
         }
       }
+      if (existing) return updateRemote(existing.id, { name: name.trim(), config })
       const dto: CreateRemoteDto = { name: name.trim(), provider, config }
-      return filesApi.createRemote(dto)
+      return filesApi.createRemote(dto).then(() => undefined)
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['remotes'] })
@@ -328,12 +393,24 @@ function AddConnectionForm({ onCancel, onSaved }: { onCancel: () => void; onSave
     },
   })
 
+  // A required secret already stored counts as satisfied: leaving it blank keeps it.
   const canSubmit = name.trim().length > 0 &&
-    def.fields.filter(f => f.required).every(f => (fields[f.key] ?? '').trim().length > 0)
+    def.fields.filter(f => f.required).every(f =>
+      (fields[f.key] ?? '').trim().length > 0 || secretsSet.includes(f.key))
 
   return (
     <div className="bg-surface-1 rounded-xl border border-border p-4 mt-2">
-      <h3 className="text-sm font-semibold text-text-primary mb-3">{t('rs.new_title')}</h3>
+      <h3 className="text-sm font-semibold text-text-primary mb-3">
+        {editing ? t('rs.edit_title', { name: existing.name }) : t('rs.new_title')}
+      </h3>
+
+      {editing && (
+        <p className="text-xs text-text-secondary bg-surface-2 border border-border rounded-lg px-3 py-2 mb-3">
+          {loadingCfg ? t('common.loading')
+            : unreadable ? t('rs.edit_hint')
+            : t('rs.edit_hint_kept')}
+        </p>
+      )}
 
       <div className="space-y-3">
         {/* Name */}
@@ -349,51 +426,113 @@ function AddConnectionForm({ onCancel, onSaved }: { onCancel: () => void; onSave
           />
         </div>
 
-        {/* Provider */}
+        {/* Provider — frozen while editing (see the component's doc comment). */}
         <div>
           <label className="block text-xs font-medium text-text-secondary mb-1">{t('rs.type_label')}</label>
-          <Dropdown
-            value={provider}
-            onChange={v => handleProviderChange(v)}
-            options={PROVIDERS.map(p => ({ value: p.value, label: `${p.emoji} ${p.label}` }))}
-          />
+          {editing ? (
+            <p className="text-sm text-text-primary px-3 py-2 rounded-lg bg-surface-2 border border-border">
+              <span className="inline-flex items-center gap-2"><ProviderIcon provider={provider} size={16} />{def.label}</span>
+            </p>
+          ) : (
+            <Dropdown
+              value={provider}
+              onChange={v => handleProviderChange(v)}
+              options={PROVIDERS.map(p => ({ value: p.value, label: p.label, icon: <ProviderIcon provider={p.value} size={16} /> }))}
+            />
+          )}
         </div>
 
         {/* Provider-specific fields */}
-        {def.fields.map(f => (
-          <div key={f.key}>
-            <label className="block text-xs font-medium text-text-secondary mb-1">
-              {t(f.label)} {f.required && <span className="text-danger">*</span>}
-            </label>
-            {f.type === 'textarea' ? (
-              <Textarea
-                value={fields[f.key] ?? ''}
-                onChange={e => setField(f.key, e.target.value)}
-                placeholder={f.phKey ? t(f.phKey) : f.placeholder}
-                rows={4}
-                className="font-mono"
-              />
-            ) : (
-              <Input
-                type={f.type}
-                value={fields[f.key] ?? ''}
-                onChange={e => setField(f.key, e.target.value)}
-                placeholder={f.phKey ? t(f.phKey) : f.placeholder}
-              />
-            )}
-          </div>
-        ))}
+        {def.fields.map(f => {
+          // A secret already on file: say so in the placeholder rather than show
+          // a fake value, so "blank = keep" reads as deliberate, not forgotten.
+          const kept = secretsSet.includes(f.key)
+          const ph = kept ? t('rs.field_unchanged') : (f.phKey ? t(f.phKey) : f.placeholder)
+          return (
+            <div key={f.key}>
+              <label className="block text-xs font-medium text-text-secondary mb-1">
+                {t(f.label)} {f.required && !kept && <span className="text-danger">*</span>}
+              </label>
+              {f.type === 'textarea' ? (
+                <Textarea
+                  value={fields[f.key] ?? ''}
+                  onChange={e => setField(f.key, e.target.value)}
+                  placeholder={ph}
+                  rows={4}
+                  className="font-mono"
+                />
+              ) : (
+                <Input
+                  type={f.type}
+                  value={fields[f.key] ?? ''}
+                  onChange={e => setField(f.key, e.target.value)}
+                  placeholder={ph}
+                />
+              )}
+
+              {f.key === 'share_name' && provider === 'smb' && (
+                <div className="mt-1.5">
+                  <button
+                    type="button"
+                    onClick={() => shares.mutate()}
+                    disabled={!(fields.host ?? '').trim() || shares.isPending}
+                    className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline disabled:opacity-50 disabled:no-underline"
+                  >
+                    {shares.isPending
+                      ? <Loader2 size={13} className="animate-spin" />
+                      : <ListTree size={13} />}
+                    {t('rs.list_shares')}
+                  </button>
+
+                  {shares.isError && (
+                    <p className="mt-1 text-xs text-danger">
+                      {(shares.error as { message?: string })?.message ?? t('rs.shares_failed')}
+                    </p>
+                  )}
+                  {shares.isSuccess && shares.data.length === 0 && (
+                    <p className="mt-1 text-xs text-text-tertiary">{t('rs.shares_none')}</p>
+                  )}
+                  {shares.isSuccess && shares.data.length > 0 && (
+                    <ul className="mt-1.5 rounded-lg border border-border divide-y divide-border overflow-hidden">
+                      {shares.data.map(s => (
+                        <li key={s.name}>
+                          <button
+                            type="button"
+                            onClick={() => setField('share_name', s.name)}
+                            className={`w-full text-left px-2.5 py-1.5 hover:bg-surface-2 transition-colors ${
+                              fields.share_name === s.name ? 'bg-primary/5' : ''
+                            }`}
+                          >
+                            {/* Name first and in code type: it is the value that
+                                goes in the field. The comment is only a label. */}
+                            <span className="font-mono text-xs text-text-primary">{s.name}</span>
+                            {s.comment && (
+                              <span className="ml-2 text-xs text-text-tertiary">{s.comment}</span>
+                            )}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </div>
+          )
+        })}
 
         {mutation.isError && (
           <p className="text-xs text-danger bg-danger/5 border border-danger/20 rounded-lg px-3 py-2">
-            {(mutation.error as { response?: { data?: { message?: string } } })?.response?.data?.message ?? t('rs.err_create')}
+            {/* The API client flattens failures to a bare { code, message }, so
+                the server's reason lives at the root — reading `response.data`
+                here always fell through to the generic label. */}
+            {(mutation.error as { message?: string })?.message ?? t('rs.err_create')}
           </p>
         )}
 
         <div className="flex gap-2 justify-end pt-1">
           <Button variant="secondary" size="sm" onClick={onCancel} disabled={mutation.isPending}>{t('common.cancel')}</Button>
           <Button size="sm" onClick={() => mutation.mutate()} disabled={!canSubmit} loading={mutation.isPending}>
-            {t('rs.create_btn')}
+            {editing ? t('rs.save_btn') : t('rs.create_btn')}
           </Button>
         </div>
       </div>
@@ -416,24 +555,21 @@ export default function RemoteStoragePanel() {
 
   if (!remotesPanelOpen) return null
 
+  // A floating window, not a full-height drawer: managing mounts is a side
+  // errand, and the drawer's backdrop hid the very files the user was placing.
+  // No footer — nothing here is confirmed, each row acts on its own.
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-end">
-      <div className="absolute inset-0 bg-black/30" onClick={closeRemotesPanel} />
-
-      <div className="relative bg-white w-full max-w-md h-full shadow-2xl flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border flex-shrink-0">
-          <div className="flex items-center gap-2">
-            <Server size={18} className="text-primary" />
-            <h2 className="text-base font-semibold text-text-primary">{t('rs.panel_title')}</h2>
-          </div>
-          <button onClick={closeRemotesPanel} className="p-1.5 rounded-lg hover:bg-surface-2 text-text-secondary transition-colors">
-            <X size={18} />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto px-5 py-4">
+    <FloatingWindow
+      title={t('rs.panel_title')}
+      icon={<Server size={17} className="text-primary" />}
+      onClose={closeRemotesPanel}
+      defaultWidth={560}
+      defaultHeight={620}
+      minWidth={420}
+      minHeight={360}
+      resizable
+    >
+        <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 size={24} className="animate-spin text-primary" />
@@ -455,7 +591,7 @@ export default function RemoteStoragePanel() {
           )}
 
           {showAdd
-            ? <AddConnectionForm onCancel={() => setShowAdd(false)} onSaved={() => setShowAdd(false)} />
+            ? <ConnectionForm onCancel={() => setShowAdd(false)} onSaved={() => setShowAdd(false)} />
             : (
               <button
                 onClick={() => setShowAdd(true)}
@@ -466,7 +602,6 @@ export default function RemoteStoragePanel() {
             )
           }
         </div>
-      </div>
-    </div>
+    </FloatingWindow>
   )
 }

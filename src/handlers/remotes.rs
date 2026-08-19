@@ -64,12 +64,50 @@ async fn forward_stream(state: &AppState, path: &str) -> Result<Response, FilesE
 
 // ── Handlers (proxy) ──────────────────────────────────────────────────────────
 
+/// Refuses when the administrator turned third-party storage off instance-wide.
+///
+/// `list_connections` and `delete_connection` deliberately DO NOT call this: a
+/// user whose connections have just become inert must still be able to see them
+/// and clean them up. Everything that would actually REACH a third-party server
+/// is closed.
+fn ensure_remote_storage_enabled(state: &AppState) -> Result<(), FilesError> {
+    if state.instance().remote_storage_enabled {
+        return Ok(());
+    }
+    Err(FilesError::PolicyDisabled(
+        "Les stockages distants sont désactivés sur cette instance".into(),
+    ))
+}
+
 pub async fn list_connections(State(state): State<AppState>, Extension(user): Extension<FilesUser>) -> Result<Response, FilesError> {
     forward_json(&state, Method::GET, &format!("/internal/storage/mounts/{}", user.id), None).await
 }
 
 pub async fn create_connection(State(state): State<AppState>, Extension(user): Extension<FilesUser>, Json(dto): Json<Value>) -> Result<Response, FilesError> {
+    ensure_remote_storage_enabled(&state)?;
     forward_json(&state, Method::POST, &format!("/internal/storage/mounts/{}", user.id), Some(dto)).await
+}
+
+/// Shares advertised by an SMB server, to fill the "share name" field from a
+/// list rather than from memory. Gated on the instance switch: it reaches a
+/// third-party server.
+pub async fn smb_shares(State(state): State<AppState>, Extension(user): Extension<FilesUser>, Json(dto): Json<Value>) -> Result<Response, FilesError> {
+    ensure_remote_storage_enabled(&state)?;
+    forward_json(&state, Method::POST, &format!("/internal/storage/smb-shares/{}", user.id), Some(dto)).await
+}
+
+/// Redacted config of a mount, for the edit form. Secrets stay on the server —
+/// only their NAMES come back. Like the two above, deliberately not gated on the
+/// instance switch: it is repair work.
+pub async fn get_connection_config(State(state): State<AppState>, Extension(user): Extension<FilesUser>, Path(id): Path<Uuid>) -> Result<Response, FilesError> {
+    forward_json(&state, Method::GET, &format!("/internal/storage/mounts/{}/{}/config", user.id, id), None).await
+}
+
+/// Like `list_connections` and `delete_connection`, this does NOT require remote
+/// storage to be enabled: correcting the credentials of a mount is repair work,
+/// and locking it behind the switch would trap a user whose mount is broken.
+pub async fn update_connection(State(state): State<AppState>, Extension(user): Extension<FilesUser>, Path(id): Path<Uuid>, Json(dto): Json<Value>) -> Result<Response, FilesError> {
+    forward_json(&state, Method::PATCH, &format!("/internal/storage/mounts/{}/{}", user.id, id), Some(dto)).await
 }
 
 pub async fn delete_connection(State(state): State<AppState>, Extension(user): Extension<FilesUser>, Path(id): Path<Uuid>) -> Result<Response, FilesError> {
@@ -77,34 +115,42 @@ pub async fn delete_connection(State(state): State<AppState>, Extension(user): E
 }
 
 pub async fn test_connection(State(state): State<AppState>, Extension(user): Extension<FilesUser>, Path(id): Path<Uuid>) -> Result<Response, FilesError> {
+    ensure_remote_storage_enabled(&state)?;
     forward_json(&state, Method::POST, &format!("/internal/storage/mounts/{}/{}/test", user.id, id), None).await
 }
 
 pub async fn list_remote_root(State(state): State<AppState>, Extension(user): Extension<FilesUser>, Path(id): Path<Uuid>) -> Result<Response, FilesError> {
+    ensure_remote_storage_enabled(&state)?;
     forward_json(&state, Method::GET, &format!("/internal/storage/mounts/{}/{}/browse", user.id, id), None).await
 }
 
 pub async fn list_remote_dir(State(state): State<AppState>, Extension(user): Extension<FilesUser>, Path((id, path)): Path<(Uuid, String)>) -> Result<Response, FilesError> {
+    ensure_remote_storage_enabled(&state)?;
     forward_json(&state, Method::GET, &format!("/internal/storage/mounts/{}/{}/browse/{}", user.id, id, enc_path(&path)), None).await
 }
 
 pub async fn get_remote_file(State(state): State<AppState>, Extension(user): Extension<FilesUser>, Path((id, path)): Path<(Uuid, String)>) -> Result<Response, FilesError> {
+    ensure_remote_storage_enabled(&state)?;
     forward_stream(&state, &format!("/internal/storage/mounts/{}/{}/file/{}", user.id, id, enc_path(&path))).await
 }
 
 pub async fn delete_remote_entry(State(state): State<AppState>, Extension(user): Extension<FilesUser>, Path((id, path)): Path<(Uuid, String)>) -> Result<Response, FilesError> {
+    ensure_remote_storage_enabled(&state)?;
     forward_json(&state, Method::DELETE, &format!("/internal/storage/mounts/{}/{}/entry/{}", user.id, id, enc_path(&path)), None).await
 }
 
 pub async fn rename_remote_entry(State(state): State<AppState>, Extension(user): Extension<FilesUser>, Path((id, path)): Path<(Uuid, String)>, Json(dto): Json<Value>) -> Result<Response, FilesError> {
+    ensure_remote_storage_enabled(&state)?;
     forward_json(&state, Method::POST, &format!("/internal/storage/mounts/{}/{}/rename/{}", user.id, id, enc_path(&path)), Some(dto)).await
 }
 
 pub async fn create_remote_dir(State(state): State<AppState>, Extension(user): Extension<FilesUser>, Path((id, path)): Path<(Uuid, String)>) -> Result<Response, FilesError> {
+    ensure_remote_storage_enabled(&state)?;
     forward_json(&state, Method::POST, &format!("/internal/storage/mounts/{}/{}/mkdir/{}", user.id, id, enc_path(&path)), None).await
 }
 
 pub async fn upload_remote(State(state): State<AppState>, Extension(user): Extension<FilesUser>, Path((id, path)): Path<(Uuid, String)>, body: Body) -> Result<Response, FilesError> {
+    ensure_remote_storage_enabled(&state)?;
     let url = format!("{}/internal/storage/mounts/{}/{}/upload/{}",
         state.settings.core.url.trim_end_matches('/'), user.id, id, enc_path(&path));
     let resp = reqwest::Client::new()

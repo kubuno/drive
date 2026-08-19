@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { Star, Trash2, RotateCcw, MoreVertical, Play } from 'lucide-react'
 import { filesApi, getFileIcon, type FileItem } from '@kubuno/drive'
 import { useAuthStore, useImageCacheStore, usePendingKind, pendingBoxClass, pendingBoxStyle } from '@kubuno/sdk'
-import { FloatCheckbox } from '@ui'
 import { isCoarsePointer, useLongPress } from '../openable'
 import { TagDots } from '../TagUI'
 import type { FileVersionStats } from '../fileVersions'
@@ -13,7 +12,7 @@ import VersionBadge from './VersionBadge'
 const _videoPreviewCache = new Map<string, string>()
 
 export default function FileCard({
-  file, trashed, selected, preSelected, focused, onSelect, onToggle, onContextMenu, onDragStart, onRestore, onDelete, onOpen,
+  file, trashed, selected, preSelected, focused, onSelect, onContextMenu, onDragStart, onRestore, onDelete, onOpen,
   thumbH = 128, iconScale = 1, dense = false,
 }: {
   file: FileItem
@@ -22,7 +21,6 @@ export default function FileCard({
   preSelected?: boolean
   focused?: boolean
   onSelect: (id: string, e: React.MouseEvent) => void
-  onToggle: (id: string) => void
   onContextMenu: (e: React.MouseEvent) => void
   onDragStart: () => void
   onRestore: () => void
@@ -147,11 +145,6 @@ export default function FileCard({
       onDoubleClick={handleDoubleClick}
     >
       {/* Checkbox overlay — top-left corner, consistent with FolderCard. */}
-      <FloatCheckbox
-        selected={selected}
-        onToggle={() => onToggle(file.id)}
-        className="absolute -top-1.5 -left-1.5 z-10"
-      />
 
       {/* Header: type icon + name + star + menu (the checkbox covers the icon on hover) */}
       <div className={`flex items-center gap-2 ${dense ? 'px-2 h-8' : 'px-3 h-10'}`}>

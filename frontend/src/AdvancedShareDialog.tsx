@@ -151,8 +151,17 @@ export default function AdvancedShareDialog({ target, onClose }: Props) {
         }
       }
       void loadMine()
-    } catch {
-      setCreateError('La création du lien a échoué. Veuillez réessayer.')
+    } catch (err) {
+      // An instance policy (public links off, password required…) answers with
+      // a sentence that names the reason. Showing "réessayer" instead would send
+      // the user round a loop that cannot succeed.
+      const body = (err as { response?: { data?: { error?: string; message?: string } } })
+        .response?.data
+      setCreateError(
+        body?.error === 'POLICY_DISABLED' && body.message
+          ? body.message
+          : 'La création du lien a échoué. Veuillez réessayer.',
+      )
     } finally {
       setCreating(false)
     }

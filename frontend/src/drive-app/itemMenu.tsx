@@ -113,7 +113,8 @@ export function buildItemMenuItems(
 
   if (isTrashed) {
     items.push({ type: 'action', label: tr('ctx.restore'), icon: <RotateCcw size={14} />, onClick: h.onRestore, disabled: isMultiSelection })
-    items.push({ type: 'action', label: tr('ctx.delete_perm'), icon: <Trash2 size={14} />, danger: true, onClick: h.onDelete, disabled: isPlaying || isMultiSelection })
+    // Inside the trash, the Delete key deletes permanently (see useDriveSelection).
+    items.push({ type: 'action', label: tr('ctx.delete_perm'), icon: <Trash2 size={14} />, danger: true, shortcut: 'Suppr', onClick: h.onDelete, disabled: isPlaying || isMultiSelection })
     return items
   }
 
@@ -242,6 +243,8 @@ export function buildItemMenuItems(
       >
         <Trash2 size={14} />
         <span className="flex-1">{isFile ? tr('ctx.trash') : tr('ctx.trash_folder')}</span>
+        {/* Delete key → trash (useDriveSelection); Shift keeps the permanent variant. */}
+        {!trashDisabled && <span className="text-text-tertiary text-xs">Suppr</span>}
         {!trashDisabled && <span className="text-text-tertiary text-xs opacity-60">{tr('ctx.shift_short')}</span>}
       </button>
     ),

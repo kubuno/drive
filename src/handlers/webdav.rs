@@ -15,10 +15,23 @@ use crate::{errors::Result, middleware::FilesUser, models, services, state::AppS
 
 // ── Token management API (JWT-authed regular endpoints) ───────────────────────
 
+/// Refuses when the administrator turned the WebDAV surface off. Handing out a
+/// token for a protocol that answers 403 would be a promise the instance does
+/// not keep, so the issuance is closed at the same time as the protocol.
+fn ensure_webdav_enabled(state: &AppState) -> Result<()> {
+    if state.instance().webdav_enabled {
+        return Ok(());
+    }
+    Err(crate::errors::FilesError::PolicyDisabled(
+        "L'accès WebDAV est désactivé sur cette instance".into(),
+    ))
+}
+
 pub async fn get_webdav_token(
     State(state): State<AppState>,
     Extension(user): Extension<FilesUser>,
 ) -> Result<Json<Value>> {
+    ensure_webdav_enabled(&state)?;
     let token = ensure_webdav_token(&state.db, user.id).await?;
     Ok(Json(json!({ "token": token })))
 }
@@ -27,6 +40,7 @@ pub async fn regenerate_webdav_token(
     State(state): State<AppState>,
     Extension(user): Extension<FilesUser>,
 ) -> Result<Json<Value>> {
+    ensure_webdav_enabled(&state)?;
     let token = new_webdav_token(&state.db, user.id).await?;
     Ok(Json(json!({ "token": token })))
 }
@@ -63,6 +77,12 @@ async fn new_webdav_token(db: &sqlx::PgPool, user_id: Uuid) -> Result<String> {
 // ── WebDAV protocol dispatcher (Basic Auth) ───────────────────────────────────
 
 pub async fn webdav_dispatch(State(state): State<AppState>, req: Request) -> Response {
+    // Checked before authentication: a closed surface must not double as an
+    // oracle telling a caller whether a token is valid.
+    if !state.instance().webdav_enabled {
+        return (StatusCode::FORBIDDEN, "WebDAV désactivé sur cette instance").into_response();
+    }
+
     let owner_id = match authenticate(&state.db, req.headers()).await {
         Some(id) => id,
         None     => {
@@ -113,7 +133,7 @@ pub async fn webdav_dispatch(State(state): State<AppState>, req: Request) -> Res
         }
 
         "PUT" => {
-            let max = state.settings.files.max_upload_bytes;
+            let max = state.max_upload_bytes();
             let mime = headers
                 .get(header::CONTENT_TYPE)
                 .and_then(|v| v.to_str().ok())
@@ -373,7 +393,7 @@ async fn children_xml(db: &sqlx::PgPool, owner: Uuid, folder_id: Option<Uuid>, p
 
     for (name, size, mime, dt) in &files {
         let href = if parent == "/" { format!("/webdav/{name}") } else { format!("/webdav{parent}/{name}") };
-        out.push_str(&prop_file(&href, name, *size, &mime, *dt));
+        out.push_str(&prop_file(&href, name, *size, mime, *dt));
     }
 
     out
@@ -407,10 +427,16 @@ async fn dav_get(state: &AppState, owner: Uuid, dav_path: &str, head: bool) -> R
 
 // ── PUT ───────────────────────────────────────────────────────────────────────
 
-async fn dav_put(state: &AppState, owner: Uuid, dav_path: &str, body: Bytes, mime: &str, max: u64) -> Response {
+async fn dav_put(state: &AppState, owner: Uuid, dav_path: &str, body: Bytes, _mime: &str, max: u64) -> Response {
     let s = norm(dav_path);
     let (parent, name) = split_path(s);
     if name.is_empty() { return StatusCode::BAD_REQUEST.into_response(); }
+
+    // The block list applies to the quiet door too: a desktop client is exactly
+    // where someone would drop the file the web upload refused.
+    if state.check_upload_name(&name).is_err() {
+        return StatusCode::FORBIDDEN.into_response();
+    }
 
     let folder_id: Option<Uuid> = if parent == "/" {
         None

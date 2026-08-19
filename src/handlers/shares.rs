@@ -10,9 +10,24 @@ use crate::{
     errors::Result,
     middleware::FilesUser,
     models::CreateShareDto,
-    services::shares,
+    services::shares::{self, SharePolicy},
     state::AppState,
 };
+
+/// Projects the instance settings onto the public-link policy the share service
+/// applies. Kept here rather than in the service so the service stays ignorant
+/// of where the administrator's choices come from.
+pub fn share_policy(state: &AppState) -> SharePolicy {
+    let inst = state.instance();
+    SharePolicy {
+        public_links_enabled: inst.public_links_enabled,
+        max_expiry_days:      inst.share_max_expiry_days,
+        default_expiry_days:  inst.share_default_expiry_days,
+        require_password:     inst.share_require_password,
+        download_enabled:     inst.share_public_download_enabled,
+        max_downloads:        inst.share_max_downloads,
+    }
+}
 
 #[derive(Debug, Deserialize)]
 pub struct RecipientQuery {
@@ -63,7 +78,7 @@ pub async fn create(
     Extension(user): Extension<FilesUser>,
     Json(dto): Json<CreateShareDto>,
 ) -> Result<Json<Value>> {
-    let share = shares::create_share(&state.db, user.id, dto).await?;
+    let share = shares::create_share(&state.db, user.id, dto, share_policy(&state)).await?;
     Ok(Json(json!({ "share": share })))
 }
 

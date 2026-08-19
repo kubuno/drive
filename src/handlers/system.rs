@@ -69,7 +69,10 @@ pub async fn create_folder(State(s): State<AppState>, Extension(user): Extension
 
 pub async fn upload(State(s): State<AppState>, Extension(user): Extension<FilesUser>, mut multipart: Multipart) -> Result<Json<Value>> {
     require_admin(&user)?;
-    let max = s.settings.files.max_upload_bytes;
+    // Size ceiling only: the extension block list polices what USERS hand each
+    // other, and this directory is the administrator's own asset store (fonts,
+    // wallpapers, icons) reachable by nobody else.
+    let max = s.max_upload_bytes();
     let (mut folder_id, mut filename, mut data, mut overwrite) = (None::<Uuid>, None::<String>, None::<Bytes>, false);
     while let Some(field) = multipart.next_field().await.map_err(|e| FilesError::Validation(e.to_string()))? {
         match field.name() {

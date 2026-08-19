@@ -13,6 +13,12 @@ pub enum FilesError {
     #[error("Accès refusé")]
     Forbidden,
 
+    /// Refused by an instance-wide policy the administrator set in the console.
+    /// Distinct from `Forbidden` so the user reads WHY rather than a bare
+    /// "access denied" — an administrative rule is not a permission bug.
+    #[error("{0}")]
+    PolicyDisabled(String),
+
     #[error("Ressource introuvable: {0}")]
     NotFound(String),
 
@@ -55,6 +61,7 @@ impl IntoResponse for FilesError {
         let (status, code, message) = match &self {
             FilesError::Unauthorized    => (StatusCode::UNAUTHORIZED,           "UNAUTHORIZED",    self.to_string()),
             FilesError::Forbidden       => (StatusCode::FORBIDDEN,              "FORBIDDEN",       self.to_string()),
+            FilesError::PolicyDisabled(_) => (StatusCode::FORBIDDEN,            "POLICY_DISABLED", self.to_string()),
             FilesError::NotFound(_)     => (StatusCode::NOT_FOUND,              "NOT_FOUND",       self.to_string()),
             FilesError::Validation(_)   => (StatusCode::UNPROCESSABLE_ENTITY,   "VALIDATION",      self.to_string()),
             FilesError::Conflict(_)     => (StatusCode::CONFLICT,               "CONFLICT",        self.to_string()),

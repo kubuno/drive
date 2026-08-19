@@ -11,11 +11,10 @@ use uuid::Uuid;
 
 use crate::{errors::Result, services::files, state::AppState};
 
-/// Days a trashed file is kept before the auto-purge removes it.
-pub const TRASH_RETENTION_DAYS: i32 = 30;
-
 /// Headline stats for a user's trash (counts + reclaimable file size).
-pub async fn trash_stats(db: &PgPool, owner_id: Uuid) -> Result<Value> {
+/// `retention_days` is the instance-wide window, shown so the user knows how
+/// long a trashed file survives before the auto-purge takes it.
+pub async fn trash_stats(db: &PgPool, owner_id: Uuid, retention_days: i32) -> Result<Value> {
     let file_count: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM drive.files WHERE owner_id = $1 AND is_trashed = TRUE",
     )
@@ -42,7 +41,7 @@ pub async fn trash_stats(db: &PgPool, owner_id: Uuid) -> Result<Value> {
         "file_count":   file_count,
         "size_bytes":   file_size,
         "folder_count": folder_count,
-        "retention_days": TRASH_RETENTION_DAYS,
+        "retention_days": retention_days,
     }))
 }
 
@@ -86,7 +85,8 @@ pub async fn purge_old_files(
 pub async fn run_trash_cleaner(state: AppState) {
     loop {
         tokio::time::sleep(Duration::from_secs(3600)).await;
-        let n = purge_old_files(&state.db, &state.storage, TRASH_RETENTION_DAYS).await;
+        let retention = state.instance().trash_retention_days;
+        let n = purge_old_files(&state.db, &state.storage, retention).await;
         if n > 0 {
             tracing::info!("Auto-purge corbeille : {n} fichier(s) supprimé(s) définitivement");
         }

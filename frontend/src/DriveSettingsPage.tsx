@@ -1,13 +1,15 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { api, useAuthStore } from '@kubuno/sdk'
-import { FolderOpen, Save, ArrowLeft, ExternalLink, Check, Info } from 'lucide-react'
-import { Toggle, Button, Radio, RangeSlider, useSaveShortcut} from '@ui'
+import { FolderOpen, ArrowLeft, ExternalLink, Check } from 'lucide-react'
+import { Toggle, Button, Radio, useSaveShortcut } from '@ui'
 import { useModulePrefs } from './userPrefs'
 import { useIsMobile } from './openable'
 import FilesWebDavSettings from './FilesWebDavSettings'
+
+// This page holds ONLY per-user preferences. Instance-wide (admin) settings —
+// the default storage quota among them — live in the core admin console, under
+// Storage and under Modules ▸ Drive, never in a user's own settings page.
 
 // ── Per-user preferences (backend, cross-device via core users.preferences) ─────
 
@@ -177,90 +179,6 @@ function WebDavTab() {
   return <FilesWebDavSettings />
 }
 
-// ── Admin-only global settings (instance, via /admin/settings) ──────────────────
-
-interface FilesSettings {
-  'storage.default_quota_bytes': number
-}
-
-function bytesFromGb(gb: number): number {
-  return Math.round(gb * 1073741824)
-}
-
-function StorageTab() {
-  const { t } = useTranslation('drive')
-  const queryClient = useQueryClient()
-
-  const { data: settings } = useQuery({
-    queryKey: ['admin-settings'],
-    queryFn: () =>
-      api.get<{ settings: { key: string; value: unknown }[] }>('/admin/settings').then((r) => {
-        const map: Record<string, unknown> = {}
-        r.data.settings.forEach((s) => { map[s.key] = s.value })
-        return map as unknown as FilesSettings
-      }),
-  })
-
-  const defaultQuotaGb = settings ? (settings['storage.default_quota_bytes'] as number) / 1073741824 : 10
-  const [defaultQuota, setDefaultQuota] = useState<number | null>(null)
-
-  const save = useMutation({
-    mutationFn: (updates: Record<string, unknown>) => api.patch('/admin/settings', updates),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-settings'] }),
-  })
-
-  function handleSave() {
-    const updates: Record<string, unknown> = {}
-    if (defaultQuota !== null) updates['storage.default_quota_bytes'] = bytesFromGb(defaultQuota)
-    if (Object.keys(updates).length > 0) {
-      save.mutate(updates, { onSuccess: () => setDefaultQuota(null) })
-    }
-  }
-
-  const currentDefaultQuota = defaultQuota ?? defaultQuotaGb
-  const isDirty = defaultQuota !== null
-
-  return (
-    <div>
-      <SettingsRow
-        label={t('settings_page.quota_label')}
-        description={t('drive_quota_desc', { defaultValue: 'Quota de stockage attribué par défaut à chaque utilisateur.' })}
-      >
-        <div className="flex items-center gap-3 max-w-md">
-          <RangeSlider
-            min={1}
-            max={100}
-            step={1}
-            value={currentDefaultQuota}
-            onChange={(v) => setDefaultQuota(v)}
-            className="flex-1"
-            aria-label={t('settings_page.quota_label')}
-          />
-          <span className="text-sm font-medium text-text-primary w-16 text-right">
-            {currentDefaultQuota} {t('common.gb')}
-          </span>
-        </div>
-      </SettingsRow>
-
-      <SettingsRow label={t('drive_quota_info_label', { defaultValue: 'À savoir' })}>
-        <div className="flex items-start gap-2">
-          <Info size={15} className="text-text-tertiary mt-0.5 shrink-0" />
-          <p className="text-xs text-text-secondary">
-            {t('settings_page.info_1')} <code className="font-mono bg-surface-2 px-1 rounded">files.max_upload_bytes</code>
-            &nbsp;{t('settings_page.info_2')}
-          </p>
-        </div>
-      </SettingsRow>
-
-      <div className="pt-5 flex justify-end">
-        <Button onClick={handleSave} disabled={!isDirty || save.isPending} icon={<Save size={15} />}>
-          {save.isPending ? t('common.saving') : t('common.save')}
-        </Button>
-      </div>
-    </div>
-  )
-}
-
 function AboutTab() {
   const { t } = useTranslation('drive')
   return (
@@ -287,22 +205,19 @@ function AboutTab() {
 
 // ── Main page (mail-style breadcrumb + tab bar) ─────────────────────────────────
 
-type Tab = 'preferences' | 'webdav' | 'storage' | 'about'
+type Tab = 'preferences' | 'webdav' | 'about'
 
 export default function DriveSettingsPage() {
   const { t } = useTranslation('drive')
-  const isAdmin = useAuthStore(s => s.user?.role === 'admin')
   const [tab, setTab] = useState<Tab>('preferences')
   const isMobile = useIsMobile()
 
-  // Admin-only tabs (instance-wide settings) are hidden for non-admins.
-  const tabs: { id: Tab; label: string; adminOnly?: boolean }[] = [
+  // Per-user only: nothing here is instance-wide, so no admin gating.
+  const visibleTabs: { id: Tab; label: string }[] = [
     { id: 'preferences', label: t('drive_tab_preferences', { defaultValue: 'Préférences' }) },
     { id: 'webdav',      label: t('drive_tab_webdav', { defaultValue: 'WebDAV' }) },
-    { id: 'storage',     label: t('drive_tab_storage', { defaultValue: 'Stockage' }), adminOnly: true },
     { id: 'about',       label: t('drive_tab_about', { defaultValue: 'À propos' }) },
   ]
-  const visibleTabs = tabs.filter(tb => !tb.adminOnly || isAdmin)
 
   return (
     <div className="flex flex-col h-full bg-white overflow-hidden">
@@ -344,7 +259,6 @@ export default function DriveSettingsPage() {
         <div className={`max-w-3xl mx-auto ${isMobile ? 'px-4 py-4' : 'px-8 py-6'}`}>
           {tab === 'preferences' && <PreferencesTab />}
           {tab === 'webdav'  && <WebDavTab />}
-          {tab === 'storage' && isAdmin && <StorageTab />}
           {tab === 'about'   && <AboutTab />}
         </div>
       </div>

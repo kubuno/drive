@@ -33,6 +33,7 @@ const VERSION_STATS_JOIN: &str = "
 /// Résout le nom final d'un fichier selon la politique d'écrasement :
 /// - `overwrite=true`  : supprime le fichier existant portant ce nom (non corbeille), retourne le nom tel quel
 /// - `overwrite=false` : ajoute " (2)", " (3)"… si conflit (ne détruit rien)
+///
 /// Résout le nom définitif d'un fichier selon la politique de conflit choisie.
 ///
 /// - `overwrite=true` : supprime le fichier existant et retourne le nom tel quel.
@@ -124,6 +125,7 @@ pub async fn folder_virt_path(db: &PgPool, folder_id: Option<Uuid>, owner_id: Uu
 
 // ── CRUD ──────────────────────────────────────────────────────────────────────
 
+#[allow(clippy::too_many_arguments)]
 pub async fn create_file_record(
     db: &PgPool,
     owner_id: Uuid,
@@ -634,6 +636,7 @@ pub async fn update_user_metadata(
 
 /// Créer un fichier en écrivant les bytes en storage + enregistrement DB en une seule opération.
 /// Utilisé par les modules qui génèrent du contenu (Office, PaintSharp…).
+#[allow(clippy::too_many_arguments)]
 pub async fn create_with_bytes(
     db:        &PgPool,
     storage:   &Arc<dyn StorageBackend>,
@@ -734,6 +737,7 @@ pub async fn copy_file(
 }
 
 /// Upload simple (fichier entier en une requête multipart).
+#[allow(clippy::too_many_arguments)]
 pub async fn upload_simple(
     db: &PgPool,
     storage: &Arc<dyn StorageBackend>,

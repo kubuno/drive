@@ -4,6 +4,7 @@ pub mod archive;
 pub mod comments;
 pub mod files;
 pub mod folders;
+pub mod fonts;
 pub mod health;
 pub mod import_url;
 pub mod insights;

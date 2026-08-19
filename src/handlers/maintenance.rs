@@ -13,6 +13,6 @@ pub async fn trash_stats(
     State(state): State<AppState>,
     Extension(user): Extension<FilesUser>,
 ) -> Result<Json<Value>> {
-    let stats = maintenance::trash_stats(&state.db, user.id).await?;
+    let stats = maintenance::trash_stats(&state.db, user.id, state.instance().trash_retention_days).await?;
     Ok(Json(stats))
 }

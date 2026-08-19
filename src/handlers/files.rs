@@ -59,7 +59,7 @@ pub async fn upload(
     Extension(user): Extension<FilesUser>,
     mut multipart: Multipart,
 ) -> Result<Json<Value>> {
-    let max = state.settings.files.max_upload_bytes;
+    let max = state.max_upload_bytes();
     let mut folder_id: Option<Uuid> = None;
     let mut filename: Option<String> = None;
     let mut data: Option<Bytes> = None;
@@ -90,6 +90,8 @@ pub async fn upload(
 
     let name = filename.ok_or_else(|| FilesError::Validation("Champ 'file' manquant".into()))?;
     let bytes = data.ok_or_else(|| FilesError::Validation("Données manquantes".into()))?;
+
+    state.check_upload_name(&name)?;
 
     let file = files::upload_simple(
         &state.db,

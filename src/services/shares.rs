@@ -2,6 +2,7 @@ use argon2::{
     password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Argon2,
 };
+use chrono::{Duration, Utc};
 use rand::Rng;
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -47,10 +48,58 @@ pub fn share_password_ok(share: &Share, provided: Option<&str>) -> bool {
     }
 }
 
+/// The instance policy on PUBLIC links, as the administrator left it in the
+/// console. Passed in by the handler so this service never has to know what an
+/// `InstanceConfig` is; an internal share (one addressed to a named recipient of
+/// the instance) is unaffected by every field here.
+#[derive(Debug, Clone, Copy)]
+pub struct SharePolicy {
+    /// Public links may be created at all.
+    pub public_links_enabled: bool,
+    /// Hard ceiling on a link's lifetime, in days. `0` = none.
+    pub max_expiry_days: i64,
+    /// Lifetime given to a link created without an expiry date, in days.
+    /// `0` = none. Always re-clamped by `max_expiry_days`.
+    pub default_expiry_days: i64,
+    /// A link must carry a password.
+    pub require_password: bool,
+    /// The link may serve the bytes. Off, `can_download` is forced to false.
+    pub download_enabled: bool,
+    /// Ceiling on the number of downloads a link may serve. `0` = none.
+    pub max_downloads: i64,
+}
+
+impl Default for SharePolicy {
+    /// The behaviour shipped before any of these knobs existed: links allowed,
+    /// no ceiling, no password required, download allowed.
+    fn default() -> Self {
+        Self {
+            public_links_enabled: true,
+            max_expiry_days:      0,
+            default_expiry_days:  0,
+            require_password:     false,
+            download_enabled:     true,
+            max_downloads:        0,
+        }
+    }
+}
+
+/// Create a share. `policy` is applied to PUBLIC links only (a share addressed
+/// to a named recipient is internal and unaffected):
+///   * public links disabled instance-wide → the link is refused;
+///   * `require_password` → a link with no password is refused rather than
+///     silently created open;
+///   * `default_expiry_days > 0` → a link created with no expiry gets one;
+///   * `max_expiry_days > 0` caps the lifetime — a link with no expiry, or one
+///     asking for longer, is clamped to that many days from now;
+///   * `download_enabled = false` → `can_download` is forced off;
+///   * `max_downloads > 0` caps the download counter — an unlimited link asked
+///     for becomes a capped one.
 pub async fn create_share(
     db: &PgPool,
     owner_id: Uuid,
     dto: CreateShareDto,
+    policy: SharePolicy,
 ) -> Result<Share> {
     if dto.file_id.is_none() && dto.folder_id.is_none() {
         return Err(FilesError::Validation("file_id ou folder_id requis".into()));
@@ -59,17 +108,72 @@ pub async fn create_share(
         return Err(FilesError::Validation("file_id et folder_id sont exclusifs".into()));
     }
 
+    // A public link has no named recipient. Internal shares (to a recipient) are
+    // never gated by the public-link policy.
+    let is_public = dto.recipient_id.is_none();
+
+    if is_public && !policy.public_links_enabled {
+        return Err(FilesError::PolicyDisabled(
+            "Les liens de partage public sont désactivés sur cette instance".into(),
+        ));
+    }
+
+    // Optional password protection. Trimmed first, so a link "protected" by a
+    // password of spaces is treated as unprotected — and refused below when the
+    // instance requires one.
+    let password = dto.password.as_deref().map(str::trim).filter(|pw| !pw.is_empty());
+
+    if is_public && policy.require_password && password.is_none() {
+        return Err(FilesError::PolicyDisabled(
+            "Cette instance exige un mot de passe sur tout lien de partage public".into(),
+        ));
+    }
+
+    // Expiry, in two steps: give a bare link the instance's default lifetime,
+    // then clamp whatever we hold — an explicit request included — to the
+    // ceiling. `None` on a capped instance becomes the ceiling rather than
+    // "never expires".
+    let expires_at = if is_public {
+        let requested = match (dto.expires_at, policy.default_expiry_days) {
+            (None, days) if days > 0 => Some(Utc::now() + Duration::days(days)),
+            (other, _)               => other,
+        };
+        if policy.max_expiry_days > 0 {
+            let cap = Utc::now() + Duration::days(policy.max_expiry_days);
+            match requested {
+                Some(r) if r <= cap => Some(r),
+                _                   => Some(cap),
+            }
+        } else {
+            requested
+        }
+    } else {
+        dto.expires_at
+    };
+
     // Pour un lien public, on génère un token sauf si c'est un partage interne
-    let token = if dto.recipient_id.is_none() {
+    let token = if is_public {
         Some(generate_token())
     } else {
         None
     };
 
-    // Optional password protection (public links only).
-    let password_hash = match dto.password.as_deref().map(str::trim) {
-        Some(pw) if !pw.is_empty() => Some(hash_share_password(pw)?),
-        _ => None,
+    let password_hash = match password {
+        Some(pw) => Some(hash_share_password(pw)?),
+        None     => None,
+    };
+
+    // A public link that the instance forbids downloading through is stamped
+    // read-only at creation. The download route enforces the same rule live, so
+    // flipping the switch later also closes the links already handed out.
+    let can_download = dto.can_download.unwrap_or(true) && (!is_public || policy.download_enabled);
+
+    // Download ceiling: an unlimited link becomes a capped one, and a request
+    // above the cap is brought back to it.
+    let max_downloads = match (dto.max_downloads, policy.max_downloads) {
+        (_, cap) if cap <= 0 || !is_public => dto.max_downloads,
+        (Some(n), cap) if (n as i64) <= cap => Some(n),
+        (_, cap)                            => Some(cap as i32),
     };
 
     let share = sqlx::query_as::<_, Share>(
@@ -84,12 +188,12 @@ pub async fn create_share(
     .bind(dto.folder_id)
     .bind(&token)
     .bind(dto.recipient_id)
-    .bind(dto.can_download.unwrap_or(true))
+    .bind(can_download)
     .bind(dto.can_upload.unwrap_or(false))
     .bind(dto.can_delete.unwrap_or(false))
     .bind(&password_hash)
-    .bind(dto.expires_at)
-    .bind(dto.max_downloads)
+    .bind(expires_at)
+    .bind(max_downloads)
     .fetch_one(db)
     .await?;
 

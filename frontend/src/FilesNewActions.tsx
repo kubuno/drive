@@ -1,55 +1,83 @@
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
+/**
+ * Items of the sidebar "New" button for Drive — DATA for the project's menu
+ * component (`MenuDropdown` from @ui), contributed through the generic
+ * 'shell.new-actions' extension point (see entry.ts). The function is evaluated
+ * when the menu opens, so labels and store state are always fresh, without hooks.
+ */
+import type { MenuItem } from '@ui'
 import { FolderPlus, Upload, FolderInput, Link2, Server } from 'lucide-react'
-import { useLocation } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
 import { useFilesStore } from '@kubuno/drive'
-import { Slot, SlotRegistry } from '@kubuno/sdk'
-import { useModulesStore } from '@kubuno/sdk'
-const ITEM_CLASS =
-  'flex items-center gap-3 w-full px-3 py-2 text-sm text-text-primary ' +
-  'hover:bg-surface-1 cursor-pointer outline-none'
+import { ExtensionRegistry, i18n, useModulesStore } from '@kubuno/sdk'
 
-export default function FilesNewActions() {
-  const { t } = useTranslation('drive')
-  const { openNewFolder, triggerUpload, triggerFolderUpload, openImportUrl, openRemotesPanel } = useFilesStore()
-  const location      = useLocation()
-  const activeModules = useModulesStore(s => s.activeModules)
-  const activeIds     = new Set(activeModules.map(m => m.module_id))
+/** Extension point where OTHER modules add entries to Drive's "New" menu —
+ *  the data counterpart of the former 'files-new-actions' component slot.
+ *  Contributors register with the same schema as 'shell.new-actions':
+ *    ExtensionRegistry.register(DRIVE_NEW_ACTIONS, '<id>',
+ *      { moduleId: '<id>', items: () => MenuItem[] })
+ */
+export const DRIVE_NEW_ACTIONS = 'drive.new-actions'
 
-  if (!location.pathname.startsWith('/drive')) return null
+export interface DriveNewActionsProvider {
+  /** Owning module — only contributions of ACTIVE modules are shown. */
+  moduleId: string
+  /** Built when the menu opens (fresh labels/state), never at registration time. */
+  items: () => MenuItem[]
+  /** Lower comes first when several providers contribute. */
+  order?: number
+}
 
-  const hasContributors = SlotRegistry.getSlot('files-new-actions').some(e => activeIds.has(e.moduleId))
+export function filesNewActionItems(): MenuItem[] {
+  if (!window.location.pathname.startsWith('/drive')) return []
 
-  return (
-    <>
-      <DropdownMenu.Item onSelect={openNewFolder} className={ITEM_CLASS}>
-        <FolderPlus size={16} className="text-text-secondary" />
-        {t('newfolder.title')}
-      </DropdownMenu.Item>
-      <DropdownMenu.Item onSelect={triggerUpload} className={ITEM_CLASS}>
-        <Upload size={16} className="text-text-secondary" />
-        {t('actions.upload_files')}
-      </DropdownMenu.Item>
-      <DropdownMenu.Item onSelect={triggerFolderUpload} className={ITEM_CLASS}>
-        <FolderInput size={16} className="text-text-secondary" />
-        {t('actions.upload_folder')}
-      </DropdownMenu.Item>
-      <DropdownMenu.Item onSelect={openImportUrl} className={ITEM_CLASS}>
-        <Link2 size={16} className="text-text-secondary" />
-        {t('actions.import_url')}
-      </DropdownMenu.Item>
-      <div className="my-1 h-px bg-border mx-2" />
-      <DropdownMenu.Item onSelect={openRemotesPanel} className={ITEM_CLASS}>
-        <Server size={16} className="text-text-secondary" />
-        {t('actions.remotes')}
-      </DropdownMenu.Item>
+  const t = (key: string) => i18n.t(`drive:${key}`)
+  // Read the store at click time, not at build time — actions stay fresh.
+  const files = () => useFilesStore.getState()
 
-      {hasContributors && (
-        <>
-          <div className="my-1 h-px bg-border mx-2" />
-          <Slot name="files-new-actions" />
-        </>
-      )}
-    </>
+  const items: MenuItem[] = [
+    {
+      type: 'action',
+      label: t('newfolder.title'),
+      icon: <FolderPlus size={16} className="text-text-secondary" />,
+      onClick: () => files().openNewFolder(),
+    },
+    {
+      type: 'action',
+      label: t('actions.upload_files'),
+      icon: <Upload size={16} className="text-text-secondary" />,
+      onClick: () => files().triggerUpload(),
+    },
+    {
+      type: 'action',
+      label: t('actions.upload_folder'),
+      icon: <FolderInput size={16} className="text-text-secondary" />,
+      onClick: () => files().triggerFolderUpload(),
+    },
+    {
+      type: 'action',
+      label: t('actions.import_url'),
+      icon: <Link2 size={16} className="text-text-secondary" />,
+      onClick: () => files().openImportUrl(),
+    },
+    { type: 'separator' },
+    {
+      type: 'action',
+      label: t('actions.remotes'),
+      icon: <Server size={16} className="text-text-secondary" />,
+      onClick: () => files().openRemotesPanel(),
+    },
+  ]
+
+  // Contributions of other ACTIVE modules (e.g. office's "New document"),
+  // read from the 'drive.new-actions' extension point — same active-module
+  // filtering the former <Slot name="files-new-actions"> applied.
+  const activeIds = new Set(
+    useModulesStore.getState().activeModules.map((m) => m.module_id),
   )
+  const contributed = ExtensionRegistry.getAll<DriveNewActionsProvider>(DRIVE_NEW_ACTIONS)
+    .filter((p) => activeIds.has(p.moduleId))
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    .flatMap((p) => p.items())
+  if (contributed.length > 0) items.push({ type: 'separator' }, ...contributed)
+
+  return items
 }

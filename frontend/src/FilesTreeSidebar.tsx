@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Folder as FolderIcon, FolderOpen, ChevronRight, Star, Clock,
   Trash2, Share2, HardDrive, Server, FolderPlus, RefreshCw, Plug, Settings2, ExternalLink, Columns2, ServerCog,
-  Search, X, Cloud,
+  Search, X, Cloud, Home,
 } from 'lucide-react'
 import { MenuDropdown, type MenuItem, ConfirmDialog } from '@ui'
 import { filesApi, FolderGlyph, type Folder, type RemoteConnection, type RemoteEntry } from '@kubuno/drive'
@@ -48,7 +48,7 @@ const hoverBg = (color: string) => ({
  * mail row highlight identically — the left panel must feel like ONE sidebar,
  * whichever module renders it.
  */
-const ROW_HOVER = 'color-mix(in srgb, var(--color-primary) 12%, white)'
+const ROW_HOVER = 'var(--kb-sidebar-hover, #e8eaed)'  // host-owned token: one hover colour product-wide
 
 /**
  * Expand/collapse chevron of a tree node — a pure action, never a navigation.
@@ -111,6 +111,8 @@ function MobileDrawerNav({ t, pathname, isInDrive, isRecent, isTrashed, isSystem
   return (
     <div className="flex-1 flex flex-col overflow-y-auto py-2 pr-2">
       <nav className="space-y-0.5">
+        <DrawerLink icon={<Home size={22} />} label={t('nav.home', { defaultValue: 'Accueil' })}
+          active={pathname === '/drive/home'} to="/drive/home" />
         <DrawerLink icon={<HardDrive size={22} />} label={t('tree.my_drive', { defaultValue: 'Mon Drive' })}
           active={isInDrive} to="/drive" />
         <DrawerLink icon={<Clock size={22} />} label={t('nav.recent')}
@@ -218,7 +220,7 @@ function TreeNode({
           <FolderGlyph folder={folder} size={15} className="shrink-0" color={isActive ? '#1a73e8' : undefined} />
           <span
             className="text-sm truncate ml-1 flex-1"
-            style={{ color: isActive ? '#041e49' : '#5f6368', fontWeight: isActive ? 600 : 400 }}
+            style={{ color: isActive ? 'var(--color-text-nav-active)' : 'var(--color-text-nav)' }}
           >
             {folder.name}
           </span>
@@ -299,8 +301,8 @@ function DriveRootSection({
             style={{ color: isRootActive ? '#1a73e8' : '#5f6368' }}
           />
           <span
-            className="text-sm font-medium truncate ml-1 flex-1"
-            style={{ color: isRootActive ? '#041e49' : '#5f6368', fontWeight: 600 }}
+            className="text-sm truncate ml-1 flex-1"
+            style={{ color: isRootActive ? 'var(--color-text-nav-active)' : 'var(--color-text-nav)' }}
           >
             {t('tree.my_drive')}
           </span>
@@ -377,7 +379,7 @@ function RemoteTreeNode({
           className={`flex-1 min-w-0 flex items-center gap-1 self-stretch -my-1 py-1 pr-2 -mr-2 rounded-full cursor-pointer ${FOCUS_RING}`}
         >
           <FolderIcon size={15} className="shrink-0" style={{ color: isActive ? '#1a73e8' : '#5f6368' }} fill="currentColor" />
-          <span className="text-sm truncate ml-1 flex-1" style={{ color: isActive ? '#041e49' : '#5f6368', fontWeight: isActive ? 600 : 400 }}>
+          <span className="text-sm truncate ml-1 flex-1" style={{ color: isActive ? 'var(--color-text-nav-active)' : 'var(--color-text-nav)' }}>
             {entry.name}
           </span>
         </RouterLink>
@@ -439,7 +441,7 @@ function RemoteSection({
               style={{ backgroundColor: REMOTE_STATUS_COLOR[remote.status] }}
             />
           </span>
-          <span className="text-sm font-medium truncate ml-1 flex-1" style={{ color: isRootActive ? '#041e49' : '#5f6368', fontWeight: 600 }}>
+          <span className="text-sm truncate ml-1 flex-1" style={{ color: isRootActive ? 'var(--color-text-nav-active)' : 'var(--color-text-nav)' }}>
             {remote.name}
           </span>
         </RouterLink>
@@ -510,7 +512,7 @@ function ModuleTreeNode({
           className={`flex-1 min-w-0 flex items-center gap-1 self-stretch -my-1 py-1 pr-2 -mr-2 rounded-full cursor-pointer ${FOCUS_RING}`}
         >
           <FolderIcon size={15} className="shrink-0" style={{ color: isActive ? '#1a73e8' : '#5f6368' }} fill="currentColor" />
-          <span className="text-sm truncate ml-1 flex-1" style={{ color: isActive ? '#041e49' : '#5f6368', fontWeight: isActive ? 600 : 400 }}>
+          <span className="text-sm truncate ml-1 flex-1" style={{ color: isActive ? 'var(--color-text-nav-active)' : 'var(--color-text-nav)' }}>
             {folder.name}
           </span>
         </RouterLink>
@@ -571,7 +573,7 @@ function ModuleMountSection({
           className={`flex-1 min-w-0 flex items-center gap-1 self-stretch -my-2 py-2 pr-3 -mr-3 rounded-full cursor-pointer ${FOCUS_RING}`}
         >
           <Cloud size={20} className="shrink-0" style={{ color: isRootActive ? '#1a73e8' : '#5f6368' }} />
-          <span className="text-sm font-medium truncate ml-1 flex-1" style={{ color: isRootActive ? '#041e49' : '#5f6368', fontWeight: 600 }}>
+          <span className="text-sm truncate ml-1 flex-1" style={{ color: isRootActive ? 'var(--color-text-nav-active)' : 'var(--color-text-nav)' }}>
             {name}
           </span>
         </RouterLink>
@@ -614,7 +616,7 @@ function NavItem({
       <span className="flex-shrink-0" style={{ color: isActive ? '#1a73e8' : '#5f6368' }}>
         {icon}
       </span>
-      <span className="truncate flex-1" style={{ color: isActive ? '#041e49' : '#5f6368', fontWeight: isActive ? 600 : 400 }}>
+      <span className="truncate flex-1" style={{ color: isActive ? 'var(--color-text-nav-active)' : 'var(--color-text-nav)' }}>
         {label}
       </span>
     </RouterLink>
@@ -702,10 +704,11 @@ export default function FilesTreeSidebar({ collapsed = false }: { collapsed?: bo
     `/drive/remote/${remoteId}?path=${encodeURIComponent(path)}`
   const goToRemote = (remoteId: string, path: string) => navigate(remoteLink(remoteId, path))
 
-  const isSpecial = ['/drive/recent', '/drive/starred', '/drive/shared', '/drive/trash', '/drive/settings', '/drive/storage', '/drive/remote', '/drive/split', '/drive/system', '/drive/m'].some(
+  const isSpecial = ['/drive/home', '/drive/recent', '/drive/starred', '/drive/shared', '/drive/trash', '/drive/settings', '/drive/storage', '/drive/remote', '/drive/split', '/drive/system', '/drive/m'].some(
     p => pathname === p || pathname.startsWith(p + '/'),
   )
   const isInDrive = !isSpecial
+  const isHome    = pathname === '/drive/home'
   const isRecent  = pathname === '/drive/recent'
   const isStarred = pathname === '/drive/starred'
   const isShared  = pathname === '/drive/shared'
@@ -730,6 +733,8 @@ export default function FilesTreeSidebar({ collapsed = false }: { collapsed?: bo
   if (collapsed) {
     return (
       <nav className="flex-1 overflow-y-auto px-2 py-2 space-y-0.5">
+        <SidebarNavItem collapsed label={t('nav.home', { defaultValue: 'Accueil' })}
+          icon={<Home size={20} />} active={isHome} to="/drive/home" />
         <SidebarNavItem collapsed label={t('tree.my_drive', { defaultValue: 'Mon Drive' })}
           icon={<HardDrive size={20} />} active={isInDrive} to="/drive" />
         {moduleMounts.map(mt => (
@@ -791,6 +796,13 @@ export default function FilesTreeSidebar({ collapsed = false }: { collapsed?: bo
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
       <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-0.5">
+        <NavItem
+          icon={<Home size={20} />}
+          label={t('nav.home', { defaultValue: 'Accueil' })}
+          isActive={isHome}
+          to="/drive/home"
+        />
+
         <DriveRootSection
           activeFolderId={currentFolderId}
           contextMenuFolderId={contextMenuFolderId}
@@ -888,7 +900,7 @@ export default function FilesTreeSidebar({ collapsed = false }: { collapsed?: bo
                   className={`flex items-center gap-3 flex-1 min-w-0 self-stretch -my-2 py-2 pr-3 -mr-3 rounded-full cursor-pointer ${FOCUS_RING}`}
                 >
                   <Search size={18} className="flex-shrink-0" style={{ color: s.color ? tagColorHex(s.color) : '#5f6368' }} />
-                  <span className="truncate flex-1" style={{ color: '#5f6368' }}>{s.name}</span>
+                  <span className="truncate flex-1" style={{ color: 'var(--color-text-nav)' }}>{s.name}</span>
                 </RouterLink>
                 <a
                   href="#"

@@ -47,7 +47,7 @@ export default function DriveContentGrid({
   const { t } = useTranslation('drive')
   const {
     selectedIds, setSelectedIds, preSelectedIds, cursorId,
-    handleItemSelect, handleItemToggle, lastSelectedIdxRef,
+    handleItemSelect, lastSelectedIdxRef,
   } = selection
 
   if (isLoading) {
@@ -86,8 +86,6 @@ export default function DriveContentGrid({
           onTypeFilter={view.setTypeFilter}
           viewMode={view.viewMode}
           onViewMode={view.setViewMode}
-          compact={view.compact}
-          onCompact={view.setCompact}
           showHidden={view.showHidden}
           onShowHidden={view.setShowHidden}
         />
@@ -99,7 +97,9 @@ export default function DriveContentGrid({
           <div className="ml-auto">
             <ViewMenu
               value={view.viewMode} onChange={view.setViewMode}
-              compact={view.compact} onCompact={view.setCompact}
+              // `compact` is gone from the core component; the published @kubuno/drive
+              // types still require the props, so pass neutral values until republish.
+              compact={false} onCompact={() => {}}
               showHidden={view.showHidden} onShowHidden={view.setShowHidden}
               t={t}
             />
@@ -112,7 +112,9 @@ export default function DriveContentGrid({
           <h2 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary mb-2">
             {trashed ? t('app.folders_trash') : t('app.folders')}
           </h2>
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2">
+          {/* Folders always render as cards here; only the icon views widen. */}
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))]"
+               style={{ gap: VIEW_SPECS[view.viewMode].kind === 'icons' ? 16 : 8 }}>
             {folders.map(folder => (
               <FolderCard
                 key={folder.id}
@@ -123,7 +125,6 @@ export default function DriveContentGrid({
                 focused={cursorId === folder.id}
                 trashed={trashed}
                 onSelect={handleItemSelect}
-                onToggle={handleItemToggle}
                 onOpen={() => { if (!trashed) onNavigate(folder.id) }}
                 onContextMenu={e => onOpenMenu(e, 'folder', folder)}
                 onDragStart={() => {
@@ -154,12 +155,12 @@ export default function DriveContentGrid({
             // Shared selection props → same behaviour across every layout.
             const sel = (file: FileItem) => ({
               selected: selectedIds.has(file.id), preSelected: preSelectedIds.has(file.id), focused: cursorId === file.id, canMove: !trashed,
-              onSelect: handleItemSelect, onToggle: handleItemToggle,
+              onSelect: handleItemSelect,
               onDragStart: () => { if (!selectedIds.has(file.id)) { setSelectedIds(new Set([file.id])); lastSelectedIdxRef.current = orderedIds.indexOf(file.id) } setDraggingItem({ type: 'file', id: file.id }) },
             })
             if (spec.kind === 'icons') {
               return (
-                <div className="grid" style={{ gridTemplateColumns: `repeat(auto-fill,minmax(${spec.min}px,1fr))`, gap: view.compact ? 6 : 12 }}>
+                <div className="grid" style={{ gridTemplateColumns: `repeat(auto-fill,minmax(${spec.min}px,1fr))`, gap: 24 }}>
                   {filteredFiles.map(file => (
                     <FileCard
                       key={file.id}
@@ -169,7 +170,6 @@ export default function DriveContentGrid({
                       preSelected={preSelectedIds.has(file.id)}
                       focused={cursorId === file.id}
                       onSelect={handleItemSelect}
-                      onToggle={handleItemToggle}
                       onContextMenu={e => onOpenMenu(e, 'file', file)}
                       onDragStart={() => {
                         if (!selectedIds.has(file.id)) { setSelectedIds(new Set([file.id])); lastSelectedIdxRef.current = orderedIds.indexOf(file.id) }
@@ -182,17 +182,6 @@ export default function DriveContentGrid({
                       iconScale={spec.iconScale}
                       dense={spec.dense}
                     />
-                  ))}
-                </div>
-              )
-            }
-            if (spec.kind === 'tiles') {
-              return (
-                <div className="grid" style={{ gridTemplateColumns: `repeat(auto-fill,minmax(${spec.min}px,1fr))`, gap: view.compact ? 6 : 10 }}>
-                  {filteredFiles.map(file => (
-                    <div key={file.id} className="border border-border rounded-lg overflow-hidden bg-white hover:border-border-strong transition-colors">
-                      <FileRow file={file} trashed={trashed} {...sel(file)} onContextMenu={e => onOpenMenu(e, 'file', file)} onRestore={() => onRestoreFile(file.id)} onDelete={() => onDeleteFile(file.id)} onOpen={() => onOpenFile(file)} hideMeta />
-                    </div>
                   ))}
                 </div>
               )

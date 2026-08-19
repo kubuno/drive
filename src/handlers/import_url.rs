@@ -34,6 +34,16 @@ pub async fn import_from_url(
     Extension(user): Extension<FilesUser>,
     Json(dto): Json<ImportUrlDto>,
 ) -> Result<(StatusCode, Json<Value>)> {
+    // ── Politique d'instance ──────────────────────────────────────────────────
+    // Importing by URL makes the SERVER reach out to an address a user chose.
+    // An instance that must not initiate outbound traffic closes the feature
+    // here, before a single byte leaves.
+    if !state.instance().import_url_enabled {
+        return Err(FilesError::PolicyDisabled(
+            "L'import de fichier depuis une URL est désactivé sur cette instance".into(),
+        ));
+    }
+
     // ── Validation URL ────────────────────────────────────────────────────────
 
     let url = dto.url.trim().to_string();
@@ -51,7 +61,7 @@ pub async fn import_from_url(
         block_private_host(host)?;
     }
 
-    let max_bytes = state.settings.files.max_upload_bytes;
+    let max_bytes = state.max_upload_bytes();
 
     // ── HEAD pour obtenir taille + nom ────────────────────────────────────────
 
@@ -109,6 +119,10 @@ pub async fn import_from_url(
     };
 
     let filename = if filename.is_empty() { "fichier".to_string() } else { filename };
+
+    // Extension refusée par l'instance : on le sait avant de tirer le corps, donc
+    // on refuse avant de le tirer.
+    state.check_upload_name(&filename)?;
 
     // ── Téléchargement streaming ───────────────────────────────────────────────
 

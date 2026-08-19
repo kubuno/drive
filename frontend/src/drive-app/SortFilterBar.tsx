@@ -8,7 +8,7 @@ import type { SortDir, SortField } from './types'
 // ── SortFilterBar ─────────────────────────────────────────────────────────────
 
 export default function SortFilterBar({
-  sortField, sortDir, typeFilter, onSortField, onSortDir, onTypeFilter, viewMode, onViewMode, compact, onCompact, showHidden, onShowHidden,
+  sortField, sortDir, typeFilter, onSortField, onSortDir, onTypeFilter, viewMode, onViewMode, showHidden, onShowHidden,
 }: {
   sortField: SortField
   sortDir: SortDir
@@ -18,8 +18,6 @@ export default function SortFilterBar({
   onTypeFilter: (v: string | null) => void
   viewMode: ViewMode
   onViewMode: (v: ViewMode) => void
-  compact: boolean
-  onCompact: (v: boolean) => void
   showHidden: boolean
   onShowHidden: (v: boolean) => void
 }) {
@@ -90,7 +88,9 @@ export default function SortFilterBar({
         </button>
         <ViewMenu
           value={viewMode} onChange={onViewMode}
-          compact={compact} onCompact={onCompact}
+          // `compact` is gone from the core component; the published @kubuno/drive
+          // types still require the props, so pass neutral values until republish.
+          compact={false} onCompact={() => {}}
           showHidden={showHidden} onShowHidden={onShowHidden}
           t={t}
         />

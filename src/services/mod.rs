@@ -16,6 +16,7 @@ pub mod scanner;
 pub mod search;
 pub mod shares;
 pub mod sync;
+pub mod system_fonts;
 pub mod tags;
 pub mod thumbnails;
 pub mod uploads;

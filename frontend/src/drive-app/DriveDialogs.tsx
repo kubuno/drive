@@ -10,7 +10,6 @@ import ArchiveBrowser from '../ArchiveBrowser'
 import DuplicatesDialog from '../DuplicatesDialog'
 import ImageEditDialog from '../ImageEditDialog'
 import ImportUrlModal from '../ImportUrlModal'
-import RemoteStoragePanel from '../RemoteStoragePanel'
 import StorageInsightsDialog from '../StorageInsightsDialog'
 import { useDriveExtras } from '../driveExtras'
 import { TagDialog } from '../TagUI'
@@ -43,7 +42,6 @@ export default function DriveDialogs({
       {/* Modals */}
       <NewFolderModal open={newFolderOpen} onClose={closeNewFolder} parentId={folderId} />
       <ImportUrlModal />
-      <RemoteStoragePanel />
       <RenameModal   target={dialogs.renameTarget} onClose={() => dialogs.setRenameTarget(null)} siblingNames={[...folders.map(f => f.name), ...files.map(f => f.name)]} />
       {batchOpen && <BatchRenameModal items={batchItems} onClose={closeBatch} />}
       <MoveModal     target={dialogs.moveTarget}   onClose={() => dialogs.setMoveTarget(null)} />

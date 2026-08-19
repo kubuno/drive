@@ -272,7 +272,16 @@
       "status_error": "Error",
       "status_syncing": "Syncing",
       "browse_error": "Unable to list this remote storage.",
-      "f_nfs_export": "NFS export"
+      "f_nfs_export": "NFS export",
+      "edit_title": "Edit {{name}}",
+      "edit_title_short": "Edit",
+      "edit_hint": "Stored credentials are never displayed. Re-enter them in full to reconnect this mount.",
+      "save_btn": "Save",
+      "edit_hint_kept": "Fill in what you want to change. Secrets are never displayed — leave them blank to keep the current ones.",
+      "field_unchanged": "•••••••• (unchanged)",
+      "list_shares": "List the server's shares",
+      "shares_none": "This server offers no share",
+      "shares_failed": "Could not list the shares"
     },
     "actions": {
       "new": "New",
@@ -361,7 +370,9 @@
       "select_all": "Select all",
       "deselect_all": "Deselect all",
       "del_pending_trash": "Moving {{count}} item(s) to trash",
-      "del_pending_perm": "Deleting {{count}} item(s)"
+      "del_pending_perm": "Deleting {{count}} item(s)",
+      "listing_failed": "This folder could not be listed",
+      "mount_reconnect_hint": "Open Remote storage and reconnect this mount to enter its credentials again."
     },
     "viewer": {
       "close_esc": "Close (Esc)"
@@ -387,7 +398,7 @@
       "created_on_save": "Files will be created on the next save.",
       "drop_here": "Drop here to import",
       "browse": "Browse",
-      "drop_hint": "Drag and drop files here or use the Import button."
+      "drop_hint": "Drag and drop files here, or right-click to import."
     },
     "info": {
       "mime_image": "Image",
@@ -447,7 +458,8 @@
       "meta_author_ph": "Add an author…",
       "meta_keywords": "Keywords",
       "meta_keywords_ph": "word1, word2, word3…",
-      "no_activity": "No activity recorded"
+      "no_activity": "No activity recorded",
+      "pick_item": "Select an item to see its details."
     },
     "share": {
       "title": "Share",
@@ -505,15 +517,10 @@
     },
     "view": {
       "menu": "View",
-      "icons_xl": "Extra large icons",
       "icons_lg": "Large icons",
-      "icons_md": "Medium icons",
       "icons_sm": "Small icons",
       "list": "List",
       "details": "Details",
-      "tiles": "Tiles",
-      "content": "Content",
-      "compact": "Compact view",
       "hidden": "Hidden items"
     },
     "batch_rename": {
@@ -940,7 +947,16 @@
       "status_error": "Erreur",
       "status_syncing": "Synchronisation",
       "browse_error": "Impossible de lister ce montage distant.",
-      "f_nfs_export": "Export NFS"
+      "f_nfs_export": "Export NFS",
+      "edit_title": "Modifier {{name}}",
+      "edit_title_short": "Modifier",
+      "edit_hint": "Les identifiants enregistrés ne sont jamais affichés. Ressaisissez-les en entier pour reconnecter ce montage.",
+      "save_btn": "Enregistrer",
+      "edit_hint_kept": "Modifiez ce que vous voulez. Les secrets ne sont jamais affichés : laissez-les vides pour conserver les actuels.",
+      "field_unchanged": "•••••••• (inchangé)",
+      "list_shares": "Lister les partages du serveur",
+      "shares_none": "Ce serveur ne propose aucun partage",
+      "shares_failed": "Impossible de lister les partages"
     },
     "actions": {
       "new": "Nouveau",
@@ -1029,7 +1045,9 @@
       "select_all": "Tout sélectionner",
       "deselect_all": "Tout désélectionner",
       "del_pending_trash": "{{count}} élément(s) → corbeille",
-      "del_pending_perm": "Suppression de {{count}} élément(s)"
+      "del_pending_perm": "Suppression de {{count}} élément(s)",
+      "listing_failed": "Impossible d’afficher ce dossier",
+      "mount_reconnect_hint": "Ouvrez « Stockages distants » et reconnectez ce montage pour saisir à nouveau ses identifiants."
     },
     "viewer": {
       "close_esc": "Fermer (Échap)"
@@ -1055,7 +1073,7 @@
       "created_on_save": "Les fichiers seront créés au prochain enregistrement.",
       "drop_here": "Déposer ici pour importer",
       "browse": "Parcourir",
-      "drop_hint": "Glissez-déposez des fichiers ici ou utilisez le bouton Importer."
+      "drop_hint": "Glissez-déposez des fichiers ici, ou faites un clic droit pour importer."
     },
     "info": {
       "mime_image": "Image",
@@ -1115,7 +1133,8 @@
       "meta_author_ph": "Ajouter un auteur…",
       "meta_keywords": "Mots-clés",
       "meta_keywords_ph": "mot1, mot2, mot3…",
-      "no_activity": "Aucune activité enregistrée"
+      "no_activity": "Aucune activité enregistrée",
+      "pick_item": "Sélectionnez un élément pour en afficher les détails."
     },
     "share": {
       "title": "Partager",
@@ -1173,15 +1192,10 @@
     },
     "view": {
       "menu": "Afficher",
-      "icons_xl": "Très grandes icônes",
       "icons_lg": "Grandes icônes",
-      "icons_md": "Icônes moyennes",
       "icons_sm": "Petites icônes",
       "list": "Liste",
       "details": "Détails",
-      "tiles": "Mosaïques",
-      "content": "Contenu",
-      "compact": "Affichage compact",
       "hidden": "Éléments masqués"
     },
     "batch_rename": {
@@ -1608,7 +1622,16 @@
       "status_error": "Error",
       "status_syncing": "Sincronizando",
       "browse_error": "No se puede listar este almacenamiento remoto.",
-      "f_nfs_export": "Exportación NFS"
+      "f_nfs_export": "Exportación NFS",
+      "edit_title": "Editar {{name}}",
+      "edit_title_short": "Editar",
+      "edit_hint": "Las credenciales guardadas nunca se muestran. Vuelva a introducirlas por completo para reconectar este montaje.",
+      "save_btn": "Guardar",
+      "edit_hint_kept": "Cambie lo que quiera. Los secretos nunca se muestran: déjelos vacíos para conservar los actuales.",
+      "field_unchanged": "•••••••• (sin cambios)",
+      "list_shares": "Listar los recursos del servidor",
+      "shares_none": "Este servidor no ofrece ningún recurso",
+      "shares_failed": "No se han podido listar los recursos"
     },
     "actions": {
       "new": "Nuevo",
@@ -1697,7 +1720,9 @@
       "select_all": "Seleccionar todo",
       "deselect_all": "Deseleccionar todo",
       "del_pending_trash": "Moviendo {{count}} elemento(s) a la papelera",
-      "del_pending_perm": "Eliminando {{count}} elemento(s)"
+      "del_pending_perm": "Eliminando {{count}} elemento(s)",
+      "listing_failed": "No se ha podido listar esta carpeta",
+      "mount_reconnect_hint": "Abra «Almacenamientos remotos» y vuelva a conectar este montaje para introducir de nuevo sus credenciales."
     },
     "viewer": {
       "close_esc": "Cerrar (Esc)"
@@ -1723,7 +1748,7 @@
       "created_on_save": "Los archivos se crearán en el próximo guardado.",
       "drop_here": "Suelta aquí para importar",
       "browse": "Explorar",
-      "drop_hint": "Arrastra y suelta archivos aquí o usa el botón Importar."
+      "drop_hint": "Arrastre y suelte archivos aquí, o haga clic derecho para importar."
     },
     "info": {
       "mime_image": "Imagen",
@@ -1783,7 +1808,8 @@
       "meta_author_ph": "Añadir un autor…",
       "meta_keywords": "Palabras clave",
       "meta_keywords_ph": "palabra1, palabra2…",
-      "no_activity": "Ninguna actividad registrada"
+      "no_activity": "Ninguna actividad registrada",
+      "pick_item": "Seleccione un elemento para ver sus detalles."
     },
     "share": {
       "title": "Compartir",
@@ -1841,15 +1867,10 @@
     },
     "view": {
       "menu": "Ver",
-      "icons_xl": "Iconos muy grandes",
       "icons_lg": "Iconos grandes",
-      "icons_md": "Iconos medianos",
       "icons_sm": "Iconos pequeños",
       "list": "Lista",
       "details": "Detalles",
-      "tiles": "Mosaicos",
-      "content": "Contenido",
-      "compact": "Vista compacta",
       "hidden": "Elementos ocultos"
     },
     "batch_rename": {
@@ -2276,7 +2297,16 @@
       "status_error": "Erro",
       "status_syncing": "A sincronizar",
       "browse_error": "Não é possível listar este armazenamento remoto.",
-      "f_nfs_export": "Exportação NFS"
+      "f_nfs_export": "Exportação NFS",
+      "edit_title": "Editar {{name}}",
+      "edit_title_short": "Editar",
+      "edit_hint": "As credenciais guardadas nunca são apresentadas. Introduza-as novamente por completo para voltar a ligar esta montagem.",
+      "save_btn": "Guardar",
+      "edit_hint_kept": "Altere o que quiser. Os segredos nunca são apresentados: deixe-os vazios para manter os atuais.",
+      "field_unchanged": "•••••••• (inalterado)",
+      "list_shares": "Listar as partilhas do servidor",
+      "shares_none": "Este servidor não oferece qualquer partilha",
+      "shares_failed": "Não foi possível listar as partilhas"
     },
     "actions": {
       "new": "Novo",
@@ -2365,7 +2395,9 @@
       "select_all": "Selecionar tudo",
       "deselect_all": "Desmarcar tudo",
       "del_pending_trash": "Movendo {{count}} item(ns) para o lixo",
-      "del_pending_perm": "Excluindo {{count}} item(ns)"
+      "del_pending_perm": "Excluindo {{count}} item(ns)",
+      "listing_failed": "Não foi possível listar esta pasta",
+      "mount_reconnect_hint": "Abra «Armazenamentos remotos» e volte a ligar esta montagem para introduzir novamente as credenciais."
     },
     "viewer": {
       "close_esc": "Fechar (Esc)"
@@ -2391,7 +2423,7 @@
       "created_on_save": "Os arquivos serão criados no próximo salvamento.",
       "drop_here": "Solte aqui para importar",
       "browse": "Explorar",
-      "drop_hint": "Arraste e solte arquivos aqui ou use o botão Importar."
+      "drop_hint": "Arraste e largue ficheiros aqui, ou clique com o botão direito para importar."
     },
     "info": {
       "mime_image": "Imagem",
@@ -2451,7 +2483,8 @@
       "meta_author_ph": "Adicionar um autor…",
       "meta_keywords": "Palavras-chave",
       "meta_keywords_ph": "palavra1, palavra2…",
-      "no_activity": "Nenhuma atividade registrada"
+      "no_activity": "Nenhuma atividade registrada",
+      "pick_item": "Selecione um item para ver os detalhes."
     },
     "share": {
       "title": "Compartilhar",
@@ -2509,15 +2542,10 @@
     },
     "view": {
       "menu": "Ver",
-      "icons_xl": "Ícones muito grandes",
       "icons_lg": "Ícones grandes",
-      "icons_md": "Ícones médios",
       "icons_sm": "Ícones pequenos",
       "list": "Lista",
       "details": "Detalhes",
-      "tiles": "Blocos",
-      "content": "Conteúdo",
-      "compact": "Exibição compacta",
       "hidden": "Itens ocultos"
     },
     "batch_rename": {
@@ -2944,7 +2972,16 @@
       "status_error": "Errore",
       "status_syncing": "Sincronizzazione",
       "browse_error": "Impossibile elencare questo archivio remoto.",
-      "f_nfs_export": "Export NFS"
+      "f_nfs_export": "Export NFS",
+      "edit_title": "Modifica {{name}}",
+      "edit_title_short": "Modifica",
+      "edit_hint": "Le credenziali salvate non vengono mai mostrate. Reinseriscile per intero per riconnettere questo montaggio.",
+      "save_btn": "Salva",
+      "edit_hint_kept": "Modifica ciò che vuoi. I segreti non vengono mai mostrati: lasciali vuoti per mantenere quelli attuali.",
+      "field_unchanged": "•••••••• (invariato)",
+      "list_shares": "Elenca le condivisioni del server",
+      "shares_none": "Questo server non offre alcuna condivisione",
+      "shares_failed": "Impossibile elencare le condivisioni"
     },
     "actions": {
       "new": "Nuovo",
@@ -3033,7 +3070,9 @@
       "select_all": "Seleziona tutto",
       "deselect_all": "Deseleziona tutto",
       "del_pending_trash": "Spostamento di {{count}} elemento/i nel cestino",
-      "del_pending_perm": "Eliminazione di {{count}} elemento/i"
+      "del_pending_perm": "Eliminazione di {{count}} elemento/i",
+      "listing_failed": "Impossibile elencare questa cartella",
+      "mount_reconnect_hint": "Apri «Archivi remoti» e riconnetti questo montaggio per inserire di nuovo le credenziali."
     },
     "viewer": {
       "close_esc": "Chiudi (Esc)"
@@ -3059,7 +3098,7 @@
       "created_on_save": "I file verranno creati al prossimo salvataggio.",
       "drop_here": "Rilascia qui per importare",
       "browse": "Sfoglia",
-      "drop_hint": "Trascina i file qui o usa il pulsante Importa."
+      "drop_hint": "Trascina qui i file, oppure fai clic destro per importare."
     },
     "info": {
       "mime_image": "Immagine",
@@ -3119,7 +3158,8 @@
       "meta_author_ph": "Aggiungi un autore…",
       "meta_keywords": "Parole chiave",
       "meta_keywords_ph": "parola1, parola2…",
-      "no_activity": "Nessuna attività registrata"
+      "no_activity": "Nessuna attività registrata",
+      "pick_item": "Seleziona un elemento per vederne i dettagli."
     },
     "share": {
       "title": "Condividi",
@@ -3177,15 +3217,10 @@
     },
     "view": {
       "menu": "Visualizza",
-      "icons_xl": "Icone molto grandi",
       "icons_lg": "Icone grandi",
-      "icons_md": "Icone medie",
       "icons_sm": "Icone piccole",
       "list": "Elenco",
       "details": "Dettagli",
-      "tiles": "Riquadri",
-      "content": "Contenuto",
-      "compact": "Visualizzazione compatta",
       "hidden": "Elementi nascosti"
     },
     "batch_rename": {
@@ -3612,7 +3647,16 @@
       "status_error": "Fehler",
       "status_syncing": "Synchronisierung",
       "browse_error": "Dieser Remote-Speicher kann nicht aufgelistet werden.",
-      "f_nfs_export": "NFS-Export"
+      "f_nfs_export": "NFS-Export",
+      "edit_title": "{{name}} bearbeiten",
+      "edit_title_short": "Bearbeiten",
+      "edit_hint": "Gespeicherte Zugangsdaten werden nie angezeigt. Geben Sie sie vollständig neu ein, um diese Einbindung wieder zu verbinden.",
+      "save_btn": "Speichern",
+      "edit_hint_kept": "Ändern Sie, was Sie möchten. Geheimnisse werden nie angezeigt – leer lassen, um die aktuellen zu behalten.",
+      "field_unchanged": "•••••••• (unverändert)",
+      "list_shares": "Freigaben des Servers auflisten",
+      "shares_none": "Dieser Server bietet keine Freigabe an",
+      "shares_failed": "Freigaben konnten nicht aufgelistet werden"
     },
     "actions": {
       "new": "Neu",
@@ -3701,7 +3745,9 @@
       "select_all": "Alle auswählen",
       "deselect_all": "Auswahl aufheben",
       "del_pending_trash": "{{count}} Element(e) in den Papierkorb",
-      "del_pending_perm": "{{count}} Element(e) werden gelöscht"
+      "del_pending_perm": "{{count}} Element(e) werden gelöscht",
+      "listing_failed": "Dieser Ordner konnte nicht gelesen werden",
+      "mount_reconnect_hint": "Öffnen Sie „Entfernte Speicher“ und verbinden Sie diese Einbindung erneut, um die Zugangsdaten neu einzugeben."
     },
     "viewer": {
       "close_esc": "Schließen (Esc)"
@@ -3727,7 +3773,7 @@
       "created_on_save": "Dateien werden beim nächsten Speichern erstellt.",
       "drop_here": "Zum Importieren hier ablegen",
       "browse": "Durchsuchen",
-      "drop_hint": "Dateien hierher ziehen oder die Schaltfläche „Importieren“ verwenden."
+      "drop_hint": "Dateien hierher ziehen oder mit der rechten Maustaste importieren."
     },
     "info": {
       "mime_image": "Bild",
@@ -3787,7 +3833,8 @@
       "meta_author_ph": "Autor hinzufügen…",
       "meta_keywords": "Schlüsselwörter",
       "meta_keywords_ph": "Wort1, Wort2…",
-      "no_activity": "Keine Aktivität aufgezeichnet"
+      "no_activity": "Keine Aktivität aufgezeichnet",
+      "pick_item": "Wählen Sie ein Element, um seine Details zu sehen."
     },
     "share": {
       "title": "Teilen",
@@ -3845,15 +3892,10 @@
     },
     "view": {
       "menu": "Ansicht",
-      "icons_xl": "Sehr große Symbole",
       "icons_lg": "Große Symbole",
-      "icons_md": "Mittelgroße Symbole",
       "icons_sm": "Kleine Symbole",
       "list": "Liste",
       "details": "Details",
-      "tiles": "Kacheln",
-      "content": "Inhalt",
-      "compact": "Kompakte Ansicht",
       "hidden": "Ausgeblendete Elemente"
     },
     "batch_rename": {
@@ -4280,7 +4322,16 @@
       "status_error": "Σφάλμα",
       "status_syncing": "Συγχρονισμός",
       "browse_error": "Αδυναμία εμφάνισης αυτού του απομακρυσμένου χώρου.",
-      "f_nfs_export": "Εξαγωγή NFS"
+      "f_nfs_export": "Εξαγωγή NFS",
+      "edit_title": "Επεξεργασία {{name}}",
+      "edit_title_short": "Επεξεργασία",
+      "edit_hint": "Τα αποθηκευμένα διαπιστευτήρια δεν εμφανίζονται ποτέ. Εισαγάγετέ τα ξανά ολόκληρα για να επανασυνδέσετε αυτή την προσάρτηση.",
+      "save_btn": "Αποθήκευση",
+      "edit_hint_kept": "Αλλάξτε ό,τι θέλετε. Τα μυστικά δεν εμφανίζονται ποτέ: αφήστε τα κενά για να διατηρηθούν τα τρέχοντα.",
+      "field_unchanged": "•••••••• (αμετάβλητο)",
+      "list_shares": "Εμφάνιση κοινόχρηστων φακέλων του διακομιστή",
+      "shares_none": "Αυτός ο διακομιστής δεν προσφέρει κοινόχρηστο φάκελο",
+      "shares_failed": "Δεν ήταν δυνατή η προβολή των κοινόχρηστων φακέλων"
     },
     "actions": {
       "new": "Νέο",
@@ -4369,7 +4420,9 @@
       "select_all": "Επιλογή όλων",
       "deselect_all": "Αποεπιλογή όλων",
       "del_pending_trash": "Μετακίνηση {{count}} στοιχείου/ων στον κάδο",
-      "del_pending_perm": "Διαγραφή {{count}} στοιχείου/ων"
+      "del_pending_perm": "Διαγραφή {{count}} στοιχείου/ων",
+      "listing_failed": "Δεν ήταν δυνατή η προβολή αυτού του φακέλου",
+      "mount_reconnect_hint": "Ανοίξτε τους «Απομακρυσμένους χώρους αποθήκευσης» και επανασυνδέστε αυτή την προσάρτηση για να εισαγάγετε ξανά τα διαπιστευτήριά της."
     },
     "viewer": {
       "close_esc": "Κλείσιμο (Esc)"
@@ -4395,7 +4448,7 @@
       "created_on_save": "Τα αρχεία θα δημιουργηθούν στην επόμενη αποθήκευση.",
       "drop_here": "Αφήστε εδώ για εισαγωγή",
       "browse": "Περιήγηση",
-      "drop_hint": "Σύρετε και αποθέστε αρχεία εδώ ή χρησιμοποιήστε το κουμπί Εισαγωγή."
+      "drop_hint": "Σύρετε αρχεία εδώ ή κάντε δεξί κλικ για εισαγωγή."
     },
     "info": {
       "mime_image": "Εικόνα",
@@ -4455,7 +4508,8 @@
       "meta_author_ph": "Προσθήκη συντάκτη…",
       "meta_keywords": "Λέξεις-κλειδιά",
       "meta_keywords_ph": "λέξη1, λέξη2…",
-      "no_activity": "Καμία καταγεγραμμένη δραστηριότητα"
+      "no_activity": "Καμία καταγεγραμμένη δραστηριότητα",
+      "pick_item": "Επιλέξτε ένα στοιχείο για να δείτε τις λεπτομέρειές του."
     },
     "share": {
       "title": "Κοινή χρήση",
@@ -4513,15 +4567,10 @@
     },
     "view": {
       "menu": "Προβολή",
-      "icons_xl": "Πολύ μεγάλα εικονίδια",
       "icons_lg": "Μεγάλα εικονίδια",
-      "icons_md": "Μεσαία εικονίδια",
       "icons_sm": "Μικρά εικονίδια",
       "list": "Λίστα",
       "details": "Λεπτομέρειες",
-      "tiles": "Πλακίδια",
-      "content": "Περιεχόμενο",
-      "compact": "Συμπαγής προβολή",
       "hidden": "Κρυφά στοιχεία"
     },
     "batch_rename": {
@@ -4948,7 +4997,16 @@
       "status_error": "Ошибка",
       "status_syncing": "Синхронизация",
       "browse_error": "Не удалось получить список этого удалённого хранилища.",
-      "f_nfs_export": "Экспорт NFS"
+      "f_nfs_export": "Экспорт NFS",
+      "edit_title": "Изменить «{{name}}»",
+      "edit_title_short": "Изменить",
+      "edit_hint": "Сохранённые учётные данные никогда не отображаются. Введите их заново целиком, чтобы переподключить это подключение.",
+      "save_btn": "Сохранить",
+      "edit_hint_kept": "Меняйте что нужно. Секреты никогда не отображаются: оставьте поля пустыми, чтобы сохранить текущие.",
+      "field_unchanged": "•••••••• (без изменений)",
+      "list_shares": "Показать общие папки сервера",
+      "shares_none": "Сервер не предлагает общих папок",
+      "shares_failed": "Не удалось получить список общих папок"
     },
     "actions": {
       "new": "Создать",
@@ -5037,7 +5095,9 @@
       "select_all": "Выбрать все",
       "deselect_all": "Снять выделение",
       "del_pending_trash": "Перемещение {{count}} элем. в корзину",
-      "del_pending_perm": "Удаление {{count}} элем."
+      "del_pending_perm": "Удаление {{count}} элем.",
+      "listing_failed": "Не удалось открыть эту папку",
+      "mount_reconnect_hint": "Откройте «Удалённые хранилища» и переподключите это подключение, чтобы заново ввести учётные данные."
     },
     "viewer": {
       "close_esc": "Закрыть (Esc)"
@@ -5063,7 +5123,7 @@
       "created_on_save": "Файлы будут созданы при следующем сохранении.",
       "drop_here": "Перетащите сюда для импорта",
       "browse": "Обзор",
-      "drop_hint": "Перетащите файлы сюда или используйте кнопку «Импорт»."
+      "drop_hint": "Перетащите файлы сюда или щёлкните правой кнопкой, чтобы импортировать."
     },
     "info": {
       "mime_image": "Изображение",
@@ -5123,7 +5183,8 @@
       "meta_author_ph": "Добавить автора…",
       "meta_keywords": "Ключевые слова",
       "meta_keywords_ph": "слово1, слово2…",
-      "no_activity": "Нет записанной активности"
+      "no_activity": "Нет записанной активности",
+      "pick_item": "Выберите элемент, чтобы увидеть его свойства."
     },
     "share": {
       "title": "Поделиться",
@@ -5181,15 +5242,10 @@
     },
     "view": {
       "menu": "Вид",
-      "icons_xl": "Огромные значки",
       "icons_lg": "Крупные значки",
-      "icons_md": "Средние значки",
       "icons_sm": "Мелкие значки",
       "list": "Список",
       "details": "Таблица",
-      "tiles": "Плитка",
-      "content": "Содержимое",
-      "compact": "Компактный вид",
       "hidden": "Скрытые элементы"
     },
     "batch_rename": {
@@ -5616,7 +5672,16 @@
       "status_error": "خطأ",
       "status_syncing": "مزامنة",
       "browse_error": "تعذر سرد وحدة التخزين البعيدة هذه.",
-      "f_nfs_export": "تصدير NFS"
+      "f_nfs_export": "تصدير NFS",
+      "edit_title": "تعديل {{name}}",
+      "edit_title_short": "تعديل",
+      "edit_hint": "لا تُعرض بيانات الاعتماد المحفوظة أبدًا. أعد إدخالها كاملة لإعادة توصيل هذا التركيب.",
+      "save_btn": "حفظ",
+      "edit_hint_kept": "عدّل ما تشاء. لا تُعرض الأسرار أبدًا: اتركها فارغة للإبقاء على الحالية.",
+      "field_unchanged": "•••••••• (دون تغيير)",
+      "list_shares": "عرض مشاركات الخادم",
+      "shares_none": "لا يوفّر هذا الخادم أي مشاركة",
+      "shares_failed": "تعذّر عرض المشاركات"
     },
     "actions": {
       "new": "جديد",
@@ -5705,7 +5770,9 @@
       "select_all": "تحديد الكل",
       "deselect_all": "إلغاء تحديد الكل",
       "del_pending_trash": "نقل {{count}} عنصر إلى المهملات",
-      "del_pending_perm": "حذف {{count}} عنصر"
+      "del_pending_perm": "حذف {{count}} عنصر",
+      "listing_failed": "تعذّر عرض محتويات هذا المجلد",
+      "mount_reconnect_hint": "افتح «وحدات التخزين البعيدة» وأعد توصيل هذا التركيب لإدخال بيانات اعتماده من جديد."
     },
     "viewer": {
       "close_esc": "إغلاق (Esc)"
@@ -5731,7 +5798,7 @@
       "created_on_save": "ستُنشأ الملفات عند الحفظ التالي.",
       "drop_here": "أفلت هنا للاستيراد",
       "browse": "تصفّح",
-      "drop_hint": "اسحب الملفات وأفلتها هنا أو استخدم زر الاستيراد."
+      "drop_hint": "أفلِت الملفات هنا، أو انقر بالزر الأيمن للاستيراد."
     },
     "info": {
       "mime_image": "صورة",
@@ -5791,7 +5858,8 @@
       "meta_author_ph": "أضف مؤلفًا…",
       "meta_keywords": "كلمات مفتاحية",
       "meta_keywords_ph": "كلمة1، كلمة2…",
-      "no_activity": "لا نشاط مُسجّل"
+      "no_activity": "لا نشاط مُسجّل",
+      "pick_item": "اختر عنصرًا لعرض تفاصيله."
     },
     "share": {
       "title": "مشاركة",
@@ -5849,15 +5917,10 @@
     },
     "view": {
       "menu": "عرض",
-      "icons_xl": "أيقونات كبيرة جداً",
       "icons_lg": "أيقونات كبيرة",
-      "icons_md": "أيقونات متوسطة",
       "icons_sm": "أيقونات صغيرة",
       "list": "قائمة",
       "details": "تفاصيل",
-      "tiles": "مربعات",
-      "content": "محتوى",
-      "compact": "عرض مضغوط",
       "hidden": "العناصر المخفية"
     },
     "batch_rename": {
@@ -6284,7 +6347,16 @@
       "status_error": "שגיאה",
       "status_syncing": "מסנכרן",
       "browse_error": "לא ניתן להציג אחסון מרוחק זה.",
-      "f_nfs_export": "ייצוא NFS"
+      "f_nfs_export": "ייצוא NFS",
+      "edit_title": "עריכת {{name}}",
+      "edit_title_short": "עריכה",
+      "edit_hint": "פרטי הגישה השמורים לעולם אינם מוצגים. הזינו אותם מחדש במלואם כדי לחבר מחדש את העגינה.",
+      "save_btn": "שמירה",
+      "edit_hint_kept": "שנו את מה שתרצו. סודות לעולם אינם מוצגים: השאירו ריק כדי לשמור על הנוכחיים.",
+      "field_unchanged": "•••••••• (ללא שינוי)",
+      "list_shares": "הצגת השיתופים של השרת",
+      "shares_none": "שרת זה אינו מציע שיתופים",
+      "shares_failed": "לא ניתן להציג את השיתופים"
     },
     "actions": {
       "new": "חדש",
@@ -6373,7 +6445,9 @@
       "select_all": "בחר הכול",
       "deselect_all": "בטל בחירה",
       "del_pending_trash": "העברת {{count}} פריט(ים) לאשפה",
-      "del_pending_perm": "מחיקת {{count}} פריט(ים)"
+      "del_pending_perm": "מחיקת {{count}} פריט(ים)",
+      "listing_failed": "לא ניתן להציג את התיקייה הזו",
+      "mount_reconnect_hint": "פתחו את «אחסונים מרוחקים» וחברו מחדש את העגינה כדי להזין שוב את פרטי הגישה."
     },
     "viewer": {
       "close_esc": "סגור (Esc)"
@@ -6399,7 +6473,7 @@
       "created_on_save": "הקבצים ייווצרו בשמירה הבאה.",
       "drop_here": "שחרר כאן לייבוא",
       "browse": "עיון",
-      "drop_hint": "גררו ושחררו קבצים כאן או השתמשו בלחצן ייבוא."
+      "drop_hint": "גררו קבצים לכאן, או לחצו לחיצה ימנית כדי לייבא."
     },
     "info": {
       "mime_image": "תמונה",
@@ -6459,7 +6533,8 @@
       "meta_author_ph": "הוסף מחבר…",
       "meta_keywords": "מילות מפתח",
       "meta_keywords_ph": "מילה1, מילה2…",
-      "no_activity": "לא נרשמה פעילות"
+      "no_activity": "לא נרשמה פעילות",
+      "pick_item": "בחרו פריט כדי לראות את פרטיו."
     },
     "share": {
       "title": "שיתוף",
@@ -6517,15 +6592,10 @@
     },
     "view": {
       "menu": "תצוגה",
-      "icons_xl": "סמלים גדולים מאוד",
       "icons_lg": "סמלים גדולים",
-      "icons_md": "סמלים בינוניים",
       "icons_sm": "סמלים קטנים",
       "list": "רשימה",
       "details": "פרטים",
-      "tiles": "אריחים",
-      "content": "תוכן",
-      "compact": "תצוגה קומפקטית",
       "hidden": "פריטים מוסתרים"
     },
     "batch_rename": {
@@ -6952,7 +7022,16 @@
       "status_error": "त्रुटि",
       "status_syncing": "सिंक हो रहा है",
       "browse_error": "इस रिमोट स्टोरेज को सूचीबद्ध नहीं किया जा सकता।",
-      "f_nfs_export": "NFS एक्सपोर्ट"
+      "f_nfs_export": "NFS एक्सपोर्ट",
+      "edit_title": "{{name}} संपादित करें",
+      "edit_title_short": "संपादित करें",
+      "edit_hint": "सहेजी गई लॉगिन जानकारी कभी नहीं दिखाई जाती। इस माउंट को फिर से जोड़ने के लिए उसे पूरा दोबारा दर्ज करें।",
+      "save_btn": "सहेजें",
+      "edit_hint_kept": "जो बदलना हो बदलें। गोपनीय जानकारी कभी नहीं दिखाई जाती — मौजूदा रखने के लिए उन्हें खाली छोड़ें।",
+      "field_unchanged": "•••••••• (अपरिवर्तित)",
+      "list_shares": "सर्वर के शेयर सूचीबद्ध करें",
+      "shares_none": "यह सर्वर कोई शेयर नहीं देता",
+      "shares_failed": "शेयर सूचीबद्ध नहीं किए जा सके"
     },
     "actions": {
       "new": "नया",
@@ -7041,7 +7120,9 @@
       "select_all": "सभी चुनें",
       "deselect_all": "चयन हटाएँ",
       "del_pending_trash": "{{count}} आइटम ट्रैश में",
-      "del_pending_perm": "{{count}} आइटम हटाए जा रहे हैं"
+      "del_pending_perm": "{{count}} आइटम हटाए जा रहे हैं",
+      "listing_failed": "यह फ़ोल्डर नहीं खोला जा सका",
+      "mount_reconnect_hint": "«दूरस्थ संग्रहण» खोलें और इस माउंट को फिर से जोड़कर उसकी लॉगिन जानकारी दोबारा दर्ज करें।"
     },
     "viewer": {
       "close_esc": "बंद करें (Esc)"
@@ -7067,7 +7148,7 @@
       "created_on_save": "फ़ाइलें अगली बार सहेजने पर बनेंगी।",
       "drop_here": "आयात के लिए यहाँ छोड़ें",
       "browse": "ब्राउज़ करें",
-      "drop_hint": "फ़ाइलें यहाँ खींचें और छोड़ें या आयात बटन का उपयोग करें।"
+      "drop_hint": "फ़ाइलें यहाँ खींचकर छोड़ें, या आयात करने के लिए दायाँ-क्लिक करें।"
     },
     "info": {
       "mime_image": "छवि",
@@ -7127,7 +7208,8 @@
       "meta_author_ph": "लेखक जोड़ें…",
       "meta_keywords": "कीवर्ड",
       "meta_keywords_ph": "शब्द1, शब्द2…",
-      "no_activity": "कोई गतिविधि दर्ज नहीं"
+      "no_activity": "कोई गतिविधि दर्ज नहीं",
+      "pick_item": "विवरण देखने के लिए कोई आइटम चुनें।"
     },
     "share": {
       "title": "साझा करें",
@@ -7185,15 +7267,10 @@
     },
     "view": {
       "menu": "देखें",
-      "icons_xl": "बहुत बड़े आइकन",
       "icons_lg": "बड़े आइकन",
-      "icons_md": "मध्यम आइकन",
       "icons_sm": "छोटे आइकन",
       "list": "सूची",
       "details": "विवरण",
-      "tiles": "टाइलें",
-      "content": "सामग्री",
-      "compact": "संक्षिप्त दृश्य",
       "hidden": "छिपे आइटम"
     },
     "batch_rename": {
@@ -7620,7 +7697,16 @@
       "status_error": "错误",
       "status_syncing": "同步中",
       "browse_error": "无法列出此远程存储。",
-      "f_nfs_export": "NFS 导出"
+      "f_nfs_export": "NFS 导出",
+      "edit_title": "编辑 {{name}}",
+      "edit_title_short": "编辑",
+      "edit_hint": "已保存的凭据永不显示。请完整重新输入，以重新连接此挂载。",
+      "save_btn": "保存",
+      "edit_hint_kept": "修改所需内容即可。机密永不显示：留空即保留当前值。",
+      "field_unchanged": "••••••••（保持不变）",
+      "list_shares": "列出服务器的共享",
+      "shares_none": "该服务器没有提供共享",
+      "shares_failed": "无法列出共享"
     },
     "actions": {
       "new": "新建",
@@ -7709,7 +7795,9 @@
       "select_all": "全选",
       "deselect_all": "取消全选",
       "del_pending_trash": "将 {{count}} 项移到回收站",
-      "del_pending_perm": "正在删除 {{count}} 项"
+      "del_pending_perm": "正在删除 {{count}} 项",
+      "listing_failed": "无法列出此文件夹",
+      "mount_reconnect_hint": "打开“远程存储”并重新连接此挂载，以再次输入其凭据。"
     },
     "viewer": {
       "close_esc": "关闭 (Esc)"
@@ -7735,7 +7823,7 @@
       "created_on_save": "文件将在下次保存时创建。",
       "drop_here": "拖放到此处导入",
       "browse": "浏览",
-      "drop_hint": "将文件拖放到此处，或使用“导入”按钮。"
+      "drop_hint": "将文件拖放到此处，或右键点击以导入。"
     },
     "info": {
       "mime_image": "图片",
@@ -7795,7 +7883,8 @@
       "meta_author_ph": "添加作者…",
       "meta_keywords": "关键词",
       "meta_keywords_ph": "词1, 词2…",
-      "no_activity": "无活动记录"
+      "no_activity": "无活动记录",
+      "pick_item": "选择一个项目以查看其详细信息。"
     },
     "share": {
       "title": "共享",
@@ -7853,15 +7942,10 @@
     },
     "view": {
       "menu": "查看",
-      "icons_xl": "超大图标",
       "icons_lg": "大图标",
-      "icons_md": "中图标",
       "icons_sm": "小图标",
       "list": "列表",
       "details": "详细信息",
-      "tiles": "平铺",
-      "content": "内容",
-      "compact": "紧凑视图",
       "hidden": "隐藏的项目"
     },
     "batch_rename": {
@@ -8288,7 +8372,16 @@
       "status_error": "エラー",
       "status_syncing": "同期中",
       "browse_error": "このリモートストレージを一覧表示できません。",
-      "f_nfs_export": "NFS エクスポート"
+      "f_nfs_export": "NFS エクスポート",
+      "edit_title": "{{name}} を編集",
+      "edit_title_short": "編集",
+      "edit_hint": "保存された認証情報は表示されません。このマウントを接続し直すには、すべて入力し直してください。",
+      "save_btn": "保存",
+      "edit_hint_kept": "変更したい項目だけ編集してください。機密情報は表示されません。空欄のままにすると現在の値を保持します。",
+      "field_unchanged": "••••••••（変更なし）",
+      "list_shares": "サーバーの共有を一覧表示",
+      "shares_none": "このサーバーは共有を提供していません",
+      "shares_failed": "共有を一覧表示できませんでした"
     },
     "actions": {
       "new": "新規",
@@ -8377,7 +8470,9 @@
       "select_all": "すべて選択",
       "deselect_all": "すべて選択解除",
       "del_pending_trash": "{{count}} 件をゴミ箱へ移動",
-      "del_pending_perm": "{{count}} 件を削除中"
+      "del_pending_perm": "{{count}} 件を削除中",
+      "listing_failed": "このフォルダーを表示できませんでした",
+      "mount_reconnect_hint": "「リモートストレージ」を開き、このマウントを接続し直して認証情報を入力してください。"
     },
     "viewer": {
       "close_esc": "閉じる (Esc)"
@@ -8403,7 +8498,7 @@
       "created_on_save": "ファイルは次回の保存時に作成されます。",
       "drop_here": "ここにドロップしてインポート",
       "browse": "参照",
-      "drop_hint": "ここにファイルをドラッグ＆ドロップするか、インポートボタンを使用してください。"
+      "drop_hint": "ここにファイルをドラッグするか、右クリックしてインポートしてください。"
     },
     "info": {
       "mime_image": "画像",
@@ -8463,7 +8558,8 @@
       "meta_author_ph": "作者を追加…",
       "meta_keywords": "キーワード",
       "meta_keywords_ph": "語1, 語2…",
-      "no_activity": "記録された活動なし"
+      "no_activity": "記録された活動なし",
+      "pick_item": "詳細を表示する項目を選択してください。"
     },
     "share": {
       "title": "共有",
@@ -8521,15 +8617,10 @@
     },
     "view": {
       "menu": "表示",
-      "icons_xl": "特大アイコン",
       "icons_lg": "大アイコン",
-      "icons_md": "中アイコン",
       "icons_sm": "小アイコン",
       "list": "一覧",
       "details": "詳細",
-      "tiles": "並べて表示",
-      "content": "コンテンツ",
-      "compact": "コンパクト表示",
       "hidden": "隠しファイル"
     },
     "batch_rename": {

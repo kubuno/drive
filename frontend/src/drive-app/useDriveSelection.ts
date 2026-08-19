@@ -17,7 +17,6 @@ export interface DriveSelection {
   cursorId: string | null
   lastSelectedIdxRef: React.RefObject<number>
   handleItemSelect: (id: string, e: React.MouseEvent) => void
-  handleItemToggle: (id: string) => void
   allItemsSelected: boolean
   toggleSelectAll: () => void
   marqueeContainerRef: React.RefObject<HTMLDivElement | null>
@@ -195,20 +194,10 @@ export function useDriveSelection({ orderedIds, folders, files, trashed, openFil
     }
   }, [orderedIds])
 
-  const handleItemToggle = useCallback((id: string) => {
-    setCursorId(id)
-    setSelectedIds(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id); else next.add(id)
-      return next
-    })
-    lastSelectedIdxRef.current = orderedIds.indexOf(id)
-  }, [orderedIds])
-
   return {
     selectedIds, setSelectedIds,
     cursorId, lastSelectedIdxRef,
-    handleItemSelect, handleItemToggle,
+    handleItemSelect,
     allItemsSelected, toggleSelectAll,
     marqueeContainerRef, marqueeStyle, preSelectedIds,
     onMarqueeDown, onMarqueeMove, onMarqueeUp, onMarqueeCancel,

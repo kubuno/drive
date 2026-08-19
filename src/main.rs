@@ -8,7 +8,7 @@ use kubuno_drive::{
     state::AppState,
 };
 use reqwest::Client;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sqlx::postgres::PgPoolOptions;
 use std::sync::Arc;
@@ -24,10 +24,76 @@ struct Manifest {
     events:        Option<ManifestEvents>,
     #[serde(default)]
     cli_commands:  Vec<CliCommandRaw>,
+    /// Declarative instance settings, edited in the admin console and read back
+    /// by the module through /internal/modules/settings.
+    #[serde(default)]
+    settings:      Vec<SettingDefRaw>,
+    /// Pages the admin panel of this module is split into (`[[setting_groups]]`).
+    /// Each becomes an entry of the admin menu with its own address; the
+    /// `category` of a setting becomes a tab inside its group.
+    #[serde(default)]
+    setting_groups: Vec<SettingGroupRaw>,
+}
+
+/// One `[[setting_groups]]` entry of module.toml, forwarded verbatim. `id` is a
+/// STABLE, UNTRANSLATED slug: it travels in the URL of the admin page.
+#[derive(Deserialize, Serialize)]
+struct SettingGroupRaw {
+    id:          String,
+    label:       String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    icon:        Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    position:    Option<i32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    description: Option<String>,
+}
+
+/// One `[[settings]]` entry of module.toml, forwarded verbatim at registration
+/// (`type` renamed to match the core's `SettingDef`). Presentation metadata the
+/// core does not understand it ignores, so an older core still shows the setting.
+#[derive(Deserialize, Serialize)]
+struct SettingDefRaw {
+    key:         String,
+    scope:       String,
+    #[serde(rename = "type")]
+    value_type:  String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    values:      Option<serde_json::Value>,
+    default:     serde_json::Value,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    label:       Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    description: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    category:    Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    group:       Option<String>,
+    #[serde(default)]
+    public:      bool,
+    #[serde(default)]
+    advanced:    bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    risk:        Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    min:         Option<i64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    max:         Option<i64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    unit:        Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    placeholder: Option<String>,
+    #[serde(default)]
+    multiline:   bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    depends_on:  Option<String>,
 }
 
 #[derive(Deserialize)]
 struct ManifestModule {
+    // Parsed from module.toml for completeness; the registration payload names
+    // the module by its own constant, as mail's manifest does.
+    #[allow(dead_code)]
     id:            String,
     display_name:  String,
     description:   Option<String>,
@@ -420,14 +486,65 @@ async fn main() -> Result<()> {
         .await
         .context("Initialisation du backend de stockage")?;
 
+    // One client, shared by registration/heartbeat and by the instance-settings
+    // refresher below.
+    let http = Client::new();
+
+    // Instance settings, seeded from the compiled defaults then read once from
+    // the core so the first hour's trash cleaner and the first shares see the
+    // administrator's values rather than the defaults. A failed read just leaves
+    // the defaults in place.
+    let instance = Arc::new(std::sync::RwLock::new(
+        kubuno_drive::config::instance::InstanceConfig::default(),
+    ));
+    if let Some(cfg) =
+        kubuno_drive::config::instance::fetch(&http, &settings.core.url, &settings.core.internal_secret).await
+    {
+        if let Ok(mut w) = instance.write() {
+            *w = cfg;
+        }
+    }
+
     let state = AppState {
         db:       pool,
         settings: Arc::new(settings.clone()),
         storage,
+        instance: instance.clone(),
     };
 
+    // Instance-settings refresher: an admin edit takes effect within a minute,
+    // no restart. A failed read keeps the last good values.
+    {
+        let http_refresh     = http.clone();
+        let settings_refresh = settings.clone();
+        let instance_refresh = instance.clone();
+        tokio::spawn(async move {
+            loop {
+                tokio::time::sleep(Duration::from_secs(60)).await;
+                if let Some(cfg) = kubuno_drive::config::instance::fetch(
+                    &http_refresh,
+                    &settings_refresh.core.url,
+                    &settings_refresh.core.internal_secret,
+                )
+                .await
+                {
+                    if let Ok(mut w) = instance_refresh.write() {
+                        *w = cfg;
+                    }
+                }
+            }
+        });
+    }
+
+    // Platform fonts shipped with the module (Google Sans Flex, Roboto Flex):
+    // seeded into System/Fonts, protected. Idempotent; a failure must not keep
+    // the module from starting — the css2 endpoint just serves less until the
+    // next restart.
+    if let Err(e) = kubuno_drive::services::system_fonts::seed(&state.db, &state.storage).await {
+        tracing::error!(error = %e, "Seed des polices système échoué");
+    }
+
     // Enregistrement auprès du core (avec retry infini)
-    let http = Client::new();
     register_with_core(&http, &settings).await;
 
     // Heartbeat toutes les 30s — re-enregistre si le core nous a supprimés du registre
@@ -545,11 +662,22 @@ async fn register_with_core(http: &Client, settings: &Settings) {
         })).collect())
         .unwrap_or_default();
 
+    // Declarative instance settings and the admin-panel pages they belong to.
+    // An older core ignores `setting_groups` and shows a single-page panel.
+    let settings_schema: Value = manifest.as_ref()
+        .map(|m| serde_json::to_value(&m.settings).unwrap_or_else(|_| json!([])))
+        .unwrap_or_else(|| json!([]));
+    let setting_groups: Value = manifest.as_ref()
+        .map(|m| serde_json::to_value(&m.setting_groups).unwrap_or_else(|_| json!([])))
+        .unwrap_or_else(|| json!([]));
+
     let payload = json!({
         "module_id":          "drive",
         "display_name":       display_name,
         "description":        description,
         "settings_path":      settings_path,
+        "settings_schema":    settings_schema,
+        "setting_groups":     setting_groups,
         "base_url":           base_url,
         "version":            env!("CARGO_PKG_VERSION"),
         "routes":             [{ "method": "*", "path": "/*" }],

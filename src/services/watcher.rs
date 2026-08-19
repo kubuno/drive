@@ -1,7 +1,7 @@
 use notify::{RecommendedWatcher, RecursiveMode, Watcher};
 use sqlx::PgPool;
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::mpsc as std_mpsc;
 use std::time::{Duration, Instant};
 use uuid::Uuid;
@@ -93,7 +93,7 @@ pub async fn start_watcher(storage_base: PathBuf, db: PgPool) {
 }
 
 /// Extrait l'owner_id depuis un chemin de type `{storage_base}/{owner_id}/...`
-fn extract_owner_id(storage_base: &PathBuf, path: &PathBuf) -> Option<Uuid> {
+fn extract_owner_id(storage_base: &PathBuf, path: &Path) -> Option<Uuid> {
     let rel   = path.strip_prefix(storage_base).ok()?;
     let first = rel.components().next()?;
     let name  = first.as_os_str().to_string_lossy();
