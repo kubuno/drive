@@ -1690,6 +1690,7 @@ dependencies = [
  "hex",
  "image",
  "kamadak-exif",
+ "kubuno-modauth",
  "kubuno-storage",
  "mime_guess",
  "notify",
@@ -1717,6 +1718,20 @@ dependencies = [
  "validator",
  "walkdir",
  "zip",
+]
+
+[[package]]
+name = "kubuno-modauth"
+version = "0.1.0"
+source = "git+https://github.com/kubuno/core?tag=modauth-v0.1.0#4c9618cbd547d5018e7dd1510892f78f2083c910"
+dependencies = [
+ "base64 0.22.1",
+ "hmac",
+ "serde",
+ "serde_json",
+ "sha2",
+ "subtle",
+ "uuid",
 ]
 
 [[package]]

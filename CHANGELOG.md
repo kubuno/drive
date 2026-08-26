@@ -9,6 +9,56 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 ## [Unreleased]
 
+
+
+### Added
+
+- **Drive now also ships a `.kbpkg`** — the single package format a Kubuno
+  server installs by itself, identical on every system. It carries the same
+  binary, interface and manifest as the `.deb`, arranged the way the server
+  expects to find a module on disk, plus a `SHA256SUMS` so an offline copy can
+  be checked without the catalogue. Nothing changes for existing installations:
+  the system packages are still published, and a catalogue that sees both simply
+  prefers the new one. Drive is the pilot for this format; the other modules
+  follow once it has proven itself.
+### Fixed
+
+- **A built package could be thrown away instead of published.** The job that
+  attaches a package to the release waited ten minutes for another workflow to
+  create that release, then gave up with "release never appeared — build.yml
+  likely failed". The diagnosis was wrong: on a repository whose `.deb` takes
+  longer than ten minutes to build, the release simply did not exist yet, and a
+  package that had built perfectly was discarded. Four modules reached v0.1.6
+  with packages missing for some systems because of it. The job now creates the
+  release itself when it is missing, so it no longer depends on another workflow
+  finishing first.
+### Added
+
+- **Security policy and CI quality gate.** A `SECURITY.md` documents how to
+  report vulnerabilities, and a CI workflow enforces `clippy -D warnings`, a
+  dependency-vulnerability audit (`cargo audit`) and the frontend typecheck/tests.
+
+### Security
+
+- **Drive now authenticates proxied requests from a signed token instead of
+  trusting plain headers.** User routes require a valid `X-Kubuno-Auth` token
+  minted by the core with this module's internal secret (see `kubuno-modauth`),
+  rather than reading `X-Kubuno-User-*` headers at face value — which any process
+  reaching Drive's loopback port could otherwise forge to act as any user.
+
+### Changed
+
+- **Opening Drive now lands on "Accueil"** instead of My Drive. The app's launch
+  target is its Home hub (`/drive/home`); My Drive stays at `/drive`, reachable
+  from the sidebar and by every existing folder link.
+- **Home screen reworked to stop echoing "Recent".** Its file section no longer
+  replays the opened-file journal; it now surfaces a curated blend — files you
+  recently **modified**, starred files, and files recently shared with you —
+  distinct from Recent. Folders and files render through the shared explorer, so
+  their cards, view modes, sort bar and context menu are identical to every other
+  Drive view, and the page now uses the full width. The in-page search box was
+  removed (the header search already covers it); the quick filter chips stay.
+
 ## [0.1.6] - 2026-08-19
 
 ### Added

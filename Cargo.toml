@@ -20,7 +20,7 @@ server = [
     "dep:tokio", "dep:axum", "dep:tower", "dep:tower-http", "dep:async-trait",
     "dep:sqlx", "dep:config", "dep:dotenvy", "dep:validator",
     "dep:tracing-subscriber", "dep:thiserror", "dep:chrono", "dep:futures",
-    "dep:tokio-util", "dep:kubuno-storage", "dep:sha2", "dep:hex", "dep:clap",
+    "dep:tokio-util", "dep:kubuno-storage", "dep:kubuno-modauth", "dep:sha2", "dep:hex", "dep:clap",
     "dep:toml", "dep:aes-gcm", "dep:mime_guess", "dep:sanitize-filename",
     "dep:image", "dep:rand", "dep:notify", "dep:walkdir", "dep:zip",
     "dep:quick-xml", "dep:pdf-extract", "dep:url", "dep:urlencoding",
@@ -54,6 +54,7 @@ chrono         = { workspace = true, optional = true }
 futures        = { workspace = true, optional = true }
 tokio-util     = { workspace = true, optional = true }
 kubuno-storage = { workspace = true, optional = true }
+kubuno-modauth = { workspace = true, optional = true }
 sha2           = { workspace = true, optional = true }
 hex            = { workspace = true, optional = true }
 clap           = { workspace = true, optional = true }
@@ -133,6 +134,9 @@ tracing-appender   = "0.2"
 tokio-util         = { version = "0.7", features = ["io"] }
 kubuno-storage     = { git = "https://github.com/kubuno/core", tag = "storage-v0.1.1", package = "kubuno-storage" }
 kubuno-seccomp     = { git = "https://github.com/kubuno/core", tag = "seccomp-v0.1.1", package = "kubuno-seccomp" }
+# Verifies the signed identity token minted by the core (core → module trust
+# boundary): the core signs X-Kubuno-Auth with this module's internal secret.
+kubuno-modauth     = { git = "https://github.com/kubuno/core", tag = "modauth-v0.1.0", package = "kubuno-modauth" }
 
 # Erreurs
 thiserror = "1"

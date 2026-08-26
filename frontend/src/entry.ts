@@ -50,9 +50,14 @@ export const sdkVersion = SDK_VERSION
 export function register() {
   FaviconRegistry.register('drive', '/drive-logo.svg')
 
-  WaffleAppRegistry.register('drive', 'Drive', [
-    { id: 'drive', label: 'Drive', Icon: DriveLogo, path: '/drive' },
-  ])
+  // `landing` opens the module on its "Accueil" hub while `path` stays at the
+  // resolvable root (/drive → Mon Drive, still matched by resolveByPath). Passed
+  // via a variable because `landing` is not yet in the published @kubuno/sdk
+  // WaffleApp type; the up-to-date host reads it at runtime (cf. `mobileTabs`).
+  const driveWaffleApps = [
+    { id: 'drive', label: 'Drive', Icon: DriveLogo, path: '/drive', landing: '/drive/home' },
+  ]
+  WaffleAppRegistry.register('drive', 'Drive', driveWaffleApps)
 
   WidgetRegistry.register({ id: 'drive-recent', moduleId: 'drive', Component: FilesRecentWidget, size: 'medium', order: 20 })
 

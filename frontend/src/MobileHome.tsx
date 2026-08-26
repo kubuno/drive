@@ -147,7 +147,7 @@ export default function MobileHome() {
             <Loader2 size={18} className="animate-spin" />{t('common.loading')}
           </div>
         }>
-          <DriveApp recent />
+          <DriveApp suggestions />
         </Suspense>
       ) : (
         <div className="flex-1 min-h-0 overflow-y-auto p-3">

@@ -44,6 +44,53 @@ export function recentSource(): LocalSource {
   })
 }
 
+/** « Accueil » : a curated blend distinct from « Récents » (which is the opened
+ *  journal). Unions starred files, files recently MODIFIED across the whole drive
+ *  (`updated_at`, not `opened_at`), and files recently shared with the user, then
+ *  dedupes and orders by last modification. Also surfaces the folders the user
+ *  most recently worked in. Rendered by the SAME explorer as every other view. */
+export function suggestionsSource(): LocalSource {
+  return flatSource('suggestions', 'Accueil', async () => {
+    const [starred, modified, shared] = await Promise.all([
+      filesApi.listFiles(null, true).then(r => r.files).catch(() => [] as FileItem[]),
+      filesApi.listFiles(null, false, false, true, undefined, { limit: 60 }).then(r => r.files).catch(() => [] as FileItem[]),
+      api.get<{ files?: FileItem[] }>('/drive/shares/received-items').then(r => r.data.files ?? []).catch(() => [] as FileItem[]),
+    ])
+
+    // Union + dedupe by id (skip trashed), newest modification first.
+    const byId = new Map<string, FileItem>()
+    for (const f of [...starred, ...shared, ...modified]) {
+      if (f.is_trashed || byId.has(f.id)) continue
+      byId.set(f.id, f)
+    }
+    const files = [...byId.values()]
+      .sort((a, b) => (b.updated_at || '').localeCompare(a.updated_at || ''))
+      .slice(0, 30)
+
+    // Suggested folders: parents of the surfaced files, padded with top-level
+    // folders so the row is never empty.
+    const parentIds: string[] = []
+    const seenParent = new Set<string>()
+    for (const f of files) {
+      const p = f.folder_id
+      if (p && !seenParent.has(p)) { seenParent.add(p); parentIds.push(p) }
+    }
+    const derived = (await Promise.all(
+      parentIds.slice(0, 10).map(id => filesApi.getFolder(id).then(r => r.folder).catch(() => null)),
+    )).filter((f): f is Folder => !!f && !f.is_trashed)
+
+    const folders = [...derived]
+    if (folders.length < 8) {
+      const roots = await filesApi.listFolders(null).then(r => r.folders).catch(() => [] as Folder[])
+      for (const r of roots) {
+        if (folders.length >= 8) break
+        if (!folders.some(m => m.id === r.id)) folders.push(r)
+      }
+    }
+    return { folders: folders.slice(0, 12), files }
+  })
+}
+
 /** « Étoilés » : flat list of starred files. */
 export function starredSource(): LocalSource {
   return flatSource('starred', 'Étoilés', async () => {

@@ -6,7 +6,7 @@ import { StorageExplorer, localSource, useFilesStore, type FileItem } from '@kub
 import { api, useAuthStore, useConfirm, type User } from '@kubuno/sdk'
 import { ConfirmDialog } from '@ui'
 import { useDriveExtras } from './driveExtras'
-import { recentSource, starredSource, sharedSource } from './driveSources'
+import { recentSource, starredSource, sharedSource, suggestionsSource } from './driveSources'
 import DriveContentGrid from './drive-app/DriveContentGrid'
 import DriveContextMenu from './drive-app/DriveContextMenu'
 import DriveDialogs from './drive-app/DriveDialogs'
@@ -33,18 +33,20 @@ interface Props {
   shared?:  boolean
   recent?:  boolean
   trashed?: boolean
+  suggestions?: boolean
 }
 
-export default function DriveApp({ starred = false, shared = false, recent = false, trashed = false }: Props) {
+export default function DriveApp({ starred = false, shared = false, recent = false, trashed = false, suggestions = false }: Props) {
   const { t } = useTranslation('drive')
   const [searchParams, setSearchParams] = useSearchParams()
-  const folderId = (starred || shared || recent || trashed) ? null : (searchParams.get('folder') ?? null)
+  const folderId = (starred || shared || recent || trashed || suggestions) ? null : (searchParams.get('folder') ?? null)
   // Local source for the normal view, delegated to StorageExplorer (unified area).
   const driveSource = useMemo(() => localSource(), [])
   // Virtual sources of the special views: same explorer, overridden source.
-  const recentSrc  = useMemo(() => recentSource(), [])
-  const starredSrc = useMemo(() => starredSource(), [])
-  const sharedSrc  = useMemo(() => sharedSource(), [])
+  const recentSrc      = useMemo(() => recentSource(), [])
+  const starredSrc     = useMemo(() => starredSource(), [])
+  const sharedSrc      = useMemo(() => sharedSource(), [])
+  const suggestionsSrc = useMemo(() => suggestionsSource(), [])
 
   const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm()
 
@@ -63,7 +65,7 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
 
   const isSearchMode = searchApplied || searchQuery.trim().length > 0
   // "Plain" normal view (no search, no special view) → delegated to StorageExplorer.
-  const isPlainNormal = !imageSearch && !isSearchMode && !starred && !shared && !recent && !trashed
+  const isPlainNormal = !imageSearch && !isSearchMode && !starred && !shared && !recent && !trashed && !suggestions
   // Special views delegated to the shared explorer through a virtual source
   // (unless a search is active → dedicated results view).
   const searchActive  = isSearchMode || !!imageSearch
@@ -71,10 +73,12 @@ export default function DriveApp({ starred = false, shared = false, recent = fal
                       : recent ? recentSrc
                       : starred ? starredSrc
                       : shared ? sharedSrc
+                      : suggestions ? suggestionsSrc
                       : null
   const specialTitle  = recent ? t('nav.recent', { defaultValue: 'Récents' })
                       : starred ? t('tree.starred', { defaultValue: 'Étoilés' })
                       : shared ? t('nav.shared', { defaultValue: 'Partagés avec moi' })
+                      : suggestions ? t('nav.home', { defaultValue: 'Accueil' })
                       : ''
 
   const navigate = (id: string | null) => {
