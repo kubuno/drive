@@ -12,6 +12,12 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 ### Fixed
 
+
+- **The interface builds against the published type surface again.** Drive reads
+  `is_protected` on the files the platform ships, a field the published
+  `@kubuno/drive` did not declare — so a clean install failed to typecheck while a
+  developer's machine, holding an older copy, did not. The package now declares
+  it, and the lockfile takes that version.
 - **A withdrawn dependency is no longer used.** A crate deep in the tree
   (`spin` 0.9.8, pulled in through the HTTP stack) was yanked by its authors.
   No vulnerability was announced, but a withdrawn crate has no business in a
