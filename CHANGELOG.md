@@ -9,6 +9,8 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 ## [Unreleased]
 
+## [0.1.7] - 2026-08-26
+
 
 
 ### Added
@@ -133,5 +135,6 @@ number at release time, and CI publishes that section as the GitHub Release note
   become unreachable behind the header's magnifying-glass search mode; it is pinned
   inline again.
 
-[Unreleased]: https://github.com/kubuno/drive/compare/v0.1.6...HEAD
+[Unreleased]: https://github.com/kubuno/drive/compare/v0.1.7...HEAD
+[0.1.7]: https://github.com/kubuno/drive/releases/tag/v0.1.7
 [0.1.6]: https://github.com/kubuno/drive/releases/tag/v0.1.6
