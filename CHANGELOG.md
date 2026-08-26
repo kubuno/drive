@@ -9,6 +9,13 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 ## [Unreleased]
 
+
+### Fixed
+
+- **A withdrawn dependency is no longer used.** A crate deep in the tree
+  (`spin` 0.9.8, pulled in through the HTTP stack) was yanked by its authors.
+  No vulnerability was announced, but a withdrawn crate has no business in a
+  release; the lockfile now takes the version that replaced it.
 ## [0.1.8] - 2026-08-26
 
 
