@@ -100,7 +100,25 @@ cp -r frontend/dist/.       "${ROOT}/frontend/"
 mkdir -p "$DIST"
 OUT="${DIST}/${MODULE}-${VERSION}-${OS}-${ARCH}.kbpkg"
 rm -f "$OUT"
-( cd "$ROOT" && zip -qr9 "$OLDPWD/$OUT" . -x '.*' )
+# L'archivage doit marcher partout, y compris là où `zip` n'existe pas : sur
+# l'exécuteur Windows de l'intégration continue, il est absent, et le paquet
+# Windows a été perdu la première fois pour cette seule raison. 7-Zip y est
+# présent, et PowerShell reste le dernier recours.
+archive() {
+  local root="$1" out="$2"
+  if command -v zip >/dev/null 2>&1; then
+    ( cd "$root" && zip -qr9 "$out" . -x '.*' )
+  elif command -v 7z >/dev/null 2>&1; then
+    ( cd "$root" && 7z a -tzip -mx=9 -bso0 -bsp0 "$out" . >/dev/null )
+  elif command -v powershell.exe >/dev/null 2>&1; then
+    powershell.exe -NoProfile -NonInteractive -Command \
+      "Compress-Archive -Path '$root/*' -DestinationPath '$out' -CompressionLevel Optimal -Force"
+  else
+    echo "Aucun outil d'archivage disponible (zip, 7z ou PowerShell)" >&2
+    return 1
+  fi
+}
+archive "$ROOT" "$PWD/$OUT"
 
 SIZE=$(stat -c%s "$OUT" 2>/dev/null || stat -f%z "$OUT")
 echo "==> $OUT"

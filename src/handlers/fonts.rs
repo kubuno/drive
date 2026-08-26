@@ -93,7 +93,11 @@ fn parse_family(data: &[u8], name_off: usize) -> Option<String> {
         let value = match platform {
             0 | 3 => {
                 // UTF-16BE
-                let units: Vec<u16> = raw.chunks_exact(2).map(|c| u16::from_be_bytes([c[0], c[1]])).collect();
+                // `as_chunks` gives fixed-size arrays, so the pair is read without
+                // indexing — and clippy stopped accepting `chunks_exact` here as of
+                // Rust 1.98. The trailing odd byte, if any, is not a code unit.
+                let (pairs, _) = raw.as_chunks::<2>();
+                let units: Vec<u16> = pairs.iter().map(|c| u16::from_be_bytes(*c)).collect();
                 String::from_utf16_lossy(&units)
             }
             _ => raw.iter().map(|&b| b as char).collect(),

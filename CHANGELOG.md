@@ -9,6 +9,20 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 ## [Unreleased]
 
+
+
+### Fixed
+
+- **The quality gate rejected the font-name reader.** A lint introduced with a
+  newer Rust compiler refused reading UTF-16 name records two bytes at a time
+  through `chunks_exact`; the pair is now read as a fixed-size array, which says
+  the same thing without indexing.
+### Fixed
+
+- **The package could not be built where `zip` is absent.** The Windows job of
+  the continuous integration has no `zip`, so the Windows package was simply lost
+  the first time it was attempted — a script failure, not a build failure. The
+  builder now falls back to 7-Zip, then to PowerShell.
 ## [0.1.7] - 2026-08-26
 
 
