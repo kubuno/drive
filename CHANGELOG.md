@@ -9,6 +9,16 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 ## [Unreleased]
 
+### Changed
+
+- **The advanced-search panel and the search bar now stay in sync both ways.**
+  Opening the panel pre-fills the "Contains the words" field with the bar's
+  current text, and editing that field rewrites the bar's text live (running
+  the search as you type, exactly like typing in the bar). Drive's search is
+  plain free text — the other panel fields (type, owner, location, dates…) are
+  structured filters with no text representation, so they intentionally stay
+  panel-only. "Reset" now also clears the search bar's text.
+
 ## [0.1.9] - 2026-08-26
 
 

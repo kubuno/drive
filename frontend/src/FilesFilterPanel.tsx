@@ -1,15 +1,42 @@
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dropdown, Checkbox, Button, Input } from '@ui'
+import { useSearchStore } from '@kubuno/sdk'
 import { useFilesStore, type FilesSearchFilters } from '@kubuno/drive'
 const rowClass   = 'flex items-start gap-6'
 const labelClass = 'text-sm font-medium text-text-primary w-44 shrink-0 pt-2'
 
 export default function FilesFilterPanel({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation('drive')
-  const { searchFilters, setSearchFilters, applySearch, clearSearch } = useFilesStore()
+  const { searchFilters, setSearchFilters, applySearch, clearSearch, setSearchQuery } = useFilesStore()
+
+  // ── Two-way sync with the shell search bar (platform rule) ──────────────────
+  // Drive's backend has NO text operators: the bar's query is plain free text
+  // (name + full-text + semantic search). So the only field that mirrors the
+  // bar is « Contient les mots »: opening the panel pre-fills it with the
+  // current query, and editing it rewrites the bar's text live (and runs the
+  // live search, exactly like typing in the bar). The other fields are
+  // structured state filters with no query-text representation — they are
+  // deliberately NOT serialized into the bar (no invented operators).
+  const query    = useSearchStore(s => s.query)
+  const setQuery = useSearchStore(s => s.setQuery)
+  const [words, setWords] = useState(query)
+  // Remembers the last query WE pushed so its echo doesn't clobber the field.
+  const lastBuilt = useRef<string | null>(null)
+  useEffect(() => {
+    if (query === lastBuilt.current) return
+    setWords(query)
+  }, [query])
+
+  const setContainsWords = (v: string) => {
+    setWords(v)
+    lastBuilt.current = v
+    setQuery(v)          // rewrite the bar's text live
+    setSearchQuery(v)    // run the live search, like typing in the bar does
+  }
 
   const handleSearch = () => { applySearch(); onClose() }
-  const handleReset  = () => { clearSearch(); onClose() }
+  const handleReset  = () => { clearSearch(); setWords(''); lastBuilt.current = ''; setQuery(''); onClose() }
 
   return (
     <div className="py-5 px-6 space-y-4" style={{ minWidth: 580 }}>
@@ -58,8 +85,8 @@ export default function FilesFilterPanel({ onClose }: { onClose: () => void }) {
           <Input
             type="text"
             placeholder={t('filter.contains_ph')}
-            value={searchFilters.containsWords}
-            onChange={e => setSearchFilters({ containsWords: e.target.value })}
+            value={words}
+            onChange={e => setContainsWords(e.target.value)}
           />
         </div>
       </div>
