@@ -73,7 +73,7 @@ export default function FontsSearchBar() {
           <button
             onClick={openSortMenu}
             aria-label="Trier par"
-            className="group flex items-center gap-1.5 h-9 pl-3 pr-2.5 mr-1.5 rounded-full text-text-secondary hover:bg-[#e8f0fe] transition-colors flex-shrink-0"
+            className="group flex items-center gap-1.5 h-9 pl-3 pr-2.5 mr-1.5 rounded-md text-text-secondary hover:bg-[#e8f0fe] transition-colors flex-shrink-0"
           >
             <ArrowUpDown size={16} className="hidden sm:block flex-shrink-0" />
             <span className="hidden sm:block text-left leading-tight">

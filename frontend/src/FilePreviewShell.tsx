@@ -831,7 +831,7 @@ export default function FilePreviewShell({
               {t('common.download')}
             </button>
           ) : (
-            <div className="flex items-stretch rounded-full overflow-hidden">
+            <div className="flex items-stretch rounded-md overflow-hidden">
               <button
                 onClick={() => onShare(current)}
                 className="flex items-center gap-1.5 pl-3.5 pr-2.5 py-2 text-xs bg-blue-600 hover:bg-blue-500 text-white transition-colors"

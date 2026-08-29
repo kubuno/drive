@@ -35,7 +35,7 @@ function FilterChip({ label, active, onOpen }: {
         const r = e.currentTarget.getBoundingClientRect()
         onOpen({ top: r.bottom + 4, left: r.left, minWidth: 220 })
       }}
-      className={`inline-flex items-center gap-1.5 h-9 pl-3.5 pr-2.5 rounded-full border text-sm transition-colors
+      className={`inline-flex items-center gap-1.5 h-9 pl-3.5 pr-2.5 rounded-md border text-sm transition-colors
                   ${active
                     ? 'border-primary/40 bg-primary-light text-primary'
                     : 'border-border text-text-secondary hover:bg-surface-2'}`}

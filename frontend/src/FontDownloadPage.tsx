@@ -2,7 +2,7 @@
 // selected, with per-family remove + download, download-all, and a self-host
 // embed-code panel. Reached from the bag button in the header search bar.
 //
-// Unlike Google Fonts (which links to fonts.googleapis.com), the embed code is
+// Unlike a public font CDN, the embed code is
 // self-hosted: the primary method is a <link> to the instance's own
 // Google-Fonts-style CSS endpoint (/api/v1/drive/fonts/css2), which generates
 // the @font-face rules server-side from the System/Fonts binaries; a raw

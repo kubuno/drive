@@ -2,7 +2,7 @@ import { useRef, useEffect, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { createPortal } from 'react-dom'
 import {
-  Play, Pause, X, Music, Minimize2, Maximize2, Download,
+  Play, Pause, X, Music, Copy, Square, Download,
 } from 'lucide-react'
 import { FloatingWindow } from '@ui'
 import { useWindowZStore } from '@ui'
@@ -228,7 +228,7 @@ function AudioPlayerCore({ ctl }: { ctl: PlayerController }) {
               className="p-1.5 rounded-full text-text-tertiary hover:text-text-primary hover:bg-surface-2 transition-colors"
               title={t('audio.maximize')}
             >
-              <Maximize2 size={14} />
+              <Square size={14} />
             </button>
             <button
               onClick={e => { e.stopPropagation(); close() }}
@@ -264,7 +264,7 @@ function AudioPlayerCore({ ctl }: { ctl: PlayerController }) {
           className="p-1.5 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-2 transition-colors"
           title={t('audio.minimize')}
         >
-          <Minimize2 size={15} />
+          <Copy size={14} />
         </button>
       }
     >
@@ -308,7 +308,7 @@ function AudioPlayerCore({ ctl }: { ctl: PlayerController }) {
         <a
           href={fileSourceUrl(file)}
           download={file.name}
-          className="flex items-center gap-1.5 px-4 py-1.5 text-xs text-text-secondary hover:text-text-primary border border-border rounded-full hover:bg-surface-1 transition-colors"
+          className="flex items-center gap-1.5 px-4 py-1.5 text-xs text-text-secondary hover:text-text-primary border border-border rounded-md hover:bg-surface-1 transition-colors"
         >
           <Download size={13} />
           Télécharger

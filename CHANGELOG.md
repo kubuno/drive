@@ -11,6 +11,10 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 ### Changed
 
+- **Classic window-caption glyphs on the floating audio player.** Expand is a
+  plain square and reduce two overlapping squares, instead of diagonal double
+  arrows.
+
 - **The advanced-search panel and the search bar now stay in sync both ways.**
   Opening the panel pre-fills the "Contains the words" field with the bar's
   current text, and editing that field rewrites the bar's text live (running
@@ -90,6 +94,29 @@ number at release time, and CI publishes that section as the GitHub Release note
   reaching Drive's loopback port could otherwise forge to act as any user.
 
 ### Changed
+
+- **Pill-shaped buttons are gone from the interface.** Filter chips, view
+  segments, tab selectors and action buttons that were drawn as pills now use the
+  same 4 px corner radius as every other button — the shape set them apart for no
+  reason other than habit. Round buttons that hold a lone icon, avatars, status
+  dots and non-clickable badges keep their shape: a circle around a single glyph
+  is not a pill.
+
+- **Plus Jakarta Sans is shipped with the module** (roman and italic, SIL Open
+  Font License), seeded into `System/Fonts` like the other platform faces and
+  served by the css2 endpoint, so documents can use it. Outfit stays available.
+
+- **Outfit replaces the Google Sans families in the shipped font library.** The
+  module embedded nine Google font files (~26 MB of the 30 MB it carried) and
+  seeded them into `System/Fonts`. They are gone: the embedded set is now Outfit
+  (SIL Open Font License, one variable file) plus the openly licensed families
+  already there — Roboto, Roboto Flex, Inter, DM Mono. The module's font assets
+  drop from 30 MB to 4.9 MB.
+- **Fonts the module no longer ships are actively removed at startup.** Seeding
+  never deleted anything, and what it installed is `is_protected`, which the API
+  refuses to remove — so a retired face would have kept being served for ever.
+  The seed now un-protects and deletes the faces it has dropped, then installs
+  the current set.
 
 - **Opening Drive now lands on "Accueil"** instead of My Drive. The app's launch
   target is its Home hub (`/drive/home`); My Drive stays at `/drive`, reachable

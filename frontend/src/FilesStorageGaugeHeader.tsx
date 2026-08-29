@@ -30,7 +30,7 @@ export default function FilesStorageGaugeHeader() {
       onClick={() => navigate('/drive/storage')}
       title={`${t('storage.title')} — ${label}`}
       aria-label={`${t('storage.title')} — ${label}`}
-      className="hidden lg:flex items-center gap-2 h-9 px-3 mr-1 rounded-full
+      className="hidden lg:flex items-center gap-2 h-9 px-3 mr-1 rounded-md
                  transition-colors select-none hover:bg-surface-3"
     >
       <HardDrive size={16} className="text-text-tertiary flex-shrink-0" />

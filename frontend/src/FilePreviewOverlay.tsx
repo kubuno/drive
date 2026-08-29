@@ -1200,7 +1200,7 @@ export default function FilePreviewOverlay({
 
           <button
             onClick={() => (commentMode ? exitCommentMode() : (setCommentMode(true), setOpenComment(null)))}
-            className={`flex items-center gap-1.5 pl-2 pr-3 py-1 rounded-full transition-colors ${commentMode ? 'bg-white/20 text-white' : 'hover:bg-white/15'}`}
+            className={`flex items-center gap-1.5 pl-2 pr-3 py-1 rounded-md transition-colors ${commentMode ? 'bg-white/20 text-white' : 'hover:bg-white/15'}`}
           >
             <MessageSquarePlus size={15} />
             <span className="text-xs">{t('preview.comment', { defaultValue: 'Commenter' })}</span>
@@ -1424,7 +1424,7 @@ export default function FilePreviewOverlay({
               <p className="text-xs">{t('preview.error_load', { defaultValue: 'Impossible d’afficher ce document' })}</p>
               <button
                 onClick={handleDownload}
-                className="flex items-center gap-1.5 px-3.5 py-2 text-xs bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors"
+                className="flex items-center gap-1.5 px-3.5 py-2 text-xs bg-white/10 hover:bg-white/20 text-white rounded-md transition-colors"
               >
                 <Download size={14} />
                 {t('common.download')}

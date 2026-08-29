@@ -198,7 +198,7 @@ export default function ImagePreviewOverlay({
           <div className="w-px h-4 bg-white/20 mx-2" />
           <button
             onClick={() => onEditImage(current)}
-            className="flex items-center gap-1.5 pl-2 pr-3 py-1 rounded-full hover:bg-white/15 transition-colors"
+            className="flex items-center gap-1.5 pl-2 pr-3 py-1 rounded-md hover:bg-white/15 transition-colors"
           >
             <Wand2 size={15} />
             <span className="text-xs">{t('preview.adjust_image', { defaultValue: 'Ajuster' })}</span>
@@ -243,7 +243,7 @@ export default function ImagePreviewOverlay({
               <p className="text-xs">{t('preview.error_load', { defaultValue: 'Impossible d’afficher ce document' })}</p>
               <button
                 onClick={handleDownload}
-                className="flex items-center gap-1.5 px-3.5 py-2 text-xs bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors"
+                className="flex items-center gap-1.5 px-3.5 py-2 text-xs bg-white/10 hover:bg-white/20 text-white rounded-md transition-colors"
               >
                 <Download size={14} />
                 {t('common.download')}

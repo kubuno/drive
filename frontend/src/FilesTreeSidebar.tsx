@@ -153,7 +153,7 @@ function MobileDrawerNav({ t, pathname, isInDrive, isRecent, isTrashed, isSystem
           </p>
           <RouterLink
             to="/drive/storage"
-            className={`w-full h-10 flex items-center justify-center rounded-full border border-border text-primary text-sm font-medium active:bg-surface-2 transition-colors cursor-pointer ${FOCUS_RING}`}
+            className={`w-full h-10 flex items-center justify-center rounded-md border border-border text-primary text-sm font-medium active:bg-surface-2 transition-colors cursor-pointer ${FOCUS_RING}`}
           >
             {t('storage.manage', { defaultValue: 'Gérer le stockage' })}
           </RouterLink>

@@ -490,10 +490,10 @@ function FontViewToggle({ mode, onMode }: { mode: FontViewMode; onMode: (m: Font
     { key: 'sample', label: 'Échantillon', icon: <ImageIcon size={16} /> },
   ]
   return (
-    <div className="flex items-center gap-1 p-1 rounded-full border border-border bg-white">
+    <div className="flex items-center gap-1 p-1 rounded-md border border-border bg-white">
       {opts.map(o => (
         <button key={o.key} onClick={() => onMode(o.key)}
-          className={clsx('flex items-center gap-1.5 h-7 px-3 rounded-full text-xs font-medium transition-colors',
+          className={clsx('flex items-center gap-1.5 h-7 px-3 rounded-md text-xs font-medium transition-colors',
             mode === o.key ? 'bg-primary-light text-primary' : 'text-text-secondary hover:bg-surface-2')}>
           {o.icon}<span className="hidden md:inline">{o.label}</span>
         </button>

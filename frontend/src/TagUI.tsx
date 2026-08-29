@@ -206,7 +206,7 @@ export function TagInfoSection() {
               <button
                 key={t.id}
                 onClick={() => void toggleTag(target, t.id)}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border transition-colors ${on ? 'border-transparent text-white' : 'border-border text-text-secondary hover:bg-surface-1'}`}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs border transition-colors ${on ? 'border-transparent text-white' : 'border-border text-text-secondary hover:bg-surface-1'}`}
                 style={on ? { backgroundColor: tagColorHex(t.color) } : undefined}
               >
                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: on ? 'rgba(255,255,255,0.9)' : tagColorHex(t.color) }} />

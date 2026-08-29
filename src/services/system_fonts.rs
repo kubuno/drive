@@ -1,11 +1,15 @@
 //! Platform fonts shipped WITH the drive module.
 //!
-//! The two default faces of the platform (Google Sans Flex, Roboto Flex) are
-//! embedded in the binary and seeded into the shared `System/Fonts` directory
-//! at startup, marked `is_protected` so nobody — administrators included — can
-//! delete them. The core's stylesheet then loads them from THIS instance
-//! (`/api/v1/drive/fonts/css2`, see [`crate::handlers::fonts`]) instead of a
-//! third-party CDN.
+//! The platform's own face (Outfit) is embedded in the binary and seeded into
+//! the shared `System/Fonts` directory at startup, marked `is_protected` so
+//! nobody — administrators included — can delete it. The core's stylesheet then
+//! loads it from THIS instance (`/api/v1/drive/fonts/css2`, see
+//! [`crate::handlers::fonts`]) instead of a third-party CDN.
+//!
+//! Every embedded face is under a licence that allows redistribution, and the
+//! licence text ships beside it (`assets/fonts/*-OFL.txt`) as the SIL Open Font
+//! License requires. A font this product cannot redistribute has no business
+//! being compiled into a binary that is packaged and published.
 
 use bytes::Bytes;
 use kubuno_storage::StorageBackend;
@@ -24,26 +28,24 @@ macro_rules! font_asset {
     };
 }
 
-/// (file name in System/Fonts, embedded bytes). All OFL-licensed. Google Sans
-/// Flex / Roboto Flex / Inter are full variable fonts, DM Mono ships as its
-/// six static styles (the family has no variable release). The internal `name`
-/// table carries the family that the css2 endpoint and the Fonts explorer
-/// match against.
+/// (file name in System/Fonts, embedded bytes). All OFL-licensed. Outfit /
+/// Roboto Flex / Inter are full variable fonts; DM Mono ships as its six static
+/// styles (the family has no variable release). The internal `name` table
+/// carries the family that the css2 endpoint and the Fonts explorer match
+/// against.
 const EMBEDDED_FONTS: &[(&str, &[u8])] = &[
-    // The platform's default stack: "Google Sans Text", "Google Sans", Roboto.
-    // Google Sans Text has no variable release → its six static styles.
-    ("Google Sans Text Regular.ttf", font_asset!("GoogleSansText-Regular.ttf")),
-    ("Google Sans Text Italic.ttf", font_asset!("GoogleSansText-Italic.ttf")),
-    ("Google Sans Text Medium.ttf", font_asset!("GoogleSansText-Medium.ttf")),
-    ("Google Sans Text Medium Italic.ttf", font_asset!("GoogleSansText-MediumItalic.ttf")),
-    ("Google Sans Text Bold.ttf", font_asset!("GoogleSansText-Bold.ttf")),
-    ("Google Sans Text Bold Italic.ttf", font_asset!("GoogleSansText-BoldItalic.ttf")),
-    ("Google Sans.ttf", font_asset!("GoogleSans.ttf")),
-    ("Google Sans Italic.ttf", font_asset!("GoogleSans-Italic.ttf")),
+    // The platform's own face. Outfit is a single variable file covering the
+    // whole 100..900 weight range, which is why one entry replaces the ten
+    // static and variable files the previous default stack needed.
+    ("Outfit.ttf", font_asset!("Outfit.ttf")),
     ("Roboto.ttf", font_asset!("Roboto.ttf")),
     ("Roboto Italic.ttf", font_asset!("Roboto-Italic.ttf")),
     // Kept available (pickers, documents that already use them).
-    ("Google Sans Flex.ttf", font_asset!("GoogleSansFlex.ttf")),
+    // Plus Jakarta Sans ships both cuts because it HAS a real italic, unlike
+    // Outfit — a document set in it gets a drawn oblique rather than one the
+    // browser slants itself.
+    ("Plus Jakarta Sans.ttf", font_asset!("PlusJakartaSans.ttf")),
+    ("Plus Jakarta Sans Italic.ttf", font_asset!("PlusJakartaSans-Italic.ttf")),
     ("Roboto Flex.ttf", font_asset!("RobotoFlex.ttf")),
     ("Inter.ttf", font_asset!("InterVariable.ttf")),
     ("Inter Italic.ttf", font_asset!("InterVariable-Italic.ttf")),
@@ -55,12 +57,74 @@ const EMBEDDED_FONTS: &[(&str, &[u8])] = &[
     ("DM Mono Medium Italic.ttf", font_asset!("DMMono-MediumItalic.ttf")),
 ];
 
-/// Idempotent: uploads each embedded font that System/Fonts does not already
-/// hold (matched by file name), (re)asserts `is_protected` on those it does,
-/// and refreshes IN PLACE any whose bytes drifted from the embedded ones —
-/// protected files cannot be replaced through the API, administrators
-/// included, so a corrected binary can only ever arrive through here.
+/// Faces this module used to ship and no longer does.
+///
+/// Seeding alone cannot undo itself: it never deletes, and what it installed is
+/// `is_protected`, which the API refuses to remove — administrators included.
+/// So an instance that was seeded with a font we have since dropped would keep
+/// serving it for ever, and the whole point of dropping it would be lost. These
+/// names are actively removed at startup.
+///
+/// The Google Sans families were retired in favour of Outfit: this product is a
+/// sovereign alternative to Google Workspace, and shipping Google's own
+/// typeface in it was incoherent — quite apart from the six `Google Sans Text`
+/// files whose licence metadata was empty, which is not something to redistribute
+/// in a package.
+const RETIRED_FONTS: &[&str] = &[
+    "Google Sans Text Regular.ttf",
+    "Google Sans Text Italic.ttf",
+    "Google Sans Text Medium.ttf",
+    "Google Sans Text Medium Italic.ttf",
+    "Google Sans Text Bold.ttf",
+    "Google Sans Text Bold Italic.ttf",
+    "Google Sans.ttf",
+    "Google Sans Italic.ttf",
+    "Google Sans Flex.ttf",
+];
+
+/// Removes the faces listed in [`RETIRED_FONTS`] from `System/Fonts`.
+///
+/// Un-protects first, because permanent deletion refuses a protected file by
+/// design. Failures are logged and skipped rather than propagated: a font that
+/// resists removal must not keep the module from starting.
+async fn retire_dropped_fonts(db: &PgPool, storage: &Arc<dyn StorageBackend>) {
+    for name in RETIRED_FONTS {
+        let existing: std::result::Result<Option<(Uuid,)>, _> = sqlx::query_as(
+            "SELECT id FROM drive.files
+             WHERE owner_id = $1 AND folder_id = $2 AND name = $3 AND is_trashed = FALSE",
+        )
+        .bind(SYSTEM_OWNER)
+        .bind(FONTS_FOLDER_ID)
+        .bind(name)
+        .fetch_optional(db)
+        .await;
+
+        let Ok(Some((id,))) = existing else { continue };
+
+        if let Err(e) = sqlx::query("UPDATE drive.files SET is_protected = FALSE WHERE id = $1")
+            .bind(id)
+            .execute(db)
+            .await
+        {
+            tracing::warn!(error = %e, name, "Retired font could not be un-protected");
+            continue;
+        }
+        match files::delete_file_permanently(db, storage, SYSTEM_OWNER, id).await {
+            Ok(()) => tracing::info!(name, "Retired font removed from System/Fonts"),
+            Err(e) => tracing::warn!(error = %e, name, "Retired font could not be removed"),
+        }
+    }
+}
+
+/// Idempotent: removes the faces this module no longer ships, uploads each
+/// embedded font that System/Fonts does not already hold (matched by file
+/// name), (re)asserts `is_protected` on those it does, and refreshes IN PLACE
+/// any whose bytes drifted from the embedded ones — protected files cannot be
+/// replaced through the API, administrators included, so a corrected binary can
+/// only ever arrive through here.
 pub async fn seed(db: &PgPool, storage: &Arc<dyn StorageBackend>) -> Result<()> {
+    retire_dropped_fonts(db, storage).await;
+
     for (name, bytes) in EMBEDDED_FONTS {
         let existing: Option<(Uuid, bool)> = sqlx::query_as(
             "SELECT id, is_protected FROM drive.files

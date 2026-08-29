@@ -536,7 +536,7 @@ async fn main() -> Result<()> {
         });
     }
 
-    // Platform fonts shipped with the module (Google Sans Flex, Roboto Flex):
+    // Platform fonts shipped with the module (Outfit, Roboto Flex):
     // seeded into System/Fonts, protected. Idempotent; a failure must not keep
     // the module from starting — the css2 endpoint just serves less until the
     // next restart.
