@@ -85,7 +85,10 @@ sqlx  = { workspace = true }
 [workspace]
 
 [workspace.package]
-version      = "0.1.4"
+# NB: no `version` key here on purpose. This is a mono-crate; `[package]` above
+# holds the real, authoritative version (release.sh bumps it) and inherits
+# nothing from here. A stale `version` in this block once mislead a release into
+# the wrong crate tag — see the versioning invariant (tag == [package].version).
 edition      = "2021"
 authors      = ["Kubuno Contributors"]
 license      = "AGPL-3.0"

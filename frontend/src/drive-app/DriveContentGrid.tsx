@@ -97,9 +97,6 @@ export default function DriveContentGrid({
           <div className="ml-auto">
             <ViewMenu
               value={view.viewMode} onChange={view.setViewMode}
-              // `compact` is gone from the core component; the published @kubuno/drive
-              // types still require the props, so pass neutral values until republish.
-              compact={false} onCompact={() => {}}
               showHidden={view.showHidden} onShowHidden={view.setShowHidden}
               t={t}
             />

@@ -48,7 +48,7 @@ import FilesFloatingAudioPlayer from './FilesFloatingAudioPlayer'
 export const sdkVersion = SDK_VERSION
 
 export function register() {
-  FaviconRegistry.register('drive', '/drive-logo.svg')
+  FaviconRegistry.register('drive', '/drive-logo.png')
 
   // `landing` opens the module on its "Accueil" hub while `path` stays at the
   // resolvable root (/drive → Mon Drive, still matched by resolveByPath). Passed

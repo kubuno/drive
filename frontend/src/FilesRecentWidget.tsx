@@ -1,8 +1,7 @@
+import { formatRelative, toDate } from '@kubuno/sdk'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { FolderOpen, File, FileText, Image, Music, Video, Archive, Code } from 'lucide-react'
-import { formatDistanceToNow, parseISO } from 'date-fns'
-import { getDateLocale } from '@kubuno/sdk'
 import { filesApi, formatSize } from '@kubuno/drive'
 import { DashboardWidget } from '@kubuno/sdk'
 import type { LucideIcon } from 'lucide-react'
@@ -57,7 +56,7 @@ export default function FilesRecentWidget() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-text-primary truncate">{f.name}</p>
                   <p className="text-xs text-text-tertiary mt-0.5">
-                    {formatSize(f.size_bytes)} · {formatDistanceToNow(parseISO(f.updated_at), { locale: getDateLocale(), addSuffix: true })}
+                    {formatSize(f.size_bytes)} · {formatRelative(toDate(f.updated_at))}
                   </p>
                 </div>
               </li>

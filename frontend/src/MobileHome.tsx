@@ -1,3 +1,4 @@
+import { formatRelative, toDate } from '@kubuno/sdk'
 /**
  * Drive home (mobile) — the landing screen of the bottom-nav "Home" tab.
  *
@@ -14,8 +15,7 @@
 import { lazy, Suspense, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
-import { api, getDateLocale } from '@kubuno/sdk'
-import { formatDistanceToNow, parseISO } from 'date-fns'
+import { api } from '@kubuno/sdk'
 import {
   Upload, Pencil, Trash2, Share2, Star, FolderPlus, RotateCcw, Copy, Move,
   Activity as ActivityIcon, Loader2, type LucideIcon,
@@ -100,7 +100,7 @@ function ActivityTab() {
                 {entry.item_name ?? t('activity.unknown_item', { defaultValue: 'Élément supprimé' })}
               </p>
               <p className="text-xs text-text-tertiary truncate">
-                {verb} · {entry.user_display} · {formatDistanceToNow(parseISO(entry.created_at), { locale: getDateLocale(), addSuffix: true })}
+                {verb} · {entry.user_display} · {formatRelative(toDate(entry.created_at))}
               </p>
             </div>
           </li>

@@ -1,3 +1,4 @@
+import { cn } from '@ui'
 // FontsExplorer — Windows-Fonts-like view for System/Fonts. Font files are stored
 // flat (e.g. CALIBRI.TTF, CALIBRIB.TTF…); we parse each font's `name`/`OS/2`
 // tables to group them by family, render an "Abg" preview in the real font, drill
@@ -6,7 +7,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Type, Upload, Trash2, FolderOpen, Rows3, LayoutGrid, Image as ImageIcon } from 'lucide-react'
-import clsx from 'clsx'
 import { Button, FloatCheckbox, MenuDropdown, ConfirmDialog, ConflictDialog, Spinner, Tooltip, type ConflictChoice, type MenuItem, type MenuDropdownPos } from '@ui'
 import { useConfirm, useSearchStore } from '@kubuno/sdk'
 import { systemApi, useMarqueeSelection, type FileItem } from '@kubuno/drive'
@@ -493,7 +493,7 @@ function FontViewToggle({ mode, onMode }: { mode: FontViewMode; onMode: (m: Font
     <div className="flex items-center gap-1 p-1 rounded-md border border-border bg-white">
       {opts.map(o => (
         <button key={o.key} onClick={() => onMode(o.key)}
-          className={clsx('flex items-center gap-1.5 h-7 px-3 rounded-md text-xs font-medium transition-colors',
+          className={cn('flex items-center gap-1.5 h-7 px-3 rounded-md text-xs font-medium transition-colors',
             mode === o.key ? 'bg-primary-light text-primary' : 'text-text-secondary hover:bg-surface-2')}>
           {o.icon}<span className="hidden md:inline">{o.label}</span>
         </button>
@@ -538,7 +538,7 @@ function FontSpecimenCard({ it, sampleText, fontSize, selected, preSelected, sel
   return (
     <div data-selectable-id={it.key}
       onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
-      className={clsx(
+      className={cn(
         'relative flex flex-col rounded-xl border bg-white px-6 pt-5 pb-6 h-[320px] overflow-hidden select-none cursor-default transition-shadow',
         selected ? 'border-primary ring-2 ring-primary ring-inset'
           : preSelected ? 'border-primary/50 ring-2 ring-primary/20'
@@ -546,7 +546,7 @@ function FontSpecimenCard({ it, sampleText, fontSize, selected, preSelected, sel
       )}
       onClick={onClick} onDoubleClick={onDouble} onContextMenu={onContextMenu}>
       <div className="flex items-start justify-between gap-3 shrink-0">
-        <div className={clsx('min-w-0 transition-[padding]', showBox && 'pl-7')}>
+        <div className={cn('min-w-0 transition-[padding]', showBox && 'pl-7')}>
           <p className="text-[15px] font-medium text-text-primary truncate leading-tight">{it.label}</p>
           {designer && <p className="text-xs text-text-tertiary truncate mt-0.5">{designer}</p>}
         </div>
@@ -573,10 +573,10 @@ function FontRow({ it, sampleText, selected, preSelected, selecting, mergeTop, m
   return (
     <div data-selectable-id={it.key}
       onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
-      className={clsx('relative py-5 cursor-default select-none', selected && 'bg-primary-light/40')}
+      className={cn('relative py-5 cursor-default select-none', selected && 'bg-primary-light/40')}
       style={selected ? { boxShadow: selRingShadow(mergeTop, mergeBottom) } : undefined}
       onClick={onClick} onDoubleClick={onDouble} onContextMenu={onContextMenu}>
-      <div className={clsx('flex items-center gap-2 mb-3 transition-[padding]', showBox && 'pl-8')}>
+      <div className={cn('flex items-center gap-2 mb-3 transition-[padding]', showBox && 'pl-8')}>
         <span className="text-[15px] font-medium text-text-primary">{it.label}</span>
         <span className="text-xs text-text-tertiary whitespace-nowrap">{styleCount} style{styleCount > 1 ? 's' : ''}</span>
         {designer && <><span className="text-text-tertiary/40">|</span><span className="text-xs text-text-tertiary truncate">{designer}</span></>}
@@ -598,12 +598,12 @@ function FontSampleCard({ it, selected, preSelected, selecting, onClick, onToggl
   return (
     <div data-selectable-id={it.key}
       onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
-      className={clsx('relative flex flex-col rounded-xl border bg-white overflow-hidden select-none cursor-default transition-shadow',
+      className={cn('relative flex flex-col rounded-xl border bg-white overflow-hidden select-none cursor-default transition-shadow',
         selected ? 'border-primary ring-2 ring-primary ring-inset'
           : preSelected ? 'border-primary/50' : 'border-[#e0e3e7] hover:shadow-[0_1px_10px_rgba(0,0,0,0.12)]')}
       onClick={onClick} onDoubleClick={onDouble} onContextMenu={onContextMenu}>
       <div className="flex items-start justify-between gap-3 px-5 pt-4 pb-3">
-        <div className={clsx('min-w-0 transition-[padding]', showBox && 'pl-7')}>
+        <div className={cn('min-w-0 transition-[padding]', showBox && 'pl-7')}>
           <p className="text-[15px] font-medium text-text-primary truncate leading-tight">{it.label}</p>
           {designer && <p className="text-xs text-text-tertiary truncate mt-0.5">{designer}</p>}
         </div>
@@ -625,7 +625,7 @@ function SelectBox({ show, selected, preSelected, onToggle, className }: {
 }) {
   return (
     <div onClick={e => { e.stopPropagation(); onToggle() }}
-      className={clsx('absolute transition-opacity', className, show ? 'opacity-100' : 'opacity-0 pointer-events-none')}>
+      className={cn('absolute transition-opacity', className, show ? 'opacity-100' : 'opacity-0 pointer-events-none')}>
       <FloatCheckbox selected={selected || !!preSelected} onToggle={onToggle} />
     </div>
   )
@@ -646,7 +646,7 @@ function FontCard({ id, cssFamily, label, stacked, selected, preSelected, select
           <div className="absolute -top-1 left-1.5 right-[-6px] h-full rounded-md border border-[#e0e3e7] bg-white" />
           <div className="absolute -top-0.5 left-0.5 right-[-3px] h-full rounded-md border border-[#e0e3e7] bg-white" />
         </>}
-        <div className={clsx(
+        <div className={cn(
           'relative aspect-square rounded-md border bg-white flex items-center justify-center overflow-hidden transition-shadow',
           selected ? 'border-primary ring-2 ring-primary bg-[#eaf2fe]'
             : preSelected ? 'border-primary/50 bg-[#eaf2fe]'
@@ -657,7 +657,7 @@ function FontCard({ id, cssFamily, label, stacked, selected, preSelected, select
           <span className="text-[#202124] leading-none" style={{ fontFamily: cssFamily ? `'${cssFamily}', system-ui` : undefined, fontSize: 44 }}>Abg</span>
           {/* Selection checkbox — visible on hover or when a selection is active. */}
           <div onClick={e => { e.stopPropagation(); onToggle() }}
-            className={clsx('absolute top-1 left-1 transition-opacity', selected || selecting || preSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100')}>
+            className={cn('absolute top-1 left-1 transition-opacity', selected || selecting || preSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100')}>
             <FloatCheckbox selected={selected || !!preSelected} onToggle={onToggle} />
           </div>
         </div>

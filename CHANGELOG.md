@@ -11,23 +11,39 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 ### Changed
 
+- **The storage client now reaches the files service through the core, not
+  directly.** Editor modules (documents, notes, and the like) talk to file
+  storage through this crate's `FilesClient`. It used to call the files module
+  on its own port; on a deployment where each module holds only its own derived
+  secret, that direct call is rejected and file operations fail. The client now
+  sends every request to the core, which authenticates the caller and forwards
+  it to the files service on their behalf. Callers pass the core's URL when they
+  build the client instead of the files service's URL; nothing else about how
+  they use it changes. This also works unchanged on single-secret deployments.
 
 
-
+- **Dates are formatted by the platform now, not by a library.** `date-fns` is
+  gone from this module: the shared SDK exposes helpers built on `Intl`, which is
+  localised for every language we ship and needs no locale bundle loaded. Call
+  sites say what a date is FOR — `formatDate(d, 'date')` — and the platform
+  decides how to write it, so a reader in Japanese no longer gets a French
+  layout. Machine formats (keys, `<input type="date">` values) go through
+  `toISODate` and friends, built from local calendar fields so the day cannot
+  shift near midnight.
+- **Class names are composed by `cn()` from `@ui`**, replacing `clsx`. One less
+  dependency for a dozen lines of finished logic; call sites are unchanged.
 - **The RPM package now names the same maintainer as the Debian one.** Its
-  changelog entry read `Kubuno Contributors <contact@kubuno.io>`, an address on
-  a domain the project does not use; it now reads
-  `Martinien OLINGA <kubuno@martinienolinga.com>`, matching the `.deb`. Nothing
-  about what the package installs changes.
+  changelog entry used a placeholder address on a domain the project does not
+  use; it now matches the maintainer of the `.deb`, on the project's own domain.
+  Nothing about what the package installs changes.
 
 - **The package maintainer address moved to the project's own domain.** The
-  Debian package's `Maintainer` field now reads
-  `Martinien OLINGA <kubuno@martinienolinga.com>`. Nothing about what the
-  package installs changes.
+  Debian package's `Maintainer` field now uses an address on the project's own
+  domain. Nothing about what the package installs changes.
 
-- **Security reports now go to `security@martinienolinga.com`.** The address
-  published in `SECURITY.md` moved to the project's own domain; the previous
-  one is retired. Reporting through GitHub Security Advisories is unaffected.
+- **Security reports now go to an address on the project's own domain.** The
+  address published in `SECURITY.md` moved to that domain; the previous one is
+  retired. Reporting through GitHub Security Advisories is unaffected.
 
 - **The README now opens with the module's logo.** The public README on
   GitHub now shows the module's designer logo (the same PNG shown as the
@@ -35,6 +51,10 @@ number at release time, and CI publishes that section as the GitHub Release note
   repository landing now matches the icon a signed-in user sees inside the
   platform. The image ships in-repo, under `.github/logo.png`, so it renders
   even when the repo is browsed offline.
+
+- **New Drive logo** — a blue isometric stack of platters with a white top
+  face and gold tabs, used as the browser-tab icon and in the applications
+  menu. It is now raster (PNG) designer artwork.
 
 - **Classic window-caption glyphs on the floating audio player.** Expand is a
   plain square and reduce two overlapping squares, instead of diagonal double
@@ -47,6 +67,26 @@ number at release time, and CI publishes that section as the GitHub Release note
   plain free text — the other panel fields (type, owner, location, dates…) are
   structured filters with no text representation, so they intentionally stay
   panel-only. "Reset" now also clears the search bar's text.
+
+### Fixed
+
+- **Folders whose stored path drifted from their name are repaired on start.**
+  A folder's path is stored, not recomputed on read, and the rename that keeps
+  it current refuses protected folders — so a protected folder renamed by a raw
+  database write (as happened to an application's own protected folder during an
+  earlier rename) kept a path from its old name. Two folders could then claim the
+  same local path, and desktop sync clients would materialise neither, leaving
+  files that were present on the server missing on the machine. The drive now
+  reconciles these paths at startup: it recomputes each folder's path from its
+  parent and its name and relocates the folder's files one by one, never as a
+  whole directory, so a file that a neighbouring folder happens to share on disk
+  is left untouched; where two records point at the very same stored file the
+  content is copied rather than moved, so neither record breaks. When a folder is
+  moved off a path it had been sharing, the neighbour that legitimately keeps that
+  path is re-published as well, so a client that had collapsed the two onto one
+  local location restores the neighbour's files instead of losing them. The pass
+  is a no-op on healthy instances and its corrections flow to clients on their
+  next sync, so the missing files reappear without any manual step.
 
 ## [0.1.9] - 2026-08-26
 

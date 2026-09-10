@@ -1,9 +1,9 @@
+import { cn } from '@ui'
 // Custom search bar for the Fonts view — registered into the core shell's search
 // slot (useSearchStore) so it fully replaces the generic search pill while the
 // Fonts view is mounted. Google-Fonts-like: a search field on the left and a
 // compact "Trier par" (sort-by) button docked on the right.
 import { useRef, useState } from 'react'
-import clsx from 'clsx'
 import { Search, X, ChevronDown, ArrowUpDown, Check, ShoppingBag } from 'lucide-react'
 import { MenuDropdown, Tooltip, type MenuItem, type MenuDropdownPos } from '@ui'
 import { useFontsUiStore, FONT_SORT_LABELS, type FontSort } from './fontsUiStore'
@@ -90,7 +90,7 @@ export default function FontsSearchBar() {
         <button
           onClick={toggleCart}
           aria-label="Polices sélectionnées"
-          className={clsx('relative shrink-0 w-11 h-11 flex items-center justify-center rounded-full transition-colors',
+          className={cn('relative shrink-0 w-11 h-11 flex items-center justify-center rounded-full transition-colors',
             cartOpen ? 'bg-primary-light text-primary' : 'text-text-secondary hover:bg-[#e8f0fe]')}
         >
           <ShoppingBag size={20} />

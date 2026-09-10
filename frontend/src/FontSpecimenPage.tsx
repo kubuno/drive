@@ -1,3 +1,4 @@
+import { cn } from '@ui'
 // Google-Fonts-like specimen page shown when a font family is opened. Four tabs:
 // Specimen (hero + type tester + styles list + size ramp), About (description &
 // designer, from the font's `name` table), License (copyright + license text),
@@ -8,7 +9,6 @@
 // Tooltip) rather than hand-rolled controls.
 import { useState } from 'react'
 import { Trash2, RotateCcw, Download, Type, Info, FileText, Languages, Globe } from 'lucide-react'
-import clsx from 'clsx'
 import { Button, Tabs, Accordion, Dropdown, Input, Editable, Tooltip, type TabDef, type DropdownOption } from '@ui'
 
 export interface SpecimenVariant {
@@ -215,7 +215,7 @@ function GlyphsTab({ data }: { data: FontSpecimenData }) {
       <div className="grid grid-cols-10 gap-px bg-border">
         {g.chars.map((ch, i) => (
           <button key={i} onClick={() => setSelected(ch)}
-            className={clsx('aspect-square flex items-center justify-center text-lg', selected === ch ? 'bg-primary text-white' : 'bg-white text-text-primary hover:bg-surface-2')}
+            className={cn('aspect-square flex items-center justify-center text-lg', selected === ch ? 'bg-primary text-white' : 'bg-white text-text-primary hover:bg-surface-2')}
             style={{ fontFamily: family }}>{ch}</button>
         ))}
       </div>

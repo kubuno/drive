@@ -5,6 +5,7 @@ pub mod comments;
 pub mod embeddings;
 pub mod extract;
 pub mod files;
+pub mod folder_reconcile;
 pub mod folders;
 pub mod indexer;
 pub mod insights;

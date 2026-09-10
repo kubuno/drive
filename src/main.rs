@@ -544,6 +544,17 @@ async fn main() -> Result<()> {
         tracing::error!(error = %e, "Seed des polices système échoué");
     }
 
+    // Repair folders whose stored `path` drifted from their `name` (e.g. a
+    // protected folder renamed with a raw UPDATE, which bypasses the path
+    // cascade in `rename_folder`). Left unfixed, two folders can claim the same
+    // local path and desktop sync clients materialise neither. Idempotent and
+    // non-fatal — a stale path just persists until the next successful restart.
+    match kubuno_drive::services::folder_reconcile::reconcile_folder_paths(&state.db, &state.storage).await {
+        Ok(0) => {}
+        Ok(n) => tracing::warn!(count = n, "Réconciliation des chemins de dossiers : {n} corrigé(s)"),
+        Err(e) => tracing::error!(error = %e, "Réconciliation des chemins de dossiers échouée"),
+    }
+
     // Enregistrement auprès du core (avec retry infini)
     register_with_core(&http, &settings).await;
 

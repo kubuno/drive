@@ -88,9 +88,6 @@ export default function SortFilterBar({
         </button>
         <ViewMenu
           value={viewMode} onChange={onViewMode}
-          // `compact` is gone from the core component; the published @kubuno/drive
-          // types still require the props, so pass neutral values until republish.
-          compact={false} onCompact={() => {}}
           showHidden={showHidden} onShowHidden={onShowHidden}
           t={t}
         />

@@ -5,6 +5,17 @@
 //! uniquement : reqwest/serde/uuid/base64). Les modules ÉDITEURS (office, notes,
 //! paintsharp, flow…) en dépendent pour déléguer TOUT le stockage au module `files` :
 //! ils ne touchent jamais `kubuno-storage` ni le disque directement.
+//!
+//! ## Routage par le relais du core (`/internal/ipc`)
+//!
+//! Le client ne parle PLUS au module `files` en direct. Sous `derive_module_secrets`
+//! chaque module n'a que son propre secret dérivé, donc un appel module→module direct
+//! est rejeté (401). Toute requête passe par le CORE : le client poste vers
+//! `{core_url}/internal/ipc/drive/<rest>`, le core authentifie le secret de l'APPELANT,
+//! ré-injecte celui de `drive` et relaie vers `{drive}/ipc/<rest>` (query-string et corps
+//! préservés). Le `core_url` passé à [`FilesClient::new`] est donc l'URL du CORE (plus
+//! celle du module `files`), et le secret reste celui de l'appelant. Marche dans les deux
+//! modes (secret dérivé ou secret maître partagé), le core ré-injectant de façon transparente.
 
 use std::collections::HashMap;
 
@@ -43,17 +54,22 @@ pub struct ResolveEntry {
     pub mime_type:  Option<String>,
 }
 
-/// Client HTTP vers l'IPC interne du module `files` (auth par X-Internal-Secret).
+/// Client HTTP vers l'IPC interne du module `files`, ROUTÉ PAR LE CORE.
+/// Chaque requête part vers `{core_url}/internal/ipc/drive/<rest>` avec le secret de
+/// l'appelant ; le core l'authentifie, ré-injecte celui de `drive` et relaie.
 #[derive(Clone)]
 pub struct FilesClient {
     http:     Client,
-    base_url: String,
+    /// URL du CORE (pas du module `files`) — le core relaie vers `drive`.
+    core_url: String,
     secret:   String,
 }
 
 impl FilesClient {
-    pub fn new(base_url: String, secret: String) -> Self {
-        FilesClient { http: Client::new(), base_url, secret }
+    /// `core_url` = URL du CORE (le relais `/internal/ipc` y vit) ; `secret` = le secret
+    /// interne de l'APPELANT (le core ré-injecte celui de `drive`).
+    pub fn new(core_url: String, secret: String) -> Self {
+        FilesClient { http: Client::new(), core_url, secret }
     }
 
     pub async fn ensure_folder_path(&self, user_id: Uuid, path: &str, protect: bool, icon: Option<&str>) -> Result<FolderInfo> {
@@ -64,7 +80,7 @@ impl FilesClient {
     /// sont marqués cachés (exclus du navigateur). Pour les dossiers d'assets internes.
     pub async fn ensure_folder_path_ex(&self, user_id: Uuid, path: &str, protect: bool, hidden: bool, icon: Option<&str>) -> Result<FolderInfo> {
         let resp = self.http
-            .post(format!("{}/ipc/folders/ensure-path", self.base_url))
+            .post(format!("{}/internal/ipc/drive/folders/ensure-path", self.core_url))
             .header("X-Internal-Secret", &self.secret)
             .json(&serde_json::json!({ "user_id": user_id, "path": path, "protect": protect, "hidden": hidden, "icon": icon }))
             .send().await?;
@@ -83,7 +99,7 @@ impl FilesClient {
     ) -> Result<FileInfo> {
         let content_b64 = base64::engine::general_purpose::STANDARD.encode(&content);
         let resp = self.http
-            .post(format!("{}/ipc/files/with-content", self.base_url))
+            .post(format!("{}/internal/ipc/drive/files/with-content", self.core_url))
             .header("X-Internal-Secret", &self.secret)
             .json(&serde_json::json!({
                 "user_id": user_id, "folder_id": folder_id, "name": name, "mime_type": mime_type,
@@ -100,7 +116,7 @@ impl FilesClient {
 
     pub async fn get_file_content(&self, user_id: Uuid, file_id: Uuid) -> Result<(FileInfo, Bytes)> {
         let resp = self.http
-            .get(format!("{}/ipc/files/{user_id}/{file_id}/content", self.base_url))
+            .get(format!("{}/internal/ipc/drive/files/{user_id}/{file_id}/content", self.core_url))
             .header("X-Internal-Secret", &self.secret)
             .send().await?;
         if !resp.status().is_success() {
@@ -117,7 +133,7 @@ impl FilesClient {
     pub async fn update_file_content(&self, user_id: Uuid, file_id: Uuid, content: Bytes) -> Result<FileInfo> {
         let content_b64 = base64::engine::general_purpose::STANDARD.encode(&content);
         let resp = self.http
-            .put(format!("{}/ipc/files/{file_id}/content", self.base_url))
+            .put(format!("{}/internal/ipc/drive/files/{file_id}/content", self.core_url))
             .header("X-Internal-Secret", &self.secret)
             .json(&serde_json::json!({ "user_id": user_id, "content": content_b64 }))
             .send().await?;
@@ -132,7 +148,7 @@ impl FilesClient {
     /// Métadonnées seules d'un fichier (sans le contenu) — pour lire son nom.
     pub async fn get_file_meta(&self, user_id: Uuid, file_id: Uuid) -> Result<FileInfo> {
         let resp = self.http
-            .get(format!("{}/ipc/files/{user_id}/{file_id}", self.base_url))
+            .get(format!("{}/internal/ipc/drive/files/{user_id}/{file_id}", self.core_url))
             .header("X-Internal-Secret", &self.secret)
             .send().await?;
         if !resp.status().is_success() { anyhow::bail!("get_file_meta failed: {}", resp.status()); }
@@ -144,7 +160,7 @@ impl FilesClient {
     pub async fn file_names(&self, user_id: Uuid, ids: &[Uuid]) -> HashMap<Uuid, String> {
         if ids.is_empty() { return HashMap::new(); }
         let resp = self.http
-            .post(format!("{}/ipc/files/names", self.base_url))
+            .post(format!("{}/internal/ipc/drive/files/names", self.core_url))
             .header("X-Internal-Secret", &self.secret)
             .json(&serde_json::json!({ "user_id": user_id, "ids": ids }))
             .send().await;
@@ -157,7 +173,7 @@ impl FilesClient {
     /// Renomme le fichier visible (.kb***).
     pub async fn rename_file(&self, user_id: Uuid, file_id: Uuid, name: &str) -> Result<FileInfo> {
         let resp = self.http
-            .patch(format!("{}/ipc/files/{file_id}/rename", self.base_url))
+            .patch(format!("{}/internal/ipc/drive/files/{file_id}/rename", self.core_url))
             .header("X-Internal-Secret", &self.secret)
             .json(&serde_json::json!({ "user_id": user_id, "name": name }))
             .send().await?;
@@ -171,7 +187,7 @@ impl FilesClient {
 
     pub async fn delete_file(&self, user_id: Uuid, file_id: Uuid) -> Result<()> {
         let resp = self.http
-            .delete(format!("{}/ipc/files/{file_id}", self.base_url))
+            .delete(format!("{}/internal/ipc/drive/files/{file_id}", self.core_url))
             .header("X-Internal-Secret", &self.secret)
             .json(&serde_json::json!({ "user_id": user_id }))
             .send().await?;
@@ -186,7 +202,7 @@ impl FilesClient {
     /// et bloque la suppression de tout dossier ancêtre non protégé).
     pub async fn set_file_protected(&self, user_id: Uuid, file_id: Uuid, protected: bool) -> Result<()> {
         let resp = self.http
-            .patch(format!("{}/ipc/files/{file_id}/protect", self.base_url))
+            .patch(format!("{}/internal/ipc/drive/files/{file_id}/protect", self.core_url))
             .header("X-Internal-Secret", &self.secret)
             .json(&serde_json::json!({ "user_id": user_id, "protected": protected }))
             .send().await?;
@@ -201,7 +217,7 @@ impl FilesClient {
     /// montage distant — drive route en interne). Les `path` retournés sont canoniques.
     pub async fn resolve_browse(&self, user_id: Uuid, path: &str) -> Result<Vec<ResolveEntry>> {
         let resp = self.http
-            .get(format!("{}/ipc/resolve/{user_id}/browse", self.base_url))
+            .get(format!("{}/internal/ipc/drive/resolve/{user_id}/browse", self.core_url))
             .query(&[("path", path)])
             .header("X-Internal-Secret", &self.secret)
             .send().await?;
@@ -216,7 +232,7 @@ impl FilesClient {
     /// Lit un fichier par chemin canonique `[stockage]/chemin` → octets bruts.
     pub async fn resolve_file(&self, user_id: Uuid, path: &str) -> Result<Bytes> {
         let resp = self.http
-            .get(format!("{}/ipc/resolve/{user_id}/file", self.base_url))
+            .get(format!("{}/internal/ipc/drive/resolve/{user_id}/file", self.core_url))
             .query(&[("path", path)])
             .header("X-Internal-Secret", &self.secret)
             .send().await?;
@@ -230,7 +246,7 @@ impl FilesClient {
     /// Protège/déprotège un dossier.
     pub async fn set_folder_protected(&self, user_id: Uuid, folder_id: Uuid, protected: bool) -> Result<()> {
         let resp = self.http
-            .patch(format!("{}/ipc/folders/{folder_id}/protect", self.base_url))
+            .patch(format!("{}/internal/ipc/drive/folders/{folder_id}/protect", self.core_url))
             .header("X-Internal-Secret", &self.secret)
             .json(&serde_json::json!({ "user_id": user_id, "protected": protected }))
             .send().await?;
