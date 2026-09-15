@@ -20,7 +20,6 @@ import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.SwapVert
 import androidx.compose.material.icons.outlined.Upload
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -43,6 +42,7 @@ import com.kubuno.android.ui.browser.ListContainer
 import com.kubuno.android.ui.browser.TabEmptyState
 import com.kubuno.android.ui.format.SizeUnits
 import com.kubuno.android.ui.format.formatSize
+import com.kubuno.android.ui.components.KubunoProgressBar
 import com.kubuno.android.ui.theme.KubunoTheme
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -166,11 +166,10 @@ private fun TransferRow(transfer: TransferEntity, onRetry: () -> Unit) {
                 val fraction = if (transfer.totalSize > 0) {
                     (transfer.bytesDone.toFloat() / transfer.totalSize).coerceIn(0f, 1f)
                 } else 0f
-                LinearProgressIndicator(
-                    progress = { fraction },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(3.dp),
+                KubunoProgressBar(
+                    progress = fraction,
+                    modifier = Modifier.fillMaxWidth(),
+                    showValue = false,
                 )
             }
         }

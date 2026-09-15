@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -47,6 +46,7 @@ import com.kubuno.android.ui.browser.RowDivider
 import com.kubuno.android.ui.browser.SectionTitle
 import com.kubuno.android.ui.format.SizeUnits
 import com.kubuno.android.ui.format.formatSize
+import com.kubuno.android.ui.components.KubunoToggle
 import com.kubuno.android.ui.theme.KubunoTheme
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -341,6 +341,6 @@ private fun SwitchRow(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
-        Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
+        KubunoToggle(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
     }
 }
