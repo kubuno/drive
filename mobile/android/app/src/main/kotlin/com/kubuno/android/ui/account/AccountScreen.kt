@@ -40,6 +40,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.kubuno.android.ui.components.KubunoButton
+import com.kubuno.android.ui.components.KubunoButtonSize
+import com.kubuno.android.ui.components.KubunoButtonVariant
+import com.kubuno.android.ui.components.KubunoTextField
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -465,20 +469,23 @@ fun AccountScreen(
             title = { Text(stringResource(R.string.account_sessions_revoke_all)) },
             text = { Text(stringResource(R.string.account_sessions_revoke_all_message)) },
             confirmButton = {
-                TextButton(onClick = {
-                    confirmRevokeAll = false
-                    viewModel.revokeAllSessions(onLogout)
-                }) {
-                    Text(
-                        stringResource(R.string.action_confirm),
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                }
+                KubunoButton(
+                    text = stringResource(R.string.action_confirm),
+                    onClick = {
+                        confirmRevokeAll = false
+                        viewModel.revokeAllSessions(onLogout)
+                    },
+                    variant = KubunoButtonVariant.TEXT_DANGER,
+                    size = KubunoButtonSize.SM,
+                )
             },
             dismissButton = {
-                TextButton(onClick = { confirmRevokeAll = false }) {
-                    Text(stringResource(R.string.action_cancel))
-                }
+                KubunoButton(
+                    text = stringResource(R.string.action_cancel),
+                    onClick = { confirmRevokeAll = false },
+                    variant = KubunoButtonVariant.GHOST,
+                    size = KubunoButtonSize.SM,
+                )
             },
         )
     }
@@ -744,9 +751,12 @@ private fun Notice(message: String, onRetry: () -> Unit) {
             color = KubunoTheme.colors.textTertiary,
             modifier = Modifier.weight(1f),
         )
-        TextButton(onClick = onRetry) {
-            Text(stringResource(R.string.account_retry))
-        }
+        KubunoButton(
+            text = stringResource(R.string.account_retry),
+            onClick = onRetry,
+            variant = KubunoButtonVariant.TEXT,
+            size = KubunoButtonSize.SM,
+        )
     }
 }
 

@@ -37,6 +37,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.kubuno.android.ui.components.KubunoButton
+import com.kubuno.android.ui.components.KubunoButtonSize
+import com.kubuno.android.ui.components.KubunoButtonVariant
+import com.kubuno.android.ui.components.KubunoTextField
 import androidx.compose.ui.unit.sp
 import com.kubuno.android.R
 
@@ -158,21 +162,27 @@ fun RenameDialog(current: String, onConfirm: (String) -> Unit, onDismiss: () -> 
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.action_rename)) },
         text = {
-            OutlinedTextField(
+            KubunoTextField(
                 value = value,
                 onValueChange = { value = it },
-                singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
         },
         confirmButton = {
-            TextButton(
+            KubunoButton(
+                text = stringResource(R.string.action_confirm),
                 onClick = { if (value.isNotBlank()) onConfirm(value.trim()) },
                 enabled = value.isNotBlank() && value != current,
-            ) { Text(stringResource(R.string.action_confirm)) }
+                size = KubunoButtonSize.SM,
+            )
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+            KubunoButton(
+                text = stringResource(R.string.action_cancel),
+                onClick = onDismiss,
+                variant = KubunoButtonVariant.GHOST,
+                size = KubunoButtonSize.SM,
+            )
         },
     )
 }
@@ -184,22 +194,28 @@ fun NewFolderDialog(onConfirm: (String) -> Unit, onDismiss: () -> Unit) {
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.new_folder)) },
         text = {
-            OutlinedTextField(
+            KubunoTextField(
                 value = value,
                 onValueChange = { value = it },
-                singleLine = true,
-                placeholder = { Text(stringResource(R.string.new_folder_hint)) },
+                placeholder = stringResource(R.string.new_folder_hint),
                 modifier = Modifier.fillMaxWidth(),
             )
         },
         confirmButton = {
-            TextButton(
+            KubunoButton(
+                text = stringResource(R.string.action_confirm),
                 onClick = { if (value.isNotBlank()) onConfirm(value.trim()) },
                 enabled = value.isNotBlank(),
-            ) { Text(stringResource(R.string.action_confirm)) }
+                size = KubunoButtonSize.SM,
+            )
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+            KubunoButton(
+                text = stringResource(R.string.action_cancel),
+                onClick = onDismiss,
+                variant = KubunoButtonVariant.GHOST,
+                size = KubunoButtonSize.SM,
+            )
         },
     )
 }

@@ -30,6 +30,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.kubuno.android.ui.components.KubunoButton
+import com.kubuno.android.ui.components.KubunoButtonSize
+import com.kubuno.android.ui.components.KubunoButtonVariant
+import com.kubuno.android.ui.components.KubunoTextField
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -95,9 +99,12 @@ fun TransfersScreen(viewModel: TransfersViewModel) {
                 .padding(horizontal = 24.dp),
             horizontalArrangement = Arrangement.End,
         ) {
-            TextButton(onClick = { viewModel.clearFinished() }) {
-                Text(stringResource(R.string.transfer_clear))
-            }
+            KubunoButton(
+                text = stringResource(R.string.transfer_clear),
+                onClick = { viewModel.clearFinished() },
+                variant = KubunoButtonVariant.TEXT,
+                size = KubunoButtonSize.SM,
+            )
         }
         LazyColumn(
             modifier = Modifier.fillMaxSize(),

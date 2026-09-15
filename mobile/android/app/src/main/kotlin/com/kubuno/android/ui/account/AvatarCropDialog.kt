@@ -36,6 +36,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.kubuno.android.ui.components.KubunoButton
+import com.kubuno.android.ui.components.KubunoButtonSize
+import com.kubuno.android.ui.components.KubunoButtonVariant
+import com.kubuno.android.ui.components.KubunoTextField
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.foundation.Image
@@ -146,19 +150,18 @@ fun AvatarCropDialog(
                 horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                TextButton(onClick = onDismiss, enabled = !saving) {
-                    Text(stringResource(R.string.action_cancel), color = Color.White)
-                }
-                Button(
+                KubunoButton(
+                    text = stringResource(R.string.action_cancel),
+                    onClick = onDismiss,
+                    enabled = !saving,
+                    variant = KubunoButtonVariant.GHOST,
+                )
+                KubunoButton(
+                    text = stringResource(R.string.action_confirm),
                     onClick = { onSave(state, viewportPx) },
                     enabled = !saving,
-                ) {
-                    if (saving) {
-                        CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                    } else {
-                        Text(stringResource(R.string.action_confirm))
-                    }
-                }
+                    loading = saving,
+                )
             }
         }
     }
