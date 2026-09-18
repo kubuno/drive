@@ -9,6 +9,8 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 ## [Unreleased]
 
+## [0.1.10] - 2026-09-18
+
 ### Changed
 
 - **This module now installs as a Kubuno package (`.kbpkg`) only.** Its system
@@ -273,7 +275,8 @@ number at release time, and CI publishes that section as the GitHub Release note
   become unreachable behind the header's magnifying-glass search mode; it is pinned
   inline again.
 
-[Unreleased]: https://github.com/kubuno/drive/compare/v0.1.9...HEAD
+[Unreleased]: https://github.com/kubuno/drive/compare/v0.1.10...HEAD
+[0.1.10]: https://github.com/kubuno/drive/releases/tag/v0.1.10
 [0.1.9]: https://github.com/kubuno/drive/releases/tag/v0.1.9
 [0.1.8]: https://github.com/kubuno/drive/releases/tag/v0.1.8
 [0.1.7]: https://github.com/kubuno/drive/releases/tag/v0.1.7
