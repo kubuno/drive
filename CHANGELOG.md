@@ -11,6 +11,11 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 ### Changed
 
+- **This module now installs as a Kubuno package (`.kbpkg`) only.** Its system
+  packages (Debian/RPM and the Windows and macOS installers) are no longer
+  built: the module is distributed as one `.kbpkg` per platform (Linux, Windows,
+  macOS) that the Kubuno server installs itself — from the admin console, or
+  offline with `kubuno modules:install <file>.kbpkg`.
 - **The storage client now reaches the files service through the core, not
   directly.** Editor modules (documents, notes, and the like) talk to file
   storage through this crate's `FilesClient`. It used to call the files module

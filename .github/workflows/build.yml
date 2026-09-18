@@ -34,18 +34,11 @@ jobs:
           npm ci
           npm run build
 
-      # ── Paquet Debian ──
-      - name: build .deb
-        run: bash build_deb.sh
-      - uses: actions/upload-artifact@v4
-        with:
-          name: kubuno-drive-deb
-          path: dist/*.deb
       # ── Paquet Kubuno (.kbpkg) ──
-      # The format the server installs itself, identical on every system. Built
-      # from the very binary and frontend produced above, so it ships exactly
-      # what the .deb ships. Published alongside it during the pilot: nothing
-      # depends on it yet, and a catalogue that sees one simply prefers it.
+      # The one format a module ships and the server installs, identical on
+      # every system: built from the binary and frontend produced above, and
+      # unpacked by the server with no external tool — same install on Linux,
+      # Windows and macOS. No Debian package is produced any more.
       - name: build .kbpkg
         run: bash build_kbpkg.sh --skip-build
       - uses: actions/upload-artifact@v4
@@ -81,6 +74,5 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/*.deb
             dist/*.kbpkg
           body_path: RELEASE_NOTES.md
