@@ -9,6 +9,8 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 ## [Unreleased]
 
+## [0.1.11] - 2026-09-18
+
 ### Security
 
 - **HTTP/2 layer updated to a patched release.** `h2` moves from 0.4.15 to
@@ -286,7 +288,8 @@ number at release time, and CI publishes that section as the GitHub Release note
   become unreachable behind the header's magnifying-glass search mode; it is pinned
   inline again.
 
-[Unreleased]: https://github.com/kubuno/drive/compare/v0.1.10...HEAD
+[Unreleased]: https://github.com/kubuno/drive/compare/v0.1.11...HEAD
+[0.1.11]: https://github.com/kubuno/drive/releases/tag/v0.1.11
 [0.1.10]: https://github.com/kubuno/drive/releases/tag/v0.1.10
 [0.1.9]: https://github.com/kubuno/drive/releases/tag/v0.1.9
 [0.1.8]: https://github.com/kubuno/drive/releases/tag/v0.1.8
