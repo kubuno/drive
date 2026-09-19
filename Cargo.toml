@@ -68,7 +68,7 @@ notify            = { version = "6", optional = true }
 walkdir           = { version = "2", optional = true }
 zip               = { version = "2", optional = true }
 quick-xml         = { workspace = true, optional = true }
-pdf-extract       = { version = "0.7", optional = true }
+pdf-extract       = { version = "0.12", optional = true }
 url               = { workspace = true, optional = true }
 urlencoding       = { workspace = true, optional = true }
 flate2            = { version = "1", optional = true }
@@ -159,4 +159,4 @@ tokio-tungstenite   = { version = "0.24", features = ["native-tls"] }
 async-stream        = "0.3"
 totp-rs             = { version = "5", features = ["gen_secret", "otpauth"] }
 zip                 = "2"
-quick-xml           = { version = "0.37", features = ["serialize"] }
+quick-xml           = { version = "0.41", features = ["serialize"] }

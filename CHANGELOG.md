@@ -11,6 +11,11 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 ### Security
 
+- **PDF and XML readers updated to patched releases.** The PDF text extractor
+  could be made to overflow the stack by deeply nested objects
+  (RUSTSEC-2026-0187), and the XML reader could be driven into quadratic time or
+  unbounded memory by a crafted document (RUSTSEC-2026-0194, RUSTSEC-2026-0195).
+  Both parse files that users upload.
 - **Database driver updated past an unfixable advisory.** The previous line
   pulled in an RSA implementation vulnerable to a timing side-channel
   (RUSTSEC-2023-0071) for which no fix will ever exist. The new line does not

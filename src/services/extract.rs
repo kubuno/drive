@@ -208,7 +208,17 @@ fn xml_text_nodes(xml: &str, out: &mut String) {
     loop {
         match reader.read_event_into(&mut buf) {
             Ok(Event::Text(e)) => {
-                if let Ok(t) = e.unescape() {
+                // quick-xml split what `unescape()` used to do in one call:
+                // `xml10_content` decodes the bytes and normalises line endings,
+                // `escape::unescape` turns entities back into characters.
+                // Indexing text needs both, and a malformed entity must not lose
+                // the rest of the node — hence the fallback to the decoded form.
+                if let Ok(decoded) = e.xml10_content() {
+                    let unescaped = quick_xml::escape::unescape(&decoded);
+                    let t = match &unescaped {
+                        Ok(s)  => s.as_ref(),
+                        Err(_) => decoded.as_ref(),
+                    };
                     let t = t.trim();
                     if !t.is_empty() {
                         out.push_str(t);
