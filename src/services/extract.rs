@@ -226,6 +226,17 @@ fn xml_text_nodes(xml: &str, out: &mut String) {
                     }
                 }
             }
+            // Since quick-xml 0.41 an entity is reported apart from the text
+            // around it, so a document saying `R&amp;D` would be indexed as
+            // "R D" and never match a search for "R&D".
+            Ok(Event::GeneralRef(e)) => {
+                if let Ok(name) = e.decode() {
+                    let source = format!("&{name};");
+                    let resolved = quick_xml::escape::unescape(&source)
+                        .map_or(source.clone(), |r| r.into_owned());
+                    out.push_str(resolved.trim());
+                }
+            }
             Ok(Event::Eof) | Err(_) => break,
             _ => {}
         }
