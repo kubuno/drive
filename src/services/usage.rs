@@ -338,7 +338,9 @@ async fn stored_paths(db: &PgPool, owners: Option<&[Uuid]>) -> Result<Vec<Stored
         }
     );
 
-    let mut query = sqlx::query_as::<_, StoredPath>(&sql);
+    // Audited: the interpolation picks between two string literals; the owner
+    // list is bound.
+    let mut query = sqlx::query_as::<_, StoredPath>(sqlx::AssertSqlSafe(sql));
     if let Some(owners) = owners {
         query = query.bind(owners);
     }
@@ -409,7 +411,9 @@ async fn aggregate(
         }
     };
 
-    let mut query = sqlx::query_as::<_, (Uuid, i64, i64)>(&sql);
+    // Audited: same shape — the match yields literals only, the owner list is
+    // bound.
+    let mut query = sqlx::query_as::<_, (Uuid, i64, i64)>(sqlx::AssertSqlSafe(sql));
     if let Some(owners) = owners {
         query = query.bind(owners);
     }

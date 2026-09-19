@@ -11,6 +11,11 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 ### Security
 
+- **Database driver updated past an unfixable advisory.** The previous line
+  pulled in an RSA implementation vulnerable to a timing side-channel
+  (RUSTSEC-2023-0071) for which no fix will ever exist. The new line does not
+  depend on it at all. An unsoundness in the event-listener it relies on
+  (RUSTSEC-2026-0221) is closed at the same time.
 - **Input validation library updated.** The version in use carried
   RUSTSEC-2024-0421 through its domain-name parser, which accepted Punycode
   labels that decode to plain ASCII — a mismatch an attacker can use to make two

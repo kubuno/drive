@@ -319,7 +319,10 @@ pub async fn list_files(
          ORDER BY b.{order} {order_dir}"
     );
 
-    let mut builder = sqlx::query_as::<_, File>(&q)
+    // Audited: every user-supplied value goes in through a bind placeholder.
+    // Only placeholder indices and a column name chosen by a closed match are
+    // interpolated, so no caller input reaches the SQL text.
+    let mut builder = sqlx::query_as::<_, File>(sqlx::AssertSqlSafe(q))
         .bind(owner_id)
         .bind(trashed);
 
@@ -339,13 +342,15 @@ pub async fn list_files(
 }
 
 pub async fn get_file(db: &PgPool, owner_id: Uuid, file_id: Uuid) -> Result<File> {
+    // Audited: the only interpolation is a const fragment of this module; the
+    // two values are bound.
     sqlx::query_as::<_, File>(
-        &format!(
+        sqlx::AssertSqlSafe(format!(
             "SELECT b.*,
                     COALESCE(v.version_count, 0) AS version_count,
                     COALESCE(v.version_bytes, 0) AS version_bytes
              FROM (SELECT * FROM drive.files WHERE id = $1 AND owner_id = $2) b{VERSION_STATS_JOIN}"
-        )
+        ))
     )
     .bind(file_id)
     .bind(owner_id)
