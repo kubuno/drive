@@ -39,7 +39,9 @@ import com.kubuno.android.R
 import com.kubuno.android.ui.browser.BrowserScreen
 import com.kubuno.android.ui.browser.BrowserViewModel
 import com.kubuno.android.ui.browser.TabEmptyState
+import com.kubuno.android.ui.onboarding.DeviceAccountsScreen
 import com.kubuno.android.ui.onboarding.LoginScreen
+import com.kubuno.android.ui.onboarding.OnboardingLoadingScreen
 import com.kubuno.android.ui.onboarding.OnboardingViewModel
 import com.kubuno.android.ui.onboarding.ServerScreen
 import com.kubuno.android.ui.onboarding.TotpScreen
@@ -52,7 +54,7 @@ import com.kubuno.android.ui.starred.StarredScreen
 import com.kubuno.android.ui.transfers.TransfersScreen
 import com.kubuno.android.ui.transfers.TransfersViewModel
 
-private enum class Stage { SERVER, LOGIN, TOTP }
+private enum class Stage { LOADING, DEVICE_ACCOUNTS, SERVER, LOGIN, TOTP }
 
 /**
  * Picks between onboarding and the app.
@@ -76,31 +78,34 @@ fun AppNav(
     val onboardingState by onboarding.state.collectAsStateWithLifecycle()
     val accounts by nav.accounts.collectAsStateWithLifecycle()
     var adding by remember { mutableStateOf(startAddingAccount) }
-    var stage by remember { mutableStateOf(Stage.SERVER) }
 
-    LaunchedEffect(
-        onboardingState.serverValidated,
-        onboardingState.totpSession,
-        onboardingState.done,
-    ) {
+    LaunchedEffect(onboardingState.done) {
         if (onboardingState.done) {
             // Sign-in already made the new account active, so leaving the flow
             // lands straight on it.
             nav.activeId.value?.let(onAccountAdded)
             adding = false
             onboarding.restart()
-            stage = Stage.SERVER
-            return@LaunchedEffect
         }
-        stage = when {
-            onboardingState.totpSession != null -> Stage.TOTP
-            onboardingState.serverValidated -> Stage.LOGIN
-            else -> Stage.SERVER
-        }
+    }
+
+    // Accounts already registered with the system are offered first: this app
+    // can lose its own registry (data cleared, reinstall) while they survive,
+    // and asking for a server address then contradicts "one Kubuno account for
+    // every Kubuno app".
+    val stage = when {
+        onboardingState.totpSession != null -> Stage.TOTP
+        onboardingState.serverValidated -> Stage.LOGIN
+        onboardingState.deviceAccountsLoading -> Stage.LOADING
+        onboardingState.deviceAccounts.isNotEmpty() && !onboardingState.deviceAccountsDismissed ->
+            Stage.DEVICE_ACCOUNTS
+        else -> Stage.SERVER
     }
 
     if (accounts.isEmpty() || adding) {
         when (stage) {
+            Stage.LOADING -> OnboardingLoadingScreen()
+            Stage.DEVICE_ACCOUNTS -> DeviceAccountsScreen(onboarding)
             Stage.SERVER -> ServerScreen(onboarding)
             Stage.LOGIN -> LoginScreen(onboarding)
             Stage.TOTP -> TotpScreen(onboarding)
@@ -118,7 +123,6 @@ fun AppNav(
         nav = nav,
         onAddAccount = {
             onboarding.restart()
-            stage = Stage.SERVER
             adding = true
         },
     )

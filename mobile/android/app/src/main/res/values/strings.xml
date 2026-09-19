@@ -3,6 +3,12 @@
 <resources>
     <string name="app_name">Kubuno</string>
 
+    <!-- Onboarding: accounts already on this device -->
+    <string name="device_accounts_title">Your Kubuno accounts</string>
+    <string name="device_accounts_subtitle">These accounts are already set up on this device. Pick one to sign in with it.</string>
+    <string name="device_accounts_other_server">Use another server</string>
+    <string name="device_accounts_back">Use another account</string>
+
     <!-- Onboarding: server -->
     <string name="server_title">Connect to your Kubuno</string>
     <string name="server_subtitle">Enter the address of your self-hosted instance.</string>

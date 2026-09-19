@@ -11,6 +11,8 @@ import com.kubuno.android.account.AccountGraphFactory
 import com.kubuno.android.account.AccountId
 import com.kubuno.android.account.AccountRegistry
 import com.kubuno.android.account.AccountClients
+import com.kubuno.android.account.SharedAccount
+import com.kubuno.android.account.SharedAccounts
 import com.kubuno.android.api.KubunoClient
 import com.kubuno.android.api.auth.LoginOutcome
 import com.kubuno.android.api.auth.TokenManager
@@ -20,16 +22,30 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.IOException
 import java.util.UUID
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 data class OnboardingUiState(
     val serverInput: String = "",
     val serverBusy: Boolean = false,
     @param:StringRes val serverError: Int? = null,
     val serverValidated: Boolean = false,
+
+    /** Kubuno accounts already on the device that this app has not registered. */
+    val deviceAccounts: List<SharedAccount> = emptyList(),
+    /** True until [deviceAccounts] has been read, so no screen is picked too early. */
+    val deviceAccountsLoading: Boolean = true,
+    /** True once the user chose "use another server" over the listed accounts. */
+    val deviceAccountsDismissed: Boolean = false,
+
+    /** Identifier to start the login screen with, taken from a device account. */
+    val prefillLogin: String = "",
+    /** Host being signed into, shown on the login screen. Empty before the probe. */
+    val serverHost: String = "",
 
     val loginBusy: Boolean = false,
     @param:StringRes val loginError: Int? = null,
@@ -56,6 +72,7 @@ class OnboardingViewModel @Inject constructor(
     private val registry: AccountRegistry,
     private val graphs: AccountGraphFactory,
     private val clients: AccountClients,
+    private val sharedAccounts: SharedAccounts,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(OnboardingUiState())
@@ -70,6 +87,65 @@ class OnboardingViewModel @Inject constructor(
         val client: KubunoClient,
     ) {
         val tokens: TokenManager get() = client.tokenManager
+    }
+
+    init {
+        viewModelScope.launch { loadDeviceAccounts() }
+    }
+
+    /**
+     * Lists the Kubuno accounts the device already knows about and that this
+     * app has not registered — typically after its data was cleared, since the
+     * system accounts outlive it, or when a sibling app signed one in.
+     *
+     * Why they are offered as a PRE-FILL and not as a silent "adoption": drive
+     * owns the authenticator, and a session's refresh token never leaves the
+     * app that obtained it — the server rotates it on every use and revokes the
+     * whole family if two processes rotate at once. Running instead as a
+     * brokered consumer (BrokeredClients / KubunoTokenProvider) would only
+     * borrow 15-minute access tokens, and only while some sibling app still
+     * holds a live session for that identity; after a data wipe of this app
+     * nothing usually does, and drive's sync engine, uploads and background
+     * workers all need an owned session that survives on their own. So the
+     * account's non-secret half (instance, e-mail) is reused and only the
+     * password is asked for, which re-establishes a real owned session — and
+     * AccountManagerBridge then re-adopts the existing system entry instead of
+     * creating a second one.
+     */
+    private suspend fun loadDeviceAccounts() {
+        val known = registry.accounts.value.mapTo(mutableSetOf()) { identityKey(it.serverUrl, it.userId) }
+        val candidates = withContext(Dispatchers.IO) {
+            runCatching { sharedAccounts.list() }.getOrDefault(emptyList())
+        }.filterNot { identityKey(it.serverUrl, it.userId) in known }
+        _state.update { it.copy(deviceAccounts = candidates, deviceAccountsLoading = false) }
+    }
+
+    private fun identityKey(serverUrl: String, userId: String): String =
+        "${serverUrl.trimEnd('/').lowercase()}|$userId"
+
+    /** Starts the sign-in on an account already present on the device. */
+    fun useDeviceAccount(account: SharedAccount) {
+        if (_state.value.serverBusy) return
+        _state.update {
+            it.copy(
+                serverInput = account.serverUrl,
+                serverError = null,
+                prefillLogin = account.email.orEmpty(),
+            )
+        }
+        checkServer()
+    }
+
+    /** Leaves the device-account list for the plain "type an address" flow. */
+    fun useAnotherServer() {
+        _state.update {
+            it.copy(
+                deviceAccountsDismissed = true,
+                serverInput = "",
+                serverError = null,
+                prefillLogin = "",
+            )
+        }
     }
 
     fun onServerInput(value: String) {
@@ -96,7 +172,9 @@ class OnboardingViewModel @Inject constructor(
             }
             if (reachable) {
                 pending = PendingSignIn(candidate, url, client)
-                _state.update { it.copy(serverBusy = false, serverValidated = true) }
+                _state.update {
+                    it.copy(serverBusy = false, serverValidated = true, serverHost = hostOf(url))
+                }
             } else {
                 client.shutdown()
                 _state.update {
@@ -110,8 +188,19 @@ class OnboardingViewModel @Inject constructor(
     fun resetServer() {
         pending?.client?.shutdown()
         pending = null
-        _state.update { it.copy(serverValidated = false, loginError = null, totpSession = null) }
+        _state.update {
+            it.copy(
+                serverValidated = false,
+                loginError = null,
+                totpSession = null,
+                prefillLogin = "",
+                serverHost = "",
+            )
+        }
     }
+
+    private fun hostOf(url: String): String =
+        url.removePrefix("https://").removePrefix("http://").substringBefore('/')
 
     fun login(loginText: String, password: String) {
         val attempt = pending ?: return
@@ -200,6 +289,9 @@ class OnboardingViewModel @Inject constructor(
         pending?.client?.shutdown()
         pending = null
         _state.value = OnboardingUiState()
+        // The account just signed in is no longer a candidate, and a sibling
+        // app may have published a new one meanwhile.
+        viewModelScope.launch { loadDeviceAccounts() }
     }
 
     /** Best-effort device inventory declaration; failures are irrelevant to login. */
