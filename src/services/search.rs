@@ -120,7 +120,13 @@ pub async fn search(
     }
     if let Some(iv) = date_interval(&p.date) {
         qb.push(" AND f.updated_at >= NOW() - INTERVAL '");
-        qb.push(iv); // littéral contrôlé (whitelist)
+        // The one fragment of this query that is not written here: an interval
+        // spliced inside quotes, where an injection would only need an
+        // apostrophe. It is safe because `date_interval` returns
+        // `Option<&'static str>` from a closed match — the search parameter
+        // only ever SELECTS one of five literals, it never becomes one. The
+        // return type is what enforces that, not this comment.
+        qb.push(iv);
         qb.push("'");
     }
     qb.push(" ORDER BY GREATEST(ts_rank(si.tsv, websearch_to_tsquery('simple', unaccent(");
