@@ -79,7 +79,8 @@ use std::time::Duration;
 
 use kubuno_storage::{StorageBackend, StorageError};
 use serde_json::json;
-use sqlx::PgPool;
+use kubuno_db::dialect::Backend;
+use kubuno_db::{DbPool, DbQueryBuilder};
 use tokio::sync::mpsc;
 use uuid::Uuid;
 
@@ -112,7 +113,7 @@ const MAX_ENTRIES: usize = 5_000;
 /// Marks left by the write paths, drained by the reporter task.
 ///
 /// A global rather than a field on `AppState` because `update_used_bytes` is a
-/// free function reached from a dozen call sites with nothing but a `PgPool` —
+/// free function reached from a dozen call sites with nothing but a `DbPool` —
 /// threading a channel through all of them would touch every write path in the
 /// module to deliver one notification.
 static DIRTY: OnceLock<mpsc::UnboundedSender<Uuid>> = OnceLock::new();
@@ -319,34 +320,67 @@ fn billable_bytes(entries: &[Entry]) -> i64 {
 /// the account's root has no folder at all, which must not drop it from the
 /// count. `BOOL_OR` over that nullable expression yields NULL when every row is
 /// rootless, hence the `COALESCE`.
-async fn stored_paths(db: &PgPool, owners: Option<&[Uuid]>) -> Result<Vec<StoredPath>, sqlx::Error> {
-    let sql = format!(
-        "SELECT f.owner_id,
-                f.storage_path,
-                MAX(f.size_bytes)::bigint                                       AS size_bytes,
-                BOOL_AND(f.is_trashed)                                          AS all_trashed,
-                COALESCE(BOOL_OR(fo.path = '/System' OR fo.path LIKE '/System/%'), FALSE)
-                                                                                AS in_system
-           FROM drive.files f
-           LEFT JOIN drive.folders fo ON fo.id = f.folder_id
-          {}
-          GROUP BY f.owner_id, f.storage_path",
-        if owners.is_some() {
-            "WHERE f.owner_id = ANY($1)"
-        } else {
-            ""
-        }
-    );
-
-    // Audited: the interpolation picks between two string literals; the owner
-    // list is bound.
-    let mut query = sqlx::query_as::<_, StoredPath>(sqlx::AssertSqlSafe(sql));
-    if let Some(owners) = owners {
-        query = query.bind(owners);
+/// A cast to BIGINT in the local spelling, for expressions this module builds at
+/// run time (the dialect helpers only take `&'static str`). `expr` is always
+/// developer-authored SQL — never request data.
+fn bigint(b: Backend, expr: &str) -> String {
+    match b {
+        Backend::Postgres => format!("({expr})::bigint"),
+        Backend::MySql => format!("CAST({expr} AS SIGNED)"),
+        Backend::Sqlite => format!("CAST({expr} AS INTEGER)"),
     }
-    query.fetch_all(db).await.inspect_err(|e| {
+}
+
+/// Raw row for [`stored_paths`]: the two boolean facts are read as `0`/`1`
+/// integers (`BOOL_AND`/`BOOL_OR` are PostgreSQL-only) and folded to bool.
+#[derive(sqlx::FromRow)]
+struct StoredPathRow {
+    owner_id: Uuid,
+    storage_path: String,
+    size_bytes: i64,
+    all_trashed: i64,
+    in_system: i64,
+}
+
+async fn stored_paths(db: &DbPool, owners: Option<&[Uuid]>) -> Result<Vec<StoredPath>, sqlx::Error> {
+    let b = db.backend();
+    let size = bigint(b, "MAX(f.size_bytes)");
+    // `all_trashed` = every row trashed → MIN(0/1) = 1; `in_system` = any row
+    // under /System → MAX(0/1) = 1. Portable replacements for BOOL_AND / BOOL_OR.
+    let all_trashed = bigint(b, "MIN(CASE WHEN f.is_trashed THEN 1 ELSE 0 END)");
+    let in_system = bigint(
+        b,
+        "MAX(CASE WHEN fo.path = '/System' OR fo.path LIKE '/System/%' THEN 1 ELSE 0 END)",
+    );
+    let mut qb = DbQueryBuilder::new(
+        b,
+        format!(
+            "SELECT f.owner_id, f.storage_path,
+                    {size} AS size_bytes,
+                    {all_trashed} AS all_trashed,
+                    {in_system} AS in_system
+               FROM drive.files f
+               LEFT JOIN drive.folders fo ON fo.id = f.folder_id"
+        ),
+    );
+    if let Some(owners) = owners {
+        qb.push(" WHERE f.owner_id").push_in(owners.iter().copied());
+    }
+    qb.push(" GROUP BY f.owner_id, f.storage_path");
+
+    let rows: Vec<StoredPathRow> = qb.fetch_all_as(db).await.inspect_err(|e| {
         tracing::error!(error = %e, "Recomptage des objets stockés échoué");
-    })
+    })?;
+    Ok(rows
+        .into_iter()
+        .map(|r| StoredPath {
+            owner_id: r.owner_id,
+            storage_path: r.storage_path,
+            size_bytes: r.size_bytes,
+            all_trashed: r.all_trashed != 0,
+            in_system: r.in_system != 0,
+        })
+        .collect())
 }
 
 /// The categories the database can add up on its own, one query each.
@@ -357,67 +391,110 @@ async fn stored_paths(db: &PgPool, owners: Option<&[Uuid]>) -> Result<Vec<Stored
 /// row, there is no blob behind it. `staging` multiplies chunks received by the
 /// chunk size rather than reading the temporary files, which is close enough for
 /// something that exists for minutes and is nobody's quota.
+/// The per-row byte cost of an `index`/`cache` row: PostgreSQL's `pg_column_size`
+/// where it exists, and a `LENGTH`-of-text estimate on the other engines (which
+/// have no equivalent — the figure is informational, never billed).
+fn index_row_size(b: Backend) -> String {
+    match b {
+        Backend::Postgres => "pg_column_size(si.*)".to_string(),
+        _ => "(LENGTH(COALESCE(si.content_text, '')) + LENGTH(COALESCE(si.name, '')) \
+              + LENGTH(COALESCE(si.name_norm, '')) + LENGTH(COALESCE(si.content_norm, '')) + 200)"
+            .to_string(),
+    }
+}
+
+fn cache_row_size(b: Backend) -> String {
+    match b {
+        Backend::Postgres => "pg_column_size(rc.*)".to_string(),
+        _ => "(LENGTH(COALESCE(rc.remote_path, '')) + LENGTH(COALESCE(rc.name, '')) \
+              + LENGTH(COALESCE(rc.remote_id, '')) + LENGTH(COALESCE(rc.etag, '')) + 100)"
+            .to_string(),
+    }
+}
+
 async fn aggregate(
-    db: &PgPool,
+    db: &DbPool,
     category: Category,
     owners: Option<&[Uuid]>,
 ) -> Result<Vec<(Uuid, i64, i64)>, sqlx::Error> {
-    let scoped = owners.is_some();
-    let sql: String = match category {
-        Category::Versions => format!(
-            "SELECT owner_id, COALESCE(SUM(size_bytes), 0)::bigint, COUNT(*)::bigint
-               FROM drive.file_versions
-              {}
-              GROUP BY owner_id",
-            if scoped { "WHERE owner_id = ANY($1)" } else { "" }
-        ),
-        Category::Index => format!(
-            "SELECT si.owner_id, COALESCE(SUM(pg_column_size(si.*)), 0)::bigint, COUNT(*)::bigint
-               FROM drive.search_index si
-              {}
-              GROUP BY si.owner_id",
-            if scoped { "WHERE si.owner_id = ANY($1)" } else { "" }
-        ),
-        Category::Staging => format!(
-            "SELECT owner_id,
-                    COALESCE(SUM(chunks_received::bigint * chunk_size), 0)::bigint,
-                    COUNT(*)::bigint
-               FROM drive.upload_sessions
-              WHERE status NOT IN ('done', 'failed')
-                {}
-              GROUP BY owner_id",
-            if scoped { "AND owner_id = ANY($1)" } else { "" }
-        ),
-        // `remote_cache` carries no owner of its own; the connection it belongs
-        // to does. Without that join the rows could not be attributed at all.
-        Category::Cache => format!(
-            "SELECT rc_conn.owner_id,
-                    COALESCE(SUM(pg_column_size(rc.*)), 0)::bigint,
-                    COUNT(*)::bigint
-               FROM drive.remote_cache rc
-               JOIN drive.remote_connections rc_conn ON rc_conn.id = rc.connection_id
-              {}
-              GROUP BY rc_conn.owner_id",
-            if scoped {
-                "WHERE rc_conn.owner_id = ANY($1)"
-            } else {
-                ""
+    let b = db.backend();
+    let count = bigint(b, "COUNT(*)");
+    let sum = |expr: &str| bigint(b, &format!("COALESCE(SUM({expr}), 0)"));
+
+    // The owner scope (`= ANY($1)`) is not portable; it is appended with
+    // `push_in` (an `IN (...)` list). Categories not derivable from a plain
+    // aggregate return early.
+    let qb = match category {
+        Category::Versions => {
+            let mut qb = DbQueryBuilder::new(
+                b,
+                format!(
+                    "SELECT owner_id, {} AS used_bytes, {count} AS object_count
+                       FROM drive.file_versions",
+                    sum("size_bytes")
+                ),
+            );
+            if let Some(owners) = owners {
+                qb.push(" WHERE owner_id").push_in(owners.iter().copied());
             }
-        ),
-        // Derived from `drive.files` (see `stored_paths`) or from the storage
-        // backend (see `refresh_thumbnails`), never from a plain aggregate.
+            qb.push(" GROUP BY owner_id");
+            qb
+        }
+        Category::Index => {
+            let mut qb = DbQueryBuilder::new(
+                b,
+                format!(
+                    "SELECT si.owner_id, {} AS used_bytes, {count} AS object_count
+                       FROM drive.search_index si",
+                    sum(&index_row_size(b))
+                ),
+            );
+            if let Some(owners) = owners {
+                qb.push(" WHERE si.owner_id").push_in(owners.iter().copied());
+            }
+            qb.push(" GROUP BY si.owner_id");
+            qb
+        }
+        Category::Staging => {
+            let mut qb = DbQueryBuilder::new(
+                b,
+                format!(
+                    "SELECT owner_id, {} AS used_bytes, {count} AS object_count
+                       FROM drive.upload_sessions
+                      WHERE status NOT IN ('done', 'failed')",
+                    sum("chunks_received * chunk_size")
+                ),
+            );
+            if let Some(owners) = owners {
+                qb.push(" AND owner_id").push_in(owners.iter().copied());
+            }
+            qb.push(" GROUP BY owner_id");
+            qb
+        }
+        // `remote_cache` carries no owner of its own; the connection it belongs to does.
+        Category::Cache => {
+            let mut qb = DbQueryBuilder::new(
+                b,
+                format!(
+                    "SELECT rc_conn.owner_id, {} AS used_bytes, {count} AS object_count
+                       FROM drive.remote_cache rc
+                       JOIN drive.remote_connections rc_conn ON rc_conn.id = rc.connection_id",
+                    sum(&cache_row_size(b))
+                ),
+            );
+            if let Some(owners) = owners {
+                qb.push(" WHERE rc_conn.owner_id").push_in(owners.iter().copied());
+            }
+            qb.push(" GROUP BY rc_conn.owner_id");
+            qb
+        }
+        // Derived from `drive.files` or from the storage backend, never a plain aggregate.
         Category::Content | Category::Trash | Category::System | Category::Thumbnails => {
             return Ok(Vec::new())
         }
     };
 
-    // Audited: same shape — the match yields literals only, the owner list is
-    // bound.
-    let mut query = sqlx::query_as::<_, (Uuid, i64, i64)>(sqlx::AssertSqlSafe(sql));
-    if let Some(owners) = owners {
-        query = query.bind(owners);
-    }
-    query.fetch_all(db).await.inspect_err(|e| {
+    qb.fetch_all_as::<(Uuid, i64, i64)>(db).await.inspect_err(|e| {
         tracing::error!(
             error = %e,
             catégorie = category.as_str(),

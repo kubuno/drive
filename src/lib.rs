@@ -12,6 +12,12 @@
 
 pub mod client;
 
+/// The database namespace this module owns: a PostgreSQL schema, a MySQL
+/// database, or the SQLite file ATTACHed under that name. Never write outside
+/// it (the one exception is the read of the shared `core.*` namespace).
+#[cfg(feature = "server")]
+pub const SCHEMA: &str = "drive";
+
 #[cfg(feature = "server")]
 pub mod config;
 #[cfg(feature = "server")]
@@ -31,3 +37,5 @@ pub mod router;
 pub mod services;
 #[cfg(feature = "server")]
 pub mod state;
+#[cfg(feature = "server")]
+pub mod sync;

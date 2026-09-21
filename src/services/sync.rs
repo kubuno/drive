@@ -15,9 +15,9 @@ use std::sync::Arc;
 
 use bytes::Bytes;
 use chrono::{DateTime, Utc};
+use kubuno_db::{params, DbPool, DbQueryBuilder};
 use kubuno_storage::StorageBackend;
 use serde_json::{json, Value};
-use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::{
@@ -71,48 +71,42 @@ pub struct Delta {
 }
 
 /// Returns changes with `change_seq > cursor`, at most `limit` of them.
-pub async fn delta(db: &PgPool, owner_id: Uuid, cursor: i64, limit: i64, full: bool) -> Result<Delta> {
+pub async fn delta(db: &DbPool, owner_id: Uuid, cursor: i64, limit: i64, full: bool) -> Result<Delta> {
     // Fetch one extra per source so the merge can tell whether more remain.
     let fetch = limit + 1;
 
-    let files = sqlx::query_as::<_, FileChange>(
-        r#"SELECT id, name, folder_id, content_hash, size_bytes, mime_type, is_trashed, change_seq
-           FROM drive.files
-           WHERE owner_id = $1 AND change_seq > $2
-           ORDER BY change_seq
-           LIMIT $3"#,
-    )
-    .bind(owner_id)
-    .bind(cursor)
-    .bind(fetch)
-    .fetch_all(db)
-    .await?;
+    let files = db
+        .fetch_all_as::<FileChange>(
+            r#"SELECT id, name, folder_id, content_hash, size_bytes, mime_type, is_trashed, change_seq
+               FROM drive.files
+               WHERE owner_id = $1 AND change_seq > $2
+               ORDER BY change_seq
+               LIMIT $3"#,
+            params![owner_id, cursor, fetch],
+        )
+        .await?;
 
-    let folders = sqlx::query_as::<_, FolderChange>(
-        r#"SELECT id, name, parent_id, path, is_trashed, change_seq
-           FROM drive.folders
-           WHERE owner_id = $1 AND change_seq > $2
-           ORDER BY change_seq
-           LIMIT $3"#,
-    )
-    .bind(owner_id)
-    .bind(cursor)
-    .bind(fetch)
-    .fetch_all(db)
-    .await?;
+    let folders = db
+        .fetch_all_as::<FolderChange>(
+            r#"SELECT id, name, parent_id, path, is_trashed, change_seq
+               FROM drive.folders
+               WHERE owner_id = $1 AND change_seq > $2
+               ORDER BY change_seq
+               LIMIT $3"#,
+            params![owner_id, cursor, fetch],
+        )
+        .await?;
 
-    let tombstones = sqlx::query_as::<_, TombstoneChange>(
-        r#"SELECT id, kind, path, change_seq, deleted_at
-           FROM drive.tombstones
-           WHERE owner_id = $1 AND change_seq > $2
-           ORDER BY change_seq
-           LIMIT $3"#,
-    )
-    .bind(owner_id)
-    .bind(cursor)
-    .bind(fetch)
-    .fetch_all(db)
-    .await?;
+    let tombstones = db
+        .fetch_all_as::<TombstoneChange>(
+            r#"SELECT id, kind, path, change_seq, deleted_at
+               FROM drive.tombstones
+               WHERE owner_id = $1 AND change_seq > $2
+               ORDER BY change_seq
+               LIMIT $3"#,
+            params![owner_id, cursor, fetch],
+        )
+        .await?;
 
     let mut merged: Vec<Change> = Vec::with_capacity(files.len() + folders.len() + tombstones.len());
 
@@ -178,16 +172,16 @@ pub async fn delta(db: &PgPool, owner_id: Uuid, cursor: i64, limit: i64, full: b
 
         let mut fmap: HashMap<Uuid, Value> = HashMap::new();
         if !file_ids.is_empty() {
-            let files = sqlx::query_as::<_, crate::models::file::File>(
-                "SELECT * FROM drive.files WHERE id = ANY($1)",
-            ).bind(&file_ids).fetch_all(db).await?;
+            let mut qb = DbQueryBuilder::new(db.backend(), "SELECT * FROM drive.files WHERE id");
+            qb.push_in(file_ids.iter().copied());
+            let files: Vec<crate::models::file::File> = qb.fetch_all_as(db).await?;
             for f in files { fmap.insert(f.id, json!(f)); }
         }
         let mut dmap: HashMap<Uuid, Value> = HashMap::new();
         if !folder_ids.is_empty() {
-            let folders = sqlx::query_as::<_, crate::models::folder::Folder>(
-                "SELECT * FROM drive.folders WHERE id = ANY($1)",
-            ).bind(&folder_ids).fetch_all(db).await?;
+            let mut qb = DbQueryBuilder::new(db.backend(), "SELECT * FROM drive.folders WHERE id");
+            qb.push_in(folder_ids.iter().copied());
+            let folders: Vec<crate::models::folder::Folder> = qb.fetch_all_as(db).await?;
             for f in folders { dmap.insert(f.id, json!(f)); }
         }
         for c in merged.iter_mut() {
@@ -225,7 +219,7 @@ pub async fn delta(db: &PgPool, owner_id: Uuid, cursor: i64, limit: i64, full: b
 /// the client last saw it. Otherwise the content is stored, the hash/size are
 /// recomputed and the updated record (with the new etag) is returned.
 pub async fn replace_content(
-    db: &PgPool,
+    db: &DbPool,
     storage: &Arc<dyn StorageBackend>,
     owner_id: Uuid,
     file_id: Uuid,
@@ -252,17 +246,20 @@ pub async fn replace_content(
 
     storage.put(&file.storage_path, data).await?;
 
-    let updated = sqlx::query_as::<_, File>(
+    // A content change is delta-visible: stamp a fresh change_seq in the same
+    // transaction as the write (no RETURNING on MySQL, so reselect afterwards).
+    let mut tx = db.begin().await?;
+    let seq = crate::sync::next_seq(&mut tx).await?;
+    tx.execute(
         "UPDATE drive.files
-            SET size_bytes = $1, content_hash = $2, has_thumbnail = FALSE, updated_at = NOW()
-          WHERE id = $3
-          RETURNING *",
+            SET size_bytes = $1, content_hash = $2, has_thumbnail = $3, updated_at = $4, change_seq = $5
+          WHERE id = $6",
+        params![size, &hash, false, Utc::now(), seq, file_id],
     )
-    .bind(size)
-    .bind(&hash)
-    .bind(file_id)
-    .fetch_one(db)
     .await?;
+    tx.commit().await?;
+
+    let updated = files::get_file(db, owner_id, file_id).await?;
 
     files::update_used_bytes(db, owner_id, size_delta).await;
 

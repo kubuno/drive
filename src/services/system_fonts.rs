@@ -12,12 +12,26 @@
 //! being compiled into a binary that is packaged and published.
 
 use bytes::Bytes;
+use kubuno_db::{params, DbPool};
 use kubuno_storage::StorageBackend;
-use sqlx::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
+use crate::sync;
 use crate::{errors::Result, handlers::system::SYSTEM_OWNER, services::files};
+
+/// A seeded font row (existence + protection state).
+#[derive(sqlx::FromRow)]
+struct FontRow {
+    id: Uuid,
+    is_protected: bool,
+}
+/// The blob pointer of a seeded font, for the in-place refresh.
+#[derive(sqlx::FromRow)]
+struct RefreshRow {
+    storage_path: String,
+    content_hash: Option<String>,
+}
 
 /// `System/Fonts` folder, created by migration `000018_drive_system`.
 pub const FONTS_FOLDER_ID: Uuid = Uuid::from_u128(0x5a2);
@@ -87,25 +101,20 @@ const RETIRED_FONTS: &[&str] = &[
 /// Un-protects first, because permanent deletion refuses a protected file by
 /// design. Failures are logged and skipped rather than propagated: a font that
 /// resists removal must not keep the module from starting.
-async fn retire_dropped_fonts(db: &PgPool, storage: &Arc<dyn StorageBackend>) {
+async fn retire_dropped_fonts(db: &DbPool, storage: &Arc<dyn StorageBackend>) {
     for name in RETIRED_FONTS {
-        let existing: std::result::Result<Option<(Uuid,)>, _> = sqlx::query_as(
-            "SELECT id FROM drive.files
-             WHERE owner_id = $1 AND folder_id = $2 AND name = $3 AND is_trashed = FALSE",
-        )
-        .bind(SYSTEM_OWNER)
-        .bind(FONTS_FOLDER_ID)
-        .bind(name)
-        .fetch_optional(db)
-        .await;
+        let existing: std::result::Result<Option<Uuid>, _> = db
+            .fetch_optional_scalar(
+                "SELECT id FROM drive.files
+                 WHERE owner_id = $1 AND folder_id = $2 AND name = $3 AND is_trashed = FALSE",
+                params![SYSTEM_OWNER, FONTS_FOLDER_ID, *name],
+            )
+            .await;
 
-        let Ok(Some((id,))) = existing else { continue };
+        let Ok(Some(id)) = existing else { continue };
 
-        if let Err(e) = sqlx::query("UPDATE drive.files SET is_protected = FALSE WHERE id = $1")
-            .bind(id)
-            .execute(db)
-            .await
-        {
+        // Un-protect first (permanent deletion refuses a protected file).
+        if let Err(e) = files::set_protected(db, SYSTEM_OWNER, id, false).await {
             tracing::warn!(error = %e, name, "Retired font could not be un-protected");
             continue;
         }
@@ -122,37 +131,31 @@ async fn retire_dropped_fonts(db: &PgPool, storage: &Arc<dyn StorageBackend>) {
 /// any whose bytes drifted from the embedded ones — protected files cannot be
 /// replaced through the API, administrators included, so a corrected binary can
 /// only ever arrive through here.
-pub async fn seed(db: &PgPool, storage: &Arc<dyn StorageBackend>) -> Result<()> {
+pub async fn seed(db: &DbPool, storage: &Arc<dyn StorageBackend>) -> Result<()> {
     retire_dropped_fonts(db, storage).await;
 
     for (name, bytes) in EMBEDDED_FONTS {
-        let existing: Option<(Uuid, bool)> = sqlx::query_as(
-            "SELECT id, is_protected FROM drive.files
-             WHERE owner_id = $1 AND folder_id = $2 AND name = $3 AND is_trashed = FALSE",
-        )
-        .bind(SYSTEM_OWNER)
-        .bind(FONTS_FOLDER_ID)
-        .bind(name)
-        .fetch_optional(db)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, name, "System font lookup failed");
-            e
-        })?;
+        let existing: Option<FontRow> = db
+            .fetch_optional_as::<FontRow>(
+                "SELECT id, is_protected FROM drive.files
+                 WHERE owner_id = $1 AND folder_id = $2 AND name = $3 AND is_trashed = FALSE",
+                params![SYSTEM_OWNER, FONTS_FOLDER_ID, *name],
+            )
+            .await
+            .map_err(|e| {
+                tracing::error!(error = %e, name, "System font lookup failed");
+                e
+            })?;
 
         match existing {
-            Some((id, true)) => {
+            Some(FontRow { id, is_protected: true }) => {
                 refresh_bytes(db, storage, id, name, bytes).await?;
             }
-            Some((id, false)) => {
-                sqlx::query("UPDATE drive.files SET is_protected = TRUE WHERE id = $1")
-                    .bind(id)
-                    .execute(db)
-                    .await
-                    .map_err(|e| {
-                        tracing::error!(error = %e, name, "System font re-protection failed");
-                        e
-                    })?;
+            Some(FontRow { id, is_protected: false }) => {
+                files::set_protected(db, SYSTEM_OWNER, id, true).await.map_err(|e| {
+                    tracing::error!(error = %e, name, "System font re-protection failed");
+                    e
+                })?;
                 refresh_bytes(db, storage, id, name, bytes).await?;
                 tracing::info!(name, "System font re-protected");
             }
@@ -168,14 +171,10 @@ pub async fn seed(db: &PgPool, storage: &Arc<dyn StorageBackend>) -> Result<()> 
                     false,
                 )
                 .await?;
-                sqlx::query("UPDATE drive.files SET is_protected = TRUE WHERE id = $1")
-                    .bind(file.id)
-                    .execute(db)
-                    .await
-                    .map_err(|e| {
-                        tracing::error!(error = %e, name, "System font protection failed");
-                        e
-                    })?;
+                files::set_protected(db, SYSTEM_OWNER, file.id, true).await.map_err(|e| {
+                    tracing::error!(error = %e, name, "System font protection failed");
+                    e
+                })?;
                 tracing::info!(name, id = %file.id, "System font installed into System/Fonts");
             }
         }
@@ -188,7 +187,7 @@ pub async fn seed(db: &PgPool, storage: &Arc<dyn StorageBackend>) -> Result<()> 
 /// the file (css2 URLs, embeds) keeps working, and `updated_at` moving is what
 /// invalidates the css2 parser cache.
 async fn refresh_bytes(
-    db: &PgPool,
+    db: &DbPool,
     storage: &Arc<dyn StorageBackend>,
     id: Uuid,
     name: &str,
@@ -199,28 +198,29 @@ async fn refresh_bytes(
     hasher.update(bytes);
     let embedded_hash = hex::encode(hasher.finalize());
 
-    let row: Option<(String, Option<String>)> =
-        sqlx::query_as("SELECT storage_path, content_hash FROM drive.files WHERE id = $1")
-            .bind(id)
-            .fetch_optional(db)
-            .await
-            .map_err(|e| {
-                tracing::error!(error = %e, name, "System font read for refresh failed");
-                e
-            })?;
-    let Some((storage_path, current_hash)) = row else { return Ok(()) };
-    if current_hash.as_deref() == Some(embedded_hash.as_str()) {
+    let row: Option<RefreshRow> = db
+        .fetch_optional_as::<RefreshRow>(
+            "SELECT storage_path, content_hash FROM drive.files WHERE id = $1",
+            params![id],
+        )
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, name, "System font read for refresh failed");
+            e
+        })?;
+    let Some(RefreshRow { storage_path, content_hash }) = row else { return Ok(()) };
+    if content_hash.as_deref() == Some(embedded_hash.as_str()) {
         return Ok(());
     }
 
     storage.put(&storage_path, Bytes::from_static(bytes)).await?;
-    sqlx::query(
-        "UPDATE drive.files SET size_bytes = $2, content_hash = $3, updated_at = NOW() WHERE id = $1",
+    // A content change carries a fresh change_seq (the old trigger); updated_at
+    // moving is what invalidates the css2 parser cache.
+    let seq = sync::next_seq_on_pool(db).await?;
+    db.execute(
+        "UPDATE drive.files SET size_bytes = $1, content_hash = $2, updated_at = $3, change_seq = $4 WHERE id = $5",
+        params![bytes.len() as i64, &embedded_hash, chrono::Utc::now(), seq, id],
     )
-    .bind(id)
-    .bind(bytes.len() as i64)
-    .bind(&embedded_hash)
-    .execute(db)
     .await
     .map_err(|e| {
         tracing::error!(error = %e, name, "System font refresh failed");

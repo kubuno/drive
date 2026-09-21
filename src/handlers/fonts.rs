@@ -18,7 +18,7 @@ use axum::{
     response::Response,
 };
 use chrono::{DateTime, Utc};
-use sqlx::PgPool;
+use kubuno_db::{params, DbPool};
 use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};
 use uuid::Uuid;
@@ -231,15 +231,14 @@ fn font_content_type(name: &str) -> &'static str {
     }
 }
 
-async fn font_files(db: &PgPool) -> Result<Vec<(Uuid, String, String, DateTime<Utc>)>> {
-    let rows: Vec<(Uuid, String, String, DateTime<Utc>)> = sqlx::query_as(
-        "SELECT id, name, storage_path, updated_at FROM drive.files
-         WHERE owner_id = $1 AND folder_id = $2 AND is_trashed = FALSE",
-    )
-    .bind(SYSTEM_OWNER)
-    .bind(FONTS_FOLDER_ID)
-    .fetch_all(db)
-    .await
+async fn font_files(db: &DbPool) -> Result<Vec<(Uuid, String, String, DateTime<Utc>)>> {
+    let rows: Vec<(Uuid, String, String, DateTime<Utc>)> = db
+        .fetch_all_as(
+            "SELECT id, name, storage_path, updated_at FROM drive.files
+             WHERE owner_id = $1 AND folder_id = $2 AND is_trashed = FALSE",
+            params![SYSTEM_OWNER, FONTS_FOLDER_ID],
+        )
+        .await
     .map_err(|e| {
         tracing::error!(error = %e, "System font listing failed");
         e
@@ -317,15 +316,14 @@ pub async fn file(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Result<Response> {
-    let row: Option<(String, String, Option<String>)> = sqlx::query_as(
-        "SELECT storage_path, name, content_hash FROM drive.files
-         WHERE id = $1 AND owner_id = $2 AND folder_id = $3 AND is_trashed = FALSE",
-    )
-    .bind(id)
-    .bind(SYSTEM_OWNER)
-    .bind(FONTS_FOLDER_ID)
-    .fetch_optional(&s.db)
-    .await
+    let row: Option<(String, String, Option<String>)> = s
+        .db
+        .fetch_optional_as(
+            "SELECT storage_path, name, content_hash FROM drive.files
+             WHERE id = $1 AND owner_id = $2 AND folder_id = $3 AND is_trashed = FALSE",
+            params![id, SYSTEM_OWNER, FONTS_FOLDER_ID],
+        )
+        .await
     .map_err(|e| {
         tracing::error!(error = %e, %id, "System font fetch failed");
         e

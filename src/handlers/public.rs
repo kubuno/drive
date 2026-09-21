@@ -52,11 +52,12 @@ pub async fn get_share_info(
         let file = files::get_file_any_owner(&state.db, file_id).await?;
         (file.name, "file", Some(file.size_bytes), Some(file.mime_type))
     } else if let Some(folder_id) = share.folder_id {
-        let name: Option<String> =
-            sqlx::query_scalar("SELECT name FROM drive.folders WHERE id = $1")
-                .bind(folder_id)
-                .fetch_optional(&state.db)
-                .await?;
+        let name: Option<String> = state.db
+            .fetch_optional_scalar(
+                "SELECT name FROM drive.folders WHERE id = $1",
+                kubuno_db::params![folder_id],
+            )
+            .await?;
         (name.unwrap_or_else(|| "Dossier".into()), "folder", None, None)
     } else {
         return Err(FilesError::NotFound("Partage invalide".into()));

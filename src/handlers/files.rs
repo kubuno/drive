@@ -166,11 +166,12 @@ pub async fn replace_content(
     // Remplace dans le stockage
     state.storage.put(&file.storage_path, bytes).await?;
 
-    // Met à jour la taille en DB et invalide le thumbnail
-    sqlx::query!(
-        "UPDATE drive.files SET size_bytes = $1, has_thumbnail = FALSE, updated_at = NOW() WHERE id = $2",
-        new_size, file_id
-    ).execute(&state.db).await?;
+    // Met à jour la taille en DB et invalide le thumbnail (fresh change_seq).
+    let seq = crate::sync::next_seq_on_pool(&state.db).await?;
+    state.db.execute(
+        "UPDATE drive.files SET size_bytes = $1, has_thumbnail = FALSE, updated_at = $2, change_seq = $3 WHERE id = $4",
+        kubuno_db::params![new_size, chrono::Utc::now(), seq, file_id],
+    ).await?;
 
     // Ajuste le quota
     files::update_used_bytes(&state.db, user.id, size_delta).await;
@@ -444,15 +445,14 @@ pub async fn compress(
         }).await.unwrap_or_default();
 
         // Récupérer le nom du dossier
-        let folder_name: Option<String> = sqlx::query_scalar(
-            "SELECT name FROM drive.folders WHERE id = $1 AND owner_id = $2",
-        )
-        .bind(folder_id)
-        .bind(user.id)
-        .fetch_optional(&state.db)
-        .await
-        .ok()
-        .flatten();
+        let folder_name: Option<String> = state.db
+            .fetch_optional_scalar(
+                "SELECT name FROM drive.folders WHERE id = $1 AND owner_id = $2",
+                kubuno_db::params![folder_id, user.id],
+            )
+            .await
+            .ok()
+            .flatten();
         let prefix = folder_name.unwrap_or_else(|| folder_id.to_string());
 
         for file in folder_files {

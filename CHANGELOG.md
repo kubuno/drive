@@ -9,6 +9,22 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 ## [Unreleased]
 
+### Added
+
+- **Drive now runs on PostgreSQL, MySQL/MariaDB or SQLite.** The database engine
+  is an administrator's choice, set in configuration (`[database] engine`) and
+  read at start-up; the same build connects to whichever is named. SQLite needs
+  no server at all, which turns a single-machine or evaluation install into a
+  one-line affair. Existing PostgreSQL instances keep working unchanged.
+
+### Changed
+
+- **File search reworked to behave identically on every database.** A file's
+  name and extracted text are reduced to their word stems (with accents folded)
+  when the file is indexed, and a query is matched the same way, so a search
+  returns the same results and the same ranking whichever engine backs the
+  instance. Approximate "typo" matching on names is no longer offered.
+
 ### Security
 
 - **PDF and XML readers updated to patched releases.** The PDF text extractor

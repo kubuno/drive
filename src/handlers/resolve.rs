@@ -117,14 +117,13 @@ async fn browse_local(state: &AppState, user_id: Uuid, rel: &str) -> Result<Json
     } else {
         let folder_path = format!("/{}", rel.trim_matches('/'));
         Some(
-            sqlx::query_scalar::<_, Uuid>(
-                "SELECT id FROM drive.folders WHERE owner_id = $1 AND path = $2 AND is_trashed = FALSE",
-            )
-            .bind(user_id)
-            .bind(&folder_path)
-            .fetch_optional(&state.db)
-            .await?
-            .ok_or_else(|| FilesError::NotFound(format!("Dossier {folder_path}")))?,
+            state.db
+                .fetch_optional_scalar::<Uuid>(
+                    "SELECT id FROM drive.folders WHERE owner_id = $1 AND path = $2 AND is_trashed = FALSE",
+                    kubuno_db::params![user_id, &folder_path],
+                )
+                .await?
+                .ok_or_else(|| FilesError::NotFound(format!("Dossier {folder_path}")))?,
         )
     };
 
@@ -223,28 +222,28 @@ async fn file_local(state: &AppState, user_id: Uuid, rel: &str) -> Result<Respon
     } else {
         let folder_path = format!("/{}", dir.trim_matches('/'));
         Some(
-            sqlx::query_scalar::<_, Uuid>(
-                "SELECT id FROM drive.folders WHERE owner_id = $1 AND path = $2 AND is_trashed = FALSE",
-            )
-            .bind(user_id)
-            .bind(&folder_path)
-            .fetch_optional(&state.db)
-            .await?
-            .ok_or_else(|| FilesError::NotFound(format!("Dossier {folder_path}")))?,
+            state.db
+                .fetch_optional_scalar::<Uuid>(
+                    "SELECT id FROM drive.folders WHERE owner_id = $1 AND path = $2 AND is_trashed = FALSE",
+                    kubuno_db::params![user_id, &folder_path],
+                )
+                .await?
+                .ok_or_else(|| FilesError::NotFound(format!("Dossier {folder_path}")))?,
         )
     };
 
-    let file = sqlx::query_as::<_, crate::models::file::File>(
+    let file_sql = format!(
         "SELECT * FROM drive.files \
-         WHERE owner_id = $1 AND name = $2 AND is_trashed = FALSE \
-           AND folder_id IS NOT DISTINCT FROM $3",
-    )
-    .bind(user_id)
-    .bind(&name)
-    .bind(folder_id)
-    .fetch_optional(&state.db)
-    .await?
-    .ok_or_else(|| FilesError::NotFound(format!("Fichier {rel}")))?;
+         WHERE owner_id = $1 AND name = $2 AND is_trashed = FALSE AND {}",
+        crate::services::null_safe_eq(state.db.backend(), "folder_id", 3)
+    );
+    let file = state.db
+        .fetch_optional_as::<crate::models::file::File>(
+            &file_sql,
+            kubuno_db::params![user_id, &name, folder_id],
+        )
+        .await?
+        .ok_or_else(|| FilesError::NotFound(format!("Fichier {rel}")))?;
 
     let data = state.storage.get(&file.storage_path).await?;
     let disposition = format!("inline; filename=\"{}\"", file.name.replace('"', "\\\""));

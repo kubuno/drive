@@ -8,7 +8,6 @@ use uuid::Uuid;
 use crate::{
     errors::{FilesError, Result},
     middleware::FilesUser,
-    models::file::File,
     services::{files, thumbnails},
     state::AppState,
 };
@@ -151,34 +150,27 @@ pub async fn transform(
     let new_size = encoded.len() as i64;
     state.storage.put(&file.storage_path, Bytes::from(encoded)).await?;
 
-    // When converting, update name/extension/mime; otherwise just the size.
-    let updated = if out_mime.is_empty() {
-        sqlx::query_as::<_, File>(
-            "UPDATE drive.files SET size_bytes = $1, has_thumbnail = FALSE, updated_at = NOW()
-             WHERE id = $2 AND owner_id = $3 RETURNING *",
-        )
-        .bind(new_size)
-        .bind(file_id)
-        .bind(user.id)
-        .fetch_one(&state.db)
-        .await?
+    // When converting, update name/extension/mime; otherwise just the size. A
+    // fresh change_seq replaces the old trigger; no RETURNING on MySQL, so the
+    // row is reselected through the service (which also carries version stats).
+    let seq = crate::sync::next_seq_on_pool(&state.db).await?;
+    if out_mime.is_empty() {
+        state.db.execute(
+            "UPDATE drive.files SET size_bytes = $1, has_thumbnail = FALSE, updated_at = $2, change_seq = $3
+             WHERE id = $4 AND owner_id = $5",
+            kubuno_db::params![new_size, chrono::Utc::now(), seq, file_id, user.id],
+        ).await?;
     } else {
         let new_name = swap_extension(&file.name, out_ext);
-        sqlx::query_as::<_, File>(
+        state.db.execute(
             "UPDATE drive.files
              SET size_bytes = $1, name = $2, extension = $3, mime_type = $4,
-                 has_thumbnail = FALSE, updated_at = NOW()
-             WHERE id = $5 AND owner_id = $6 RETURNING *",
-        )
-        .bind(new_size)
-        .bind(&new_name)
-        .bind(out_ext)
-        .bind(out_mime)
-        .bind(file_id)
-        .bind(user.id)
-        .fetch_one(&state.db)
-        .await?
-    };
+                 has_thumbnail = FALSE, updated_at = $5, change_seq = $6
+             WHERE id = $7 AND owner_id = $8",
+            kubuno_db::params![new_size, &new_name, out_ext, out_mime, chrono::Utc::now(), seq, file_id, user.id],
+        ).await?;
+    }
+    let updated = crate::services::files::get_file(&state.db, user.id, file_id).await?;
 
     // Regenerate the thumbnail from the new bytes (best-effort).
     {

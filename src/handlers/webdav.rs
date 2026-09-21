@@ -8,6 +8,7 @@ use axum::{
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use bytes::Bytes;
 use chrono::{DateTime, Utc};
+use kubuno_db::params;
 use serde_json::{json, Value};
 use uuid::Uuid;
 
@@ -45,31 +46,38 @@ pub async fn regenerate_webdav_token(
     Ok(Json(json!({ "token": token })))
 }
 
-async fn ensure_webdav_token(db: &sqlx::PgPool, user_id: Uuid) -> Result<String> {
-    if let Some(t) = sqlx::query_scalar::<_, String>(
-        "SELECT token FROM drive.webdav_tokens WHERE user_id = $1",
-    )
-    .bind(user_id)
-    .fetch_optional(db)
-    .await?
+async fn ensure_webdav_token(db: &kubuno_db::DbPool, user_id: Uuid) -> Result<String> {
+    if let Some(t) = db
+        .fetch_optional_scalar::<String>(
+            "SELECT token FROM drive.webdav_tokens WHERE user_id = $1",
+            params![user_id],
+        )
+        .await?
     {
         return Ok(t);
     }
     new_webdav_token(db, user_id).await
 }
 
-async fn new_webdav_token(db: &sqlx::PgPool, user_id: Uuid) -> Result<String> {
+async fn new_webdav_token(db: &kubuno_db::DbPool, user_id: Uuid) -> Result<String> {
+    use kubuno_db::dialect::Assign;
     use rand::Rng;
     let raw: [u8; 24] = rand::thread_rng().gen();
     let token = BASE64.encode(raw);
-    sqlx::query(
-        "INSERT INTO drive.webdav_tokens (user_id, token)
-         VALUES ($1, $2)
-         ON CONFLICT (user_id) DO UPDATE SET token = EXCLUDED.token, created_at = NOW()",
+    let now = Utc::now();
+    let b = db.backend();
+    db.execute(
+        &format!(
+            "INSERT INTO drive.webdav_tokens (user_id, token, created_at)
+             VALUES ($1, $2, $3){}",
+            b.upsert(
+                "drive.webdav_tokens",
+                &["user_id"],
+                &[Assign::Incoming("token"), Assign::Incoming("created_at")]
+            )
+        ),
+        params![user_id, &token, now],
     )
-    .bind(user_id)
-    .bind(&token)
-    .execute(db)
     .await?;
     Ok(token)
 }
@@ -97,12 +105,12 @@ pub async fn webdav_dispatch(State(state): State<AppState>, req: Request) -> Res
     // Update last_used_at asynchronously
     let db2 = state.db.clone();
     tokio::spawn(async move {
-        let _ = sqlx::query(
-            "UPDATE drive.webdav_tokens SET last_used_at = NOW() WHERE user_id = $1",
-        )
-        .bind(owner_id)
-        .execute(&db2)
-        .await;
+        let _ = db2
+            .execute(
+                "UPDATE drive.webdav_tokens SET last_used_at = $1 WHERE user_id = $2",
+                params![Utc::now(), owner_id],
+            )
+            .await;
     });
 
     let method  = req.method().clone();
@@ -165,22 +173,20 @@ pub async fn webdav_dispatch(State(state): State<AppState>, req: Request) -> Res
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
-async fn authenticate(db: &sqlx::PgPool, headers: &axum::http::HeaderMap) -> Option<Uuid> {
+async fn authenticate(db: &kubuno_db::DbPool, headers: &axum::http::HeaderMap) -> Option<Uuid> {
     let auth    = headers.get(header::AUTHORIZATION)?.to_str().ok()?;
     let b64     = auth.strip_prefix("Basic ")?;
     let decoded = BASE64.decode(b64).ok()?;
     let creds   = String::from_utf8(decoded).ok()?;
     let (email, token) = creds.split_once(':')?;
 
-    sqlx::query_scalar::<_, Uuid>(
+    db.fetch_optional_scalar::<Uuid>(
         r#"SELECT wt.user_id
            FROM drive.webdav_tokens wt
            JOIN core.users u ON u.id = wt.user_id
            WHERE u.email = $1 AND wt.token = $2 AND u.is_active = TRUE"#,
+        params![email, token],
     )
-    .bind(email)
-    .bind(token)
-    .fetch_optional(db)
     .await
     .ok()
     .flatten()
@@ -219,18 +225,18 @@ struct FolderRow { id: Uuid, name: String, dt: DateTime<Utc> }
 #[derive(Clone)]
 struct FileRow   { id: Uuid, name: String, size: i64, mime: String, path: String, dt: DateTime<Utc> }
 
-async fn resolve_folder(db: &sqlx::PgPool, owner: Uuid, dav_path: &str) -> Option<FolderRow> {
+async fn resolve_folder(db: &kubuno_db::DbPool, owner: Uuid, dav_path: &str) -> Option<FolderRow> {
     let s = norm(dav_path);
     if s == "/" { return None; }
-    sqlx::query_as::<_, (Uuid, String, DateTime<Utc>)>(
+    db.fetch_optional_as::<(Uuid, String, DateTime<Utc>)>(
         "SELECT id, name, updated_at FROM drive.folders WHERE owner_id = $1 AND path = $2",
+        params![owner, s],
     )
-    .bind(owner).bind(s)
-    .fetch_optional(db).await.ok().flatten()
+    .await.ok().flatten()
     .map(|(id, name, dt)| FolderRow { id, name, dt })
 }
 
-async fn resolve_file(db: &sqlx::PgPool, owner: Uuid, dav_path: &str) -> Option<FileRow> {
+async fn resolve_file(db: &kubuno_db::DbPool, owner: Uuid, dav_path: &str) -> Option<FileRow> {
     let s = norm(dav_path);
     if s == "/" { return None; }
     let (parent, name) = split_path(s);
@@ -238,30 +244,30 @@ async fn resolve_file(db: &sqlx::PgPool, owner: Uuid, dav_path: &str) -> Option<
     let folder_id: Option<Uuid> = if parent == "/" {
         None
     } else {
-        sqlx::query_scalar::<_, Uuid>(
+        db.fetch_optional_scalar::<Uuid>(
             "SELECT id FROM drive.folders WHERE owner_id = $1 AND path = $2",
+            params![owner, &parent],
         )
-        .bind(owner).bind(&parent)
-        .fetch_optional(db).await.ok().flatten()
+        .await.ok().flatten()
         .map(Some)?
     };
 
     let row = if let Some(fid) = folder_id {
-        sqlx::query_as::<_, (Uuid, String, i64, String, String, DateTime<Utc>)>(
+        db.fetch_optional_as::<(Uuid, String, i64, String, String, DateTime<Utc>)>(
             "SELECT id, name, size_bytes, mime_type, storage_path, updated_at
              FROM drive.files
              WHERE owner_id = $1 AND folder_id = $2 AND name = $3 AND is_trashed = FALSE",
+            params![owner, fid, &name],
         )
-        .bind(owner).bind(fid).bind(&name)
-        .fetch_optional(db).await.ok().flatten()
+        .await.ok().flatten()
     } else {
-        sqlx::query_as::<_, (Uuid, String, i64, String, String, DateTime<Utc>)>(
+        db.fetch_optional_as::<(Uuid, String, i64, String, String, DateTime<Utc>)>(
             "SELECT id, name, size_bytes, mime_type, storage_path, updated_at
              FROM drive.files
              WHERE owner_id = $1 AND folder_id IS NULL AND name = $2 AND is_trashed = FALSE",
+            params![owner, &name],
         )
-        .bind(owner).bind(&name)
-        .fetch_optional(db).await.ok().flatten()
+        .await.ok().flatten()
     };
 
     row.map(|(id, name, size, mime, path, dt)| FileRow { id, name, size, mime, path, dt })
@@ -319,7 +325,7 @@ fn make_href(dav_path: &str, is_collection: bool) -> String {
     }
 }
 
-async fn propfind(db: &sqlx::PgPool, owner: Uuid, dav_path: &str, depth: &str) -> Response {
+async fn propfind(db: &kubuno_db::DbPool, owner: Uuid, dav_path: &str, depth: &str) -> Response {
     let s = norm(dav_path);
     let is_root = s == "/";
 
@@ -360,19 +366,21 @@ fn xml_207(body: String) -> Response {
     (StatusCode::MULTI_STATUS, [(header::CONTENT_TYPE, "application/xml; charset=utf-8")], body).into_response()
 }
 
-async fn children_xml(db: &sqlx::PgPool, owner: Uuid, folder_id: Option<Uuid>, parent_dav: &str) -> String {
+async fn children_xml(db: &kubuno_db::DbPool, owner: Uuid, folder_id: Option<Uuid>, parent_dav: &str) -> String {
     let parent = norm(parent_dav);
     let mut out = String::new();
 
     // Sub-folders
     let folders: Vec<(Uuid, String, DateTime<Utc>)> = if let Some(fid) = folder_id {
-        sqlx::query_as(
+        db.fetch_all_as(
             "SELECT id, name, updated_at FROM drive.folders WHERE owner_id=$1 AND parent_id=$2 ORDER BY name",
-        ).bind(owner).bind(fid).fetch_all(db).await.unwrap_or_default()
+            params![owner, fid],
+        ).await.unwrap_or_default()
     } else {
-        sqlx::query_as(
+        db.fetch_all_as(
             "SELECT id, name, updated_at FROM drive.folders WHERE owner_id=$1 AND parent_id IS NULL ORDER BY name",
-        ).bind(owner).fetch_all(db).await.unwrap_or_default()
+            params![owner],
+        ).await.unwrap_or_default()
     };
 
     for (_, name, dt) in &folders {
@@ -382,13 +390,15 @@ async fn children_xml(db: &sqlx::PgPool, owner: Uuid, folder_id: Option<Uuid>, p
 
     // Files
     let files: Vec<(String, i64, String, DateTime<Utc>)> = if let Some(fid) = folder_id {
-        sqlx::query_as(
+        db.fetch_all_as(
             "SELECT name, size_bytes, mime_type, updated_at FROM drive.files WHERE owner_id=$1 AND folder_id=$2 AND is_trashed=FALSE ORDER BY name",
-        ).bind(owner).bind(fid).fetch_all(db).await.unwrap_or_default()
+            params![owner, fid],
+        ).await.unwrap_or_default()
     } else {
-        sqlx::query_as(
+        db.fetch_all_as(
             "SELECT name, size_bytes, mime_type, updated_at FROM drive.files WHERE owner_id=$1 AND folder_id IS NULL AND is_trashed=FALSE ORDER BY name",
-        ).bind(owner).fetch_all(db).await.unwrap_or_default()
+            params![owner],
+        ).await.unwrap_or_default()
     };
 
     for (name, size, mime, dt) in &files {
@@ -441,9 +451,10 @@ async fn dav_put(state: &AppState, owner: Uuid, dav_path: &str, body: Bytes, _mi
     let folder_id: Option<Uuid> = if parent == "/" {
         None
     } else {
-        match sqlx::query_scalar::<_, Uuid>(
+        match state.db.fetch_optional_scalar::<Uuid>(
             "SELECT id FROM drive.folders WHERE owner_id = $1 AND path = $2",
-        ).bind(owner).bind(&parent).fetch_optional(&state.db).await {
+            params![owner, &parent],
+        ).await {
             Ok(Some(id)) => Some(id),
             _ => return StatusCode::CONFLICT.into_response(),
         }
@@ -486,9 +497,10 @@ async fn dav_mkcol(state: &AppState, owner: Uuid, dav_path: &str) -> Response {
     let parent_id: Option<Uuid> = if parent == "/" {
         None
     } else {
-        match sqlx::query_scalar::<_, Uuid>(
+        match state.db.fetch_optional_scalar::<Uuid>(
             "SELECT id FROM drive.folders WHERE owner_id = $1 AND path = $2",
-        ).bind(owner).bind(&parent).fetch_optional(&state.db).await {
+            params![owner, &parent],
+        ).await {
             Ok(Some(id)) => Some(id),
             _ => return StatusCode::CONFLICT.into_response(),
         }
@@ -519,9 +531,10 @@ async fn dav_move(state: &AppState, owner: Uuid, src_path: &str, dst_path: &str)
     let dst_folder_id: Option<Uuid> = if dst_parent == "/" {
         None
     } else {
-        match sqlx::query_scalar::<_, Uuid>(
+        match state.db.fetch_optional_scalar::<Uuid>(
             "SELECT id FROM drive.folders WHERE owner_id = $1 AND path = $2",
-        ).bind(owner).bind(&dst_parent).fetch_optional(&state.db).await {
+            params![owner, &dst_parent],
+        ).await {
             Ok(Some(id)) => Some(id),
             _ => return StatusCode::CONFLICT.into_response(),
         }

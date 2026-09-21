@@ -1,19 +1,27 @@
-//! Service de recherche. Palier plein-texte toujours actif (Postgres FTS + trigram).
-//! Palier sémantique optionnel (embeddings + cosinus) fusionné si un fournisseur est joignable.
+//! Service de recherche, portable sur les trois moteurs.
+//!
+//! Le plein-texte ne repose plus sur tsvector/ts_rank/websearch/pg_trgm (PostgreSQL
+//! seulement) mais sur `kubuno_db::search` : le nom et le contenu extrait sont
+//! réduits en radicaux (Snowball FR) à l'indexation dans `name_norm`/`content_norm`,
+//! et une requête est passée dans le même `normalize()` puis appariée par `LIKE`
+//! portable, le nom (poids A) primant sur le contenu (poids B).
+//! Palier sémantique optionnel (embeddings + cosinus) fusionné si un fournisseur répond.
 
 use crate::models::file::File;
 use crate::services::{embeddings, phash};
 use crate::state::AppState;
-use sqlx::{Postgres, QueryBuilder, Row};
+use kubuno_db::dialect::{Backend, Unit};
+use kubuno_db::search::{Field, Query, Weight};
+use kubuno_db::{params, DbPool, DbQueryBuilder, DbValue};
 use std::collections::HashMap;
 use uuid::Uuid;
 
 #[derive(Debug, Default)]
 pub struct SearchParams {
     pub q:              String,
-    pub type_filter:    String, // all|folder|document|spreadsheet|presentation|pdf|image|video|audio|archive
-    pub owner:          String, // anyone|me|notme
-    pub date:           String, // anytime|today|7days|30days|thisyear|lastyear
+    pub type_filter:    String,
+    pub owner:          String,
+    pub date:           String,
     pub trash:          bool,
     pub starred:        bool,
     pub item_name:      String,
@@ -26,38 +34,55 @@ pub struct SearchHit {
     pub file:        File,
     pub snippet:     Option<String>,
     pub score:       f32,
-    pub match_kind:  String, // "text" | "name" | "semantic"
-    pub folder_path: Option<String>, // chemin matérialisé du dossier parent
+    pub match_kind:  String, // "text" | "semantic" | "image"
+    pub folder_path: Option<String>,
 }
 
-const CAND_CAP: i64 = 400; // plafond de candidats classés (échelle perso) → pagination en mémoire
+const CAND_CAP: i64 = 400; // plafond de candidats classés → pagination en mémoire
 
-/// Fragment SQL filtrant par catégorie de type MIME. Renvoie false si le type exclut tout fichier.
-fn push_type_filter(qb: &mut QueryBuilder<Postgres>, t: &str) -> bool {
-    match t {
-        "" | "all" => true,
-        "folder" => false, // les dossiers ne sont pas indexés ici
-        "pdf" => { qb.push(" AND si.mime_type = 'application/pdf'"); true }
-        "image" => { qb.push(" AND si.mime_type LIKE 'image/%'"); true }
-        "video" => { qb.push(" AND si.mime_type LIKE 'video/%'"); true }
-        "audio" => { qb.push(" AND si.mime_type LIKE 'audio/%'"); true }
-        "document" => { qb.push(" AND (si.mime_type LIKE 'text/%' OR si.mime_type LIKE '%word%' OR si.mime_type LIKE '%opendocument.text%' OR si.mime_type LIKE '%rtf%')"); true }
-        "spreadsheet" => { qb.push(" AND (si.mime_type LIKE '%excel%' OR si.mime_type LIKE '%spreadsheet%' OR si.mime_type LIKE '%csv%')"); true }
-        "presentation" => { qb.push(" AND (si.mime_type LIKE '%powerpoint%' OR si.mime_type LIKE '%presentation%')"); true }
-        "archive" => { qb.push(" AND (si.mime_type LIKE '%zip%' OR si.mime_type LIKE '%tar%' OR si.mime_type LIKE '%rar%' OR si.mime_type LIKE '%7z%' OR si.mime_type LIKE '%gzip%')"); true }
-        _ => true,
-    }
+/// Fragment SQL filtrant par catégorie de type MIME. `None` = ce type exclut tout fichier.
+fn type_filter_sql(t: &str) -> Option<String> {
+    Some(match t {
+        "" | "all" => String::new(),
+        "pdf" => " AND si.mime_type = 'application/pdf'".into(),
+        "image" => " AND si.mime_type LIKE 'image/%'".into(),
+        "video" => " AND si.mime_type LIKE 'video/%'".into(),
+        "audio" => " AND si.mime_type LIKE 'audio/%'".into(),
+        "document" => " AND (si.mime_type LIKE 'text/%' OR si.mime_type LIKE '%word%' OR si.mime_type LIKE '%opendocument.text%' OR si.mime_type LIKE '%rtf%')".into(),
+        "spreadsheet" => " AND (si.mime_type LIKE '%excel%' OR si.mime_type LIKE '%spreadsheet%' OR si.mime_type LIKE '%csv%')".into(),
+        "presentation" => " AND (si.mime_type LIKE '%powerpoint%' OR si.mime_type LIKE '%presentation%')".into(),
+        "archive" => " AND (si.mime_type LIKE '%zip%' OR si.mime_type LIKE '%tar%' OR si.mime_type LIKE '%rar%' OR si.mime_type LIKE '%7z%' OR si.mime_type LIKE '%gzip%')".into(),
+        _ => String::new(),
+    })
 }
 
-fn date_interval(date: &str) -> Option<&'static str> {
-    match date {
-        "today"    => Some("1 day"),
-        "7days"    => Some("7 days"),
-        "30days"   => Some("30 days"),
-        "thisyear" => Some("1 year"),
-        "lastyear" => Some("2 years"),
-        _ => None,
-    }
+/// `AND f.updated_at >= NOW() - INTERVAL …`, per engine (no year unit; approximated in days).
+fn date_filter(date: &str, b: Backend) -> Option<String> {
+    let (n, unit) = match date {
+        "today" => (1u32, Unit::Day),
+        "7days" => (7, Unit::Day),
+        "30days" => (30, Unit::Day),
+        "thisyear" => (365, Unit::Day),
+        "lastyear" => (730, Unit::Day),
+        _ => return None,
+    };
+    Some(format!(" AND f.updated_at >= {}", b.interval_before(n, unit)))
+}
+
+#[derive(sqlx::FromRow)]
+struct IdRow {
+    file_id: Uuid,
+}
+#[derive(sqlx::FromRow)]
+struct EmbRow {
+    file_id: Uuid,
+    #[sqlx(json)]
+    embedding: Vec<f32>,
+}
+#[derive(sqlx::FromRow)]
+struct FolderPathRow {
+    id: Uuid,
+    path: String,
 }
 
 pub async fn search(
@@ -66,143 +91,109 @@ pub async fn search(
     owner_id: Uuid,
     p: &SearchParams,
 ) -> Result<(Vec<SearchHit>, usize, bool), sqlx::Error> {
-    // Rien à chercher, ou type qui exclut tout fichier → vide.
-    let has_query = !p.q.trim().is_empty() || !p.item_name.trim().is_empty() || !p.contains_words.trim().is_empty();
+    let has_query =
+        !p.q.trim().is_empty() || !p.item_name.trim().is_empty() || !p.contains_words.trim().is_empty();
     if !has_query || p.type_filter == "folder" || p.owner == "notme" {
         return Ok((Vec::new(), 0, false));
     }
 
+    let db = &state.db;
+    let b = db.backend();
     let q = p.q.trim();
-    let limit  = p.limit.clamp(1, 100) as usize;
+    let limit = p.limit.clamp(1, 100) as usize;
     let offset = p.offset.max(0) as usize;
 
-    // ── Palier 1 : plein-texte (FTS) + nom (trigram, tolérant aux fautes) ───────
-    // name_sim = similarité trigramme du nom (0..1) → tolérance aux fautes de frappe.
-    let mut qb: QueryBuilder<Postgres> = QueryBuilder::new(
-        "SELECT si.file_id, \
-                ts_rank(si.tsv, websearch_to_tsquery('simple', unaccent(",
-    );
-    qb.push_bind(q);
-    qb.push("))) AS rank, \
-             (si.tsv @@ websearch_to_tsquery('simple', unaccent(");
-    qb.push_bind(q);
-    qb.push("))) AS text_match, \
-             similarity(unaccent(si.name), unaccent(");
-    qb.push_bind(q);
-    qb.push(")) AS name_sim, \
-             ts_headline('simple', unaccent(coalesce(si.content_text, si.name)), websearch_to_tsquery('simple', unaccent(");
-    qb.push_bind(q);
-    qb.push(")), 'StartSel=<b>,StopSel=</b>,MaxFragments=2,MaxWords=18,MinWords=5') AS snippet \
-             FROM drive.search_index si JOIN drive.files f ON f.id = si.file_id \
-             WHERE si.owner_id = ");
-    qb.push_bind(owner_id);
-    qb.push(" AND f.is_trashed = ");
-    qb.push_bind(p.trash);
+    // ── Base filters (owner, trash, item name, type, starred, date) ────────────
+    let type_frag = match type_filter_sql(&p.type_filter) {
+        Some(f) => f,
+        None => return Ok((Vec::new(), 0, false)),
+    };
 
-    // Correspondance : FTS OU sous-chaîne du nom OU nom trigramme-similaire (fautes).
-    qb.push(" AND (si.tsv @@ websearch_to_tsquery('simple', unaccent(");
-    qb.push_bind(q);
-    qb.push(")) OR si.name ILIKE ");
-    qb.push_bind(format!("%{q}%"));
-    qb.push(" OR unaccent(si.name) % unaccent(");
-    qb.push_bind(q);
-    qb.push("))");
+    // Binds accumulate in strict textual placeholder order.
+    let mut ps: Vec<DbValue> = vec![DbValue::from(owner_id), DbValue::from(p.trash)];
+    let mut next = 3usize;
+    let mut where_sql = String::from("si.owner_id = $1 AND f.is_trashed = $2");
 
-    if !push_type_filter(&mut qb, &p.type_filter) {
-        return Ok((Vec::new(), 0, false));
-    }
-    if p.starred {
-        qb.push(" AND f.is_starred = TRUE");
-    }
     if !p.item_name.trim().is_empty() {
-        qb.push(" AND si.name ILIKE ");
-        qb.push_bind(format!("%{}%", p.item_name.trim()));
+        where_sql.push_str(&format!(" AND {}", b.ilike("si.name", next)));
+        ps.push(DbValue::from(format!("%{}%", p.item_name.trim())));
+        next += 1;
     }
-    if let Some(iv) = date_interval(&p.date) {
-        qb.push(" AND f.updated_at >= NOW() - INTERVAL '");
-        // The one fragment of this query that is not written here: an interval
-        // spliced inside quotes, where an injection would only need an
-        // apostrophe. It is safe because `date_interval` returns
-        // `Option<&'static str>` from a closed match — the search parameter
-        // only ever SELECTS one of five literals, it never becomes one. The
-        // return type is what enforces that, not this comment.
-        qb.push(iv);
-        qb.push("'");
+    where_sql.push_str(&type_frag);
+    if p.starred {
+        where_sql.push_str(" AND f.is_starred = TRUE");
     }
-    qb.push(" ORDER BY GREATEST(ts_rank(si.tsv, websearch_to_tsquery('simple', unaccent(");
-    qb.push_bind(q);
-    qb.push("))), similarity(unaccent(si.name), unaccent(");
-    qb.push_bind(q);
-    qb.push("))) DESC NULLS LAST LIMIT ");
-    qb.push_bind(CAND_CAP);
-
-    let rows = qb.build().fetch_all(&state.db).await?;
-
-    let mut order: Vec<Uuid> = Vec::new();
-    let mut rank_by: HashMap<Uuid, f32> = HashMap::new();
-    let mut namesim_by: HashMap<Uuid, f32> = HashMap::new();
-    let mut snippet_by: HashMap<Uuid, Option<String>> = HashMap::new();
-    let mut kind_by: HashMap<Uuid, String> = HashMap::new();
-    let mut max_rank = 0f32;
-    for r in &rows {
-        let id: Uuid = r.get("file_id");
-        let rank: f32 = r.try_get("rank").unwrap_or(0.0);
-        let name_sim: f32 = r.try_get("name_sim").unwrap_or(0.0);
-        let text_match: bool = r.try_get("text_match").unwrap_or(false);
-        let snippet: Option<String> = r.try_get("snippet").ok();
-        max_rank = max_rank.max(rank);
-        order.push(id);
-        rank_by.insert(id, rank);
-        namesim_by.insert(id, name_sim);
-        snippet_by.insert(id, snippet);
-        kind_by.insert(id, if text_match { "text".into() } else { "name".into() });
+    if let Some(d) = date_filter(&p.date, b) {
+        where_sql.push_str(&d);
     }
 
-    // Score plein-texte normalisé (0..1), combiné avec la similarité de nom (fautes
-    // de frappe) : on garde le meilleur des deux.
+    // ── Full-text match + ranking (kubuno_db::search) ──────────────────────────
+    // The WHERE fts block is numbered from `next`; the ORDER BY block follows it,
+    // and sits after the WHERE in the text, so placeholders stay increasing.
+    let fields = [Field::new("name_norm", Weight::A), Field::new("content_norm", Weight::B)];
+    let order_clause;
+    let limit_ph;
+    if let Some(fts) = Query::build(q, &fields, next) {
+        where_sql.push_str(&format!(" AND {}", fts.where_sql));
+        order_clause = format!("{} DESC", fts.order_sql);
+        limit_ph = fts.next;
+        ps.extend(fts.binds);
+    } else {
+        // No stems (query empty / all stop chars): fall back to a plain listing
+        // filtered by the base conditions, newest first.
+        order_clause = "f.updated_at DESC".to_string();
+        limit_ph = next;
+    }
+    ps.push(DbValue::from(CAND_CAP));
+
+    let sql = format!(
+        "SELECT si.file_id FROM drive.search_index si
+         JOIN drive.files f ON f.id = si.file_id
+         WHERE {where_sql}
+         ORDER BY {order_clause}
+         LIMIT ${limit_ph}"
+    );
+    let cand = db.fetch_all_as::<IdRow>(&sql, ps).await?;
+
+    // Rank-based full-text score in [0,1] (top candidate ≈ 1.0). Enough to blend
+    // with the cosine tier; the SQL already returned them in rank order.
+    let mut order: Vec<Uuid> = cand.iter().map(|r| r.file_id).collect();
+    let n_cand = order.len().max(1) as f32;
     let mut score_by: HashMap<Uuid, f32> = HashMap::new();
-    for id in &order {
-        let r = rank_by.get(id).copied().unwrap_or(0.0);
-        let ts = if max_rank > 0.0 { r / max_rank } else { 0.0 };
-        let ns = namesim_by.get(id).copied().unwrap_or(0.0);
-        score_by.insert(*id, ts.max(ns).max(0.01));
+    let mut kind_by: HashMap<Uuid, String> = HashMap::new();
+    for (i, id) in order.iter().enumerate() {
+        score_by.insert(*id, ((order.len() - i) as f32 / n_cand).max(0.01));
+        kind_by.insert(*id, "text".into());
     }
 
-    // ── Palier 2 : sémantique (optionnel, fail-open) ────────────────────────────
+    // ── Semantic tier (optional, fail-open) ────────────────────────────────────
     let mut semantic_active = false;
-    if embeddings::is_enabled(&state.settings.embeddings) {
+    if !q.is_empty() && embeddings::is_enabled(&state.settings.embeddings) {
         if let Ok(qvec) = embeddings::embed(http, &state.settings.embeddings, q).await {
             semantic_active = true;
-            // Vecteurs candidats de l'utilisateur (brute-force — échelle perso)
-            let cand = sqlx::query(
-                "SELECT si.file_id, si.embedding FROM drive.search_index si \
-                 JOIN drive.files f ON f.id = si.file_id \
-                 WHERE si.owner_id = $1 AND f.is_trashed = $2 AND si.embedding IS NOT NULL",
-            )
-            .bind(owner_id)
-            .bind(p.trash)
-            .fetch_all(&state.db)
-            .await?;
-
-            let mut sem: Vec<(Uuid, f32)> = Vec::new();
-            for r in &cand {
-                let id: Uuid = r.get("file_id");
-                let emb: Vec<f32> = r.try_get("embedding").unwrap_or_default();
-                let cos = embeddings::cosine_similarity(&qvec, &emb);
-                if cos > 0.20 {
-                    sem.push((id, cos));
-                }
-            }
-            sem.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+            let rows = db
+                .fetch_all_as::<EmbRow>(
+                    "SELECT si.file_id, si.embedding FROM drive.search_index si
+                     JOIN drive.files f ON f.id = si.file_id
+                     WHERE si.owner_id = $1 AND f.is_trashed = $2 AND si.embedding IS NOT NULL",
+                    params![owner_id, p.trash],
+                )
+                .await?;
+            let mut sem: Vec<(Uuid, f32)> = rows
+                .into_iter()
+                .filter_map(|r| {
+                    let cos = embeddings::cosine_similarity(&qvec, &r.embedding);
+                    (cos > 0.20).then_some((r.file_id, cos))
+                })
+                .collect();
+            sem.sort_by(|a, c| c.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
             sem.truncate(CAND_CAP as usize);
-
             for (id, cos) in sem {
                 let blended = if let Some(fts) = score_by.get(&id) {
-                    0.6 * fts + 0.4 * cos // présent dans les deux
+                    0.6 * fts + 0.4 * cos
                 } else {
-                    order.push(id); // hit purement sémantique
+                    order.push(id);
                     kind_by.insert(id, "semantic".into());
-                    snippet_by.insert(id, None);
                     0.4 * cos
                 };
                 score_by.insert(id, blended);
@@ -214,19 +205,15 @@ pub async fn search(
         return Ok((Vec::new(), 0, semantic_active));
     }
 
-    // ── Récupération des lignes File + assemblage trié par score (pertinence) ───
-    let files = sqlx::query_as::<_, File>("SELECT * FROM drive.files WHERE id = ANY($1)")
-        .bind(&order)
-        .fetch_all(&state.db)
-        .await?;
-    let file_by: HashMap<Uuid, File> = files.into_iter().map(|f| (f.id, f)).collect();
+    // ── File rows + assembly, sorted by score ──────────────────────────────────
+    let file_by = fetch_files_by_ids(db, &order).await?;
 
     let mut hits: Vec<SearchHit> = order
         .iter()
         .filter_map(|id| {
             file_by.get(id).map(|f| SearchHit {
                 file: f.clone(),
-                snippet: snippet_by.get(id).cloned().flatten(),
+                snippet: None,
                 score: score_by.get(id).copied().unwrap_or(0.0),
                 match_kind: kind_by.get(id).cloned().unwrap_or_else(|| "text".into()),
                 folder_path: None,
@@ -234,50 +221,41 @@ pub async fn search(
         })
         .collect();
 
-    hits.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
+    hits.sort_by(|a, c| c.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
 
-    // Pagination en mémoire (le classement par pertinence est complet sur le pool capé).
     let total = hits.len();
     let mut page: Vec<SearchHit> = hits.into_iter().skip(offset).take(limit).collect();
 
-    // Chemin matérialisé du dossier parent pour chaque résultat de la page.
-    let folder_ids: Vec<Uuid> = page.iter().filter_map(|h| h.file.folder_id).collect();
-    if !folder_ids.is_empty() {
-        let rows = sqlx::query("SELECT id, path FROM drive.folders WHERE id = ANY($1)")
-            .bind(&folder_ids)
-            .fetch_all(&state.db)
-            .await?;
-        let path_by: HashMap<Uuid, String> = rows.iter().map(|r| (r.get::<Uuid, _>("id"), r.get::<String, _>("path"))).collect();
-        for h in &mut page {
-            if let Some(fid) = h.file.folder_id {
-                h.folder_path = path_by.get(&fid).cloned();
-            }
-        }
-    }
+    attach_folder_paths(db, &mut page).await?;
 
     Ok((page, total, semantic_active))
 }
 
-/// Recherche d'images SIMILAIRES par empreinte perceptuelle (dHash → distance de Hamming).
-/// `query_phash` = empreinte de l'image requête. Renvoie les images les plus proches.
+/// Recherche d'images SIMILAIRES par empreinte perceptuelle (dHash → Hamming).
 pub async fn search_similar(
     state: &AppState,
     owner_id: Uuid,
     query_phash: i64,
     limit: usize,
 ) -> Result<(Vec<SearchHit>, usize), sqlx::Error> {
-    let rows = sqlx::query(
-        "SELECT file_id, phash FROM drive.search_index \
-         WHERE owner_id = $1 AND is_trashed = FALSE AND phash IS NOT NULL",
-    )
-    .bind(owner_id)
-    .fetch_all(&state.db)
-    .await?;
+    let db = &state.db;
 
-    // Distance de Hamming ; on garde les plus proches (≤ 22 bits ≈ visuellement proches).
+    #[derive(sqlx::FromRow)]
+    struct PhashRow {
+        file_id: Uuid,
+        phash: i64,
+    }
+    let rows = db
+        .fetch_all_as::<PhashRow>(
+            "SELECT file_id, phash FROM drive.search_index
+             WHERE owner_id = $1 AND is_trashed = FALSE AND phash IS NOT NULL",
+            params![owner_id],
+        )
+        .await?;
+
     let mut scored: Vec<(Uuid, u32)> = rows
         .iter()
-        .map(|r| (r.get::<Uuid, _>("file_id"), phash::hamming(query_phash, r.get::<i64, _>("phash"))))
+        .map(|r| (r.file_id, phash::hamming(query_phash, r.phash)))
         .filter(|(_, d)| *d <= 22)
         .collect();
     scored.sort_by_key(|x| x.1);
@@ -288,24 +266,10 @@ pub async fn search_similar(
     }
 
     let ids: Vec<Uuid> = scored.iter().map(|x| x.0).collect();
-    let files = sqlx::query_as::<_, File>("SELECT * FROM drive.files WHERE id = ANY($1)")
-        .bind(&ids)
-        .fetch_all(&state.db)
-        .await?;
-    let file_by: HashMap<Uuid, File> = files.into_iter().map(|f| (f.id, f)).collect();
+    let file_by = fetch_files_by_ids(db, &ids).await?;
 
     let folder_ids: Vec<Uuid> = file_by.values().filter_map(|f| f.folder_id).collect();
-    let path_by: HashMap<Uuid, String> = if folder_ids.is_empty() {
-        HashMap::new()
-    } else {
-        sqlx::query("SELECT id, path FROM drive.folders WHERE id = ANY($1)")
-            .bind(&folder_ids)
-            .fetch_all(&state.db)
-            .await?
-            .iter()
-            .map(|r| (r.get::<Uuid, _>("id"), r.get::<String, _>("path")))
-            .collect()
-    };
+    let path_by = fetch_folder_paths(db, &folder_ids).await?;
 
     let hits: Vec<SearchHit> = scored
         .iter()
@@ -313,7 +277,7 @@ pub async fn search_similar(
             file_by.get(id).map(|f| SearchHit {
                 file: f.clone(),
                 snippet: None,
-                score: (64 - *dist) as f32 / 64.0, // proximité 0..1
+                score: (64 - *dist) as f32 / 64.0,
                 match_kind: "image".into(),
                 folder_path: f.folder_id.and_then(|fid| path_by.get(&fid).cloned()),
             })
@@ -321,4 +285,38 @@ pub async fn search_similar(
         .collect();
 
     Ok((hits, total))
+}
+
+async fn fetch_files_by_ids(db: &DbPool, ids: &[Uuid]) -> Result<HashMap<Uuid, File>, sqlx::Error> {
+    if ids.is_empty() {
+        return Ok(HashMap::new());
+    }
+    let mut qb = DbQueryBuilder::new(db.backend(), "SELECT * FROM drive.files WHERE id");
+    qb.push_in(ids.iter().copied());
+    let files: Vec<File> = qb.fetch_all_as(db).await?;
+    Ok(files.into_iter().map(|f| (f.id, f)).collect())
+}
+
+async fn fetch_folder_paths(db: &DbPool, ids: &[Uuid]) -> Result<HashMap<Uuid, String>, sqlx::Error> {
+    if ids.is_empty() {
+        return Ok(HashMap::new());
+    }
+    let mut qb = DbQueryBuilder::new(db.backend(), "SELECT id, path FROM drive.folders WHERE id");
+    qb.push_in(ids.iter().copied());
+    let rows: Vec<FolderPathRow> = qb.fetch_all_as(db).await?;
+    Ok(rows.into_iter().map(|r| (r.id, r.path)).collect())
+}
+
+async fn attach_folder_paths(db: &DbPool, page: &mut [SearchHit]) -> Result<(), sqlx::Error> {
+    let folder_ids: Vec<Uuid> = page.iter().filter_map(|h| h.file.folder_id).collect();
+    if folder_ids.is_empty() {
+        return Ok(());
+    }
+    let path_by = fetch_folder_paths(db, &folder_ids).await?;
+    for h in page.iter_mut() {
+        if let Some(fid) = h.file.folder_id {
+            h.folder_path = path_by.get(&fid).cloned();
+        }
+    }
+    Ok(())
 }

@@ -4,38 +4,58 @@
 use std::sync::Arc;
 use std::time::Duration;
 
+use kubuno_db::dialect::Unit;
+use kubuno_db::{params, DbPool};
 use kubuno_storage::StorageBackend;
 use serde_json::{json, Value};
-use sqlx::PgPool;
 use uuid::Uuid;
 
+use crate::sync;
 use crate::{errors::Result, services::files, state::AppState};
 
+/// One trashed file eligible for the auto-purge.
+#[derive(sqlx::FromRow)]
+struct StaleFile {
+    id: Uuid,
+    owner_id: Uuid,
+    name: String,
+    storage_path: String,
+    size_bytes: i64,
+}
+
 /// Headline stats for a user's trash (counts + reclaimable file size).
-/// `retention_days` is the instance-wide window, shown so the user knows how
-/// long a trashed file survives before the auto-purge takes it.
-pub async fn trash_stats(db: &PgPool, owner_id: Uuid, retention_days: i32) -> Result<Value> {
-    let file_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM drive.files WHERE owner_id = $1 AND is_trashed = TRUE",
-    )
-    .bind(owner_id)
-    .fetch_one(db)
-    .await?;
+pub async fn trash_stats(db: &DbPool, owner_id: Uuid, retention_days: i32) -> Result<Value> {
+    let b = db.backend();
 
-    let file_size: i64 = sqlx::query_scalar(
-        // SUM(bigint) yields NUMERIC in Postgres — cast back to BIGINT for i64.
-        "SELECT COALESCE(SUM(size_bytes), 0)::BIGINT FROM drive.files WHERE owner_id = $1 AND is_trashed = TRUE",
-    )
-    .bind(owner_id)
-    .fetch_one(db)
-    .await?;
+    let file_count: i64 = db
+        .fetch_scalar(
+            &format!(
+                "SELECT {} FROM drive.files WHERE owner_id = $1 AND is_trashed = TRUE",
+                b.count_bigint("*")
+            ),
+            params![owner_id],
+        )
+        .await?;
 
-    let folder_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM drive.folders WHERE owner_id = $1 AND is_trashed = TRUE",
-    )
-    .bind(owner_id)
-    .fetch_one(db)
-    .await?;
+    let file_size: i64 = db
+        .fetch_scalar(
+            &format!(
+                "SELECT {} FROM drive.files WHERE owner_id = $1 AND is_trashed = TRUE",
+                b.sum_bigint("size_bytes")
+            ),
+            params![owner_id],
+        )
+        .await?;
+
+    let folder_count: i64 = db
+        .fetch_scalar(
+            &format!(
+                "SELECT {} FROM drive.folders WHERE owner_id = $1 AND is_trashed = TRUE",
+                b.count_bigint("*")
+            ),
+            params![owner_id],
+        )
+        .await?;
 
     Ok(json!({
         "file_count":   file_count,
@@ -48,31 +68,37 @@ pub async fn trash_stats(db: &PgPool, owner_id: Uuid, retention_days: i32) -> Re
 /// Permanently removes files trashed longer than `retention_days` (all users).
 /// Bounded per run so a huge backlog drains gradually. Returns purged count.
 pub async fn purge_old_files(
-    db: &PgPool,
+    db: &DbPool,
     storage: &Arc<dyn StorageBackend>,
     retention_days: i32,
 ) -> usize {
-    let stale: Vec<(Uuid, Uuid, String, i64)> = sqlx::query_as(
-        "SELECT id, owner_id, storage_path, size_bytes FROM drive.files
+    // `make_interval(days => $1)` is PostgreSQL-only; the dialect layer spells
+    // `NOW() - INTERVAL 'n day'` per engine (n is a plain integer, never data).
+    let cutoff = db.backend().interval_before(retention_days.max(0) as u32, Unit::Day);
+    let sql = format!(
+        "SELECT id, owner_id, name, storage_path, size_bytes FROM drive.files
          WHERE is_trashed = TRUE AND trashed_at IS NOT NULL
-           AND trashed_at < NOW() - make_interval(days => $1)
-         LIMIT 500",
-    )
-    .bind(retention_days)
-    .fetch_all(db)
-    .await
-    .unwrap_or_default();
+           AND trashed_at < {cutoff}
+         LIMIT 500"
+    );
+    let stale: Vec<StaleFile> = db.fetch_all_as::<StaleFile>(&sql, params![]).await.unwrap_or_default();
 
     let mut purged = 0usize;
-    for (id, owner, path, size) in stale {
-        let _ = storage.delete(&path).await;
-        if sqlx::query("DELETE FROM drive.files WHERE id = $1")
-            .bind(id)
-            .execute(db)
-            .await
-            .is_ok()
-        {
-            files::update_used_bytes(db, owner, -size).await;
+    for f in stale {
+        let _ = storage.delete(&f.storage_path).await;
+        // Hard delete + tombstone in one transaction (the old AFTER DELETE
+        // trigger); the fresh seq orders the deletion in the delta feed.
+        let deleted = (|| async {
+            let mut tx = db.begin().await?;
+            let seq = sync::next_seq(&mut tx).await?;
+            tx.execute("DELETE FROM drive.files WHERE id = $1", params![f.id]).await?;
+            sync::record_file_tombstone(&mut tx, f.id, f.owner_id, &f.name, seq).await?;
+            tx.commit().await?;
+            Ok::<(), sqlx::Error>(())
+        })()
+        .await;
+        if deleted.is_ok() {
+            files::update_used_bytes(db, f.owner_id, -f.size_bytes).await;
             purged += 1;
         }
     }
@@ -80,8 +106,6 @@ pub async fn purge_old_files(
 }
 
 /// Background worker: hourly, purges files trashed beyond the retention window.
-/// The first pass is deferred by one interval so a fresh deploy never purges
-/// immediately on boot.
 pub async fn run_trash_cleaner(state: AppState) {
     loop {
         tokio::time::sleep(Duration::from_secs(3600)).await;

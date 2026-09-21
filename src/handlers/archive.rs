@@ -102,15 +102,14 @@ pub async fn compress_save(
     }
 
     for folder_id in &dto.folder_ids {
-        let folder_name: Option<String> = sqlx::query_scalar(
-            "SELECT name FROM drive.folders WHERE id = $1 AND owner_id = $2",
-        )
-        .bind(folder_id)
-        .bind(user.id)
-        .fetch_optional(&state.db)
-        .await
-        .ok()
-        .flatten();
+        let folder_name: Option<String> = state.db
+            .fetch_optional_scalar(
+                "SELECT name FROM drive.folders WHERE id = $1 AND owner_id = $2",
+                kubuno_db::params![folder_id, user.id],
+            )
+            .await
+            .ok()
+            .flatten();
         let prefix = folder_name.unwrap_or_else(|| folder_id.to_string());
         gather_folder(&state, user.id, *folder_id, prefix, &mut dirs, &mut entries).await;
     }
@@ -163,14 +162,13 @@ async fn gather_folder(
         entries.push((format!("{}/{}", prefix, file.name), data.to_vec()));
     }
 
-    let subfolders: Vec<(Uuid, String)> = sqlx::query_as(
-        "SELECT id, name FROM drive.folders WHERE parent_id = $1 AND owner_id = $2 AND is_trashed = FALSE",
-    )
-    .bind(folder_id)
-    .bind(owner_id)
-    .fetch_all(&state.db)
-    .await
-    .unwrap_or_default();
+    let subfolders: Vec<(Uuid, String)> = state.db
+        .fetch_all_as::<(Uuid, String)>(
+            "SELECT id, name FROM drive.folders WHERE parent_id = $1 AND owner_id = $2 AND is_trashed = FALSE",
+            kubuno_db::params![folder_id, owner_id],
+        )
+        .await
+        .unwrap_or_default();
 
     for (sub_id, sub_name) in subfolders {
         let sub_prefix = format!("{}/{}", prefix, sub_name);

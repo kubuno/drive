@@ -91,13 +91,18 @@ pub async fn import_from_url(
     }
 
     // Vérification quota avant téléchargement
-    let user_row = sqlx::query!(
-        "SELECT quota_bytes, used_bytes FROM core.users WHERE id = $1",
-        user.id
-    )
-    .fetch_optional(&state.db)
-    .await?
-    .ok_or_else(|| FilesError::Internal(anyhow::anyhow!("Utilisateur introuvable")))?;
+    #[derive(sqlx::FromRow)]
+    struct QuotaRow {
+        quota_bytes: i64,
+        used_bytes: i64,
+    }
+    let user_row = state.db
+        .fetch_optional_as::<QuotaRow>(
+            "SELECT quota_bytes, used_bytes FROM core.users WHERE id = $1",
+            kubuno_db::params![user.id],
+        )
+        .await?
+        .ok_or_else(|| FilesError::Internal(anyhow::anyhow!("Utilisateur introuvable")))?;
 
     if let Some(size) = declared_size {
         if user_row.used_bytes + size as i64 > user_row.quota_bytes {

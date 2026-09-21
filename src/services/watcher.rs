@@ -1,5 +1,5 @@
 use notify::{RecommendedWatcher, RecursiveMode, Watcher};
-use sqlx::PgPool;
+use kubuno_db::DbPool;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::mpsc as std_mpsc;
@@ -10,7 +10,7 @@ use crate::services::scanner;
 
 /// Démarre la surveillance du répertoire de stockage.
 /// Détecte les fichiers déposés manuellement sur le disque et les synchronise en DB.
-pub async fn start_watcher(storage_base: PathBuf, db: PgPool) {
+pub async fn start_watcher(storage_base: PathBuf, db: DbPool) {
     let (tx, rx) = std_mpsc::channel::<PathBuf>();
     let storage_base_watch = storage_base.clone();
 

@@ -21,6 +21,14 @@ use crate::state::AppState;
 const MAX_CACHED_BODY: usize = 4 * 1024 * 1024; // 4 MB — drive write responses are small JSON
 const TTL_HOURS: i64 = 24;
 
+/// The stored response replayed for a repeated idempotency key.
+#[derive(sqlx::FromRow)]
+struct CachedResponse {
+    status_code: i32,
+    content_type: Option<String>,
+    body: Vec<u8>,
+}
+
 fn sha256_hex(s: &str) -> String {
     hex::encode(Sha256::digest(s.as_bytes()))
 }
@@ -53,15 +61,16 @@ pub async fn idempotency(State(state): State<AppState>, req: Request, next: Next
     let path = req.uri().path().to_string();
     let id_hash = sha256_hex(&format!("{user_id}|{method}|{path}|{key}"));
 
-    match sqlx::query_as::<_, (i32, Option<String>, Vec<u8>)>(
-        "SELECT status_code, content_type, body FROM drive.idempotency_keys
-         WHERE id_hash = $1 AND expires_at > NOW()",
-    )
-    .bind(&id_hash)
-    .fetch_optional(&state.db)
-    .await
+    match state
+        .db
+        .fetch_optional_as::<CachedResponse>(
+            "SELECT status_code, content_type, body FROM drive.idempotency_keys
+             WHERE id_hash = $1 AND expires_at > $2",
+            kubuno_db::params![&id_hash, Utc::now()],
+        )
+        .await
     {
-        Ok(Some((status, ctype, body))) => {
+        Ok(Some(CachedResponse { status_code: status, content_type: ctype, body })) => {
             let status = StatusCode::from_u16(status as u16).unwrap_or(StatusCode::OK);
             let mut builder = axum::http::Response::builder()
                 .status(status)
@@ -97,22 +106,30 @@ pub async fn idempotency(State(state): State<AppState>, req: Request, next: Next
             .and_then(|v| v.to_str().ok())
             .map(|s| s.to_string());
         let expires = Utc::now() + Duration::hours(TTL_HOURS);
-        if let Err(e) = sqlx::query(
-            "INSERT INTO drive.idempotency_keys
+        let b = state.db.backend();
+        let sql = format!(
+            "INSERT {}INTO drive.idempotency_keys
                 (id_hash, user_id, method, path, status_code, content_type, body, expires_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-             ON CONFLICT (id_hash) DO NOTHING",
-        )
-        .bind(&id_hash)
-        .bind(user_id)
-        .bind(method.as_str())
-        .bind(&path)
-        .bind(parts.status.as_u16() as i32)
-        .bind(ctype)
-        .bind(bytes.as_ref())
-        .bind(expires)
-        .execute(&state.db)
-        .await
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8){}",
+            b.insert_ignore_prefix(),
+            b.on_conflict_do_nothing(&["id_hash"]),
+        );
+        if let Err(e) = state
+            .db
+            .execute(
+                &sql,
+                kubuno_db::params![
+                    &id_hash,
+                    user_id,
+                    method.as_str(),
+                    &path,
+                    parts.status.as_u16() as i32,
+                    ctype,
+                    bytes.as_ref(),
+                    expires
+                ],
+            )
+            .await
         {
             tracing::error!(error = %e, "Écriture drive.idempotency_keys échouée");
         }

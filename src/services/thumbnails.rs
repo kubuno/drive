@@ -1,16 +1,17 @@
 use bytes::Bytes;
-use kubuno_storage::{StorageBackend, path as storage_path};
-use sqlx::PgPool;
+use kubuno_db::{params, DbPool};
+use kubuno_storage::{path as storage_path, StorageBackend};
 use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::errors::Result;
+use crate::sync;
 
 /// Génère un thumbnail pour les images ET les vidéos (JPEG, ou PNG si l'image a
 /// de la transparence). Images : décodées via la crate `image`. Vidéos : ffmpeg.
 /// Les formats non supportés (ou fichiers illisibles/corrompus) sont ignorés.
 pub async fn generate_thumbnail(
-    db: &PgPool,
+    db: &DbPool,
     storage: &Arc<dyn StorageBackend>,
     owner_id: Uuid,
     file_id: Uuid,
@@ -22,10 +23,13 @@ pub async fn generate_thumbnail(
     // fichier SVG sert directement de miniature — rendu par le navigateur via le
     // handler `thumbnail`. On marque juste has_thumbnail pour que l'UI l'affiche.
     if mime_type == "image/svg+xml" {
-        sqlx::query("UPDATE drive.files SET has_thumbnail = TRUE WHERE id = $1")
-            .bind(file_id)
-            .execute(db)
-            .await?;
+        // has_thumbnail is delivered in the full delta feed, so bump change_seq.
+        let seq = sync::next_seq_on_pool(db).await?;
+        db.execute(
+            "UPDATE drive.files SET has_thumbnail = TRUE, change_seq = $1 WHERE id = $2",
+            params![seq, file_id],
+        )
+        .await?;
         return Ok(true);
     }
 
@@ -79,10 +83,12 @@ pub async fn generate_thumbnail(
             return Ok(false);
         }
 
-        sqlx::query("UPDATE drive.files SET has_thumbnail = TRUE WHERE id = $1")
-            .bind(file_id)
-            .execute(db)
-            .await?;
+        let seq = sync::next_seq_on_pool(db).await?;
+        db.execute(
+            "UPDATE drive.files SET has_thumbnail = TRUE, change_seq = $1 WHERE id = $2",
+            params![seq, file_id],
+        )
+        .await?;
 
         return Ok(true);
     }

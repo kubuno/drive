@@ -3,9 +3,9 @@
 
 use std::io::Cursor;
 
+use kubuno_db::{params, DbPool};
 use serde::Serialize;
 use serde_json::{json, Map, Value};
-use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::{errors::Result, models::File};
@@ -92,19 +92,20 @@ pub struct DuplicateGroup {
 }
 
 /// Groups the user's non-trashed files that share a content hash.
-pub async fn find_duplicates(db: &PgPool, owner_id: Uuid) -> Result<Vec<DuplicateGroup>> {
-    let files = sqlx::query_as::<_, File>(
-        "SELECT f.* FROM drive.files f
-         WHERE f.owner_id = $1 AND f.is_trashed = FALSE AND f.content_hash IS NOT NULL
-           AND f.content_hash IN (
-                SELECT content_hash FROM drive.files
-                WHERE owner_id = $1 AND is_trashed = FALSE AND content_hash IS NOT NULL
-                GROUP BY content_hash HAVING COUNT(*) > 1)
-         ORDER BY f.content_hash, f.created_at ASC",
-    )
-    .bind(owner_id)
-    .fetch_all(db)
-    .await?;
+pub async fn find_duplicates(db: &DbPool, owner_id: Uuid) -> Result<Vec<DuplicateGroup>> {
+    // owner_id is bound twice (outer and subquery); a placeholder is not reused.
+    let files = db
+        .fetch_all_as::<File>(
+            "SELECT f.* FROM drive.files f
+             WHERE f.owner_id = $1 AND f.is_trashed = FALSE AND f.content_hash IS NOT NULL
+               AND f.content_hash IN (
+                    SELECT content_hash FROM drive.files
+                    WHERE owner_id = $2 AND is_trashed = FALSE AND content_hash IS NOT NULL
+                    GROUP BY content_hash HAVING COUNT(*) > 1)
+             ORDER BY f.content_hash, f.created_at ASC",
+            params![owner_id, owner_id],
+        )
+        .await?;
 
     let mut groups: Vec<DuplicateGroup> = Vec::new();
     for file in files {
@@ -139,57 +140,73 @@ pub struct CategoryStat {
 }
 
 /// A by-category breakdown plus headline totals, for the storage dashboard.
-pub async fn storage_overview(db: &PgPool, owner_id: Uuid) -> Result<Value> {
-    let categories = sqlx::query_as::<_, CategoryStat>(
-        "SELECT
-            CASE
-                WHEN mime_type LIKE 'image/%' THEN 'image'
-                WHEN mime_type LIKE 'video/%' THEN 'video'
-                WHEN mime_type LIKE 'audio/%' THEN 'audio'
-                WHEN mime_type LIKE 'application/pdf' THEN 'document'
-                WHEN mime_type LIKE 'text/%' THEN 'document'
-                WHEN mime_type LIKE '%zip%' OR mime_type LIKE '%tar%' OR mime_type LIKE '%gzip%' THEN 'archive'
-                ELSE 'other'
-            END AS category,
-            COUNT(*) AS count,
-            COALESCE(SUM(size_bytes), 0)::BIGINT AS size
-         FROM drive.files
-         WHERE owner_id = $1 AND is_trashed = FALSE
-         GROUP BY category",
-    )
-    .bind(owner_id)
-    .fetch_all(db)
-    .await?;
+pub async fn storage_overview(db: &DbPool, owner_id: Uuid) -> Result<Value> {
+    let b = db.backend();
+    // Group by the CASE result. COUNT is bigint on every engine; SUM goes through
+    // the dialect helper so it decodes as i64 (a bare int4/numeric would not).
+    let categories = db
+        .fetch_all_as::<CategoryStat>(
+            &format!(
+                "SELECT
+                    CASE
+                        WHEN mime_type LIKE 'image/%' THEN 'image'
+                        WHEN mime_type LIKE 'video/%' THEN 'video'
+                        WHEN mime_type LIKE 'audio/%' THEN 'audio'
+                        WHEN mime_type LIKE 'application/pdf' THEN 'document'
+                        WHEN mime_type LIKE 'text/%' THEN 'document'
+                        WHEN mime_type LIKE '%zip%' OR mime_type LIKE '%tar%' OR mime_type LIKE '%gzip%' THEN 'archive'
+                        ELSE 'other'
+                    END AS category,
+                    {count} AS count,
+                    {size} AS size
+                 FROM drive.files
+                 WHERE owner_id = $1 AND is_trashed = FALSE
+                 GROUP BY category",
+                count = b.count_bigint("*"),
+                size = b.sum_bigint("size_bytes"),
+            ),
+            params![owner_id],
+        )
+        .await?;
 
-    let total_files: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM drive.files WHERE owner_id = $1 AND is_trashed = FALSE",
-    )
-    .bind(owner_id)
-    .fetch_one(db)
-    .await?;
+    let total_files: i64 = db
+        .fetch_scalar::<i64>(
+            &format!(
+                "SELECT {} FROM drive.files WHERE owner_id = $1 AND is_trashed = FALSE",
+                b.count_bigint("*")
+            ),
+            params![owner_id],
+        )
+        .await?;
 
-    let total_folders: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM drive.folders WHERE owner_id = $1 AND is_trashed = FALSE AND is_hidden = FALSE",
-    )
-    .bind(owner_id)
-    .fetch_one(db)
-    .await?;
+    let total_folders: i64 = db
+        .fetch_scalar::<i64>(
+            &format!(
+                "SELECT {} FROM drive.folders WHERE owner_id = $1 AND is_trashed = FALSE AND is_hidden = FALSE",
+                b.count_bigint("*")
+            ),
+            params![owner_id],
+        )
+        .await?;
 
-    let trashed_files: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM drive.files WHERE owner_id = $1 AND is_trashed = TRUE",
-    )
-    .bind(owner_id)
-    .fetch_one(db)
-    .await?;
+    let trashed_files: i64 = db
+        .fetch_scalar::<i64>(
+            &format!(
+                "SELECT {} FROM drive.files WHERE owner_id = $1 AND is_trashed = TRUE",
+                b.count_bigint("*")
+            ),
+            params![owner_id],
+        )
+        .await?;
 
-    let largest = sqlx::query_as::<_, File>(
-        "SELECT * FROM drive.files
-         WHERE owner_id = $1 AND is_trashed = FALSE
-         ORDER BY size_bytes DESC LIMIT 10",
-    )
-    .bind(owner_id)
-    .fetch_all(db)
-    .await?;
+    let largest = db
+        .fetch_all_as::<File>(
+            "SELECT * FROM drive.files
+             WHERE owner_id = $1 AND is_trashed = FALSE
+             ORDER BY size_bytes DESC LIMIT 10",
+            params![owner_id],
+        )
+        .await?;
 
     Ok(json!({
         "categories":    categories,

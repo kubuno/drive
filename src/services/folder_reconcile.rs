@@ -5,12 +5,13 @@
 //! their `name` lives here as its own concern. Called once from `main.rs` at
 //! startup. See [`reconcile_folder_paths`].
 
+use kubuno_db::{params, DbPool};
 use kubuno_storage::StorageBackend;
-use sqlx::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::errors::Result;
+use crate::sync;
 
 /// Lightweight row for the folder-tree walk in [`reconcile_folder_paths`].
 #[derive(sqlx::FromRow)]
@@ -54,28 +55,29 @@ struct FileMoveRow {
 /// already taken by a different folder of the same owner is skipped and logged,
 /// so genuine data is never clobbered. Returns the number of folders repathed.
 pub async fn reconcile_folder_paths(
-    db:      &PgPool,
+    db:      &DbPool,
     storage: &Arc<dyn StorageBackend>,
 ) -> Result<u64> {
     // Depth in the parent tree (root = 0), computed from `parent_id` and NOT
     // from the possibly-stale `path` string. Shallow-first ordering guarantees a
     // parent's path is already corrected when we compute its children's.
-    let rows = sqlx::query_as::<_, FolderPathRow>(
-        r#"WITH RECURSIVE tree AS (
-               SELECT id, owner_id, parent_id, name, path, 0 AS depth
-               FROM drive.folders
-               WHERE parent_id IS NULL
-             UNION ALL
-               SELECT c.id, c.owner_id, c.parent_id, c.name, c.path, t.depth + 1
-               FROM drive.folders c
-               JOIN tree t ON c.parent_id = t.id
-           )
-           SELECT id, owner_id, parent_id, name, path
-           FROM tree
-           ORDER BY depth, id"#,
-    )
-    .fetch_all(db)
-    .await?;
+    let rows = db
+        .fetch_all_as::<FolderPathRow>(
+            r#"WITH RECURSIVE tree AS (
+                   SELECT id, owner_id, parent_id, name, path, 0 AS depth
+                   FROM drive.folders
+                   WHERE parent_id IS NULL
+                 UNION ALL
+                   SELECT c.id, c.owner_id, c.parent_id, c.name, c.path, t.depth + 1
+                   FROM drive.folders c
+                   JOIN tree t ON c.parent_id = t.id
+               )
+               SELECT id, owner_id, parent_id, name, path
+               FROM tree
+               ORDER BY depth, id"#,
+            params![],
+        )
+        .await?;
 
     // Corrected path of every folder we have already visited, so children read
     // the value their parent will actually hold after reconciliation.
@@ -111,14 +113,12 @@ pub async fn reconcile_folder_paths(
         // A different folder of the same owner already occupies the corrected
         // path: a real conflict that needs a human. Skip, keep the stale value
         // for this folder's own children, and log loudly.
-        let clash: Option<Uuid> = sqlx::query_scalar(
-            "SELECT id FROM drive.folders WHERE owner_id = $1 AND path = $2 AND id <> $3 LIMIT 1",
-        )
-        .bind(row.owner_id)
-        .bind(&canonical)
-        .bind(row.id)
-        .fetch_optional(db)
-        .await?;
+        let clash: Option<Uuid> = db
+            .fetch_optional_scalar(
+                "SELECT id FROM drive.folders WHERE owner_id = $1 AND path = $2 AND id <> $3 LIMIT 1",
+                params![row.owner_id, &canonical, row.id],
+            )
+            .await?;
         if clash.is_some() {
             tracing::error!(
                 folder = %row.id, owner = %row.owner_id,
@@ -136,14 +136,13 @@ pub async fn reconcile_folder_paths(
         // to `files/Forge/`). A wholesale `mv_dir` would carry the sibling's
         // bytes away and orphan them; moving each file by its own recorded
         // `storage_path` touches only this folder's bytes.
-        let files = sqlx::query_as::<_, FileMoveRow>(
-            "SELECT id, name, storage_path FROM drive.files
-             WHERE folder_id = $1 AND owner_id = $2",
-        )
-        .bind(row.id)
-        .bind(row.owner_id)
-        .fetch_all(db)
-        .await?;
+        let files = db
+            .fetch_all_as::<FileMoveRow>(
+                "SELECT id, name, storage_path FROM drive.files
+                 WHERE folder_id = $1 AND owner_id = $2",
+                params![row.id, row.owner_id],
+            )
+            .await?;
 
         // Phase 1: physical moves, OUTSIDE the transaction. Collect the
         // (file id, new storage_path) pairs whose database row must follow.
@@ -165,15 +164,16 @@ pub async fn reconcile_folder_paths(
                 // it out from under the sibling row and break it. COPY instead —
                 // leave the sibling's bytes untouched — and let de-duplication be
                 // someone else's concern. When the blob is NOT shared, move it.
-                let shared: bool = sqlx::query_scalar(
-                    "SELECT EXISTS(SELECT 1 FROM drive.files \
-                     WHERE storage_path = $1 AND id <> $2)",
-                )
-                .bind(&f.storage_path)
-                .bind(f.id)
-                .fetch_one(db)
-                .await?;
-                if shared {
+                // `SELECT EXISTS(...)` returns a boolean on PostgreSQL but a
+                // BIGINT 0/1 on MySQL, which does not decode into `bool`; select
+                // an id and test presence instead.
+                let shared: Option<Uuid> = db
+                    .fetch_optional_scalar(
+                        "SELECT id FROM drive.files WHERE storage_path = $1 AND id <> $2 LIMIT 1",
+                        params![&f.storage_path, f.id],
+                    )
+                    .await?;
+                if shared.is_some() {
                     storage.copy(&f.storage_path, &new_sp).await?;
                 } else {
                     storage.mv(&f.storage_path, &new_sp).await?;
@@ -206,18 +206,24 @@ pub async fn reconcile_folder_paths(
         // folder move. Atomicity also restores crash-safety that the folder-first
         // order would otherwise lose: nothing commits until the whole folder is
         // done, so an interrupted run leaves the folder stale and simply retries.
+        // The folder takes a fresh change_seq FIRST (lower value), then each
+        // file — the delta trigger used to do this; now it is explicit. A client
+        // resolving a file's local path through its folder must learn the
+        // folder's new path no later than the files themselves.
         let mut tx = db.begin().await?;
-        sqlx::query("UPDATE drive.folders SET path = $1 WHERE id = $2")
-            .bind(&canonical)
-            .bind(row.id)
-            .execute(&mut *tx)
-            .await?;
+        let fseq = sync::next_seq(&mut tx).await?;
+        tx.execute(
+            "UPDATE drive.folders SET path = $1, change_seq = $2 WHERE id = $3",
+            params![&canonical, fseq, row.id],
+        )
+        .await?;
         for (file_id, new_sp) in &file_updates {
-            sqlx::query("UPDATE drive.files SET storage_path = $1 WHERE id = $2")
-                .bind(new_sp)
-                .bind(file_id)
-                .execute(&mut *tx)
-                .await?;
+            let s = sync::next_seq(&mut tx).await?;
+            tx.execute(
+                "UPDATE drive.files SET storage_path = $1, change_seq = $2 WHERE id = $3",
+                params![new_sp, s, file_id],
+            )
+            .await?;
         }
         tx.commit().await?;
 
@@ -253,31 +259,30 @@ pub async fn reconcile_folder_paths(
         let subtree = format!("{vacated_path}/%");
         // Our own repathed folders have already moved elsewhere, so whatever
         // still matches the vacated path is exactly the innocent sibling(s).
-        let folders_touched = sqlx::query(
-            "UPDATE drive.folders SET path = path
-             WHERE owner_id = $1 AND (path = $2 OR path LIKE $3)",
-        )
-        .bind(owner)
-        .bind(vacated_path)
-        .bind(&subtree)
-        .execute(db)
-        .await?
-        .rows_affected();
+        // Re-emitting them = a fresh change_seq (the old no-op `SET path = path`
+        // fired the trigger; without triggers the seq is assigned explicitly).
+        // One seq for the folders, a later one for their files (folders first).
+        let fseq = sync::next_seq_on_pool(db).await?;
+        let folders_touched = db
+            .execute(
+                "UPDATE drive.folders SET change_seq = $1
+                 WHERE owner_id = $2 AND (path = $3 OR path LIKE $4)",
+                params![fseq, owner, vacated_path, &subtree],
+            )
+            .await?;
         if folders_touched == 0 {
             // No sibling occupied the vacated path — nothing to restore.
             continue;
         }
-        sqlx::query(
-            "UPDATE drive.files SET storage_path = storage_path
-             WHERE owner_id = $1 AND folder_id IN (
+        let xseq = sync::next_seq_on_pool(db).await?;
+        db.execute(
+            "UPDATE drive.files SET change_seq = $1
+             WHERE owner_id = $2 AND folder_id IN (
                  SELECT id FROM drive.folders
-                 WHERE owner_id = $1 AND (path = $2 OR path LIKE $3)
+                 WHERE owner_id = $3 AND (path = $4 OR path LIKE $5)
              )",
+            params![xseq, owner, owner, vacated_path, &subtree],
         )
-        .bind(owner)
-        .bind(vacated_path)
-        .bind(&subtree)
-        .execute(db)
         .await?;
         tracing::warn!(
             owner = %owner, path = %vacated_path, folders = folders_touched,

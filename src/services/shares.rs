@@ -2,9 +2,10 @@ use argon2::{
     password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Argon2,
 };
-use chrono::{Duration, Utc};
+use chrono::{DateTime, Duration, Utc};
+use kubuno_db::dialect::{Backend, SqlType};
+use kubuno_db::{params, DbPool};
 use rand::Rng;
-use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::{
@@ -15,8 +16,7 @@ use crate::{
 fn generate_token() -> String {
     let mut rng = rand::thread_rng();
     let bytes: [u8; 24] = rng.gen();
-    base64::engine::general_purpose::URL_SAFE_NO_PAD
-        .encode(bytes)
+    base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(bytes)
 }
 
 /// Hashes a share link password with argon2id (same scheme as core account passwords).
@@ -32,15 +32,12 @@ fn hash_share_password(password: &str) -> Result<String> {
 /// Verifies a candidate password against a stored argon2 hash.
 fn verify_share_password(password: &str, hash: &str) -> bool {
     match PasswordHash::new(hash) {
-        Ok(parsed) => Argon2::default()
-            .verify_password(password.as_bytes(), &parsed)
-            .is_ok(),
+        Ok(parsed) => Argon2::default().verify_password(password.as_bytes(), &parsed).is_ok(),
         Err(_) => false,
     }
 }
 
 /// Returns true when the share is accessible given the provided password.
-/// A share with no password is always accessible; otherwise the candidate must match.
 pub fn share_password_ok(share: &Share, provided: Option<&str>) -> bool {
     match &share.password_hash {
         None => true,
@@ -48,55 +45,88 @@ pub fn share_password_ok(share: &Share, provided: Option<&str>) -> bool {
     }
 }
 
-/// The instance policy on PUBLIC links, as the administrator left it in the
-/// console. Passed in by the handler so this service never has to know what an
-/// `InstanceConfig` is; an internal share (one addressed to a named recipient of
-/// the instance) is unaffected by every field here.
+/// The instance policy on PUBLIC links, as the administrator left it in the console.
 #[derive(Debug, Clone, Copy)]
 pub struct SharePolicy {
-    /// Public links may be created at all.
     pub public_links_enabled: bool,
-    /// Hard ceiling on a link's lifetime, in days. `0` = none.
     pub max_expiry_days: i64,
-    /// Lifetime given to a link created without an expiry date, in days.
-    /// `0` = none. Always re-clamped by `max_expiry_days`.
     pub default_expiry_days: i64,
-    /// A link must carry a password.
     pub require_password: bool,
-    /// The link may serve the bytes. Off, `can_download` is forced to false.
     pub download_enabled: bool,
-    /// Ceiling on the number of downloads a link may serve. `0` = none.
     pub max_downloads: i64,
 }
 
 impl Default for SharePolicy {
-    /// The behaviour shipped before any of these knobs existed: links allowed,
-    /// no ceiling, no password required, download allowed.
     fn default() -> Self {
         Self {
             public_links_enabled: true,
-            max_expiry_days:      0,
-            default_expiry_days:  0,
-            require_password:     false,
-            download_enabled:     true,
-            max_downloads:        0,
+            max_expiry_days: 0,
+            default_expiry_days: 0,
+            require_password: false,
+            download_enabled: true,
+            max_downloads: 0,
         }
     }
 }
 
-/// Create a share. `policy` is applied to PUBLIC links only (a share addressed
-/// to a named recipient is internal and unaffected):
-///   * public links disabled instance-wide → the link is refused;
-///   * `require_password` → a link with no password is refused rather than
-///     silently created open;
-///   * `default_expiry_days > 0` → a link created with no expiry gets one;
-///   * `max_expiry_days > 0` caps the lifetime — a link with no expiry, or one
-///     asking for longer, is clamped to that many days from now;
-///   * `download_enabled = false` → `can_download` is forced off;
-///   * `max_downloads > 0` caps the download counter — an unlimited link asked
-///     for becomes a capped one.
+/// The columns shared by the two enriched-listing queries, plus the raw
+/// `password_hash` (so `password_protected` is derived in Rust — a boolean-valued
+/// SQL expression decodes as bool on PostgreSQL/SQLite but not on MySQL). The
+/// owner name is only joined in "shared with me"; elsewhere the column is absent
+/// and `#[sqlx(default)]` leaves it `None`.
+#[derive(sqlx::FromRow)]
+struct EnrichedRow {
+    id: Uuid,
+    owner_id: Uuid,
+    file_id: Option<Uuid>,
+    folder_id: Option<Uuid>,
+    token: Option<String>,
+    recipient_id: Option<Uuid>,
+    can_download: bool,
+    can_upload: bool,
+    can_delete: bool,
+    password_hash: Option<String>,
+    expires_at: Option<DateTime<Utc>>,
+    download_count: i32,
+    max_downloads: Option<i32>,
+    created_at: DateTime<Utc>,
+    updated_at: DateTime<Utc>,
+    revoked_at: Option<DateTime<Utc>>,
+    item_name: Option<String>,
+    item_kind: String,
+    #[sqlx(default)]
+    owner_name: Option<String>,
+}
+
+impl From<EnrichedRow> for ShareWithTarget {
+    fn from(r: EnrichedRow) -> Self {
+        ShareWithTarget {
+            id: r.id,
+            owner_id: r.owner_id,
+            file_id: r.file_id,
+            folder_id: r.folder_id,
+            token: r.token,
+            recipient_id: r.recipient_id,
+            can_download: r.can_download,
+            can_upload: r.can_upload,
+            can_delete: r.can_delete,
+            password_protected: r.password_hash.is_some(),
+            expires_at: r.expires_at,
+            download_count: r.download_count,
+            max_downloads: r.max_downloads,
+            created_at: r.created_at,
+            updated_at: r.updated_at,
+            revoked_at: r.revoked_at,
+            item_name: r.item_name,
+            item_kind: r.item_kind,
+            owner_name: r.owner_name,
+        }
+    }
+}
+
+/// Create a share. `policy` is applied to PUBLIC links only.
 pub async fn create_share(
-    db: &PgPool,
+    db: &DbPool,
     owner_id: Uuid,
     dto: CreateShareDto,
     policy: SharePolicy,
@@ -108,8 +138,6 @@ pub async fn create_share(
         return Err(FilesError::Validation("file_id et folder_id sont exclusifs".into()));
     }
 
-    // A public link has no named recipient. Internal shares (to a recipient) are
-    // never gated by the public-link policy.
     let is_public = dto.recipient_id.is_none();
 
     if is_public && !policy.public_links_enabled {
@@ -118,9 +146,6 @@ pub async fn create_share(
         ));
     }
 
-    // Optional password protection. Trimmed first, so a link "protected" by a
-    // password of spaces is treated as unprotected — and refused below when the
-    // instance requires one.
     let password = dto.password.as_deref().map(str::trim).filter(|pw| !pw.is_empty());
 
     if is_public && policy.require_password && password.is_none() {
@@ -129,20 +154,16 @@ pub async fn create_share(
         ));
     }
 
-    // Expiry, in two steps: give a bare link the instance's default lifetime,
-    // then clamp whatever we hold — an explicit request included — to the
-    // ceiling. `None` on a capped instance becomes the ceiling rather than
-    // "never expires".
     let expires_at = if is_public {
         let requested = match (dto.expires_at, policy.default_expiry_days) {
             (None, days) if days > 0 => Some(Utc::now() + Duration::days(days)),
-            (other, _)               => other,
+            (other, _) => other,
         };
         if policy.max_expiry_days > 0 {
             let cap = Utc::now() + Duration::days(policy.max_expiry_days);
             match requested {
                 Some(r) if r <= cap => Some(r),
-                _                   => Some(cap),
+                _ => Some(cap),
             }
         } else {
             requested
@@ -151,150 +172,126 @@ pub async fn create_share(
         dto.expires_at
     };
 
-    // Pour un lien public, on génère un token sauf si c'est un partage interne
-    let token = if is_public {
-        Some(generate_token())
-    } else {
-        None
-    };
+    let token = if is_public { Some(generate_token()) } else { None };
 
     let password_hash = match password {
         Some(pw) => Some(hash_share_password(pw)?),
-        None     => None,
+        None => None,
     };
 
-    // A public link that the instance forbids downloading through is stamped
-    // read-only at creation. The download route enforces the same rule live, so
-    // flipping the switch later also closes the links already handed out.
     let can_download = dto.can_download.unwrap_or(true) && (!is_public || policy.download_enabled);
 
-    // Download ceiling: an unlimited link becomes a capped one, and a request
-    // above the cap is brought back to it.
     let max_downloads = match (dto.max_downloads, policy.max_downloads) {
         (_, cap) if cap <= 0 || !is_public => dto.max_downloads,
         (Some(n), cap) if (n as i64) <= cap => Some(n),
-        (_, cap)                            => Some(cap as i32),
+        (_, cap) => Some(cap as i32),
     };
 
-    let share = sqlx::query_as::<_, Share>(
+    // Mint the id in Rust and reselect (no RETURNING on MySQL).
+    let id = kubuno_db::new_id();
+    db.execute(
         "INSERT INTO drive.shares
-            (owner_id, file_id, folder_id, token, recipient_id,
+            (id, owner_id, file_id, folder_id, token, recipient_id,
              can_download, can_upload, can_delete, password_hash, expires_at, max_downloads)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-         RETURNING *"
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)",
+        params![
+            id, owner_id, dto.file_id, dto.folder_id, token, dto.recipient_id, can_download,
+            dto.can_upload.unwrap_or(false), dto.can_delete.unwrap_or(false), password_hash,
+            expires_at, max_downloads
+        ],
     )
-    .bind(owner_id)
-    .bind(dto.file_id)
-    .bind(dto.folder_id)
-    .bind(&token)
-    .bind(dto.recipient_id)
-    .bind(can_download)
-    .bind(dto.can_upload.unwrap_or(false))
-    .bind(dto.can_delete.unwrap_or(false))
-    .bind(&password_hash)
-    .bind(expires_at)
-    .bind(max_downloads)
-    .fetch_one(db)
     .await?;
-
-    Ok(share)
+    db.fetch_one_as::<Share>("SELECT * FROM drive.shares WHERE id = $1", params![id])
+        .await
+        .map_err(Into::into)
 }
 
 /// Links the current user created, enriched with the target item name/kind.
-/// `password_hash` is never exposed — only a `password_protected` boolean.
-pub async fn list_shares_enriched(db: &PgPool, owner_id: Uuid) -> Result<Vec<ShareWithTarget>> {
-    let shares = sqlx::query_as::<_, ShareWithTarget>(
-        "SELECT s.id, s.owner_id, s.file_id, s.folder_id, s.token, s.recipient_id,
-                s.can_download, s.can_upload, s.can_delete,
-                (s.password_hash IS NOT NULL) AS password_protected,
-                s.expires_at, s.download_count, s.max_downloads,
-                s.created_at, s.updated_at, s.revoked_at,
-                COALESCE(f.name, fo.name) AS item_name,
-                CASE WHEN s.file_id IS NOT NULL THEN 'file' ELSE 'folder' END AS item_kind,
-                NULL::text AS owner_name
-         FROM drive.shares s
-         LEFT JOIN drive.files   f  ON f.id  = s.file_id
-         LEFT JOIN drive.folders fo ON fo.id = s.folder_id
-         WHERE s.owner_id = $1 AND s.revoked_at IS NULL
-         ORDER BY s.created_at DESC",
-    )
-    .bind(owner_id)
-    .fetch_all(db)
-    .await?;
-    Ok(shares)
+pub async fn list_shares_enriched(db: &DbPool, owner_id: Uuid) -> Result<Vec<ShareWithTarget>> {
+    let rows = db
+        .fetch_all_as::<EnrichedRow>(
+            "SELECT s.id, s.owner_id, s.file_id, s.folder_id, s.token, s.recipient_id,
+                    s.can_download, s.can_upload, s.can_delete, s.password_hash,
+                    s.expires_at, s.download_count, s.max_downloads,
+                    s.created_at, s.updated_at, s.revoked_at,
+                    COALESCE(f.name, fo.name) AS item_name,
+                    CASE WHEN s.file_id IS NOT NULL THEN 'file' ELSE 'folder' END AS item_kind
+             FROM drive.shares s
+             LEFT JOIN drive.files   f  ON f.id  = s.file_id
+             LEFT JOIN drive.folders fo ON fo.id = s.folder_id
+             WHERE s.owner_id = $1 AND s.revoked_at IS NULL
+             ORDER BY s.created_at DESC",
+            params![owner_id],
+        )
+        .await?;
+    Ok(rows.into_iter().map(Into::into).collect())
 }
 
-/// Internal shares targeting the current user ("shared with me"), enriched with
-/// the item name and the sharer's display name. Expired shares are excluded.
-pub async fn list_received_shares(db: &PgPool, recipient_id: Uuid) -> Result<Vec<ShareWithTarget>> {
-    let shares = sqlx::query_as::<_, ShareWithTarget>(
-        "SELECT s.id, s.owner_id, s.file_id, s.folder_id, s.token, s.recipient_id,
-                s.can_download, s.can_upload, s.can_delete,
-                (s.password_hash IS NOT NULL) AS password_protected,
-                s.expires_at, s.download_count, s.max_downloads,
-                s.created_at, s.updated_at, s.revoked_at,
-                COALESCE(f.name, fo.name) AS item_name,
-                CASE WHEN s.file_id IS NOT NULL THEN 'file' ELSE 'folder' END AS item_kind,
-                u.display_name AS owner_name
-         FROM drive.shares s
-         LEFT JOIN drive.files   f  ON f.id  = s.file_id
-         LEFT JOIN drive.folders fo ON fo.id = s.folder_id
-         LEFT JOIN core.users    u  ON u.id  = s.owner_id
-         WHERE s.recipient_id = $1 AND s.revoked_at IS NULL
-           AND (s.expires_at IS NULL OR s.expires_at > NOW())
-         ORDER BY s.created_at DESC",
-    )
-    .bind(recipient_id)
-    .fetch_all(db)
-    .await?;
-    Ok(shares)
+/// Internal shares targeting the current user ("shared with me"). Expired excluded.
+pub async fn list_received_shares(db: &DbPool, recipient_id: Uuid) -> Result<Vec<ShareWithTarget>> {
+    let rows = db
+        .fetch_all_as::<EnrichedRow>(
+            "SELECT s.id, s.owner_id, s.file_id, s.folder_id, s.token, s.recipient_id,
+                    s.can_download, s.can_upload, s.can_delete, s.password_hash,
+                    s.expires_at, s.download_count, s.max_downloads,
+                    s.created_at, s.updated_at, s.revoked_at,
+                    COALESCE(f.name, fo.name) AS item_name,
+                    CASE WHEN s.file_id IS NOT NULL THEN 'file' ELSE 'folder' END AS item_kind,
+                    u.display_name AS owner_name
+             FROM drive.shares s
+             LEFT JOIN drive.files   f  ON f.id  = s.file_id
+             LEFT JOIN drive.folders fo ON fo.id = s.folder_id
+             LEFT JOIN core.users    u  ON u.id  = s.owner_id
+             WHERE s.recipient_id = $1 AND s.revoked_at IS NULL
+               AND (s.expires_at IS NULL OR s.expires_at > $2)
+             ORDER BY s.created_at DESC",
+            params![recipient_id, Utc::now()],
+        )
+        .await?;
+    Ok(rows.into_iter().map(Into::into).collect())
 }
 
-pub async fn get_share_by_token(db: &PgPool, token: &str) -> Result<Share> {
-    sqlx::query_as::<_, Share>(
+pub async fn get_share_by_token(db: &DbPool, token: &str) -> Result<Share> {
+    db.fetch_optional_as::<Share>(
         "SELECT * FROM drive.shares
          WHERE token = $1 AND revoked_at IS NULL
-         AND (expires_at IS NULL OR expires_at > NOW())
-         AND (max_downloads IS NULL OR download_count < max_downloads)"
+         AND (expires_at IS NULL OR expires_at > $2)
+         AND (max_downloads IS NULL OR download_count < max_downloads)",
+        params![token, Utc::now()],
     )
-    .bind(token)
-    .fetch_optional(db)
     .await?
     .ok_or_else(|| FilesError::NotFound("Partage introuvable ou expiré".into()))
 }
 
-pub async fn list_shares(db: &PgPool, owner_id: Uuid) -> Result<Vec<Share>> {
-    let shares = sqlx::query_as::<_, Share>(
-        "SELECT * FROM drive.shares
-         WHERE owner_id = $1 AND revoked_at IS NULL
-         ORDER BY created_at DESC"
-    )
-    .bind(owner_id)
-    .fetch_all(db)
-    .await?;
+pub async fn list_shares(db: &DbPool, owner_id: Uuid) -> Result<Vec<Share>> {
+    let shares = db
+        .fetch_all_as::<Share>(
+            "SELECT * FROM drive.shares
+             WHERE owner_id = $1 AND revoked_at IS NULL
+             ORDER BY created_at DESC",
+            params![owner_id],
+        )
+        .await?;
     Ok(shares)
 }
 
-pub async fn revoke_share(db: &PgPool, owner_id: Uuid, share_id: Uuid) -> Result<()> {
-    let result = sqlx::query(
-        "UPDATE drive.shares SET revoked_at = NOW()
-         WHERE id = $1 AND owner_id = $2 AND revoked_at IS NULL"
-    )
-    .bind(share_id)
-    .bind(owner_id)
-    .execute(db)
-    .await?;
-
-    if result.rows_affected() == 0 {
+pub async fn revoke_share(db: &DbPool, owner_id: Uuid, share_id: Uuid) -> Result<()> {
+    let affected = db
+        .execute(
+            "UPDATE drive.shares SET revoked_at = $1
+             WHERE id = $2 AND owner_id = $3 AND revoked_at IS NULL",
+            params![Utc::now(), share_id, owner_id],
+        )
+        .await?;
+    if affected == 0 {
         return Err(FilesError::NotFound(format!("Partage {share_id} introuvable")));
     }
     Ok(())
 }
 
-/// Recherche des utilisateurs avec qui partager (par nom, email ou identifiant),
-/// en excluant l'utilisateur courant. Interroge directement `core.users`.
+/// Recherche des utilisateurs avec qui partager. Interroge directement `core.users`.
 pub async fn search_recipients(
-    db: &PgPool,
+    db: &DbPool,
     exclude_user: Uuid,
     query: &str,
     limit: i64,
@@ -304,74 +301,84 @@ pub async fn search_recipients(
         return Ok(Vec::new());
     }
     let pattern = format!("%{q}%");
-    let hits = sqlx::query_as::<_, RecipientHit>(
-        r#"SELECT id, display_name, email::text as email, avatar_url
-           FROM core.users
-           WHERE is_active = TRUE
-             AND id <> $1
-             AND (email::text ILIKE $2 OR username ILIKE $2 OR display_name ILIKE $2)
-           ORDER BY display_name NULLS LAST, email
-           LIMIT $3"#,
-    )
-    .bind(exclude_user)
-    .bind(&pattern)
-    .bind(limit.clamp(1, 50))
-    .fetch_all(db)
-    .await?;
+    let b = db.backend();
+    let email = b.cast("email", SqlType::Text);
+    // Case-insensitive match on the email cast (a run-time expression, so the
+    // `ilike` helper — which takes a `&'static str` column — cannot be used on
+    // it). Each pattern is bound to its own placeholder (no reuse); `NULLS LAST`
+    // is dropped (MySQL rejects it).
+    let email_ilike = match b {
+        Backend::Postgres => format!("{email} ILIKE $2"),
+        _ => format!("LOWER({email}) LIKE LOWER($2)"),
+    };
+    let sql = format!(
+        "SELECT id, display_name, {email} AS email, avatar_url
+         FROM core.users
+         WHERE is_active = TRUE
+           AND id <> $1
+           AND ({email_ilike} OR {u3} OR {d4})
+         ORDER BY display_name, email
+         LIMIT $5",
+        u3 = b.ilike("username", 3),
+        d4 = b.ilike("display_name", 4),
+    );
+    let hits = db
+        .fetch_all_as::<RecipientHit>(
+            &sql,
+            params![exclude_user, &pattern, &pattern, &pattern, limit.clamp(1, 50)],
+        )
+        .await?;
     Ok(hits)
 }
 
-/// Resolves the actual folders/files internally shared WITH the user (for the
-/// "Partagés avec moi" view). Bypasses ownership — that's the point of a share.
-pub async fn list_received_items(db: &PgPool, recipient_id: Uuid) -> Result<(Vec<Folder>, Vec<File>)> {
-    let files = sqlx::query_as::<_, File>(
-        "SELECT DISTINCT f.* FROM drive.files f
-         JOIN drive.shares s ON s.file_id = f.id
-         WHERE s.recipient_id = $1 AND s.revoked_at IS NULL
-           AND (s.expires_at IS NULL OR s.expires_at > NOW())
-           AND f.is_trashed = FALSE
-         ORDER BY f.updated_at DESC",
-    )
-    .bind(recipient_id)
-    .fetch_all(db)
-    .await?;
+/// Resolves the actual folders/files internally shared WITH the user.
+pub async fn list_received_items(db: &DbPool, recipient_id: Uuid) -> Result<(Vec<Folder>, Vec<File>)> {
+    let files = db
+        .fetch_all_as::<File>(
+            "SELECT DISTINCT f.* FROM drive.files f
+             JOIN drive.shares s ON s.file_id = f.id
+             WHERE s.recipient_id = $1 AND s.revoked_at IS NULL
+               AND (s.expires_at IS NULL OR s.expires_at > $2)
+               AND f.is_trashed = FALSE
+             ORDER BY f.updated_at DESC",
+            params![recipient_id, Utc::now()],
+        )
+        .await?;
 
-    let folders = sqlx::query_as::<_, Folder>(
-        "SELECT DISTINCT fo.* FROM drive.folders fo
-         JOIN drive.shares s ON s.folder_id = fo.id
-         WHERE s.recipient_id = $1 AND s.revoked_at IS NULL
-           AND (s.expires_at IS NULL OR s.expires_at > NOW())
-           AND fo.is_trashed = FALSE
-         ORDER BY fo.name ASC",
-    )
-    .bind(recipient_id)
-    .fetch_all(db)
-    .await?;
+    let folders = db
+        .fetch_all_as::<Folder>(
+            "SELECT DISTINCT fo.* FROM drive.folders fo
+             JOIN drive.shares s ON s.folder_id = fo.id
+             WHERE s.recipient_id = $1 AND s.revoked_at IS NULL
+               AND (s.expires_at IS NULL OR s.expires_at > $2)
+               AND fo.is_trashed = FALSE
+             ORDER BY fo.name ASC",
+            params![recipient_id, Utc::now()],
+        )
+        .await?;
 
     Ok((folders, files))
 }
 
 /// True when a file is internally shared with the user via an active share.
-pub async fn is_file_shared_with(db: &PgPool, user_id: Uuid, file_id: Uuid) -> Result<bool> {
-    let found: Option<Uuid> = sqlx::query_scalar(
-        "SELECT id FROM drive.shares
-         WHERE file_id = $1 AND recipient_id = $2 AND revoked_at IS NULL
-           AND (expires_at IS NULL OR expires_at > NOW())
-         LIMIT 1",
-    )
-    .bind(file_id)
-    .bind(user_id)
-    .fetch_optional(db)
-    .await?;
+pub async fn is_file_shared_with(db: &DbPool, user_id: Uuid, file_id: Uuid) -> Result<bool> {
+    let found = db
+        .fetch_optional_scalar::<Uuid>(
+            "SELECT id FROM drive.shares
+             WHERE file_id = $1 AND recipient_id = $2 AND revoked_at IS NULL
+               AND (expires_at IS NULL OR expires_at > $3)
+             LIMIT 1",
+            params![file_id, user_id, Utc::now()],
+        )
+        .await?;
     Ok(found.is_some())
 }
 
-pub async fn increment_download_count(db: &PgPool, share_id: Uuid) -> Result<()> {
-    sqlx::query(
-        "UPDATE drive.shares SET download_count = download_count + 1 WHERE id = $1"
+pub async fn increment_download_count(db: &DbPool, share_id: Uuid) -> Result<()> {
+    db.execute(
+        "UPDATE drive.shares SET download_count = download_count + 1 WHERE id = $1",
+        params![share_id],
     )
-    .bind(share_id)
-    .execute(db)
     .await?;
     Ok(())
 }
