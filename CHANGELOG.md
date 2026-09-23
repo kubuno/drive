@@ -27,6 +27,12 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 ### Security
 
+- **Security fixes from the shared database layer (kubuno-db 0.9.0).** The
+  database password can no longer appear in a log through the debug output of
+  the database settings. A search now keeps at most 16 distinct words (set for the
+  whole instance by the core's `[search] max_terms`), so a single request can
+  no longer overload the database.
+
 - **PDF and XML readers updated to patched releases.** The PDF text extractor
   could be made to overflow the stack by deeply nested objects
   (RUSTSEC-2026-0187), and the XML reader could be driven into quadratic time or
