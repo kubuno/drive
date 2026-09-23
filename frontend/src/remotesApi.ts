@@ -1,8 +1,8 @@
 /**
  * Update of a remote mount — kept here rather than in `filesApi` because the
  * published `@kubuno/drive` surface does not carry `updateRemote` yet, and the
- * module builds against the published package (dev mode = "published", see
- * CLAUDE.md). Move it to `filesApi` at the next publish of `@kubuno/drive`.
+ * module builds against the published package (dependencies on `@kubuno/*`
+ * follow the npm releases). Move it to `filesApi` at the next publish of `@kubuno/drive`.
  */
 import { api } from '@kubuno/sdk'
 

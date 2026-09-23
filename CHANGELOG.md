@@ -9,6 +9,15 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 ## [Unreleased]
 
+### Fixed
+
+- **Drive is fully translated again.** English (and other non-French) users saw a
+  French "Mon Drive" page title and a French "Deux volets" entry, because the
+  title used a translation key that existed in no language and the two-pane view
+  had no translations at all. Both are now translated in every supported
+  language.
+
+
 ### Added
 
 - **Drive now runs on PostgreSQL, MySQL/MariaDB or SQLite.** The database engine

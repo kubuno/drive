@@ -25,33 +25,40 @@ they build on.
 
 ---
 
-## ✨ Features
+## Screenshots
 
-- 📁 **Full-featured file explorer** — list and grid views, a dual-pane mode, drag & drop, and Home / Recent / Starred / Shared / Trash views. Opening Drive lands on a curated **Home** hub that blends files you recently modified, starred and were shared, rendered through the same explorer as every other view.
-- 🔎 **Search that lives in the URL** — free-text search with saved searches, each getting a real, shareable link. The advanced-search panel and the header search bar stay in sync both ways, so the fields and the query text can never disagree.
-- 🤝 **Sharing, locks & activity** — share files and folders, lock files against concurrent edits, and follow what happened through a per-item activity log plus an account-wide **activity feed** (who did what to which item, newest first).
-- 🏷️ **Cross-module labels** — a tag put on a file here is the very same label other modules attach to their items and that the platform-wide labels page filters on.
-- 🔌 **File infrastructure for other modules** — open/save dialogs, folder pickers and the file browser ship in `@kubuno/drive` for every module to reuse; Drive also contributes a "Drive" tab to the core image picker, so any module can pick images straight from the user's files.
-- 🌐 **External & module storage** — WebDAV access, remote storage browsing (with editable mounts and SMB share discovery), an admin System browser, and generic storage mounts published by other active modules rendered directly in the sidebar tree.
-- 🔤 **Self-hosted fonts** — the module ships an openly-licensed font library into `System/Fonts` and serves it through its own `css2`/font endpoints, so documents never fetch fonts from a third-party CDN.
-- 🖥️ **Desktop pop-outs** — the floating audio player and the built-in Paint editor can pop out into their own OS window in the Kubuno desktop client, via standalone `/drive/player` and `/drive/paint` routes.
-- 📱 **Mobile experience** — a dedicated bottom navigation, a mobile Home screen with *Suggestions* and *Activity* tabs, a touch-friendly navigation drawer with a storage gauge, and responsive settings pages.
-- 📊 **Storage insight** — a quota gauge in the header and a storage page whose single bar shows both how full the quota is and its per-category composition.
+![My Drive — files, folders and previews](.github/screenshots/drive-my-drive.png)
 
-## 🏗️ Architecture
+<sub>My Drive — files, folders and previews</sub>
+
+## Features
+
+- **Full-featured file explorer** — grid, details-table and list views, a dual-pane mode, drag & drop, and Home / Recent / Starred / Shared / Trash views. Opening Drive lands on a curated **Home** hub that blends files you recently modified, starred and were shared, rendered through the same explorer as every other view.
+- **Search that lives in the URL** — full-text search over file names and extracted document text, with saved searches that each get a real, shareable link. Names and contents are reduced to accent-folded word stems when a file is indexed, so a plural finds its singular and results rank the same whichever database backs the instance. The advanced-search panel and the header search bar stay in sync both ways, so the fields and the query text can never disagree.
+- **Sharing, locks & activity** — share files and folders, lock files against concurrent edits, and follow what happened through a per-item activity log plus an account-wide **activity feed** (who did what to which item, newest first).
+- **Cross-module labels** — a tag put on a file here is the very same label other modules attach to their items and that the platform-wide labels page filters on.
+- **File infrastructure for other modules** — open/save dialogs, folder pickers and the file browser ship in `@kubuno/drive` for every module to reuse; Drive also contributes a "Drive" tab to the core image picker, so any module can pick images straight from the user's files.
+- **External & module storage** — WebDAV access, remote storage browsing (with editable mounts and SMB share discovery), an admin System browser, and generic storage mounts published by other active modules rendered directly in the sidebar tree.
+- **Self-hosted fonts** — the module ships an openly-licensed font library into `System/Fonts` and serves it through its own `css2`/font endpoints, so documents never fetch fonts from a third-party CDN.
+- **Desktop pop-outs** — the floating audio player and the built-in Paint editor can pop out into their own OS window in the Kubuno desktop client, via standalone `/drive/player` and `/drive/paint` routes.
+- **Mobile experience** — a dedicated bottom navigation, a mobile Home screen with *Suggestions* and *Activity* tabs, a touch-friendly navigation drawer with a storage gauge, and responsive settings pages.
+- **Storage insight** — a quota gauge in the header and a storage page whose single bar shows both how full the quota is and its per-category composition.
+- **Your choice of database** — runs on PostgreSQL, MySQL/MariaDB or SQLite, picked by the administrator in configuration; SQLite needs no database server, which makes a single-machine or evaluation install a one-liner.
+
+## Architecture
 
 Drive is a **Kubuno module**: a standalone Rust process (port `3101`) that registers with the [core](https://github.com/kubuno/core) at startup. The core proxies its routes (`/api/v1/drive/*`) and serves its runtime-loaded frontend bundle.
 
 ```
 core (kubuno/core)  ──proxy──►  kubuno-drive (this repo, :3101)
-       │                              ├─ Rust backend (Axum + PostgreSQL, schema `drive`)
+       │                              ├─ Rust backend (Axum + SQLx; PostgreSQL, MySQL/MariaDB or SQLite)
        └─ serves /modules/drive/entry.js (React frontend, loaded at runtime)
 ```
 
-- **Backend** — `src/`: Axum + SQLx (PostgreSQL, schema `drive`); migrations in `migrations/`.
+- **Backend** — `src/`: Axum + SQLx through the shared `kubuno-db` layer — PostgreSQL (schema `drive`), MySQL/MariaDB or SQLite; migrations in `migrations/`.
 - **Frontend** — `frontend/`: a React bundle built to `entry.js`, consuming `@kubuno/sdk`, `@kubuno/ui` and `@kubuno/drive` from npm (provided by the host at runtime via the import map).
 
-## 📥 Install
+## Install
 
 Modules install as a **Kubuno package (`.kbpkg`)** — a single, self-contained archive the Kubuno server unpacks itself (in pure Rust, identically on Linux, Windows and macOS). There are no native system packages for a module; only the core ships those.
 
@@ -72,9 +79,9 @@ sudo systemctl restart kubuno        # the core loads the module on (re)start
 
 A `.kbpkg` is attached to every tagged [GitHub Release](https://github.com/kubuno/drive/releases) (Linux via `build.yml`, Windows/macOS via `dist.yml`).
 
-## 🛠️ Build & development
+## Build & development
 
-**Requirements:** Rust ≥ 1.82, Node.js ≥ 24, PostgreSQL 16.
+**Requirements:** Rust ≥ 1.82, Node.js ≥ 24, and PostgreSQL 16, MySQL/MariaDB or SQLite (no server needed).
 
 ```bash
 cargo build --release                      # → target/release/kubuno-drive
@@ -86,14 +93,18 @@ bash build_kbpkg.sh                         # → dist/drive-<version>-<os>-<arc
 > - **Rust** — shared crates via tagged git dependencies on `kubuno/core`.
 > - **Frontend** — `@kubuno/sdk`, `@kubuno/ui`, `@kubuno/drive` from the `@kubuno` npm scope. They are `external` at runtime (the host provides the singletons via its import map); the npm packages supply the build-time type surface.
 
-## 📦 Tech stack
+## Configuration
 
-Rust 2021 · Axum 0.7 · Tokio · SQLx 0.8 (PostgreSQL, schema `drive`) — React 19 · TypeScript · Vite · Tailwind CSS v4 · Zustand · React Query.
+Copy `config.toml.example` → `config.toml`, or use environment variables (`KUBUNO_CORE_URL`, `KUBUNO_INTERNAL_SECRET`, `KUBUNO_DB_*`). The database engine is the administrator's choice, set in `[database] engine` — `postgres` (default), `mysql`/`mariadb` or `sqlite` — and read at start-up: the same binary connects to whichever is named, and SQLite needs no server at all. Under the Kubuno supervisor the connection settings are injected by the core. See `module.toml` for the manifest (id, port, routes, sidebar entry, settings).
 
-## 🤝 Contributing
+## Tech stack
+
+Rust 2021 · Axum 0.7 · Tokio · SQLx 0.9 via `kubuno-db` (PostgreSQL, MySQL/MariaDB or SQLite; schema `drive`) — React 19 · TypeScript · Vite · Tailwind CSS v4 · Zustand · React Query.
+
+## Contributing
 
 Issues and pull requests are welcome. For any significant change, please open an issue first.
 
-## 📄 License
+## License
 
 [AGPL-3.0-or-later](LICENSE) © Kubuno contributors.

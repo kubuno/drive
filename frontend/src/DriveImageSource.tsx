@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { ChevronRight, Folder, Image as ImageIcon, LayoutGrid, List, Loader2 } from 'lucide-react'
 import { filesApi, type FileItem, type FilesSearchFilters } from '@kubuno/drive'
@@ -12,10 +13,10 @@ import type { ImageSourceProps } from '@kubuno/sdk'
 
 type Scope = 'mine' | 'recent' | 'starred'
 
-const SCOPES: Array<{ id: Scope; label: string }> = [
-  { id: 'mine',    label: 'Mon Drive' },
-  { id: 'recent',  label: 'Récents' },
-  { id: 'starred', label: 'Favoris' },
+const SCOPES: Array<{ id: Scope; labelKey: string; fallback: string }> = [
+  { id: 'mine',    labelKey: 'nav.my_files', fallback: 'My Drive' },
+  { id: 'recent',  labelKey: 'nav.recent',   fallback: 'Recent' },
+  { id: 'starred', labelKey: 'nav.favorites', fallback: 'Starred' },
 ]
 
 const isImage = (f: FileItem) => f.mime_type.startsWith('image/')
@@ -28,9 +29,11 @@ const SEARCH_FILTERS: FilesSearchFilters = {
 }
 
 export default function DriveImageSource({ onPick, query }: ImageSourceProps) {
+  const { t } = useTranslation()
+  const myDrive = t('nav.my_files', { defaultValue: 'My Drive' })
   const [scope,  setScope]  = useState<Scope>('mine')
   const [folder, setFolder] = useState<string | null>(null)
-  const [crumbs, setCrumbs] = useState<Array<{ id: string | null; name: string }>>([{ id: null, name: 'Mon Drive' }])
+  const [crumbs, setCrumbs] = useState<Array<{ id: string | null; name: string }>>([{ id: null, name: myDrive }])
   const [grid,   setGrid]   = useState(true)
 
   const searching = query.trim().length > 0
@@ -70,7 +73,7 @@ export default function DriveImageSource({ onPick, query }: ImageSourceProps) {
     setCrumbs(c => c.slice(0, i + 1))
   }
   const switchScope = (s: Scope) => {
-    setScope(s); setFolder(null); setCrumbs([{ id: null, name: 'Mon Drive' }])
+    setScope(s); setFolder(null); setCrumbs([{ id: null, name: myDrive }])
   }
 
   return (
@@ -87,7 +90,7 @@ export default function DriveImageSource({ onPick, query }: ImageSourceProps) {
                 fontWeight: on ? 500 : 400,
                 boxShadow: on ? 'inset 0 -2px 0 0 var(--color-primary)' : 'none',
               }}>
-              {s.label}
+              {t(s.labelKey, { defaultValue: s.fallback })}
             </button>
           )
         })}

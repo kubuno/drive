@@ -78,7 +78,8 @@
       "search_ph": "Search in files…",
       "system": "System",
       "home": "Home",
-      "shared_short": "Shared"
+      "shared_short": "Shared",
+      "my_drive": "My Drive"
     },
     "tree": {
       "collapse_drive": "Collapse My Drive",
@@ -672,6 +673,10 @@
     "details": {
       "col_created": "Creation date",
       "fit_all": "Resize all columns to fit"
+    },
+    "dual": {
+      "title": "Two panes",
+      "transferred": "\"{{name}}\" transferred"
     }
   },
   "fr": {
@@ -753,7 +758,8 @@
       "search_ph": "Rechercher dans les fichiers…",
       "system": "Système",
       "home": "Accueil",
-      "shared_short": "Partagés"
+      "shared_short": "Partagés",
+      "my_drive": "Mon Drive"
     },
     "tree": {
       "collapse_drive": "Réduire Mon Drive",
@@ -1347,6 +1353,10 @@
     "details": {
       "col_created": "Date de création",
       "fit_all": "Ajuster la taille de toutes les colonnes"
+    },
+    "dual": {
+      "title": "Deux volets",
+      "transferred": "« {{name}} » transféré"
     }
   },
   "es": {
@@ -1428,7 +1438,8 @@
       "search_ph": "Buscar en los archivos…",
       "system": "Sistema",
       "home": "Inicio",
-      "shared_short": "Compartidos"
+      "shared_short": "Compartidos",
+      "my_drive": "Mi unidad"
     },
     "tree": {
       "collapse_drive": "Contraer Mi unidad",
@@ -2022,6 +2033,10 @@
     "details": {
       "col_created": "Fecha de creación",
       "fit_all": "Ajustar el tamaño de todas las columnas"
+    },
+    "dual": {
+      "title": "Dos paneles",
+      "transferred": "«{{name}}» transferido"
     }
   },
   "pt": {
@@ -2103,7 +2118,8 @@
       "search_ph": "Pesquisar nos arquivos…",
       "system": "Sistema",
       "home": "Início",
-      "shared_short": "Partilhados"
+      "shared_short": "Partilhados",
+      "my_drive": "Meu Drive"
     },
     "tree": {
       "collapse_drive": "Recolher O meu disco",
@@ -2697,6 +2713,10 @@
     "details": {
       "col_created": "Data de criação",
       "fit_all": "Ajustar o tamanho de todas as colunas"
+    },
+    "dual": {
+      "title": "Dois painéis",
+      "transferred": "\"{{name}}\" transferido"
     }
   },
   "it": {
@@ -2778,7 +2798,8 @@
       "search_ph": "Cerca nei file…",
       "system": "Sistema",
       "home": "Home",
-      "shared_short": "Condivisi"
+      "shared_short": "Condivisi",
+      "my_drive": "Il mio Drive"
     },
     "tree": {
       "collapse_drive": "Comprimi Il mio Drive",
@@ -3372,6 +3393,10 @@
     "details": {
       "col_created": "Data di creazione",
       "fit_all": "Adatta la larghezza di tutte le colonne"
+    },
+    "dual": {
+      "title": "Due riquadri",
+      "transferred": "«{{name}}» trasferito"
     }
   },
   "de": {
@@ -3453,7 +3478,8 @@
       "search_ph": "In Dateien suchen…",
       "system": "System",
       "home": "Start",
-      "shared_short": "Geteilt"
+      "shared_short": "Geteilt",
+      "my_drive": "Meine Ablage"
     },
     "tree": {
       "collapse_drive": "Mein Drive einklappen",
@@ -4047,6 +4073,10 @@
     "details": {
       "col_created": "Erstelldatum",
       "fit_all": "Größe aller Spalten anpassen"
+    },
+    "dual": {
+      "title": "Zwei Bereiche",
+      "transferred": "„{{name}}“ übertragen"
     }
   },
   "el": {
@@ -4128,7 +4158,8 @@
       "search_ph": "Αναζήτηση στα αρχεία…",
       "system": "Σύστημα",
       "home": "Αρχική",
-      "shared_short": "Κοινόχρηστα"
+      "shared_short": "Κοινόχρηστα",
+      "my_drive": "Ο δίσκος μου"
     },
     "tree": {
       "collapse_drive": "Σύμπτυξη του Drive μου",
@@ -4722,6 +4753,10 @@
     "details": {
       "col_created": "Ημερομηνία δημιουργίας",
       "fit_all": "Προσαρμογή μεγέθους όλων των στηλών"
+    },
+    "dual": {
+      "title": "Δύο τμήματα",
+      "transferred": "«{{name}}» μεταφέρθηκε"
     }
   },
   "ru": {
@@ -4803,7 +4838,8 @@
       "search_ph": "Поиск в файлах…",
       "system": "Система",
       "home": "Главная",
-      "shared_short": "Общие"
+      "shared_short": "Общие",
+      "my_drive": "Мой диск"
     },
     "tree": {
       "collapse_drive": "Свернуть «Мой диск»",
@@ -5397,6 +5433,10 @@
     "details": {
       "col_created": "Дата создания",
       "fit_all": "Подогнать размер всех столбцов"
+    },
+    "dual": {
+      "title": "Две панели",
+      "transferred": "«{{name}}» перенесён"
     }
   },
   "ar": {
@@ -5478,7 +5518,8 @@
       "search_ph": "البحث في الملفات…",
       "system": "النظام",
       "home": "الرئيسية",
-      "shared_short": "المشتركة"
+      "shared_short": "المشتركة",
+      "my_drive": "قرصي"
     },
     "tree": {
       "collapse_drive": "طي قرصي",
@@ -6072,6 +6113,10 @@
     "details": {
       "col_created": "تاريخ الإنشاء",
       "fit_all": "ضبط حجم كل الأعمدة"
+    },
+    "dual": {
+      "title": "لوحتان",
+      "transferred": "تم نقل «{{name}}»"
     }
   },
   "he": {
@@ -6153,7 +6198,8 @@
       "search_ph": "חיפוש בקבצים…",
       "system": "מערכת",
       "home": "בית",
-      "shared_short": "משותפים"
+      "shared_short": "משותפים",
+      "my_drive": "הכונן שלי"
     },
     "tree": {
       "collapse_drive": "כווץ את הכונן שלי",
@@ -6747,6 +6793,10 @@
     "details": {
       "col_created": "תאריך יצירה",
       "fit_all": "התאם את רוחב כל העמודות"
+    },
+    "dual": {
+      "title": "שתי חלוניות",
+      "transferred": "«{{name}}» הועבר"
     }
   },
   "hi": {
@@ -6828,7 +6878,8 @@
       "search_ph": "फ़ाइलों में खोजें…",
       "system": "सिस्टम",
       "home": "होम",
-      "shared_short": "साझा"
+      "shared_short": "साझा",
+      "my_drive": "मेरी ड्राइव"
     },
     "tree": {
       "collapse_drive": "मेरा ड्राइव संकुचित करें",
@@ -7503,7 +7554,8 @@
       "search_ph": "在文件中搜索…",
       "system": "系统",
       "home": "主页",
-      "shared_short": "共享"
+      "shared_short": "共享",
+      "my_drive": "我的云端硬盘"
     },
     "tree": {
       "collapse_drive": "收起“我的云端硬盘”",
@@ -8178,7 +8230,8 @@
       "search_ph": "ファイル内を検索…",
       "system": "システム",
       "home": "ホーム",
-      "shared_short": "共有"
+      "shared_short": "共有",
+      "my_drive": "マイドライブ"
     },
     "tree": {
       "collapse_drive": "マイドライブを折りたたむ",
