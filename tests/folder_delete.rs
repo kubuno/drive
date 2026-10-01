@@ -2,138 +2,16 @@
 //! never a live `drive.files` / `drive.file_versions` row whose bytes were
 //! removed, and never the bytes of an item outside the deleted subtree.
 //!
-//! Runs the real services against a throwaway SQLite database (a temp file, the
-//! same harness as `db_portability`) and a `LocalStorage` rooted in a temp
-//! directory. Nothing touches a shared or development database.
+//! Harness: `tests/common` (temp SQLite + temp `LocalStorage`).
 
-use std::sync::Arc;
+mod common;
 
 use bytes::Bytes;
-use kubuno_db::{new_id, params, DbPool};
-use kubuno_drive::models::{CreateFolderDto, MoveFolderDto};
+use common::env;
+use kubuno_db::params;
+use kubuno_drive::models::MoveFolderDto;
 use kubuno_drive::services::{files, folders};
-use kubuno_drive::{sync, SCHEMA};
-use kubuno_storage::{path as storage_path, LocalStorage, StorageBackend};
-use uuid::Uuid;
-
-const MAX: u64 = 1 << 20;
-
-struct Env {
-    db: DbPool,
-    storage: Arc<dyn StorageBackend>,
-    owner: Uuid,
-    _dirs: (tempfile::TempDir, tempfile::TempDir),
-}
-
-async fn env() -> Env {
-    let db_dir = tempfile::tempdir().expect("db tempdir");
-    let store_dir = tempfile::tempdir().expect("storage tempdir");
-    let settings = kubuno_db::DbSettings {
-        engine: "sqlite".into(),
-        url: None,
-        host: None,
-        port: None,
-        user: None,
-        password: None,
-        database: None,
-        path: Some(db_dir.path().to_string_lossy().into_owned()),
-        max_connections: 4,
-        min_connections: 0,
-        connect_timeout: std::time::Duration::from_secs(10),
-        run_migrations: true,
-        schema_prefix: None,
-    };
-    let db = kubuno_db::connect(&settings, SCHEMA).await.expect("connect");
-    kubuno_db::migrations!("./migrations/postgres", "./migrations/mysql", "./migrations/sqlite",)
-        .run(&db, SCHEMA)
-        .await
-        .expect("migrations");
-    // Hand LocalStorage the canonical spelling of its root: kubuno-storage 0.1.1
-    // compares every candidate with the canonicalized base (verbatim `\\?\` on
-    // Windows), so a raw temp path would reject every operation there.
-    let root = store_dir.path().canonicalize().expect("canonical storage root");
-    let storage: Arc<dyn StorageBackend> =
-        Arc::new(LocalStorage::new(&root.to_string_lossy()).await.expect("local storage"));
-    Env { db, storage, owner: Uuid::new_v4(), _dirs: (db_dir, store_dir) }
-}
-
-impl Env {
-    async fn folder(&self, name: &str, parent: Option<Uuid>) -> Uuid {
-        folders::create_folder(
-            &self.db,
-            &self.storage,
-            self.owner,
-            CreateFolderDto { name: name.into(), parent_id: parent, id: None },
-        )
-        .await
-        .expect("create folder")
-        .id
-    }
-
-    async fn upload(&self, folder: Option<Uuid>, name: &str, body: &'static str) -> kubuno_drive::models::File {
-        files::upload_simple(&self.db, &self.storage, self.owner, folder, name, Bytes::from(body), MAX, false)
-            .await
-            .expect("upload")
-    }
-
-    async fn exists(&self, path: &str) -> bool {
-        self.storage.exists(path).await.expect("exists")
-    }
-
-    async fn row(&self, id: Uuid) -> Option<kubuno_drive::models::File> {
-        self.db
-            .fetch_optional_as::<kubuno_drive::models::File>(
-                "SELECT * FROM drive.files WHERE id = $1",
-                params![id],
-            )
-            .await
-            .expect("select file")
-    }
-
-    /// Every live file / version row of the owner must still have its bytes.
-    async fn assert_no_dangling_rows(&self) {
-        #[derive(sqlx::FromRow)]
-        struct Sp {
-            storage_path: String,
-        }
-        let rows = self
-            .db
-            .fetch_all_as::<Sp>(
-                "SELECT storage_path FROM drive.files WHERE owner_id = $1
-                 UNION ALL
-                 SELECT storage_path FROM drive.file_versions WHERE owner_id = $2",
-                params![self.owner, self.owner],
-            )
-            .await
-            .expect("select paths");
-        for r in rows {
-            assert!(self.exists(&r.storage_path).await, "live row points at missing bytes: {}", r.storage_path);
-        }
-    }
-
-    async fn insert_version(&self, file_id: Uuid, name: &str, body: &'static str) -> String {
-        let sp = storage_path::user_version_path(self.owner, file_id, 1, name).to_string_lossy().into_owned();
-        self.storage.put(&sp, Bytes::from(body)).await.expect("put version");
-        self.db
-            .execute(
-                "INSERT INTO drive.file_versions (id, file_id, owner_id, version_number, storage_path, size_bytes)
-                 VALUES ($1, $2, $3, $4, $5, $6)",
-                params![new_id(), file_id, self.owner, 1i32, &sp, body.len() as i64],
-            )
-            .await
-            .expect("insert version");
-        sp
-    }
-
-    async fn is_tombstoned(&self, id: Uuid) -> bool {
-        let feed = kubuno_db::journal::changes_since(
-            &self.db, "drive.files", sync::TOMBSTONES_TABLE, self.owner, 0, 10_000,
-        )
-        .await
-        .expect("feed");
-        feed.iter().any(|c| c.id == id && c.deleted)
-    }
-}
+use kubuno_storage::path as storage_path;
 
 /// The reported bug: the files of a deleted folder were re-parented to the root
 /// in the database while the folder's directory — their bytes — was removed.
@@ -248,16 +126,17 @@ async fn merging_folders_keeps_trashed_files_restorable() {
     assert!(e.row(live.id).await.is_some());
 }
 
-/// A live file re-using the name of a trashed one in the same folder ends up on
-/// the same storage path. Emptying the trash, or deleting the trashed twin for
-/// good, must not take the live file's bytes.
+/// Rows written before storage locations were allocated can share one blob (a
+/// live file re-using the name of a trashed one in the same folder). Emptying
+/// the trash, or deleting the trashed twin for good, must not take the live
+/// file's bytes.
 #[tokio::test]
 async fn purging_a_trashed_twin_keeps_the_live_files_bytes() {
     let e = env().await;
     let old = e.upload(None, "a.txt", "old").await;
     files::trash_file(&e.db, e.owner, old.id).await.expect("trash");
     let live = e.upload(None, "a.txt", "new").await;
-    assert_eq!(old.storage_path, live.storage_path, "precondition: both rows share one blob");
+    e.make_legacy_twin(old.id, &live.storage_path).await;
 
     files::delete_file_permanently(&e.db, &e.storage, e.owner, old.id).await.expect("delete twin");
     assert!(e.exists(&live.storage_path).await, "delete_file_permanently kept the live bytes");
@@ -265,6 +144,7 @@ async fn purging_a_trashed_twin_keeps_the_live_files_bytes() {
     let old2 = e.upload(None, "b.txt", "old").await;
     files::trash_file(&e.db, e.owner, old2.id).await.expect("trash");
     let live2 = e.upload(None, "b.txt", "new").await;
+    e.make_legacy_twin(old2.id, &live2.storage_path).await;
     folders::purge_trash(&e.db, &e.storage, e.owner).await.expect("purge");
     assert!(e.exists(&live2.storage_path).await, "purge_trash kept the live bytes");
     e.assert_no_dangling_rows().await;

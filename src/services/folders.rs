@@ -24,12 +24,6 @@ struct IdPath {
     path: String,
 }
 #[derive(sqlx::FromRow)]
-struct FileFolder {
-    file_id: Uuid,
-    file_name: String,
-    folder_path: String,
-}
-#[derive(sqlx::FromRow)]
 struct DoomedFile {
     id: Uuid,
     name: String,
@@ -328,66 +322,132 @@ pub async fn get_folder_ancestors(db: &DbPool, owner_id: Uuid, folder_id: Uuid) 
     Ok(rows)
 }
 
-/// Rewrites the paths of every descendant folder of a moved/renamed folder, each
-/// stamped with a fresh `change_seq`. `old_path`/`new_path` are the moved
-/// folder's own paths; descendants share the `old_path/` prefix.
-async fn rewrite_descendant_paths(db: &DbPool, owner_id: Uuid, old_path: &str, new_path: &str) -> Result<()> {
-    let like = format!("{old_path}/%");
+/// Records a folder repath (rename or move) once its directory has been moved
+/// on disk, in ONE transaction: the folder's own row (`set_sql`, `ps`), the
+/// paths of its descendants, and the `storage_path` of every file whose bytes
+/// the directory move carried. Those files are chosen by WHERE THEIR BYTES ARE,
+/// not by folder membership: the on-disk name of a file can differ from its
+/// display name (see `files::allocate_storage_path`), a file of the subtree can
+/// have its bytes elsewhere (left untouched by the move), and a file outside it
+/// can have them under the moved directory (carried along).
+#[allow(clippy::too_many_arguments)]
+async fn commit_folder_repath(
+    db: &DbPool,
+    owner_id: Uuid,
+    folder_id: Uuid,
+    set_sql: &str,
+    mut ps: Vec<DbValue>,
+    old_path: &str,
+    new_path: &str,
+    old_dir: &str,
+    new_dir: &str,
+) -> Result<Folder> {
+    // Descendants: LIKE pre-filters, the exact prefix test decides (`_` and `%`
+    // in a folder name are LIKE wildcards).
+    let prefix = format!("{old_path}/");
     let descendants: Vec<IdPath> = db
         .fetch_all_as::<IdPath>(
             "SELECT id, path FROM drive.folders WHERE owner_id = $1 AND path LIKE $2",
-            params![owner_id, like],
+            params![owner_id, format!("{old_path}/%")],
         )
-        .await?;
-    if descendants.is_empty() {
-        return Ok(());
+        .await
+        .inspect_err(|e| tracing::error!(folder_id = %folder_id, error = %e, "Failed to list the descendant folders"))?
+        .into_iter()
+        .filter(|d| d.path.starts_with(&prefix))
+        .collect();
+
+    #[derive(sqlx::FromRow)]
+    struct IdStorage {
+        id: Uuid,
+        storage_path: String,
     }
+    let moved: Vec<(Uuid, String)> = db
+        .fetch_all_as::<IdStorage>(
+            "SELECT id, storage_path FROM drive.files WHERE owner_id = $1",
+            params![owner_id],
+        )
+        .await
+        .inspect_err(|e| tracing::error!(folder_id = %folder_id, error = %e, "Failed to list the file locations"))?
+        .into_iter()
+        .filter_map(|r| blob_gc::rebase(&r.storage_path, old_dir, new_dir).map(|p| (r.id, p)))
+        .collect();
+
     let mut tx = db.begin().await?;
+    // The folder first, so it carries a lower change_seq than its content: a
+    // sync client resolving a file through its folder learns the folder's new
+    // path no later than the file's.
+    let seq = sync::next_seq(&mut tx).await?;
+    let n = ps.len();
+    let sql = format!(
+        "UPDATE drive.folders SET {set_sql}, change_seq = ${} WHERE id = ${} AND owner_id = ${}",
+        n + 1,
+        n + 2,
+        n + 3
+    );
+    ps.push(DbValue::from(seq));
+    ps.push(DbValue::from(folder_id));
+    ps.push(DbValue::from(owner_id));
+    let affected = tx
+        .execute(&sql, ps)
+        .await
+        .inspect_err(|e| tracing::error!(folder_id = %folder_id, error = %e, "Failed to update the folder"))?;
+    if affected == 0 {
+        tx.rollback().await?;
+        return Err(FilesError::NotFound(format!("Dossier {folder_id} introuvable")));
+    }
     for d in &descendants {
-        let suffix = &d.path[old_path.len()..]; // keeps the leading '/'
-        let np = format!("{new_path}{suffix}");
+        let np = format!("{new_path}{}", &d.path[old_path.len()..]);
         let seq = sync::next_seq(&mut tx).await?;
         tx.execute(
             "UPDATE drive.folders SET path = $1, change_seq = $2 WHERE id = $3",
             params![np, seq, d.id],
         )
-        .await?;
+        .await
+        .inspect_err(|e| tracing::error!(folder_id = %d.id, error = %e, "Failed to repath a descendant folder"))?;
     }
-    tx.commit().await?;
-    Ok(())
-}
-
-/// Recomputes `storage_path` for every file under a folder that just moved (the
-/// folder itself and all its descendants, whose paths are already final),
-/// stamping each with a fresh `change_seq`. Portable replacement for the old
-/// `UPDATE ... FROM` with `owner_id::text || ...` (no cross-engine UUID→text).
-async fn rewrite_files_storage(db: &DbPool, owner_id: Uuid, folder_id: Uuid, new_path: &str) -> Result<()> {
-    let like = format!("{new_path}/%");
-    let rows: Vec<FileFolder> = db
-        .fetch_all_as::<FileFolder>(
-            "SELECT fi.id AS file_id, fi.name AS file_name, f.path AS folder_path
-             FROM drive.files fi JOIN drive.folders f ON fi.folder_id = f.id
-             WHERE fi.owner_id = $1 AND f.owner_id = $2 AND (f.id = $3 OR f.path LIKE $4)",
-            params![owner_id, owner_id, folder_id, like],
-        )
-        .await?;
-    if rows.is_empty() {
-        return Ok(());
-    }
-    let mut tx = db.begin().await?;
-    for r in &rows {
-        let sp = storage_path::user_file_path(owner_id, &r.folder_path, &r.file_name)
-            .to_string_lossy()
-            .to_string();
+    for (id, sp) in &moved {
         let seq = sync::next_seq(&mut tx).await?;
         tx.execute(
             "UPDATE drive.files SET storage_path = $1, change_seq = $2 WHERE id = $3",
-            params![sp, seq, r.file_id],
+            params![sp, seq, id],
         )
-        .await?;
+        .await
+        .inspect_err(|e| tracing::error!(file_id = %id, error = %e, "Failed to repoint a moved file"))?;
     }
-    tx.commit().await?;
-    Ok(())
+    tx.commit()
+        .await
+        .inspect_err(|e| tracing::error!(folder_id = %folder_id, error = %e, "Failed to commit the folder repath"))?;
+    get_folder(db, owner_id, folder_id).await
+}
+
+/// Moves a folder's directory, then records the repath; when the database step
+/// fails the directory is moved back, so rows and bytes stay in agreement.
+#[allow(clippy::too_many_arguments)]
+async fn repath_folder(
+    db: &DbPool,
+    storage: &Arc<dyn StorageBackend>,
+    owner_id: Uuid,
+    folder_id: Uuid,
+    set_sql: &str,
+    ps: Vec<DbValue>,
+    old_path: &str,
+    new_path: &str,
+) -> Result<Folder> {
+    let old_dir = storage_path::user_folder_dir(owner_id, old_path).to_string_lossy().into_owned();
+    let new_dir = storage_path::user_folder_dir(owner_id, new_path).to_string_lossy().into_owned();
+    storage.mv_dir(&old_dir, &new_dir).await?;
+    match commit_folder_repath(db, owner_id, folder_id, set_sql, ps, old_path, new_path, &old_dir, &new_dir).await {
+        Ok(folder) => Ok(folder),
+        Err(e) => {
+            if let Err(back) = storage.mv_dir(&new_dir, &old_dir).await {
+                tracing::error!(
+                    folder_id = %folder_id, from = %new_dir, to = %old_dir, error = %back,
+                    "Could not move the folder directory back after a failed repath"
+                );
+            }
+            Err(e)
+        }
+    }
 }
 
 pub async fn rename_folder(
@@ -454,23 +514,17 @@ pub async fn rename_folder(
         None => format!("/{unique_name}"),
     };
 
-    let old_dir = storage_path::user_folder_dir(owner_id, &old.path);
-    let new_dir = storage_path::user_folder_dir(owner_id, &new_path);
-    storage.mv_dir(&old_dir.to_string_lossy(), &new_dir.to_string_lossy()).await?;
-
-    // 1. Descendant folder paths, 2. this folder, 3. every file's storage_path.
-    rewrite_descendant_paths(db, owner_id, &old.path, &new_path).await?;
-    let updated = update_folder_returning(
+    repath_folder(
         db,
+        storage,
         owner_id,
         folder_id,
         "name = $1, path = $2",
         params![&unique_name, &new_path],
+        &old.path,
+        &new_path,
     )
-    .await?;
-    rewrite_files_storage(db, owner_id, folder_id, &new_path).await?;
-
-    Ok(updated)
+    .await
 }
 
 pub async fn move_folder(
@@ -548,22 +602,17 @@ pub async fn move_folder(
         format!("{new_parent_path}/{unique_name}")
     };
 
-    let old_dir = storage_path::user_folder_dir(owner_id, &old.path);
-    let new_dir = storage_path::user_folder_dir(owner_id, &new_path);
-    storage.mv_dir(&old_dir.to_string_lossy(), &new_dir.to_string_lossy()).await?;
-
-    rewrite_descendant_paths(db, owner_id, &old.path, &new_path).await?;
-    let updated = update_folder_returning(
+    repath_folder(
         db,
+        storage,
         owner_id,
         folder_id,
         "parent_id = $1, name = $2, path = $3",
         params![dto.parent_id, &unique_name, &new_path],
+        &old.path,
+        &new_path,
     )
-    .await?;
-    rewrite_files_storage(db, owner_id, folder_id, &new_path).await?;
-
-    Ok(updated)
+    .await
 }
 
 pub async fn delete_folder(
@@ -859,9 +908,11 @@ fn validate_folder_name(name: &str) -> Result<()> {
     if name.is_empty() || name.len() > 255 {
         return Err(FilesError::Validation("Nom de dossier invalide".into()));
     }
-    if name.contains('/') || name == ".." || name == "." {
+    // A backslash is a path separator on Windows: it would split the name into
+    // several directories (and `..\..` would climb out of the owner's tree).
+    if name.contains(['/', '\\', '\0']) || name == ".." || name == "." {
         return Err(FilesError::Validation(
-            "Le nom de dossier ne peut pas contenir '/', '..' ou '.'".into(),
+            "Le nom de dossier ne peut pas contenir '/', '\\', '..' ou '.'".into(),
         ));
     }
     Ok(())
@@ -908,12 +959,13 @@ pub async fn purge_trash(
         id: Uuid,
         name: String,
         storage_path: String,
+        size_bytes: i64,
     }
     let mut by_id: std::collections::HashMap<Uuid, FileDel> = std::collections::HashMap::new();
 
     let mut qb = DbQueryBuilder::new(
         db.backend(),
-        "SELECT id, name, storage_path FROM drive.files WHERE owner_id = ",
+        "SELECT id, name, storage_path, size_bytes FROM drive.files WHERE owner_id = ",
     );
     qb.push_bind(owner_id).push(" AND folder_id").push_in(folder_ids.iter().copied());
     for f in qb.fetch_all_as::<FileDel>(db).await? {
@@ -921,7 +973,7 @@ pub async fn purge_trash(
     }
     let individual = db
         .fetch_all_as::<FileDel>(
-            "SELECT id, name, storage_path FROM drive.files WHERE owner_id = $1 AND is_trashed = TRUE",
+            "SELECT id, name, storage_path, size_bytes FROM drive.files WHERE owner_id = $1 AND is_trashed = TRUE",
             params![owner_id],
         )
         .await?;
@@ -929,22 +981,44 @@ pub async fn purge_trash(
         by_id.insert(f.id, f);
     }
     let files: Vec<FileDel> = by_id.into_values().collect();
+    let file_ids: Vec<Uuid> = files.iter().map(|f| f.id).collect();
+
+    // Their revisions go with them: blobs, rows and charge (the FK cascade alone
+    // would drop the rows and leak the other two).
+    let mut versions: Vec<VersionBlob> = Vec::new();
+    for chunk in file_ids.chunks(DELETE_CHUNK) {
+        let mut qb = DbQueryBuilder::new(
+            db.backend(),
+            "SELECT storage_path, size_bytes FROM drive.file_versions WHERE owner_id = ",
+        );
+        qb.push_bind(owner_id).push(" AND file_id").push_in(chunk.iter().copied());
+        versions.extend(
+            qb.fetch_all_as::<VersionBlob>(db)
+                .await
+                .inspect_err(|e| tracing::error!(owner_id = %owner_id, error = %e, "Failed to list the trashed files' versions"))?,
+        );
+    }
 
     // Hard delete + tombstones, all in one transaction. The bytes go only after
     // the commit (see below): a crash in between leaves an orphan blob, never a
     // live row without its bytes.
     let mut tx = db.begin().await?;
-    let files_deleted = if files.is_empty() {
-        0
-    } else {
-        // DELETE FROM drive.files WHERE owner_id = $1 AND id IN (...)
-        let ids: Vec<Uuid> = files.iter().map(|f| f.id).collect();
-        let in_list = tx.backend().in_list(2, ids.len());
-        let sql = format!("DELETE FROM drive.files WHERE owner_id = $1 AND id IN ({in_list})");
+    let mut files_deleted = 0u64;
+    for chunk in file_ids.chunks(DELETE_CHUNK) {
+        let in_list = tx.backend().in_list(2, chunk.len());
         let mut ps: Vec<DbValue> = vec![DbValue::from(owner_id)];
-        ps.extend(ids.into_iter().map(DbValue::from));
-        tx.execute(&sql, ps).await?
-    };
+        ps.extend(chunk.iter().copied().map(DbValue::from));
+        tx.execute(
+            &format!("DELETE FROM drive.file_versions WHERE owner_id = $1 AND file_id IN ({in_list})"),
+            ps.clone(),
+        )
+        .await
+        .inspect_err(|e| tracing::error!(owner_id = %owner_id, error = %e, "Failed to delete the trashed files' versions"))?;
+        files_deleted += tx
+            .execute(&format!("DELETE FROM drive.files WHERE owner_id = $1 AND id IN ({in_list})"), ps)
+            .await
+            .inspect_err(|e| tracing::error!(owner_id = %owner_id, error = %e, "Failed to delete the trashed files"))?;
+    }
     // Delete the trashed root folders; the cascade removes descendant folders.
     let folders_deleted = tx
         .execute(
@@ -965,14 +1039,22 @@ pub async fn purge_trash(
         .await
         .inspect_err(|e| tracing::error!(owner_id = %owner_id, error = %e, "Failed to commit the trash purge"))?;
 
-    // Delete the physical blobs no live row references any more: a live file
-    // re-using a trashed one's name in the same folder shares its storage path.
+    // Charged back once: every purged file and every revision it had.
+    let freed: i64 = files.iter().map(|f| f.size_bytes).sum::<i64>()
+        + versions.iter().map(|v| v.size_bytes).sum::<i64>();
+    if freed != 0 {
+        crate::services::files::update_used_bytes(db, owner_id, -freed).await;
+    }
+
+    // Delete the physical blobs no live row references any more (rows written
+    // before locations were allocated can share one).
     let live = blob_gc::LiveRefs::load(db, owner_id).await?;
-    let mut blobs: Vec<String> = Vec::with_capacity(files.len() * 2);
+    let mut blobs: Vec<String> = Vec::with_capacity(files.len() * 2 + versions.len());
     for f in &files {
         blobs.push(f.storage_path.clone());
         blobs.push(storage_path::user_thumbnail_path(owner_id, f.id).to_string_lossy().into_owned());
     }
+    blobs.extend(versions.iter().map(|v| v.storage_path.clone()));
     blob_gc::delete_unreferenced(storage, &live, &blobs).await;
 
     // Remove the physical directories of the trashed folders, keeping any that

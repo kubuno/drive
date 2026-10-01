@@ -20,6 +20,12 @@ use crate::{
 struct NameOnly {
     name: String,
 }
+/// A blob some row pays for (a version's, typically).
+#[derive(sqlx::FromRow)]
+struct StoredBlob {
+    storage_path: String,
+    size_bytes: i64,
+}
 #[derive(sqlx::FromRow)]
 struct IdName {
     id: Uuid,
@@ -161,11 +167,15 @@ pub async fn resolve_name(
 /// * `core.users.used_bytes` is adjusted by the delta (the authoritative figure).
 /// * The owner is marked for the usage reporter (non-blocking; cannot fail the caller).
 pub async fn update_used_bytes(db: &DbPool, owner_id: Uuid, delta: i64) {
+    // SQLite has no GREATEST; its two-argument MAX is the same scalar function.
+    let sql = match db.backend() {
+        Backend::Sqlite => "UPDATE core.users SET used_bytes = MAX(0, used_bytes + $1) WHERE id = $2",
+        Backend::Postgres | Backend::MySql => {
+            "UPDATE core.users SET used_bytes = GREATEST(0, used_bytes + $1) WHERE id = $2"
+        }
+    };
     if let Err(e) = db
-        .execute(
-            "UPDATE core.users SET used_bytes = GREATEST(0, used_bytes + $1) WHERE id = $2",
-            params![delta, owner_id],
-        )
+        .execute(sql, params![delta, owner_id])
         .await
     {
         tracing::error!(owner_id = %owner_id, delta, error = %e, "Échec mise à jour used_bytes");
@@ -269,6 +279,110 @@ pub async fn resolve_for_write(
     Ok((unique_file_name(name, &existing_names), None))
 }
 
+// ── Storage locations ─────────────────────────────────────────────────────────
+//
+// A file's bytes live at its row's `storage_path`, which mirrors the virtual
+// tree. The display name is unique only among the folder's NON-trashed files (a
+// trashed `a.txt` does not stop a new `a.txt`), so the physical location cannot
+// simply be derived from the name: two rows would share one blob, and writing,
+// moving or deleting one would silently destroy the other. Every new location is
+// therefore allocated here, against every row that still references bytes.
+
+/// Upper bound on the numbered candidates tried for one location.
+const MAX_LOCATION_CANDIDATES: usize = 1000;
+
+/// Rejects a name that is not one plain path segment: the name becomes a segment
+/// of the on-disk path, and a separator or a `..` would let it escape its folder
+/// — or the owner's tree.
+pub fn ensure_plain_name(name: &str) -> Result<()> {
+    if name.is_empty() || name == "." || name == ".." || name.contains(['/', '\\', '\0']) {
+        return Err(FilesError::Validation("Nom de fichier invalide".into()));
+    }
+    Ok(())
+}
+
+/// Picks the storage path for bytes named `name` in the folder at `virt_path`:
+/// `{owner}/files{virt_path}/{name}` when it is free, else the same name numbered
+/// (`a (2).txt`, `a (3).txt`…). Free means referenced by no row — files, trashed
+/// ones included, and versions — and absent from the storage (an unknown blob is
+/// never overwritten; on a case-insensitive file system this also catches a
+/// sibling differing only by case). Only the physical location is numbered: the
+/// display name stays the caller's.
+///
+/// `own` is the row the bytes belong to (rename, move): its current location
+/// counts as free when no OTHER row references it.
+pub async fn allocate_storage_path(
+    db: &DbPool,
+    storage: &Arc<dyn StorageBackend>,
+    owner_id: Uuid,
+    virt_path: &str,
+    name: &str,
+    own: Option<&File>,
+) -> Result<String> {
+    ensure_plain_name(name)?;
+    let mut tried: Vec<String> = Vec::new();
+    for _ in 0..MAX_LOCATION_CANDIDATES {
+        let candidate_name = unique_file_name(name, &tried);
+        let candidate = storage_path::user_file_path(owner_id, virt_path, &candidate_name)
+            .to_string_lossy()
+            .into_owned();
+        let free = match own {
+            Some(f) if f.storage_path == candidate => {
+                !crate::services::blob_gc::is_referenced(db, owner_id, &candidate, Some(f.id)).await?
+            }
+            _ => {
+                !crate::services::blob_gc::is_referenced(db, owner_id, &candidate, None).await?
+                    && !storage.exists(&candidate).await?
+            }
+        };
+        if free {
+            return Ok(candidate);
+        }
+        tried.push(candidate_name);
+    }
+    tracing::error!(owner_id = %owner_id, name, "No free storage location for the file");
+    Err(FilesError::Conflict(name.to_string()))
+}
+
+/// Where to write new content for `name`: in place over `existing` (overwrite)
+/// when no other row shares its blob, otherwise a freshly allocated location.
+pub async fn write_location(
+    db: &DbPool,
+    storage: &Arc<dyn StorageBackend>,
+    owner_id: Uuid,
+    virt_path: &str,
+    name: &str,
+    existing: Option<&File>,
+) -> Result<String> {
+    if let Some(ex) = existing {
+        if !crate::services::blob_gc::is_referenced(db, owner_id, &ex.storage_path, Some(ex.id)).await? {
+            return Ok(ex.storage_path.clone());
+        }
+    }
+    allocate_storage_path(db, storage, owner_id, virt_path, name, None).await
+}
+
+/// Moves a row's bytes to `to`. When another row shares them (data written
+/// before locations were allocated) they are COPIED instead, so that row keeps
+/// its bytes.
+async fn relocate_blob(
+    db: &DbPool,
+    storage: &Arc<dyn StorageBackend>,
+    owner_id: Uuid,
+    file: &File,
+    to: &str,
+) -> Result<()> {
+    if file.storage_path == to {
+        return Ok(());
+    }
+    if crate::services::blob_gc::is_referenced(db, owner_id, &file.storage_path, Some(file.id)).await? {
+        storage.copy(&file.storage_path, to).await?;
+    } else {
+        storage.mv(&file.storage_path, to).await?;
+    }
+    Ok(())
+}
+
 /// Enregistre la ligne fichier après écriture du blob : INSERT, ou MISE À JOUR
 /// EN PLACE (id préservé) quand `existing` est fourni (cas overwrite).
 #[allow(clippy::too_many_arguments)]
@@ -291,9 +405,6 @@ pub async fn insert_or_update_record(
         .map(|e| e.to_lowercase());
 
     if let Some(ex) = existing {
-        if ex.storage_path != storage_path_str {
-            let _ = storage.delete(&ex.storage_path).await;
-        }
         let delta = size - ex.size_bytes;
         let updated = update_file_returning(
             db,
@@ -306,6 +417,11 @@ pub async fn insert_or_update_record(
         .await?;
         if delta != 0 {
             update_used_bytes(db, owner_id, delta).await;
+        }
+        // The previous blob goes once the row points elsewhere, and only if no
+        // other row still uses it.
+        if ex.storage_path != storage_path_str {
+            crate::services::blob_gc::delete_blob_if_unreferenced(db, storage, owner_id, &ex.storage_path).await?;
         }
         return Ok(updated);
     }
@@ -449,6 +565,8 @@ pub async fn rename_file(
     if name.is_empty() || name.len() > 1000 {
         return Err(FilesError::Validation("Nom invalide".into()));
     }
+    // Validated before anything is touched (the overwrite branch deletes).
+    ensure_plain_name(&name)?;
 
     let file = get_file(db, owner_id, file_id).await?;
     let b = db.backend();
@@ -485,10 +603,8 @@ pub async fn rename_file(
     };
 
     let virt_path = folder_virt_path(db, file.folder_id, owner_id).await?;
-    let new_storage = storage_path::user_file_path(owner_id, &virt_path, &name);
-    let new_storage_str = new_storage.to_string_lossy().to_string();
-
-    storage.mv(&file.storage_path, &new_storage_str).await?;
+    let new_storage_str = allocate_storage_path(db, storage, owner_id, &virt_path, &name, Some(&file)).await?;
+    relocate_blob(db, storage, owner_id, &file, &new_storage_str).await?;
 
     let extension = std::path::Path::new(&name)
         .extension()
@@ -519,10 +635,9 @@ pub async fn move_file(
         resolve_name(db, storage, owner_id, dto.folder_id, &file.name, dto.overwrite, dto.strict).await?;
 
     let new_virt_path = folder_virt_path(db, dto.folder_id, owner_id).await?;
-    let new_storage = storage_path::user_file_path(owner_id, &new_virt_path, &safe_name);
-    let new_storage_str = new_storage.to_string_lossy().to_string();
-
-    storage.mv(&file.storage_path, &new_storage_str).await?;
+    let new_storage_str =
+        allocate_storage_path(db, storage, owner_id, &new_virt_path, &safe_name, Some(&file)).await?;
+    relocate_blob(db, storage, owner_id, &file, &new_storage_str).await?;
 
     update_file_returning(
         db,
@@ -560,10 +675,8 @@ pub async fn move_trashed_file(
     let name = unique_file_name(&file.name, &taken);
 
     let virt_path = folder_virt_path(db, folder_id, owner_id).await?;
-    let new_storage = storage_path::user_file_path(owner_id, &virt_path, &name)
-        .to_string_lossy()
-        .into_owned();
-    storage.mv(&file.storage_path, &new_storage).await?;
+    let new_storage = allocate_storage_path(db, storage, owner_id, &virt_path, &name, Some(file)).await?;
+    relocate_blob(db, storage, owner_id, file, &new_storage).await?;
 
     update_file_returning(
         db,
@@ -599,7 +712,47 @@ pub async fn set_protected(db: &DbPool, owner_id: Uuid, file_id: Uuid, protected
     update_file_returning(db, owner_id, file_id, "is_protected = $1", params![protected]).await
 }
 
-pub async fn restore_file(db: &DbPool, owner_id: Uuid, file_id: Uuid) -> Result<File> {
+/// Takes a file out of the trash. When a live file of its folder now carries the
+/// same name, the restored one gets a unique name (`a (2).txt`) — and a location
+/// of its own — rather than two visible files sharing one name.
+pub async fn restore_file(
+    db: &DbPool,
+    storage: &Arc<dyn StorageBackend>,
+    owner_id: Uuid,
+    file_id: Uuid,
+) -> Result<File> {
+    let file = get_file(db, owner_id, file_id).await?;
+    if file.is_trashed {
+        let sql = format!(
+            "SELECT name FROM drive.files WHERE owner_id = $1 AND {} AND id <> $3 AND is_trashed = FALSE",
+            null_safe_eq(db.backend(), "folder_id", 2)
+        );
+        let live_names: Vec<String> = db
+            .fetch_all_as::<NameOnly>(&sql, params![owner_id, file.folder_id, file_id])
+            .await
+            .inspect_err(|e| tracing::error!(file_id = %file_id, error = %e, "Failed to list the names a restore could clash with"))?
+            .into_iter()
+            .map(|r| r.name)
+            .collect();
+        if live_names.iter().any(|n| n == &file.name) {
+            let name = unique_file_name(&file.name, &live_names);
+            let virt_path = folder_virt_path(db, file.folder_id, owner_id).await?;
+            let location = allocate_storage_path(db, storage, owner_id, &virt_path, &name, Some(&file)).await?;
+            relocate_blob(db, storage, owner_id, &file, &location).await?;
+            let extension = std::path::Path::new(&name)
+                .extension()
+                .and_then(|e| e.to_str())
+                .map(|e| e.to_lowercase());
+            return update_file_returning(
+                db,
+                owner_id,
+                file_id,
+                "name = $1, extension = $2, storage_path = $3, is_trashed = $4, trashed_at = $5",
+                params![&name, extension, &location, false, None::<chrono::DateTime<chrono::Utc>>],
+            )
+            .await;
+        }
+    }
     update_file_returning(
         db,
         owner_id,
@@ -621,20 +774,27 @@ pub async fn delete_file_permanently(
         return Err(FilesError::Protected(file_protected_msg(&file.name)));
     }
 
-    // Purge the version history explicitly so both the disk blobs and the quota
-    // follow (the FK cascade alone would drop the rows and leak both).
-    let history = crate::services::versions::purge_versions(db, storage, owner_id, file_id).await?;
-    if history.removed > 0 {
-        tracing::debug!(
-            file_id = %file_id, removed = history.removed, freed = history.freed_bytes,
-            "Historique de versions purgé avec le fichier",
-        );
-    }
+    // The version history goes in the same transaction as the file, so the row,
+    // its revisions and the quota move together (the FK cascade alone would drop
+    // the revision rows and leak both their blobs and their charge).
+    let versions: Vec<StoredBlob> = db
+        .fetch_all_as::<StoredBlob>(
+            "SELECT storage_path, size_bytes FROM drive.file_versions WHERE owner_id = $1 AND file_id = $2",
+            params![owner_id, file_id],
+        )
+        .await
+        .inspect_err(|e| tracing::error!(file_id = %file_id, error = %e, "Failed to list the file versions"))?;
 
     // Hard delete plus a tombstone, in one transaction, stamped with a fresh seq
     // so an offline client learns the file is gone (the old AFTER DELETE trigger).
     let mut tx = db.begin().await?;
     let seq = sync::next_seq(&mut tx).await?;
+    tx.execute(
+        "DELETE FROM drive.file_versions WHERE owner_id = $1 AND file_id = $2",
+        params![owner_id, file_id],
+    )
+    .await
+    .inspect_err(|e| tracing::error!(file_id = %file_id, error = %e, "Failed to delete the file versions"))?;
     tx.execute(
         "DELETE FROM drive.files WHERE id = $1 AND owner_id = $2",
         params![file_id, owner_id],
@@ -642,19 +802,22 @@ pub async fn delete_file_permanently(
     .await
     .inspect_err(|e| tracing::error!(file_id = %file_id, error = %e, "Échec de suppression du fichier"))?;
     sync::record_file_tombstone(&mut tx, file_id, owner_id, &file.name, seq).await?;
-    tx.commit().await?;
+    tx.commit()
+        .await
+        .inspect_err(|e| tracing::error!(file_id = %file_id, error = %e, "Failed to commit the file deletion"))?;
 
-    update_used_bytes(db, owner_id, -file.size_bytes).await;
+    // Charged once: the file and every revision it had.
+    let freed = file.size_bytes + versions.iter().map(|v| v.size_bytes).sum::<i64>();
+    update_used_bytes(db, owner_id, -freed).await;
 
-    // Bytes only once the row is gone, and only if no live row shares them (a
-    // live file re-using a trashed one's name in the same folder has the same
-    // storage path).
+    // Bytes only once the rows are gone, and only if no live row shares them.
     crate::services::blob_gc::delete_blob_if_unreferenced(db, storage, owner_id, &file.storage_path).await?;
-    if file.has_thumbnail {
-        let thumb = storage_path::user_thumbnail_path(owner_id, file_id);
-        if let Err(e) = storage.delete(&thumb.to_string_lossy()).await {
-            tracing::warn!(error = %e, "Could not delete thumbnail");
-        }
+    for v in &versions {
+        crate::services::blob_gc::delete_blob_if_unreferenced(db, storage, owner_id, &v.storage_path).await?;
+    }
+    let thumb = storage_path::user_thumbnail_path(owner_id, file_id);
+    if let Err(e) = storage.delete(&thumb.to_string_lossy()).await {
+        tracing::warn!(error = %e, "Could not delete thumbnail");
     }
 
     Ok(())
@@ -741,8 +904,7 @@ pub async fn create_with_bytes(
     let (safe_name, existing) = resolve_for_write(db, owner_id, folder_id, name, overwrite, false).await?;
 
     let virt_path = folder_virt_path(db, folder_id, owner_id).await?;
-    let dest = storage_path::user_file_path(owner_id, &virt_path, &safe_name);
-    let dest_str = dest.to_string_lossy().to_string();
+    let dest_str = write_location(db, storage, owner_id, &virt_path, &safe_name, existing.as_ref()).await?;
     let size = data.len() as i64;
 
     use sha2::{Digest, Sha256};
@@ -815,8 +977,7 @@ pub async fn copy_file(
 
     let new_name = unique_file_name(&src.name, &existing);
     let virt_path = folder_virt_path(db, folder_id, owner_id).await?;
-    let new_storage = storage_path::user_file_path(owner_id, &virt_path, &new_name);
-    let new_storage_str = new_storage.to_string_lossy().to_string();
+    let new_storage_str = allocate_storage_path(db, storage, owner_id, &virt_path, &new_name, None).await?;
 
     storage.copy(&src.storage_path, &new_storage_str).await?;
 
@@ -867,8 +1028,7 @@ pub async fn upload_simple(
     let hash = hex::encode(hasher.finalize());
 
     let virt_path = folder_virt_path(db, folder_id, owner_id).await?;
-    let dest = storage_path::user_file_path(owner_id, &virt_path, &safe_name);
-    let dest_str = dest.to_string_lossy().to_string();
+    let dest_str = write_location(db, storage, owner_id, &virt_path, &safe_name, existing.as_ref()).await?;
 
     storage.put(&dest_str, data).await?;
 

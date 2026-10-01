@@ -136,8 +136,10 @@ pub async fn complete_upload(
     let (safe_filename, existing) =
         resolve_for_write(db, owner_id, session.folder_id, &session.filename, session.overwrite, false).await?;
 
-    let dest_path = storage_path::user_file_path(owner_id, &folder_virt_path, &safe_filename);
-    let dest_str = dest_path.to_string_lossy().to_string();
+    let dest_str = crate::services::files::write_location(
+        db, storage, owner_id, &folder_virt_path, &safe_filename, existing.as_ref(),
+    )
+    .await?;
 
     // Assembler les chunks.
     let mut assembled = bytes::BytesMut::new();

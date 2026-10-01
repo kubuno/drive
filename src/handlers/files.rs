@@ -338,7 +338,7 @@ pub async fn restore(
     Extension(user): Extension<FilesUser>,
     Path(file_id): Path<Uuid>,
 ) -> Result<Json<Value>> {
-    let file = files::restore_file(&state.db, user.id, file_id).await?;
+    let file = files::restore_file(&state.db, &state.storage, user.id, file_id).await?;
     activity::log_file(&state.db, file.id, user.id, &user.email, "restored",
         serde_json::json!({})).await;
     crate::events::notify_change(&state.settings, user.id);

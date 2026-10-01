@@ -9,22 +9,6 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 ## [Unreleased]
 
-### Security
-
-- **Deleting a folder for good no longer leaves broken files behind or destroys
-  other files' contents.** A permanent folder delete (Shift+Delete, deleting from
-  the trash, the WebDAV `DELETE`, the module and admin APIs) moved the folder's
-  files to the root of the drive while wiping the folder's directory on disk, so
-  those files showed up at the root with their contents gone, and any other file
-  whose bytes happened to live in that directory lost them too. The whole folder
-  is now deleted consistently — subfolders, files (trashed ones included),
-  version history and thumbnails — and the bytes are only removed after the
-  database change is committed and only when no remaining file still uses them.
-- **Emptying the trash, or deleting a trashed file for good, no longer erases a
-  live file with the same name.** A file uploaded under the name of a trashed
-  file in the same folder shares its storage location; purging the trashed copy
-  deleted the live file's contents. Shared contents are now kept.
-
 ### Fixed
 
 - **Database migrations keep the same checksum on every OS.** The repository now
@@ -37,6 +21,18 @@ number at release time, and CI publishes that section as the GitHub Release note
   or renaming a folder onto a same-named one (with "merge") used to drop the
   source folder's trashed files; they now move into the destination and stay in
   the trash, restorable, without overwriting anything there.
+- **Restoring a file whose name is now taken keeps both files.** The restored
+  file comes back under a unique name (`report (2).pdf`) next to the file that
+  took its name.
+- **Storage quota is charged back exactly once when files are deleted for
+  good.** Emptying the trash freed nothing from the quota, and the automatic
+  trash clean-up and permanent deletes left the space used by version history
+  counted forever. File and version sizes are now released together, once, and
+  the version history's stored copies are removed too. On SQLite installations
+  the quota counter was not updated at all; it now is.
+- **Renaming or moving a folder keeps every file pointing at its contents**,
+  including files stored under a different name on disk; if the database step
+  fails, the folder is moved back on disk.
 - **Drive builds from a clean checkout again.** The lockfile pinned two shared
   crates (`kubuno-modauth`, `kubuno-storage`) to commits that no longer exist on
   GitHub after their tags were moved, so a fresh `cargo build` could not fetch
@@ -60,6 +56,12 @@ number at release time, and CI publishes that section as the GitHub Release note
   that starts both, so contributors can build and debug Drive from Visual Studio
   without generating the solution first. Per-machine files (`obj/`, `.vs/`, user
   settings, the local SDK feed) stay out of version control.
+- **`drive:fsck` maintenance command.** `kubuno-drive drive:fsck` lists the
+  files and versions whose contents are missing from storage and the files that
+  share one stored copy, account by account (`--owner`, `--json`). It changes
+  nothing unless asked: `--split-shared` gives each file its own copy, and
+  `--trash-missing` moves files whose contents are gone to the trash, where
+  their owner can see them. It exits with code 2 when it finds a problem.
 
 ### Changed
 
@@ -71,6 +73,29 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 ### Security
 
+- **Deleting a folder for good no longer leaves broken files behind or destroys
+  other files' contents.** A permanent folder delete (Shift+Delete, deleting from
+  the trash, the WebDAV `DELETE`, the module and admin APIs) moved the folder's
+  files to the root of the drive while wiping the folder's directory on disk, so
+  those files showed up at the root with their contents gone, and any other file
+  whose bytes happened to live in that directory lost them too. The whole folder
+  is now deleted consistently — subfolders, files (trashed ones included),
+  version history and thumbnails — and the bytes are only removed after the
+  database change is committed and only when no remaining file still uses them.
+- **Emptying the trash, or deleting a trashed file for good, no longer erases a
+  live file with the same name.** A file uploaded under the name of a trashed
+  file in the same folder shares its storage location; purging the trashed copy
+  deleted the live file's contents. Shared contents are now kept.
+- **A new file no longer takes over the contents of a trashed file with the same
+  name.** Uploading, creating, renaming, moving, copying or restoring a file
+  under the name of a trashed file in the same folder wrote over the trashed
+  file's contents, so restoring it brought back the wrong data. Every file now
+  gets a storage location that no other file or version uses; the name shown in
+  Drive is unchanged.
+- **File and folder names can no longer escape their folder.** A rename to a
+  name such as `../../other.txt`, or a folder name containing `\` (a path
+  separator on Windows), could place bytes outside the folder, or even outside
+  the account's own storage. Such names are now refused.
 - **Security fixes from the shared database layer (kubuno-db 0.9.0).** The
   database password can no longer appear in a log through the debug output of
   the database settings. A search now keeps at most 16 distinct words (set for the

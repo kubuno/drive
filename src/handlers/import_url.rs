@@ -165,14 +165,14 @@ pub async fn import_from_url(
 
     // ── Stockage ──────────────────────────────────────────────────────────────
 
-    use kubuno_storage::path as storage_path;
     use mime_guess::MimeGuess;
 
     let (safe_name, existing) = resolve_for_write(&state.db, user.id, dto.folder_id, &filename, dto.overwrite, false).await?;
     let mime        = MimeGuess::from_path(&safe_name).first_or_octet_stream().to_string();
     let virt_path   = folder_virt_path(&state.db, dto.folder_id, user.id).await?;
-    let dest        = storage_path::user_file_path(user.id, &virt_path, &safe_name);
-    let dest_str    = dest.to_string_lossy().to_string();
+    let dest_str    = crate::services::files::write_location(
+        &state.db, &state.storage, user.id, &virt_path, &safe_name, existing.as_ref(),
+    ).await?;
 
     state.storage.put(&dest_str, data).await?;
 

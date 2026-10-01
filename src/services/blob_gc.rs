@@ -79,18 +79,22 @@ impl LiveRefs {
 /// Targeted variant of [`LiveRefs::references`] for a single blob: true when a
 /// live row of the owner still references `path`, in any separator spelling.
 /// Cheaper than loading every reference when only one blob is at stake.
-pub async fn is_referenced(db: &DbPool, owner_id: Uuid, path: &str) -> Result<bool> {
+/// `except_file` leaves one `drive.files` row out of the check (the row the
+/// bytes belong to, when asking whether ANOTHER row shares them).
+pub async fn is_referenced(db: &DbPool, owner_id: Uuid, path: &str, except_file: Option<Uuid>) -> Result<bool> {
     let slash = path.replace('\\', "/");
     let backslash = path.replace('/', "\\");
+    // A nil id never matches a real row, so one statement serves both cases.
+    let except = except_file.unwrap_or(Uuid::nil());
     let hit = db
         .fetch_optional_as::<PathRow>(
             "SELECT storage_path FROM drive.files
-               WHERE owner_id = $1 AND storage_path IN ($2, $3, $4)
+               WHERE owner_id = $1 AND id <> $2 AND storage_path IN ($3, $4, $5)
              UNION ALL
              SELECT storage_path FROM drive.file_versions
-               WHERE owner_id = $5 AND storage_path IN ($6, $7, $8)
+               WHERE owner_id = $6 AND storage_path IN ($7, $8, $9)
              LIMIT 1",
-            params![owner_id, path, &slash, &backslash, owner_id, path, &slash, &backslash],
+            params![owner_id, except, path, &slash, &backslash, owner_id, path, &slash, &backslash],
         )
         .await
         .inspect_err(|e| tracing::error!(owner_id = %owner_id, error = %e, "Failed to check a storage reference"))?;
@@ -106,7 +110,7 @@ pub async fn delete_blob_if_unreferenced(
     owner_id: Uuid,
     path: &str,
 ) -> Result<()> {
-    if is_referenced(db, owner_id, path).await? {
+    if is_referenced(db, owner_id, path, None).await? {
         tracing::warn!(path, "Blob kept: a live row still references it");
         return Ok(());
     }
@@ -173,9 +177,62 @@ pub async fn remove_folder_dirs(
     }
 }
 
+/// Whether the platform's usual file systems ignore case (NTFS, APFS / HFS+).
+const CASE_INSENSITIVE_FS: bool = cfg!(any(windows, target_os = "macos"));
+
+/// Identity of a storage location as this platform's file system sees it:
+/// separators unified, case folded only where the file system folds it. Two
+/// rows with the same `fs_key` read and write the very same bytes.
+pub fn fs_key(path: &str) -> String {
+    let joined = segments(path).join("/");
+    if CASE_INSENSITIVE_FS {
+        joined.to_lowercase()
+    } else {
+        joined
+    }
+}
+
+fn segments(path: &str) -> Vec<&str> {
+    path.split(['/', '\\']).filter(|s| !s.is_empty() && *s != ".").collect()
+}
+
+fn same_segment(a: &str, b: &str) -> bool {
+    if CASE_INSENSITIVE_FS {
+        a.to_lowercase() == b.to_lowercase()
+    } else {
+        a == b
+    }
+}
+
+/// Where a directory move carried the blob at `path`: when `path` lies under
+/// `old_dir` *as this platform's file system sees it* (any separator; case
+/// folded only where the file system folds it), the same path re-rooted under
+/// `new_dir`; otherwise `None` — the move did not touch those bytes.
+pub fn rebase(path: &str, old_dir: &str, new_dir: &str) -> Option<String> {
+    let p = segments(path);
+    let o = segments(old_dir);
+    if p.len() <= o.len() || !p.iter().zip(&o).all(|(a, b)| same_segment(a, b)) {
+        return None;
+    }
+    let mut out = std::path::PathBuf::from(new_dir);
+    for s in &p[o.len()..] {
+        out.push(s);
+    }
+    Some(out.to_string_lossy().into_owned())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn rebase_follows_the_directory_move() {
+        let moved = rebase(r"u\files\Docs/Sub\a.txt", "u/files/Docs", "u/files/Archive").expect("under");
+        assert_eq!(segments(&moved), ["u", "files", "Archive", "Sub", "a.txt"]);
+        assert!(rebase("u/files/Docs2/a.txt", "u/files/Docs", "u/files/X").is_none());
+        assert!(rebase("u/files/Docs", "u/files/Docs", "u/files/X").is_none());
+        assert_eq!(rebase("u/files/docs/a.txt", "u/files/Docs", "n").is_some(), CASE_INSENSITIVE_FS);
+    }
 
     #[test]
     fn path_key_unifies_separators_and_case() {

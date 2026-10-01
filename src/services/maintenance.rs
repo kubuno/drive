@@ -10,7 +10,6 @@ use kubuno_storage::StorageBackend;
 use serde_json::{json, Value};
 use uuid::Uuid;
 
-use crate::sync;
 use crate::{errors::Result, services::files, state::AppState};
 
 /// One trashed file eligible for the auto-purge.
@@ -18,9 +17,6 @@ use crate::{errors::Result, services::files, state::AppState};
 struct StaleFile {
     id: Uuid,
     owner_id: Uuid,
-    name: String,
-    storage_path: String,
-    size_bytes: i64,
 }
 
 /// Headline stats for a user's trash (counts + reclaimable file size).
@@ -76,30 +72,27 @@ pub async fn purge_old_files(
     // `NOW() - INTERVAL 'n day'` per engine (n is a plain integer, never data).
     let cutoff = db.backend().interval_before(retention_days.max(0) as u32, Unit::Day);
     let sql = format!(
-        "SELECT id, owner_id, name, storage_path, size_bytes FROM drive.files
+        "SELECT id, owner_id FROM drive.files
          WHERE is_trashed = TRUE AND trashed_at IS NOT NULL
            AND trashed_at < {cutoff}
          LIMIT 500"
     );
-    let stale: Vec<StaleFile> = db.fetch_all_as::<StaleFile>(&sql, params![]).await.unwrap_or_default();
+    let stale: Vec<StaleFile> = match db.fetch_all_as::<StaleFile>(&sql, params![]).await {
+        Ok(rows) => rows,
+        Err(e) => {
+            tracing::error!(error = %e, "Trash auto-purge: failed to list the expired files");
+            return 0;
+        }
+    };
 
+    // Each file goes through the one permanent-delete path: rows (file and
+    // versions) and tombstone in one transaction, the quota charged back once,
+    // the bytes removed after the commit and only when nothing else uses them.
     let mut purged = 0usize;
     for f in stale {
-        let _ = storage.delete(&f.storage_path).await;
-        // Hard delete + tombstone in one transaction (the old AFTER DELETE
-        // trigger); the fresh seq orders the deletion in the delta feed.
-        let deleted = (|| async {
-            let mut tx = db.begin().await?;
-            let seq = sync::next_seq(&mut tx).await?;
-            tx.execute("DELETE FROM drive.files WHERE id = $1", params![f.id]).await?;
-            sync::record_file_tombstone(&mut tx, f.id, f.owner_id, &f.name, seq).await?;
-            tx.commit().await?;
-            Ok::<(), sqlx::Error>(())
-        })()
-        .await;
-        if deleted.is_ok() {
-            files::update_used_bytes(db, f.owner_id, -f.size_bytes).await;
-            purged += 1;
+        match files::delete_file_permanently(db, storage, f.owner_id, f.id).await {
+            Ok(()) => purged += 1,
+            Err(e) => tracing::error!(file_id = %f.id, error = %e, "Trash auto-purge: failed to delete a file"),
         }
     }
     purged

@@ -72,6 +72,11 @@ name        = "drive:upload"
 description = "Uploade un ou plusieurs fichiers vers Kubuno (authentification par token d'API)"
 usage       = "kubuno drive:upload <FICHIER>... --token <TOKEN> [--server <URL>] [--folder <FOLDER|UUID>]"
 
+[[cli_commands]]
+name        = "drive:fsck"
+description = "Vérifie la cohérence fichiers ↔ stockage : lignes sans octets, blobs partagés (lecture seule par défaut)"
+usage       = "kubuno-drive drive:fsck [--owner <UUID>] [--json] [--split-shared] [--trash-missing]"
+
 [events]
 subscribed = [
     "UserDeleted",

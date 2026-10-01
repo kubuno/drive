@@ -47,6 +47,7 @@ pub mod extract;
 pub mod files;
 pub mod folder_reconcile;
 pub mod folders;
+pub mod fsck;
 pub mod indexer;
 pub mod insights;
 pub mod locks;

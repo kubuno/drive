@@ -169,6 +169,99 @@ enum CliCommand {
     /// Uploade un ou plusieurs fichiers vers Kubuno
     #[command(name = "files:upload")]
     Upload(UploadArgs),
+    /// Vérifie la cohérence fichiers ↔ stockage (lecture seule sauf option de réparation)
+    #[command(name = "drive:fsck")]
+    Fsck(FsckArgs),
+}
+
+#[derive(clap::Args, Debug)]
+struct FsckArgs {
+    /// Restrict the check to one account (user UUID).
+    #[arg(long)]
+    owner: Option<Uuid>,
+    /// Print the full report as JSON instead of the summary.
+    #[arg(long)]
+    json: bool,
+    /// REPAIR: give each file sharing a blob with another row its own copy of the bytes.
+    #[arg(long)]
+    split_shared: bool,
+    /// REPAIR: move the live files whose bytes are gone to the trash (reversible).
+    #[arg(long)]
+    trash_missing: bool,
+}
+
+/// `drive:fsck` — lists the rows whose bytes are gone and the rows sharing one
+/// blob. Read-only unless a repair flag is given. Uses the module's own
+/// configuration (database and storage); runs no migration.
+async fn cmd_drive_fsck(args: FsckArgs) -> Result<()> {
+    use kubuno_drive::services::fsck;
+
+    let settings = Settings::load().context("Chargement de la configuration")?;
+    let _ = tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("warn")),
+        )
+        .with_writer(std::io::stderr)
+        .try_init();
+
+    let pool = kubuno_db::connect(&settings.database, kubuno_drive::SCHEMA)
+        .await
+        .context("Connexion à la base de données")?;
+    let storage = kubuno_storage::from_config(&settings.storage)
+        .await
+        .context("Initialisation du backend de stockage")?;
+
+    let opts = fsck::FsckOptions {
+        owner: args.owner,
+        split_shared: args.split_shared,
+        trash_missing: args.trash_missing,
+    };
+    let report = fsck::run(&pool, &storage, &opts).await.context("Vérification")?;
+
+    if args.json {
+        println!("{}", serde_json::to_string_pretty(&report).context("Sérialisation du rapport")?);
+    } else {
+        println!(
+            "drive:fsck — {} ({} compte(s), {} fichier(s), {} version(s) vérifiés)",
+            if report.dry_run { "lecture seule" } else { "RÉPARATION" },
+            report.owners_checked, report.files_checked, report.versions_checked,
+        );
+        println!();
+        println!("Lignes sans octets : {}", report.missing.len());
+        for m in &report.missing {
+            println!(
+                "  [{}] {} owner={} file={} trashed={} path={}{}",
+                m.kind, m.id, m.owner_id, m.file_id, m.is_trashed, m.storage_path,
+                m.error.as_deref().map(|e| format!(" (erreur: {e})")).unwrap_or_default(),
+            );
+        }
+        println!("Blobs partagés : {}", report.shared.len());
+        for s in &report.shared {
+            println!("  owner={}", s.owner_id);
+            for r in &s.rows {
+                println!("    [{}] {} trashed={} name={:?} path={}", r.kind, r.id, r.is_trashed, r.name, r.storage_path);
+            }
+        }
+        if report.dry_run {
+            println!();
+            println!("Aucune modification. Réparations possibles : --split-shared, --trash-missing.");
+        } else {
+            println!();
+            println!("Copies séparées : {} · mis à la corbeille : {}", report.split, report.trashed);
+            for e in &report.repair_errors {
+                println!("  échec : {e}");
+            }
+        }
+    }
+
+    // Exit code 2 when a dry run found damage or a repair failed, so a script
+    // can alert on it.
+    let found = !report.missing.is_empty() || !report.shared.is_empty();
+    if !report.repair_errors.is_empty() || (report.dry_run && found) {
+        std::process::exit(2);
+    }
+    Ok(())
 }
 
 #[derive(clap::Args, Debug)]
@@ -429,6 +522,7 @@ async fn main() -> Result<()> {
     if let Some(cmd) = cli.command {
         return match cmd {
             CliCommand::Upload(args) => cmd_files_upload(args).await,
+            CliCommand::Fsck(args)   => cmd_drive_fsck(args).await,
         };
     }
 
