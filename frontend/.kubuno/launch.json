@@ -1,0 +1,21 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "edge",
+      "request": "launch",
+      "name": "Kubuno drive (Edge)",
+      "url": "http://localhost:8080/drive",
+      "webRoot": "${workspaceFolder}",
+      "sourceMapPathOverrides": { "http://localhost:8080/modules/drive/frontend/*": "${workspaceFolder}/dist/*" }
+    },
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "Kubuno drive (Chrome)",
+      "url": "http://localhost:8080/drive",
+      "webRoot": "${workspaceFolder}",
+      "sourceMapPathOverrides": { "http://localhost:8080/modules/drive/frontend/*": "${workspaceFolder}/dist/*" }
+    }
+  ]
+}

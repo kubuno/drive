@@ -29,6 +29,11 @@ number at release time, and CI publishes that section as the GitHub Release note
   read at start-up; the same build connects to whichever is named. SQLite needs
   no server at all, which turns a single-machine or evaluation install into a
   one-line affair. Existing PostgreSQL instances keep working unchanged.
+- **Open Drive in Visual Studio.** The repository now ships a ready-made solution
+  (`Kubuno.Drive.slnx`) with the server and frontend projects and a launch profile
+  that starts both, so contributors can build and debug Drive from Visual Studio
+  without generating the solution first. Per-machine files (`obj/`, `.vs/`, user
+  settings, the local SDK feed) stay out of version control.
 
 ### Changed
 

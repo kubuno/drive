@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "Drive (Kubuno Core Web + navigateur)",
+    "Projects": [
+      {
+        "Path": "kubuno-drive.rsproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "frontend\\drive-frontend.esproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]
