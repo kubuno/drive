@@ -40,6 +40,7 @@ pub(crate) fn null_safe_distinct_cols(backend: Backend, a: &str, b: &str) -> Str
 pub mod access;
 pub mod activity;
 pub mod archives;
+pub mod blob_gc;
 pub mod comments;
 pub mod embeddings;
 pub mod extract;

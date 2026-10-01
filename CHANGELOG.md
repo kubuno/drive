@@ -9,8 +9,28 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 ## [Unreleased]
 
+### Security
+
+- **Deleting a folder for good no longer leaves broken files behind or destroys
+  other files' contents.** A permanent folder delete (Shift+Delete, deleting from
+  the trash, the WebDAV `DELETE`, the module and admin APIs) moved the folder's
+  files to the root of the drive while wiping the folder's directory on disk, so
+  those files showed up at the root with their contents gone, and any other file
+  whose bytes happened to live in that directory lost them too. The whole folder
+  is now deleted consistently — subfolders, files (trashed ones included),
+  version history and thumbnails — and the bytes are only removed after the
+  database change is committed and only when no remaining file still uses them.
+- **Emptying the trash, or deleting a trashed file for good, no longer erases a
+  live file with the same name.** A file uploaded under the name of a trashed
+  file in the same folder shares its storage location; purging the trashed copy
+  deleted the live file's contents. Shared contents are now kept.
+
 ### Fixed
 
+- **Merging two folders keeps the trashed files of the merged folder.** Moving
+  or renaming a folder onto a same-named one (with "merge") used to drop the
+  source folder's trashed files; they now move into the destination and stay in
+  the trash, restorable, without overwriting anything there.
 - **Drive builds from a clean checkout again.** The lockfile pinned two shared
   crates (`kubuno-modauth`, `kubuno-storage`) to commits that no longer exist on
   GitHub after their tags were moved, so a fresh `cargo build` could not fetch

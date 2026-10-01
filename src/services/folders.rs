@@ -10,7 +10,7 @@ use crate::{
         CreateFolderDto, Folder, FolderAncestor, FolderSize, MoveFileDto, MoveFolderDto,
         RenameFolderDto, SetFolderColorDto,
     },
-    services::files,
+    services::{blob_gc, files},
 };
 
 // ── Small row projections ─────────────────────────────────────────────────────
@@ -30,9 +30,21 @@ struct FileFolder {
     folder_path: String,
 }
 #[derive(sqlx::FromRow)]
-struct IdOnly {
+struct DoomedFile {
     id: Uuid,
+    name: String,
+    storage_path: String,
+    size_bytes: i64,
 }
+#[derive(sqlx::FromRow)]
+struct VersionBlob {
+    storage_path: String,
+    size_bytes: i64,
+}
+
+/// Ids per `IN (...)` list of a bulk delete: far below the bind-parameter
+/// ceilings of the three engines (SQLite 32766, PostgreSQL / MySQL 65535).
+const DELETE_CHUNK: usize = 500;
 
 // ── Journal helpers ───────────────────────────────────────────────────────────
 
@@ -569,10 +581,16 @@ pub async fn delete_folder(
         return Err(FilesError::Protected(protected_block_msg(&folder.name, &protected)));
     }
 
+    // A permanent delete removes the whole subtree — folders, files (trashed ones
+    // included), their versions, thumbnails and bytes — the way the UI announces
+    // it. Files used to be re-parented to the root (FK `ON DELETE SET NULL`) while
+    // the folder directory, which holds their bytes, was wiped: live rows pointing
+    // at deleted bytes. Now the rows go first, in one transaction, and the bytes
+    // only after the commit and only when no live row still references them.
+    //
     // Enumerate the whole subtree BEFORE deleting: descendant folders (cascade
-    // would drop them silently, so we tombstone each explicitly), and the files
-    // under them (which the FK sets to NULL — orphaned to root — so we bump their
-    // change_seq explicitly to surface the move in the delta feed).
+    // would drop them silently, so we tombstone each explicitly) and the files
+    // under them.
     let subtree: Vec<IdPath> = db
         .fetch_all_as::<IdPath>(
             r#"WITH RECURSIVE sub AS (
@@ -585,22 +603,55 @@ pub async fn delete_folder(
                SELECT id, path FROM sub"#,
             params![folder_id, owner_id, owner_id],
         )
-        .await?;
+        .await
+        .inspect_err(|e| tracing::error!(folder_id = %folder_id, error = %e, "Failed to enumerate the folder subtree"))?;
     let subtree_ids: Vec<Uuid> = subtree.iter().map(|f| f.id).collect();
 
-    let mut qb = DbQueryBuilder::new(db.backend(), "SELECT id FROM drive.files WHERE owner_id = ");
+    let mut qb = DbQueryBuilder::new(
+        db.backend(),
+        "SELECT id, name, storage_path, size_bytes FROM drive.files WHERE owner_id = ",
+    );
     qb.push_bind(owner_id).push(" AND folder_id").push_in(subtree_ids.iter().copied());
-    let orphan_files: Vec<Uuid> = qb.fetch_all_as::<IdOnly>(db).await?.into_iter().map(|r| r.id).collect();
+    let doomed_files: Vec<DoomedFile> = qb
+        .fetch_all_as::<DoomedFile>(db)
+        .await
+        .inspect_err(|e| tracing::error!(folder_id = %folder_id, error = %e, "Failed to enumerate the folder files"))?;
+    let file_ids: Vec<Uuid> = doomed_files.iter().map(|f| f.id).collect();
+
+    let mut doomed_versions: Vec<VersionBlob> = Vec::new();
+    for chunk in file_ids.chunks(DELETE_CHUNK) {
+        let mut qb = DbQueryBuilder::new(
+            db.backend(),
+            "SELECT storage_path, size_bytes FROM drive.file_versions WHERE owner_id = ",
+        );
+        qb.push_bind(owner_id).push(" AND file_id").push_in(chunk.iter().copied());
+        doomed_versions.extend(
+            qb.fetch_all_as::<VersionBlob>(db)
+                .await
+                .inspect_err(|e| tracing::error!(folder_id = %folder_id, error = %e, "Failed to enumerate the file versions"))?,
+        );
+    }
 
     let mut tx = db.begin().await?;
-    // Orphan the files first (folder_id NULL) so the later cascade is a no-op.
-    for fid in &orphan_files {
-        let seq = sync::next_seq(&mut tx).await?;
+    // Rows first, by the exact id set enumerated above: a file added to the
+    // subtree in the meantime is not deleted blindly — the folder FK re-parents
+    // it to the root and the reference check below keeps its bytes.
+    for chunk in file_ids.chunks(DELETE_CHUNK) {
+        let in_list = tx.backend().in_list(2, chunk.len());
+        let mut ps: Vec<DbValue> = vec![DbValue::from(owner_id)];
+        ps.extend(chunk.iter().copied().map(DbValue::from));
         tx.execute(
-            "UPDATE drive.files SET folder_id = NULL, change_seq = $1 WHERE id = $2",
-            params![seq, fid],
+            &format!("DELETE FROM drive.file_versions WHERE owner_id = $1 AND file_id IN ({in_list})"),
+            ps.clone(),
         )
-        .await?;
+        .await
+        .inspect_err(|e| tracing::error!(folder_id = %folder_id, error = %e, "Failed to delete the file versions"))?;
+        tx.execute(
+            &format!("DELETE FROM drive.files WHERE owner_id = $1 AND id IN ({in_list})"),
+            ps,
+        )
+        .await
+        .inspect_err(|e| tracing::error!(folder_id = %folder_id, error = %e, "Failed to delete the folder files"))?;
     }
     // Delete the root folder; the FK cascade removes descendant folders.
     let affected = tx
@@ -608,22 +659,48 @@ pub async fn delete_folder(
             "DELETE FROM drive.folders WHERE id = $1 AND owner_id = $2",
             params![folder_id, owner_id],
         )
-        .await?;
+        .await
+        .inspect_err(|e| tracing::error!(folder_id = %folder_id, error = %e, "Failed to delete the folder"))?;
     if affected == 0 {
         tx.rollback().await?;
         return Err(FilesError::NotFound(format!("Dossier {folder_id} introuvable")));
     }
-    // Tombstone every folder that was deleted (root + descendants).
+    // Tombstone every file and folder that was deleted (root + descendants).
+    for f in &doomed_files {
+        let seq = sync::next_seq(&mut tx).await?;
+        sync::record_file_tombstone(&mut tx, f.id, owner_id, &f.name, seq).await?;
+    }
     for f in &subtree {
         let seq = sync::next_seq(&mut tx).await?;
         sync::record_folder_tombstone(&mut tx, f.id, owner_id, &f.path, seq).await?;
     }
-    tx.commit().await?;
+    tx.commit()
+        .await
+        .inspect_err(|e| tracing::error!(folder_id = %folder_id, error = %e, "Failed to commit the folder deletion"))?;
 
-    let dir = storage_path::user_folder_dir(owner_id, &folder.path);
-    if let Err(e) = storage.delete_dir(&dir.to_string_lossy()).await {
-        tracing::warn!(path = %dir.display(), error = %e, "Could not delete folder directory on disk");
+    let freed: i64 = doomed_files.iter().map(|f| f.size_bytes).sum::<i64>()
+        + doomed_versions.iter().map(|v| v.size_bytes).sum::<i64>();
+    if freed != 0 {
+        files::update_used_bytes(db, owner_id, -freed).await;
     }
+
+    // Bytes last, and only those no live row references any more. Thumbnails are
+    // keyed by file id, so they are never shared.
+    let live = blob_gc::LiveRefs::load(db, owner_id).await?;
+    let mut blobs: Vec<String> = Vec::with_capacity(doomed_files.len() * 2 + doomed_versions.len());
+    for f in &doomed_files {
+        blobs.push(f.storage_path.clone());
+        blobs.push(storage_path::user_thumbnail_path(owner_id, f.id).to_string_lossy().into_owned());
+    }
+    blobs.extend(doomed_versions.iter().map(|v| v.storage_path.clone()));
+    blob_gc::delete_unreferenced(storage, &live, &blobs).await;
+
+    let root_dir = storage_path::user_folder_dir(owner_id, &folder.path).to_string_lossy().into_owned();
+    let dirs: Vec<String> = subtree
+        .iter()
+        .map(|f| storage_path::user_folder_dir(owner_id, &f.path).to_string_lossy().into_owned())
+        .collect();
+    blob_gc::remove_folder_dirs(storage, &live, &root_dir, &dirs).await;
 
     Ok(())
 }
@@ -748,6 +825,18 @@ pub async fn merge_into_folder(
     for f in src_files {
         files::move_file(db, storage, owner_id, f.id, MoveFileDto { folder_id: dst_id, overwrite, strict: false }).await?;
     }
+    // 1b. Individually trashed files follow too, still trashed: the source folder
+    // is deleted for good below, which would otherwise purge them from the trash.
+    let src_trashed: Vec<crate::models::File> = db
+        .fetch_all_as::<crate::models::File>(
+            "SELECT * FROM drive.files WHERE owner_id = $1 AND folder_id = $2 AND is_trashed = TRUE",
+            params![owner_id, src_id],
+        )
+        .await
+        .inspect_err(|e| tracing::error!(folder_id = %src_id, error = %e, "Failed to list the trashed files to merge"))?;
+    for f in src_trashed {
+        files::move_trashed_file(db, storage, owner_id, &f, dst_id).await?;
+    }
 
     // 2. Move / merge each sub-folder recursively.
     let src_sub: Vec<Folder> = db
@@ -841,14 +930,9 @@ pub async fn purge_trash(
     }
     let files: Vec<FileDel> = by_id.into_values().collect();
 
-    // Delete the physical blobs.
-    for f in &files {
-        if let Err(e) = storage.delete(&f.storage_path).await {
-            tracing::warn!(path = %f.storage_path, error = %e, "purge_trash: impossible de supprimer le fichier");
-        }
-    }
-
-    // Hard delete + tombstones, all in one transaction.
+    // Hard delete + tombstones, all in one transaction. The bytes go only after
+    // the commit (see below): a crash in between leaves an orphan blob, never a
+    // live row without its bytes.
     let mut tx = db.begin().await?;
     let files_deleted = if files.is_empty() {
         0
@@ -877,15 +961,25 @@ pub async fn purge_trash(
         let seq = sync::next_seq(&mut tx).await?;
         sync::record_folder_tombstone(&mut tx, f.id, owner_id, &f.path, seq).await?;
     }
-    tx.commit().await?;
+    tx.commit()
+        .await
+        .inspect_err(|e| tracing::error!(owner_id = %owner_id, error = %e, "Failed to commit the trash purge"))?;
 
-    // Remove the physical directories of the trashed folders.
-    let paths: Vec<String> = folders.iter().map(|f| f.path.clone()).collect();
-    for path in &paths {
-        let dir = storage_path::user_folder_dir(owner_id, path);
-        if let Err(e) = storage.delete_dir(&dir.to_string_lossy()).await {
-            tracing::warn!(path, error = %e, "purge_trash: impossible de supprimer le répertoire");
-        }
+    // Delete the physical blobs no live row references any more: a live file
+    // re-using a trashed one's name in the same folder shares its storage path.
+    let live = blob_gc::LiveRefs::load(db, owner_id).await?;
+    let mut blobs: Vec<String> = Vec::with_capacity(files.len() * 2);
+    for f in &files {
+        blobs.push(f.storage_path.clone());
+        blobs.push(storage_path::user_thumbnail_path(owner_id, f.id).to_string_lossy().into_owned());
+    }
+    blob_gc::delete_unreferenced(storage, &live, &blobs).await;
+
+    // Remove the physical directories of the trashed folders, keeping any that
+    // still hold bytes a live row references.
+    for f in &folders {
+        let dir = storage_path::user_folder_dir(owner_id, &f.path).to_string_lossy().into_owned();
+        blob_gc::remove_folder_dirs(storage, &live, &dir, std::slice::from_ref(&dir)).await;
     }
 
     Ok(PurgeTrashResult { folders_deleted, files_deleted })

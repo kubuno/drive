@@ -534,6 +534,47 @@ pub async fn move_file(
     .await
 }
 
+/// Moves a TRASHED file into `folder_id`, keeping it in the trash.
+///
+/// Unlike [`move_file`], the new name is made unique among ALL the destination's
+/// files, trashed ones included: two rows with the same name in one folder share
+/// one storage path, and the move would overwrite the other file's bytes.
+pub async fn move_trashed_file(
+    db: &DbPool,
+    storage: &Arc<dyn StorageBackend>,
+    owner_id: Uuid,
+    file: &File,
+    folder_id: Option<Uuid>,
+) -> Result<File> {
+    let sql = format!(
+        "SELECT name FROM drive.files WHERE owner_id = $1 AND {} AND id <> $3",
+        null_safe_eq(db.backend(), "folder_id", 2)
+    );
+    let taken: Vec<String> = db
+        .fetch_all_as::<NameOnly>(&sql, params![owner_id, folder_id, file.id])
+        .await
+        .inspect_err(|e| tracing::error!(file_id = %file.id, error = %e, "Failed to list the destination names"))?
+        .into_iter()
+        .map(|r| r.name)
+        .collect();
+    let name = unique_file_name(&file.name, &taken);
+
+    let virt_path = folder_virt_path(db, folder_id, owner_id).await?;
+    let new_storage = storage_path::user_file_path(owner_id, &virt_path, &name)
+        .to_string_lossy()
+        .into_owned();
+    storage.mv(&file.storage_path, &new_storage).await?;
+
+    update_file_returning(
+        db,
+        owner_id,
+        file.id,
+        "folder_id = $1, name = $2, storage_path = $3",
+        params![folder_id, &name, &new_storage],
+    )
+    .await
+}
+
 pub async fn trash_file(db: &DbPool, owner_id: Uuid, file_id: Uuid) -> Result<File> {
     let existing = get_file(db, owner_id, file_id).await?;
     if existing.is_protected {
@@ -580,17 +621,6 @@ pub async fn delete_file_permanently(
         return Err(FilesError::Protected(file_protected_msg(&file.name)));
     }
 
-    if let Err(e) = storage.delete(&file.storage_path).await {
-        tracing::warn!(path = %file.storage_path, error = %e, "Could not delete storage file");
-    }
-
-    if file.has_thumbnail {
-        let thumb = storage_path::user_thumbnail_path(owner_id, file_id);
-        if let Err(e) = storage.delete(&thumb.to_string_lossy()).await {
-            tracing::warn!(error = %e, "Could not delete thumbnail");
-        }
-    }
-
     // Purge the version history explicitly so both the disk blobs and the quota
     // follow (the FK cascade alone would drop the rows and leak both).
     let history = crate::services::versions::purge_versions(db, storage, owner_id, file_id).await?;
@@ -615,6 +645,17 @@ pub async fn delete_file_permanently(
     tx.commit().await?;
 
     update_used_bytes(db, owner_id, -file.size_bytes).await;
+
+    // Bytes only once the row is gone, and only if no live row shares them (a
+    // live file re-using a trashed one's name in the same folder has the same
+    // storage path).
+    crate::services::blob_gc::delete_blob_if_unreferenced(db, storage, owner_id, &file.storage_path).await?;
+    if file.has_thumbnail {
+        let thumb = storage_path::user_thumbnail_path(owner_id, file_id);
+        if let Err(e) = storage.delete(&thumb.to_string_lossy()).await {
+            tracing::warn!(error = %e, "Could not delete thumbnail");
+        }
+    }
 
     Ok(())
 }
