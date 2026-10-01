@@ -188,6 +188,9 @@ struct FsckArgs {
     /// REPAIR: move the live files whose bytes are gone to the trash (reversible).
     #[arg(long)]
     trash_missing: bool,
+    /// REPAIR: merge the duplicate rows recorded by the `live_name_unique` migration.
+    #[arg(long)]
+    merge_duplicates: bool,
 }
 
 /// `drive:fsck` — lists the rows whose bytes are gone and the rows sharing one
@@ -216,6 +219,7 @@ async fn cmd_drive_fsck(args: FsckArgs) -> Result<()> {
         owner: args.owner,
         split_shared: args.split_shared,
         trash_missing: args.trash_missing,
+        merge_duplicates: args.merge_duplicates,
     };
     let report = fsck::run(&pool, &storage, &opts).await.context("Vérification")?;
 
@@ -243,12 +247,34 @@ async fn cmd_drive_fsck(args: FsckArgs) -> Result<()> {
                 println!("    [{}] {} trashed={} name={:?} path={}", r.kind, r.id, r.is_trashed, r.name, r.storage_path);
             }
         }
+        println!("Doublons vivants (même dossier, même nom) : {}", report.live_duplicates.len());
+        for s in &report.live_duplicates {
+            println!("  owner={}", s.owner_id);
+            for r in &s.rows {
+                println!("    {} name={:?} path={}", r.id, r.name, r.storage_path);
+            }
+        }
+        println!(
+            "Doublons enregistrés par la migration{} : {}",
+            if report.dry_run { " (fusion proposée)" } else { "" },
+            report.duplicates.len(),
+        );
+        for d in &report.duplicates {
+            println!(
+                "  {} -> {} owner={} name={:?} versions={} contenu={:?}{}",
+                d.duplicate_id, d.keeper_id, d.owner_id, d.name, d.versions_moved, d.contents,
+                if d.keeper_missing { " (conservé introuvable)" } else { "" },
+            );
+        }
         if report.dry_run {
             println!();
-            println!("Aucune modification. Réparations possibles : --split-shared, --trash-missing.");
+            println!("Aucune modification. Réparations possibles : --split-shared, --trash-missing, --merge-duplicates.");
         } else {
             println!();
-            println!("Copies séparées : {} · mis à la corbeille : {}", report.split, report.trashed);
+            println!(
+                "Copies séparées : {} · mis à la corbeille : {} · doublons fusionnés : {}",
+                report.split, report.trashed, report.merged,
+            );
             for e in &report.repair_errors {
                 println!("  échec : {e}");
             }
@@ -257,7 +283,10 @@ async fn cmd_drive_fsck(args: FsckArgs) -> Result<()> {
 
     // Exit code 2 when a dry run found damage or a repair failed, so a script
     // can alert on it.
-    let found = !report.missing.is_empty() || !report.shared.is_empty();
+    let found = !report.missing.is_empty()
+        || !report.shared.is_empty()
+        || !report.live_duplicates.is_empty()
+        || !report.duplicates.is_empty();
     if !report.repair_errors.is_empty() || (report.dry_run && found) {
         std::process::exit(2);
     }
@@ -567,6 +596,18 @@ async fn main() -> Result<()> {
     let storage = kubuno_storage::from_config(&settings.storage)
         .await
         .context("Initialisation du backend de stockage")?;
+
+    // Finish what the `live_name_unique` migration started: merge every duplicate
+    // file row it recorded (and trashed) into the row it duplicates. Idempotent;
+    // a failure is logged and the duplicate stays recorded, in the trash.
+    match kubuno_drive::services::duplicates::merge_all(&pool, &storage, None).await {
+        Ok(o) if !o.merged.is_empty() || !o.errors.is_empty() => tracing::warn!(
+            merged = o.merged.len(), failed = o.errors.len(),
+            "Duplicate file rows merged into the rows they duplicated"
+        ),
+        Ok(_) => {}
+        Err(e) => tracing::error!(error = %e, "Could not merge the recorded duplicate file rows"),
+    }
 
     // One client, shared by registration/heartbeat and by the instance-settings
     // refresher below.

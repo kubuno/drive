@@ -156,11 +156,22 @@ pub async fn scan_owner(db: &DbPool, storage_base: &Path, owner_id: Uuid) -> Res
 
             let id = kubuno_db::new_id();
             let seq = sync::next_seq_on_pool(db).await?;
+            // Skipped when a live file of that folder already carries the name
+            // (one live file per name and folder): a write registering these
+            // very bytes may be in flight, and a second row would duplicate it.
+            let b = db.backend();
             let inserted = db
                 .execute(
-                    "INSERT INTO drive.files
-                        (id, owner_id, folder_id, name, extension, mime_type, size_bytes, storage_path, metadata, change_seq)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
+                    &format!(
+                        "INSERT {}INTO drive.files
+                            (id, owner_id, folder_id, name, extension, mime_type, size_bytes, storage_path, metadata, change_seq)
+                         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10){}",
+                        b.insert_ignore_prefix(),
+                        match b {
+                            kubuno_db::dialect::Backend::MySql => "",
+                            _ => " ON CONFLICT DO NOTHING",
+                        }
+                    ),
                     params![
                         id, owner_id, folder_id, name, extension, mime, size, storage_rel,
                         serde_json::json!({}), seq
@@ -168,8 +179,8 @@ pub async fn scan_owner(db: &DbPool, storage_base: &Path, owner_id: Uuid) -> Res
                 )
                 .await?;
 
-            // `drive.files` has no natural unique key, so this insert of a fresh
-            // id always writes a row; follow the quota by what the DB did.
+            // The insert may be skipped (name taken by a live file); follow the
+            // quota by what the DB did.
             if inserted > 0 {
                 crate::services::files::update_used_bytes(db, owner_id, size).await;
                 stats.files_added += 1;

@@ -169,7 +169,7 @@ pub async fn complete_upload(
 
     let file = insert_or_update_record(
         db, storage, owner_id, session.folder_id, &safe_filename, &session.mime_type, size, &dest_str,
-        Some(&hash), None, existing,
+        Some(&hash), None, existing, session.overwrite,
     )
     .await?;
 

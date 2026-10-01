@@ -298,7 +298,7 @@ async fn fsck_reports_damage_and_repairs_only_when_asked() {
     assert!(!e.row(broken.id).await.expect("row").is_trashed);
     assert_eq!(e.row(twin.id).await.expect("row").storage_path, live.storage_path);
 
-    let repair = fsck::FsckOptions { owner: Some(e.owner), split_shared: true, trash_missing: true };
+    let repair = fsck::FsckOptions { owner: Some(e.owner), split_shared: true, trash_missing: true, merge_duplicates: false };
     let done = fsck::run(&e.db, &e.storage, &repair).await.expect("repair");
     assert!(!done.dry_run);
     assert_eq!((done.split, done.trashed), (1, 1));

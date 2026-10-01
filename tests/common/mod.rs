@@ -24,6 +24,8 @@ pub struct Env {
     pub db: DbPool,
     pub storage: Arc<dyn StorageBackend>,
     pub owner: Uuid,
+    /// Canonical storage root (what the scanner walks).
+    pub root: std::path::PathBuf,
     _dirs: (tempfile::TempDir, tempfile::TempDir),
 }
 
@@ -78,7 +80,7 @@ pub async fn env() -> Env {
     let root = store_dir.path().canonicalize().expect("canonical storage root");
     let storage: Arc<dyn StorageBackend> =
         Arc::new(LocalStorage::new(&root.to_string_lossy()).await.expect("local storage"));
-    Env { db, storage, owner, _dirs: (db_dir, store_dir) }
+    Env { db, storage, owner, root, _dirs: (db_dir, store_dir) }
 }
 
 impl Env {

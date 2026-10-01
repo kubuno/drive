@@ -11,6 +11,9 @@
 //!   location (a live file uploaded under the name of a trashed one in the same
 //!   folder): writing, moving or deleting one silently affects the others.
 //!
+//! It also lists live rows sharing a folder and name, and the duplicates the
+//! `live_name_unique` migration recorded (with the merge each would get).
+//!
 //! The check is read-only unless a repair is asked for explicitly:
 //!
 //! * `split_shared` gives every row of a shared blob but one its own copy of the
@@ -20,6 +23,8 @@
 //! * `trash_missing` moves the live files whose bytes are confirmed absent to the
 //!   trash — reversible, and it makes the damage visible to their owner instead
 //!   of failing on open. Nothing is ever hard-deleted.
+//! * `merge_duplicates` merges the recorded duplicates into the rows they
+//!   duplicate (see `services::duplicates`; the module also does it at start-up).
 
 use std::collections::BTreeMap;
 use std::sync::Arc;
@@ -30,7 +35,7 @@ use serde::Serialize;
 use uuid::Uuid;
 
 use crate::errors::Result;
-use crate::services::{blob_gc, files};
+use crate::services::{blob_gc, duplicates, files};
 use crate::sync;
 
 /// What to check, and which repairs (if any) to apply.
@@ -42,6 +47,8 @@ pub struct FsckOptions {
     pub split_shared: bool,
     /// Move the live files whose bytes are gone to the trash.
     pub trash_missing: bool,
+    /// Merge the duplicate rows recorded by the `live_name_unique` migration.
+    pub merge_duplicates: bool,
 }
 
 /// A row whose bytes are not in the storage.
@@ -91,6 +98,13 @@ pub struct FsckReport {
     pub split: u64,
     /// Live files moved to the trash because their bytes are gone.
     pub trashed: u64,
+    /// Several LIVE rows with the same folder and name (impossible once the
+    /// unique index exists; reported in case it does not).
+    pub live_duplicates: Vec<SharedBlob>,
+    /// Duplicates recorded by the migration and what merging them does (did).
+    pub duplicates: Vec<duplicates::DuplicatePlan>,
+    /// Duplicates merged by this run.
+    pub merged: u64,
     /// Repairs that could not be applied (each also logged).
     pub repair_errors: Vec<String>,
 }
@@ -118,7 +132,7 @@ struct VersionRow {
 
 /// Runs the check over every account (or `opts.owner`).
 pub async fn run(db: &DbPool, storage: &Arc<dyn StorageBackend>, opts: &FsckOptions) -> Result<FsckReport> {
-    let mut report = FsckReport { dry_run: !(opts.split_shared || opts.trash_missing), ..Default::default() };
+    let mut report = FsckReport { dry_run: !(opts.split_shared || opts.trash_missing || opts.merge_duplicates), ..Default::default() };
 
     let owners: Vec<Uuid> = match opts.owner {
         Some(o) => vec![o],
@@ -139,6 +153,17 @@ pub async fn run(db: &DbPool, storage: &Arc<dyn StorageBackend>, opts: &FsckOpti
     for owner_id in owners {
         check_owner(db, storage, owner_id, opts, &mut report).await?;
         report.owners_checked += 1;
+    }
+
+    // Duplicates recorded by the migration: planned in a dry run, merged on
+    // explicit request (the module also merges them at start-up).
+    if opts.merge_duplicates {
+        let outcome = duplicates::merge_all(db, storage, opts.owner).await?;
+        report.merged = outcome.merged.len() as u64;
+        report.duplicates = outcome.merged;
+        report.repair_errors.extend(outcome.errors.into_iter().map(|e| format!("merge {e}")));
+    } else {
+        report.duplicates = duplicates::plan(db, storage, opts.owner).await?;
     }
     Ok(report)
 }
@@ -211,6 +236,21 @@ async fn check_owner(
         });
     }
     let shared: Vec<Vec<SharedRow>> = by_location.into_values().filter(|rows| rows.len() > 1).collect();
+
+    // ── Several live rows with one folder and name ──
+    let mut by_name: BTreeMap<(Option<Uuid>, &str), Vec<SharedRow>> = BTreeMap::new();
+    for f in file_rows.iter().filter(|f| !f.is_trashed) {
+        by_name.entry((f.folder_id, f.name.as_str())).or_default().push(SharedRow {
+            kind: "file",
+            id: f.id,
+            name: f.name.clone(),
+            storage_path: f.storage_path.clone(),
+            is_trashed: false,
+        });
+    }
+    report.live_duplicates.extend(
+        by_name.into_values().filter(|rows| rows.len() > 1).map(|rows| SharedBlob { owner_id, rows }),
+    );
 
     // ── Repairs (explicit only) ──
     if opts.split_shared {

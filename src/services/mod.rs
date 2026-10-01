@@ -42,6 +42,7 @@ pub mod activity;
 pub mod archives;
 pub mod blob_gc;
 pub mod comments;
+pub mod duplicates;
 pub mod embeddings;
 pub mod extract;
 pub mod files;

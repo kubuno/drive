@@ -76,7 +76,17 @@ async fn update_file_returning(
     ps.push(DbValue::from(seq));
     ps.push(DbValue::from(file_id));
     ps.push(DbValue::from(owner_id));
-    let affected = tx.execute(&sql, ps).await?;
+    let affected = tx.execute(&sql, ps).await.map_err(|e| {
+        let e = FilesError::from(e);
+        if is_unique_violation(&e) {
+            // A concurrent write took the name in the meantime (one live file
+            // per name and folder).
+            FilesError::Conflict("un fichier porte déjà ce nom dans ce dossier".into())
+        } else {
+            tracing::error!(file_id = %file_id, error = %e, "Failed to update a file row");
+            e
+        }
+    })?;
     if affected == 0 {
         tx.rollback().await?;
         return Err(FilesError::NotFound(format!("Fichier {file_id} introuvable")));
@@ -198,6 +208,43 @@ pub async fn folder_virt_path(db: &DbPool, folder_id: Option<Uuid>, owner_id: Uu
     }
 }
 
+// ── One live file per name and folder ─────────────────────────────────────────
+//
+// The `files_live_name_unique` index (migration `live_name_unique`) forbids two
+// live rows with the same owner, folder and name. Names are resolved before the
+// insert, so the index only fires when a concurrent write took the name in the
+// meantime; the insert paths then retry rather than fail.
+
+/// Attempts per insert before giving up on a name taken again and again.
+const MAX_INSERT_ATTEMPTS: usize = 5;
+
+/// True when the error is a unique-constraint violation (any engine).
+pub fn is_unique_violation(e: &FilesError) -> bool {
+    matches!(e, FilesError::Database(sqlx::Error::Database(d)) if d.is_unique_violation())
+}
+
+/// Names of the live files of a folder.
+async fn live_names(db: &DbPool, owner_id: Uuid, folder_id: Option<Uuid>) -> Result<Vec<String>> {
+    let sql = format!(
+        "SELECT name FROM drive.files WHERE owner_id = $1 AND {} AND is_trashed = FALSE",
+        null_safe_eq(db.backend(), "folder_id", 2)
+    );
+    Ok(db
+        .fetch_all_as::<NameOnly>(&sql, params![owner_id, folder_id])
+        .await
+        .inspect_err(|e| tracing::error!(owner_id = %owner_id, error = %e, "Failed to list the folder's names"))?
+        .into_iter()
+        .map(|r| r.name)
+        .collect())
+}
+
+fn extension_of(name: &str) -> Option<String> {
+    std::path::Path::new(name)
+        .extension()
+        .and_then(|e| e.to_str())
+        .map(|e| e.to_lowercase())
+}
+
 // ── CRUD ──────────────────────────────────────────────────────────────────────
 
 #[allow(clippy::too_many_arguments)]
@@ -211,30 +258,40 @@ pub async fn create_file_record(
     storage_path_str: &str,
     content_hash: Option<&str>,
 ) -> Result<File> {
-    let extension = std::path::Path::new(name)
-        .extension()
-        .and_then(|e| e.to_str())
-        .map(|e| e.to_lowercase());
-
-    let id = kubuno_db::new_id();
-    insert_file(
-        db,
-        id,
-        owner_id,
-        folder_id,
-        name,
-        extension,
-        mime_type,
-        size_bytes,
-        storage_path_str,
-        content_hash,
-        serde_json::Value::Object(Default::default()),
-    )
-    .await?;
-
-    update_used_bytes(db, owner_id, size_bytes).await;
-
-    get_file(db, owner_id, id).await
+    let mut name = name.to_string();
+    for _ in 0..MAX_INSERT_ATTEMPTS {
+        let id = kubuno_db::new_id();
+        match insert_file(
+            db,
+            id,
+            owner_id,
+            folder_id,
+            &name,
+            extension_of(&name),
+            mime_type,
+            size_bytes,
+            storage_path_str,
+            content_hash,
+            serde_json::Value::Object(Default::default()),
+        )
+        .await
+        {
+            Ok(()) => {
+                release_reservation(storage_path_str);
+                update_used_bytes(db, owner_id, size_bytes).await;
+                return get_file(db, owner_id, id).await;
+            }
+            // A concurrent write took the name: number it, as the caller would have.
+            Err(e) if is_unique_violation(&e) => {
+                name = unique_file_name(&name, &live_names(db, owner_id, folder_id).await?);
+            }
+            Err(e) => {
+                tracing::error!(owner_id = %owner_id, error = %e, "Failed to insert a file row");
+                return Err(e);
+            }
+        }
+    }
+    Err(FilesError::Conflict(name))
 }
 
 /// Résout le nom final d'un UPLOAD et, en mode `overwrite`, retourne aussi le
@@ -291,6 +348,42 @@ pub async fn resolve_for_write(
 /// Upper bound on the numbered candidates tried for one location.
 const MAX_LOCATION_CANDIDATES: usize = 1000;
 
+/// How long an allocated location stays reserved for the write that got it.
+/// Long enough for the slowest write (a large chunked upload being assembled)
+/// to put its bytes and insert its row; by then the row references it.
+const RESERVATION_TTL: std::time::Duration = std::time::Duration::from_secs(3600);
+
+/// Locations handed out by [`allocate_storage_path`] whose row may not exist
+/// yet. Checking the database and the disk is not enough on its own: two
+/// concurrent writes would both find the same location free and write over each
+/// other's bytes before either row exists. The reservation closes that window
+/// within this process (the module runs as a single process per instance).
+static RESERVED_LOCATIONS: std::sync::LazyLock<std::sync::Mutex<std::collections::HashMap<String, std::time::Instant>>> =
+    std::sync::LazyLock::new(Default::default);
+
+/// Reserves `location` (by its file-system identity); false when another write
+/// holds it.
+fn try_reserve(location: &str) -> bool {
+    let key = crate::services::blob_gc::fs_key(location);
+    let now = std::time::Instant::now();
+    // A poisoned lock only means another thread panicked mid-update; the map is
+    // still a valid map.
+    let mut map = RESERVED_LOCATIONS.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+    map.retain(|_, at| now.duration_since(*at) < RESERVATION_TTL);
+    if map.contains_key(&key) {
+        return false;
+    }
+    map.insert(key, now);
+    true
+}
+
+/// Ends a reservation once the row referencing the location is committed (the
+/// database check covers it from then on).
+fn release_reservation(location: &str) {
+    let key = crate::services::blob_gc::fs_key(location);
+    RESERVED_LOCATIONS.lock().unwrap_or_else(std::sync::PoisonError::into_inner).remove(&key);
+}
+
 /// Rejects a name that is not one plain path segment: the name becomes a segment
 /// of the on-disk path, and a separator or a `..` would let it escape its folder
 /// — or the owner's tree.
@@ -333,6 +426,7 @@ pub async fn allocate_storage_path(
             _ => {
                 !crate::services::blob_gc::is_referenced(db, owner_id, &candidate, None).await?
                     && !storage.exists(&candidate).await?
+                    && try_reserve(&candidate)
             }
         };
         if free {
@@ -383,8 +477,48 @@ async fn relocate_blob(
     Ok(())
 }
 
+/// Relocates a row's bytes to `to`, then applies `set_sql` to the row (which
+/// must point it at `to`). When the database step fails — a name taken by a
+/// concurrent write, typically — the bytes go back where the row still says
+/// they are, so the row never points at an empty location.
+async fn relocate_and_update(
+    db: &DbPool,
+    storage: &Arc<dyn StorageBackend>,
+    owner_id: Uuid,
+    file: &File,
+    to: &str,
+    set_sql: &str,
+    ps: Vec<DbValue>,
+) -> Result<File> {
+    let shared = file.storage_path != to
+        && crate::services::blob_gc::is_referenced(db, owner_id, &file.storage_path, Some(file.id)).await?;
+    relocate_blob(db, storage, owner_id, file, to).await?;
+    match update_file_returning(db, owner_id, file.id, set_sql, ps).await {
+        Ok(updated) => {
+            release_reservation(to);
+            Ok(updated)
+        }
+        Err(e) => {
+            if file.storage_path != to {
+                let undo = if shared { storage.delete(to).await } else { storage.mv(to, &file.storage_path).await };
+                if let Err(u) = undo {
+                    tracing::error!(
+                        file_id = %file.id, from = %to, to = %file.storage_path, error = %u,
+                        "Could not undo a file relocation after a failed update"
+                    );
+                }
+            }
+            Err(e)
+        }
+    }
+}
+
 /// Enregistre la ligne fichier après écriture du blob : INSERT, ou MISE À JOUR
 /// EN PLACE (id préservé) quand `existing` est fourni (cas overwrite).
+///
+/// When the insert finds the name taken by a concurrent write (one live file per
+/// name and folder), `overwrite` decides: the winner's row is updated in place
+/// (last writer wins), or the new file takes a numbered name.
 #[allow(clippy::too_many_arguments)]
 pub async fn insert_or_update_record(
     db: &DbPool,
@@ -398,52 +532,71 @@ pub async fn insert_or_update_record(
     content_hash: Option<&str>,
     metadata: Option<serde_json::Value>,
     existing: Option<File>,
+    overwrite: bool,
 ) -> Result<File> {
-    let extension = std::path::Path::new(name)
-        .extension()
-        .and_then(|e| e.to_str())
-        .map(|e| e.to_lowercase());
+    let mut name = name.to_string();
+    let mut existing = existing;
+    for _ in 0..MAX_INSERT_ATTEMPTS {
+        if let Some(ex) = existing.take() {
+            let delta = size - ex.size_bytes;
+            let updated = update_file_returning(
+                db,
+                owner_id,
+                ex.id,
+                "name = $1, extension = $2, mime_type = $3, size_bytes = $4, \
+                 storage_path = $5, content_hash = $6, metadata = COALESCE($7, metadata)",
+                params![&name, extension_of(&name), mime_type, size, storage_path_str, content_hash, metadata],
+            )
+            .await?;
+            release_reservation(storage_path_str);
+            if delta != 0 {
+                update_used_bytes(db, owner_id, delta).await;
+            }
+            // The previous blob goes once the row points elsewhere, and only if no
+            // other row still uses it.
+            if ex.storage_path != storage_path_str {
+                crate::services::blob_gc::delete_blob_if_unreferenced(db, storage, owner_id, &ex.storage_path).await?;
+            }
+            return Ok(updated);
+        }
 
-    if let Some(ex) = existing {
-        let delta = size - ex.size_bytes;
-        let updated = update_file_returning(
+        let meta = metadata.clone().unwrap_or(serde_json::Value::Object(Default::default()));
+        let id = kubuno_db::new_id();
+        match insert_file(
             db,
+            id,
             owner_id,
-            ex.id,
-            "name = $1, extension = $2, mime_type = $3, size_bytes = $4, \
-             storage_path = $5, content_hash = $6, metadata = COALESCE($7, metadata)",
-            params![name, extension, mime_type, size, storage_path_str, content_hash, metadata],
+            folder_id,
+            &name,
+            extension_of(&name),
+            mime_type,
+            size,
+            storage_path_str,
+            content_hash,
+            meta,
         )
-        .await?;
-        if delta != 0 {
-            update_used_bytes(db, owner_id, delta).await;
+        .await
+        {
+            Ok(()) => {
+                release_reservation(storage_path_str);
+                update_used_bytes(db, owner_id, size).await;
+                return get_file(db, owner_id, id).await;
+            }
+            Err(e) if is_unique_violation(&e) => {
+                tracing::warn!(owner_id = %owner_id, name = %name, "File name taken by a concurrent write");
+                if overwrite {
+                    existing = resolve_for_write(db, owner_id, folder_id, &name, true, false).await?.1;
+                } else {
+                    name = unique_file_name(&name, &live_names(db, owner_id, folder_id).await?);
+                }
+            }
+            Err(e) => {
+                tracing::error!(owner_id = %owner_id, error = %e, "Failed to insert a file row");
+                return Err(e);
+            }
         }
-        // The previous blob goes once the row points elsewhere, and only if no
-        // other row still uses it.
-        if ex.storage_path != storage_path_str {
-            crate::services::blob_gc::delete_blob_if_unreferenced(db, storage, owner_id, &ex.storage_path).await?;
-        }
-        return Ok(updated);
     }
-
-    let meta = metadata.unwrap_or(serde_json::Value::Object(Default::default()));
-    let id = kubuno_db::new_id();
-    insert_file(
-        db,
-        id,
-        owner_id,
-        folder_id,
-        name,
-        extension,
-        mime_type,
-        size,
-        storage_path_str,
-        content_hash,
-        meta,
-    )
-    .await?;
-    update_used_bytes(db, owner_id, size).await;
-    get_file(db, owner_id, id).await
+    Err(FilesError::Conflict(name))
 }
 
 pub async fn list_files(db: &DbPool, owner_id: Uuid, query: ListFilesQuery) -> Result<Vec<File>> {
@@ -604,18 +757,18 @@ pub async fn rename_file(
 
     let virt_path = folder_virt_path(db, file.folder_id, owner_id).await?;
     let new_storage_str = allocate_storage_path(db, storage, owner_id, &virt_path, &name, Some(&file)).await?;
-    relocate_blob(db, storage, owner_id, &file, &new_storage_str).await?;
-
     let extension = std::path::Path::new(&name)
         .extension()
         .and_then(|e| e.to_str())
         .map(|e| e.to_lowercase());
     let mime = MimeGuess::from_path(&name).first_or_octet_stream().to_string();
 
-    update_file_returning(
+    relocate_and_update(
         db,
+        storage,
         owner_id,
-        file_id,
+        &file,
+        &new_storage_str,
         "name = $1, extension = $2, mime_type = $3, storage_path = $4",
         params![&name, extension, mime, &new_storage_str],
     )
@@ -637,12 +790,12 @@ pub async fn move_file(
     let new_virt_path = folder_virt_path(db, dto.folder_id, owner_id).await?;
     let new_storage_str =
         allocate_storage_path(db, storage, owner_id, &new_virt_path, &safe_name, Some(&file)).await?;
-    relocate_blob(db, storage, owner_id, &file, &new_storage_str).await?;
-
-    update_file_returning(
+    relocate_and_update(
         db,
+        storage,
         owner_id,
-        file_id,
+        &file,
+        &new_storage_str,
         "folder_id = $1, name = $2, storage_path = $3",
         params![dto.folder_id, &safe_name, &new_storage_str],
     )
@@ -676,12 +829,12 @@ pub async fn move_trashed_file(
 
     let virt_path = folder_virt_path(db, folder_id, owner_id).await?;
     let new_storage = allocate_storage_path(db, storage, owner_id, &virt_path, &name, Some(file)).await?;
-    relocate_blob(db, storage, owner_id, file, &new_storage).await?;
-
-    update_file_returning(
+    relocate_and_update(
         db,
+        storage,
         owner_id,
-        file.id,
+        file,
+        &new_storage,
         "folder_id = $1, name = $2, storage_path = $3",
         params![folder_id, &name, &new_storage],
     )
@@ -738,15 +891,16 @@ pub async fn restore_file(
             let name = unique_file_name(&file.name, &live_names);
             let virt_path = folder_virt_path(db, file.folder_id, owner_id).await?;
             let location = allocate_storage_path(db, storage, owner_id, &virt_path, &name, Some(&file)).await?;
-            relocate_blob(db, storage, owner_id, &file, &location).await?;
             let extension = std::path::Path::new(&name)
                 .extension()
                 .and_then(|e| e.to_str())
                 .map(|e| e.to_lowercase());
-            return update_file_returning(
+            return relocate_and_update(
                 db,
+                storage,
                 owner_id,
-                file_id,
+                &file,
+                &location,
                 "name = $1, extension = $2, storage_path = $3, is_trashed = $4, trashed_at = $5",
                 params![&name, extension, &location, false, None::<chrono::DateTime<chrono::Utc>>],
             )
@@ -916,6 +1070,7 @@ pub async fn create_with_bytes(
 
     insert_or_update_record(
         db, storage, owner_id, folder_id, &safe_name, mime_type, size, &dest_str, Some(&hash), metadata, existing,
+        overwrite,
     )
     .await
 }
@@ -1034,6 +1189,7 @@ pub async fn upload_simple(
 
     insert_or_update_record(
         db, storage, owner_id, folder_id, &safe_name, &mime, size, &dest_str, Some(&hash), None, existing,
+        overwrite,
     )
     .await
 }

@@ -179,7 +179,7 @@ pub async fn import_from_url(
     // ── Enregistrement DB (insert ou remplacement en place sur overwrite) ─────
     let file = insert_or_update_record(
         &state.db, &state.storage, user.id, dto.folder_id,
-        &safe_name, &mime, size, &dest_str, Some(&hash), None, existing,
+        &safe_name, &mime, size, &dest_str, Some(&hash), None, existing, dto.overwrite,
     ).await?;
 
     // No `update_used_bytes` here: `insert_or_update_record` already adjusted the

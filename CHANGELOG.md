@@ -33,6 +33,20 @@ number at release time, and CI publishes that section as the GitHub Release note
 - **Renaming or moving a folder keeps every file pointing at its contents**,
   including files stored under a different name on disk; if the database step
   fails, the folder is moved back on disk.
+- **No more duplicate copies of the same file.** Two saves of a new document
+  arriving together (office drafts, Flow, App, PaintSharp files), or a save
+  racing the disk scan, could each create a file with the same name in the same
+  folder, often over one stored copy. A folder can now hold only one live file
+  per name: a concurrent overwrite updates that file, a concurrent upload gets a
+  numbered name, and the disk scan skips names already in use. Existing
+  duplicates are merged on upgrade: the most recently saved copy is kept, the
+  others' version history, shares, comments, tags, activity and star move to it,
+  and a duplicate with different contents becomes a version of the kept file —
+  nothing is deleted. `drive:fsck` lists any that remain (`--merge-duplicates`).
+- **Module file registration with "overwrite" no longer deletes the contents it
+  registers.** Re-registering a file at the location just written deleted the
+  previous record and, with it, those very bytes; the record is now updated in
+  place.
 - **Drive builds from a clean checkout again.** The lockfile pinned two shared
   crates (`kubuno-modauth`, `kubuno-storage`) to commits that no longer exist on
   GitHub after their tags were moved, so a fresh `cargo build` could not fetch

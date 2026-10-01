@@ -117,19 +117,43 @@ pub async fn create_file(
     State(state): State<AppState>,
     Json(dto): Json<IpcCreateFileDto>,
 ) -> Result<(StatusCode, Json<Value>)> {
-    let safe_name = files::resolve_name(&state.db, &state.storage, dto.user_id, dto.folder_id, &dto.name, dto.overwrite, false).await?;
+    // The module wrote the bytes itself; their location must lie in this
+    // account's own tree.
+    let segs: Vec<&str> = dto.storage_path.split(['/', '\\']).filter(|s| !s.is_empty()).collect();
+    if segs.len() < 2 || segs[0] != dto.user_id.to_string() || segs.contains(&"..") {
+        return Err(FilesError::Validation("storage_path hors de l'espace du compte".into()));
+    }
 
-    let file = files::create_file_record(
-        &state.db,
-        dto.user_id,
-        dto.folder_id,
-        &safe_name,
-        &dto.mime_type,
-        dto.size_bytes,
-        &dto.storage_path,
-        dto.content_hash.as_deref(),
-    )
-    .await?;
+    // Overwrite updates the existing live row IN PLACE (its old blob goes only
+    // if nothing else uses it). The previous code deleted that row — and its
+    // blob — first, which destroyed the bytes when the module re-registered the
+    // very location it had just written.
+    let (safe_name, existing) =
+        files::resolve_for_write(&state.db, dto.user_id, dto.folder_id, &dto.name, dto.overwrite, false).await?;
+    files::ensure_plain_name(&safe_name)?;
+
+    let file = match existing {
+        Some(ex) => {
+            files::insert_or_update_record(
+                &state.db, &state.storage, dto.user_id, dto.folder_id, &safe_name, &dto.mime_type,
+                dto.size_bytes, &dto.storage_path, dto.content_hash.as_deref(), None, Some(ex), true,
+            )
+            .await?
+        }
+        None => {
+            files::create_file_record(
+                &state.db,
+                dto.user_id,
+                dto.folder_id,
+                &safe_name,
+                &dto.mime_type,
+                dto.size_bytes,
+                &dto.storage_path,
+                dto.content_hash.as_deref(),
+            )
+            .await?
+        }
+    };
     Ok((StatusCode::CREATED, Json(json!({ "file": file }))))
 }
 
