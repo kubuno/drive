@@ -11,6 +11,10 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 ### Fixed
 
+- **Drive builds from a clean checkout again.** The lockfile pinned two shared
+  crates (`kubuno-modauth`, `kubuno-storage`) to commits that no longer exist on
+  GitHub after their tags were moved, so a fresh `cargo build` could not fetch
+  them. The lockfile now points at the commits the tags currently resolve to.
 - **Drive is fully translated again.** English (and other non-French) users saw a
   French "Mon Drive" page title and a French "Deux volets" entry, because the
   title used a translation key that existed in no language and the two-pane view
