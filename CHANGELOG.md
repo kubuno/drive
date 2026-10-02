@@ -11,6 +11,18 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 ### Fixed
 
+- **Drive starts on MySQL and MariaDB again.** Migration 2 ("one live file per
+  name and folder") declared its uniqueness key as a `STORED` generated column
+  over `folder_id`, whose foreign key is `ON DELETE SET NULL`; both servers refuse
+  that (MySQL 8 with error 1215, MariaDB with error 1901), so the module stopped
+  at start-up. Each server now runs a variant of that migration
+  (`migrations/mysql-oracle/`, `migrations/mysql-mariadb/`) that declares the
+  column `VIRTUAL` — same key, same unique index, same rule. The variants are
+  recorded under the original checksum, so nothing changes for a database that
+  already applied the migration. If an earlier start failed on it, delete the
+  failed row once (`DELETE FROM drive._sqlx_migrations WHERE version = 2 AND
+  success = 0`) and restart.
+
 - **Database migrations keep the same checksum on every OS.** The repository now
   pins line endings to LF (`.gitattributes`), so a checkout on Windows no longer
   turns SQL migrations, scripts, manifests or sources into CRLF. A database
