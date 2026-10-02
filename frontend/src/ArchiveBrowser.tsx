@@ -6,6 +6,7 @@ import {
   Loader2, Package, Image, Film, Music, type LucideIcon,
 } from 'lucide-react'
 import { filesApi, formatSize, type FileItem, type ArchiveEntry } from '@kubuno/drive'
+import { downloadSignedUrl } from '@kubuno/sdk'
 interface Props {
   file:    FileItem
   onClose: () => void
@@ -182,7 +183,7 @@ function EntryRow({ entry, fileId, onNavigate }: {
         <a
           href={filesApi.archiveFileUrl(fileId, entry.path)}
           download={entry.name}
-          onClick={e => e.stopPropagation()}
+          onClick={e => { e.stopPropagation(); e.preventDefault(); void downloadSignedUrl(filesApi.archiveFileUrl(fileId, entry.path), entry.name) }}
           title={t('common.download')}
           className="inline-flex items-center justify-center p-1 rounded
                      opacity-0 group-hover:opacity-100 hover:bg-surface-2 transition-all"

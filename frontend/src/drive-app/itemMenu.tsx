@@ -5,6 +5,7 @@ import {
   Scissors, Copy, ClipboardPaste, Archive, PackageOpen, Info, History, Palette, Eraser,
 } from 'lucide-react'
 import { filesApi, FOLDER_COLORS, type Folder, type FileItem } from '@kubuno/drive'
+import { downloadSignedUrl } from '@kubuno/sdk'
 import type { MenuItem } from '@ui'
 import { hasReclaimableHistory, type FileVersionStats } from '../fileVersions'
 import type { MenuTarget } from './types'
@@ -123,7 +124,7 @@ export function buildItemMenuItems(
     items.push({
       type: 'action', label: tr('common.download'), icon: <Download size={14} />,
       disabled: isMultiSelection,
-      onClick: () => { window.open(filesApi.downloadUrl((menu.item as FileItem).id), '_blank', 'noreferrer') },
+      onClick: () => { void downloadSignedUrl(filesApi.downloadUrl((menu.item as FileItem).id), (menu.item as FileItem).name) },
     })
   } else {
     items.push({ type: 'action', label: tr('ctx.download_zip'), icon: <Download size={14} />, onClick: h.onCompress, disabled: isMultiSelection })

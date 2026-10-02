@@ -2,7 +2,7 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Star, Trash2, RotateCcw, MoreVertical } from 'lucide-react'
 import { filesApi, formatSize, getFileIcon, type FileItem } from '@kubuno/drive'
-import { useImageCacheStore, usePendingKind, pendingBoxClass, pendingBoxStyle } from '@kubuno/sdk'
+import { useImageCacheStore, useSignedUrl, usePendingKind, pendingBoxClass, pendingBoxStyle } from '@kubuno/sdk'
 import { openable, useLongPress } from '../openable'
 import { TagDots } from '../TagUI'
 import type { FileVersionStats } from '../fileVersions'
@@ -28,7 +28,7 @@ export default function FileRow({ file, trashed, selected, preSelected, focused,
   const pendingKind = usePendingKind(file.id)
   const updated = new Date(file.updated_at).toLocaleDateString(i18n.language, { day: '2-digit', month: 'short', year: 'numeric' })
   const thumbVer = useImageCacheStore(s => s.global + (s.versions[file.id] ?? 0))
-  const thumbSrc = thumbVer ? `${filesApi.thumbnailUrl(file.id)}?v=${thumbVer}` : filesApi.thumbnailUrl(file.id)
+  const thumbSrc = useSignedUrl(thumbVer ? `${filesApi.thumbnailUrl(file.id)}?v=${thumbVer}` : filesApi.thumbnailUrl(file.id))
   const pad   = density === 'compact' ? 'px-3 py-1' : density === 'large' ? 'px-4 py-3.5' : 'px-4 py-2.5'
   const thumb = density === 'large' ? 'w-12 h-12' : density === 'compact' ? 'w-6 h-6' : 'w-8 h-8'
   const longPress = useLongPress(onContextMenu)
@@ -44,7 +44,7 @@ export default function FileRow({ file, trashed, selected, preSelected, focused,
     >
       <div className={`shrink-0 ${thumb} flex items-center justify-center rounded overflow-hidden bg-surface-2`}>
         {file.has_thumbnail
-          ? <img src={thumbSrc} alt={file.name} className="w-full h-full object-cover" />
+          ? (thumbSrc ? <img src={thumbSrc} alt={file.name} className="w-full h-full object-cover" /> : null)
           : <span className="scale-75">{getFileIcon(file.mime_type, file.name)}</span>
         }
       </div>

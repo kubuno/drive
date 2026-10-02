@@ -1,9 +1,15 @@
-import { useState } from 'react'
+import { useState, type ImgHTMLAttributes } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { ChevronRight, Folder, Image as ImageIcon, LayoutGrid, List, Loader2 } from 'lucide-react'
 import { filesApi, type FileItem, type FilesSearchFilters } from '@kubuno/drive'
-import type { ImageSourceProps } from '@kubuno/sdk'
+import { useSignedUrl, type ImageSourceProps } from '@kubuno/sdk'
+
+/** `<img>` whose thumbnail URL is ticketed (nothing is rendered until the ticket arrives). */
+function SignedImg({ src, ...rest }: { src: string } & Omit<ImgHTMLAttributes<HTMLImageElement>, 'src'>) {
+  const signed = useSignedUrl(src)
+  return signed ? <img src={signed} {...rest} /> : null
+}
 
 /**
  * The "Drive" tab of the core image picker. Registered by this module, so the
@@ -155,7 +161,7 @@ export default function DriveImageSource({ onPick, query }: ImageSourceProps) {
                     onClick={() => onPick({ kind: 'url', url: filesApi.downloadUrl(f.id) })}
                     className="rounded-lg overflow-hidden bg-surface-2 hover:opacity-80 transition-opacity">
                     {f.has_thumbnail
-                      ? <img src={filesApi.thumbnailUrl(f.id)} alt={f.name} loading="lazy"
+                      ? <SignedImg src={filesApi.thumbnailUrl(f.id)} alt={f.name} loading="lazy"
                           className="w-full aspect-square object-cover" />
                       : <span className="flex items-center justify-center w-full aspect-square text-text-tertiary">
                           <ImageIcon size={22} />
@@ -170,7 +176,7 @@ export default function DriveImageSource({ onPick, query }: ImageSourceProps) {
                     onClick={() => onPick({ kind: 'url', url: filesApi.downloadUrl(f.id) })}
                     className="w-full flex items-center gap-3 px-3 h-11 rounded-lg hover:bg-surface-2 text-left transition-colors">
                     {f.has_thumbnail
-                      ? <img src={filesApi.thumbnailUrl(f.id)} alt="" className="w-8 h-8 rounded object-cover shrink-0" />
+                      ? <SignedImg src={filesApi.thumbnailUrl(f.id)} alt="" className="w-8 h-8 rounded object-cover shrink-0" />
                       : <ImageIcon size={16} className="shrink-0 text-text-tertiary" />}
                     <span className="truncate text-sm text-text-primary">{f.name}</span>
                   </button>

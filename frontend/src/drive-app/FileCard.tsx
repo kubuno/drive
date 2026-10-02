@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Star, Trash2, RotateCcw, MoreVertical, Play } from 'lucide-react'
 import { filesApi, getFileIcon, type FileItem } from '@kubuno/drive'
-import { useAuthStore, useImageCacheStore, usePendingKind, pendingBoxClass, pendingBoxStyle } from '@kubuno/sdk'
+import { useAuthStore, useImageCacheStore, useSignedUrl, usePendingKind, pendingBoxClass, pendingBoxStyle } from '@kubuno/sdk'
 import { isCoarsePointer, useLongPress } from '../openable'
 import { TagDots } from '../TagUI'
 import type { FileVersionStats } from '../fileVersions'
@@ -48,7 +48,7 @@ export default function FileCard({
     return /^[a-z0-9]{1,5}$/i.test(e) ? e.toUpperCase() : ''
   })()
   const thumbVer = useImageCacheStore(s => s.global + (s.versions[file.id] ?? 0))
-  const thumbSrc = thumbVer ? `${filesApi.thumbnailUrl(file.id)}?v=${thumbVer}` : filesApi.thumbnailUrl(file.id)
+  const thumbSrc = useSignedUrl(thumbVer ? `${filesApi.thumbnailUrl(file.id)}?v=${thumbVer}` : filesApi.thumbnailUrl(file.id))
   const videoRef    = useRef<HTMLVideoElement>(null)
   const fetchingRef = useRef(false)
   const [videoPlaying, setVideoPlaying] = useState(false)
@@ -169,13 +169,15 @@ export default function FileCard({
         <VersionBadge file={file as FileItem & FileVersionStats} variant="overlay" />
         {hasBigThumb && !thumbErr ? (
           <>
-            <img
-              src={thumbSrc}
-              alt={file.name}
-              className={`w-full h-full object-cover transition-opacity duration-200 ${videoPlaying ? 'opacity-0' : 'opacity-100'}`}
-              loading="lazy"
-              onError={() => setThumbErr(true)}
-            />
+            {thumbSrc && (
+              <img
+                src={thumbSrc}
+                alt={file.name}
+                className={`w-full h-full object-cover transition-opacity duration-200 ${videoPlaying ? 'opacity-0' : 'opacity-100'}`}
+                loading="lazy"
+                onError={() => setThumbErr(true)}
+              />
+            )}
             {isVideo && (
               <video
                 ref={videoRef}

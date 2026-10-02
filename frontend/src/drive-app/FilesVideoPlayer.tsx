@@ -2,12 +2,14 @@ import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Download, X } from 'lucide-react'
 import { formatSize, type FileItem } from '@kubuno/drive'
+import { downloadSignedUrl, useSignedUrl } from '@kubuno/sdk'
 import { fileSourceUrl, isExternalFile } from '../externalPreview'
 
 // ── Built-in video player (fallback when the media module is not active) ──────
 
 export default function FilesVideoPlayer({ file, onClose }: { file: FileItem; onClose: () => void }) {
   const { t } = useTranslation('drive')
+  const videoSrc = useSignedUrl(fileSourceUrl(file), { purpose: 'stream' })
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', handler)
@@ -30,7 +32,7 @@ export default function FilesVideoPlayer({ file, onClose }: { file: FileItem; on
             href={fileSourceUrl(file)}
             download={file.name}
             className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
-            onClick={e => e.stopPropagation()}
+            onClick={e => { e.stopPropagation(); e.preventDefault(); void downloadSignedUrl(fileSourceUrl(file), file.name) }}
           >
             <Download size={14} />
             {t('common.download')}
@@ -45,13 +47,15 @@ export default function FilesVideoPlayer({ file, onClose }: { file: FileItem; on
         className="flex-1 flex items-center justify-center p-6"
         onClick={e => e.stopPropagation()}
       >
-        <video
-          src={fileSourceUrl(file)}
-          controls
-          autoPlay
-          className="max-h-full max-w-full rounded-lg shadow-2xl"
-          style={{ maxHeight: 'calc(100vh - 120px)' }}
-        />
+        {videoSrc && (
+          <video
+            src={videoSrc}
+            controls
+            autoPlay
+            className="max-h-full max-w-full rounded-lg shadow-2xl"
+            style={{ maxHeight: 'calc(100vh - 120px)' }}
+          />
+        )}
       </div>
     </div>
   )

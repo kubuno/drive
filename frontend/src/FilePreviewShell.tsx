@@ -11,7 +11,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { filesApi, formatSize, FilesOpenWithContext, type FileItem } from '@kubuno/drive'
-import { api, useAuthStore, SlotRegistry, useModulesStore } from '@kubuno/sdk'
+import { api, useAuthStore, SlotRegistry, useModulesStore, downloadSignedUrl, openSignedUrl } from '@kubuno/sdk'
 import { MenuDropdown, type MenuItem } from '@ui'
 import { fileInlineUrl, fileSourceUrl, isExternalFile } from './externalPreview'
 import { useExternalPreviewActions } from './previewActions'
@@ -491,7 +491,7 @@ export default function FilePreviewShell({
 
   // ── Actions ────────────────────────────────────────────────────────────────
   const handleDownload = useCallback(() => {
-    window.open(fileSourceUrl(current), '_blank', 'noreferrer')
+    void downloadSignedUrl(fileSourceUrl(current), current.name)
   }, [current])
 
   const handleStar = useCallback(() => {
@@ -603,7 +603,7 @@ export default function FilePreviewShell({
           icon: <ExternalLink size={14} />,
           // `inline=1`: the backend serves Content-Disposition inline so the
           // browser DISPLAYS the file instead of saving it.
-          onClick: () => window.open(fileInlineUrl(current), '_blank', 'noreferrer'),
+          onClick: () => { void openSignedUrl(fileInlineUrl(current)) },
         },
         ...(openWith.length > 0 ? [{ type: 'separator' } as MenuItem, ...openWith] : []),
       ],

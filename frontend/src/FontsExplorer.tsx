@@ -8,7 +8,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties }
 import { useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Type, Upload, Trash2, FolderOpen, Rows3, LayoutGrid, Image as ImageIcon } from 'lucide-react'
 import { Button, FloatCheckbox, MenuDropdown, ConfirmDialog, ConflictDialog, Spinner, Tooltip, type ConflictChoice, type MenuItem, type MenuDropdownPos } from '@ui'
-import { useConfirm, useSearchStore } from '@kubuno/sdk'
+import { useConfirm, useSearchStore, downloadSignedUrl } from '@kubuno/sdk'
 import { systemApi, useMarqueeSelection, type FileItem } from '@kubuno/drive'
 import { parseFontMeta, styleLabelFr, styleSortKey, type FontMeta } from './fonts/fontMeta'
 import { SamplePoster } from './fonts/samplePosters'
@@ -339,11 +339,7 @@ export default function FontsExplorer({ folderId, onExit }: { folderId: string; 
     finally { setBusy(false) }
   }
   const downloadFamily = (fam: Family) => {
-    fam.variants.forEach(v => {
-      const a = document.createElement('a')
-      a.href = systemApi.downloadUrl(v.file.id); a.download = ''
-      document.body.appendChild(a); a.click(); a.remove()
-    })
+    fam.variants.forEach(v => { void downloadSignedUrl(systemApi.downloadUrl(v.file.id), v.file.name) })
   }
 
   // Shared per-item props for the fonts-home views (grid / row / sample).

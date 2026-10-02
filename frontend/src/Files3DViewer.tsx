@@ -9,6 +9,7 @@ import * as THREE from 'three'
 import { X, Download, Box, Loader2, AlertTriangle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { FileItem } from '@kubuno/drive'
+import { downloadSignedUrl } from '@kubuno/sdk'
 import { fetchFileBuffer, fileSourceUrl } from './externalPreview'
 // ── Supported formats ─────────────────────────────────────────────────────────
 
@@ -310,6 +311,7 @@ export default function Files3DViewer({ file, onClose }: { file: FileItem; onClo
           <a
             href={fileSourceUrl(file)}
             download={file.name}
+            onClick={e => { e.preventDefault(); void downloadSignedUrl(fileSourceUrl(file), file.name) }}
             className="p-2 rounded text-white/60 hover:text-white hover:bg-white/10 transition-colors"
             title={t('common.download')}
           >

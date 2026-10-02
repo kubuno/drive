@@ -72,6 +72,9 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 ### Added
 
+- **Downloads answer byte-range requests** (`206 Partial Content`, `Accept-Ranges: bytes`), so a video
+  or an audio file can be sought without downloading it again, and a PDF viewer can fetch only the pages
+  it shows.
 - **Drive now runs on PostgreSQL, MySQL/MariaDB or SQLite.** The database engine
   is an administrator's choice, set in configuration (`[database] engine`) and
   read at start-up; the same build connects to whichever is named. SQLite needs
@@ -99,6 +102,11 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 ### Security
 
+- **Thumbnails, previews, the video and audio players, downloads (files, archive members, fonts) and the
+  image editor no longer rely on the access-token cookie the web client used to keep readable by page
+  scripts.** They load with short-lived signed tickets bound to your session and to the exact file.
+  Saving from the image editor now uses your session instead of a token read from local storage.
+  Requires a Kubuno core that issues signed tickets (`POST /api/v1/auth/tickets`) and `@kubuno/sdk` with the signed-URL helpers.
 - **Deleting a folder for good no longer leaves broken files behind or destroys
   other files' contents.** A permanent folder delete (Shift+Delete, deleting from
   the trash, the WebDAV `DELETE`, the module and admin APIs) moved the folder's

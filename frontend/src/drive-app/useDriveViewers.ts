@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { filesApi, isTextFile, useFilesMediaPlayerStore, useFilesVideoPlayerStore, type FileItem } from '@kubuno/drive'
-import { api, FileTypeRegistry, ModuleServiceRegistry } from '@kubuno/sdk'
+import { api, downloadSignedUrl, FileTypeRegistry, ModuleServiceRegistry } from '@kubuno/sdk'
 import { is3dFile } from '../Files3DViewer'
 import { isFontFile } from '../FilesFontViewer'
 import { isArchiveFile } from './fileKinds'
@@ -91,7 +91,7 @@ export function useDriveViewers(): DriveViewers {
     const opener = FileTypeRegistry.openersFor(file)[0]
     if (opener?.open) { opener.open(file, routerNavigate); return }
     // 5. Fallback: download
-    window.open(filesApi.downloadUrl(file.id), '_blank')
+    void downloadSignedUrl(filesApi.downloadUrl(file.id), file.name)
   }, [openAudio, openVideoFile, routerNavigate])
 
   // Opens a file directly in its NATIVE preview (skipping the « open with »

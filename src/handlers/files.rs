@@ -228,13 +228,99 @@ pub async fn download(
         file.name.replace('"', "\\\"")
     );
 
-    Ok(Response::builder()
-        .status(StatusCode::OK)
-        .header(header::CONTENT_TYPE, &file.mime_type)
-        .header(header::CONTENT_DISPOSITION, disposition)
-        .header(header::CONTENT_LENGTH, data.len())
-        .body(Body::from(data))
-        .expect("valid response"))
+    // Byte ranges: what a <video>/<audio> element (and a PDF viewer) needs to
+    // seek without downloading the whole file again.
+    let total = data.len() as u64;
+    let range = headers
+        .get(header::RANGE)
+        .and_then(|v| v.to_str().ok());
+    match parse_byte_range(range, total) {
+        Ok(Some((start, end))) => Ok(Response::builder()
+            .status(StatusCode::PARTIAL_CONTENT)
+            .header(header::CONTENT_TYPE, &file.mime_type)
+            .header(header::CONTENT_DISPOSITION, disposition)
+            .header(header::ACCEPT_RANGES, "bytes")
+            .header(header::CONTENT_RANGE, format!("bytes {start}-{end}/{total}"))
+            .header(header::CONTENT_LENGTH, end - start + 1)
+            .body(Body::from(data.slice(start as usize..=end as usize)))
+            .expect("valid response")),
+        Err(()) => Ok(Response::builder()
+            .status(StatusCode::RANGE_NOT_SATISFIABLE)
+            .header(header::CONTENT_RANGE, format!("bytes */{total}"))
+            .body(Body::empty())
+            .expect("valid response")),
+        Ok(None) => Ok(Response::builder()
+            .status(StatusCode::OK)
+            .header(header::CONTENT_TYPE, &file.mime_type)
+            .header(header::CONTENT_DISPOSITION, disposition)
+            .header(header::ACCEPT_RANGES, "bytes")
+            .header(header::CONTENT_LENGTH, data.len())
+            .body(Body::from(data))
+            .expect("valid response")),
+    }
+}
+
+/// A single `Range: bytes=…` request against a body of `len` bytes.
+///
+/// `Ok(Some((start, end)))` (inclusive) for a satisfiable range, `Ok(None)` to
+/// serve the whole body (no header, another unit, several ranges, or a header
+/// that does not parse — RFC 9110 says to ignore it then), `Err(())` when the
+/// range cannot be satisfied (→ 416).
+fn parse_byte_range(header: Option<&str>, len: u64) -> std::result::Result<Option<(u64, u64)>, ()> {
+    let Some(spec) = header.and_then(|h| h.trim().strip_prefix("bytes=")) else {
+        return Ok(None);
+    };
+    if spec.contains(',') {
+        return Ok(None);
+    }
+    let Some((first, last)) = spec.trim().split_once('-') else {
+        return Ok(None);
+    };
+    let (first, last) = (first.trim(), last.trim());
+    if first.is_empty() {
+        // Suffix range: the last `n` bytes.
+        let Ok(n) = last.parse::<u64>() else { return Ok(None) };
+        if n == 0 || len == 0 {
+            return Err(());
+        }
+        return Ok(Some((len.saturating_sub(n), len - 1)));
+    }
+    let Ok(start) = first.parse::<u64>() else { return Ok(None) };
+    let end = if last.is_empty() {
+        len.saturating_sub(1)
+    } else {
+        match last.parse::<u64>() {
+            Ok(e) if e >= start => e.min(len.saturating_sub(1)),
+            _ => return Ok(None),
+        }
+    };
+    if start >= len {
+        return Err(());
+    }
+    Ok(Some((start, end)))
+}
+
+#[cfg(test)]
+mod range_tests {
+    use super::parse_byte_range;
+
+    #[test]
+    fn byte_ranges() {
+        assert_eq!(parse_byte_range(None, 100), Ok(None));
+        assert_eq!(parse_byte_range(Some("bytes=0-9"), 100), Ok(Some((0, 9))));
+        assert_eq!(parse_byte_range(Some("bytes=90-"), 100), Ok(Some((90, 99))));
+        assert_eq!(parse_byte_range(Some("bytes=-10"), 100), Ok(Some((90, 99))));
+        assert_eq!(parse_byte_range(Some("bytes=-500"), 100), Ok(Some((0, 99))));
+        assert_eq!(parse_byte_range(Some("bytes=50-500"), 100), Ok(Some((50, 99))));
+        assert_eq!(parse_byte_range(Some("bytes=100-"), 100), Err(()));
+        assert_eq!(parse_byte_range(Some("bytes=-0"), 100), Err(()));
+        assert_eq!(parse_byte_range(Some("bytes=0-"), 0), Err(()));
+        // Ignored: another unit, several ranges, reversed or garbled.
+        assert_eq!(parse_byte_range(Some("items=0-9"), 100), Ok(None));
+        assert_eq!(parse_byte_range(Some("bytes=0-9,20-29"), 100), Ok(None));
+        assert_eq!(parse_byte_range(Some("bytes=9-0"), 100), Ok(None));
+        assert_eq!(parse_byte_range(Some("bytes=a-b"), 100), Ok(None));
+    }
 }
 
 /// Thumbnail du fichier

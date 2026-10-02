@@ -216,6 +216,7 @@ export function register() {
     getCurrentFolderId: () => useFilesStore.getState().currentFolderId,
     openFilePicker:     (opts?: object) => useFilesDialogStore.getState().openFile(opts),
     pickFolder:         (opts?: object) => useFilesDialogStore.getState().pickFolder(opts),
+    // Bare URLs (no ticket): they may be stored by consumers, which sign them at render time.
     thumbnailUrl:       (id: string) => filesApi.thumbnailUrl(id),
 
     // Viewer offered to other modules: preview any URL (mail attachments,
@@ -230,6 +231,7 @@ export function register() {
     ) => openPreview(source),
     canPreview:  (mime?: string, name?: string) => canPreview(mime, name),
 
+    // Bare URL (no ticket) - consumers sign it when they render or download it.
     downloadUrl:        (id: string) => filesApi.downloadUrl(id),
 
     listFolders:  (parentId?: string | null) => filesApi.listFolders(parentId),

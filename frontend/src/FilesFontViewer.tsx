@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Download, Type, ChevronDown } from 'lucide-react'
 import { type FileItem } from '@kubuno/drive'
 import { FloatingWindow } from '@ui'
+import { downloadSignedUrl } from '@kubuno/sdk'
 import { fetchFileBuffer, fileSourceUrl } from './externalPreview'
 
 // ── Font detection ─────────────────────────────────────────────────────────────
@@ -113,6 +114,7 @@ export default function FilesFontViewer({ file, onClose }: Props) {
       <a
         href={fileSourceUrl(file)}
         download={file.name}
+        onClick={e => { e.preventDefault(); void downloadSignedUrl(fileSourceUrl(file), file.name) }}
         className="p-2 text-text-tertiary hover:text-text-primary rounded-lg hover:bg-surface-1"
         title={t('common.download')}
       >

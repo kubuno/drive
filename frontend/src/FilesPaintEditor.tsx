@@ -7,7 +7,7 @@ import { ColorPicker, useAppPickerTheme } from '@ui'
 import { useFilesPaintStore } from '@kubuno/drive'
 import { filesApi } from '@kubuno/drive'
 import { useQueryClient } from '@tanstack/react-query'
-import { useModulesStore } from '@kubuno/sdk'
+import { api, signedUrl, useModulesStore } from '@kubuno/sdk'
 import {
   Pencil, Eraser, PaintBucket, Type, Pipette, ZoomIn,
   Minus, Plus, Undo2, Redo2, Save,
@@ -180,7 +180,12 @@ export default function FilesPaintEditor() {
       ctx.fillRect(0, 0, canvas.width, canvas.height)
       pushHistory(canvas, ctx)
     }
-    img.src = filesApi.downloadUrl(file.id)
+    // The download route needs a ticket (an <img> cannot send the bearer).
+    let cancelled = false
+    void signedUrl(filesApi.downloadUrl(file.id)).then(src => {
+      if (!cancelled) img.src = src
+    }).catch(() => { if (!cancelled) img.onerror?.(new Event('error')) })
+    return () => { cancelled = true }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, file?.id])
 
@@ -382,11 +387,7 @@ export default function FilesPaintEditor() {
       )
       const fd = new FormData()
       fd.append('file', blob, file.name)
-      await fetch(`/api/v1/drive/${file.id}/content`, {
-        method: 'PUT',
-        headers: { Authorization: `Bearer ${localStorage.getItem('access_token') ?? ''}` },
-        body: fd,
-      })
+      await api.put(`/drive/${file.id}/content`, fd)
       qc.invalidateQueries({ queryKey: ['files'] })
       closeEditor()
     } catch {

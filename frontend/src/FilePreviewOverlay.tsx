@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { PDFDocumentProxy, PDFDocumentLoadingTask } from 'pdfjs-dist'
 import { type FileItem } from '@kubuno/drive'
-import { api, useAuthStore } from '@kubuno/sdk'
+import { api, useAuthStore, downloadSignedUrl } from '@kubuno/sdk'
 import { fetchFileResponse, fileSourceUrl, isExternalFile } from './externalPreview'
 import { MenuDropdown, type MenuItem } from '@ui'
 import {
@@ -1056,7 +1056,7 @@ export default function FilePreviewOverlay({
   }, [doc])
 
   const handleDownload = useCallback(() => {
-    window.open(fileSourceUrl(current), '_blank', 'noreferrer')
+    void downloadSignedUrl(fileSourceUrl(current), current.name)
   }, [current])
 
   // ── Shell extensions ───────────────────────────────────────────────────────

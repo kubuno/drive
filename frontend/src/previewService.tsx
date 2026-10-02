@@ -9,7 +9,7 @@ import {
 } from '@kubuno/drive'
 // `navigate` is aliased: `ExternalPreviewHost` has a local `navigate` of its own
 // (moving between the previewed files), and shadowing would be confusing.
-import { i18n, FileTypeRegistry, SlotRegistry, useModulesStore, navigate as shellNavigate } from '@kubuno/sdk'
+import { i18n, FileTypeRegistry, SlotRegistry, useModulesStore, useSignedUrl, navigate as shellNavigate } from '@kubuno/sdk'
 import { AppWindow } from 'lucide-react'
 import type { MenuItem } from '@ui'
 import {
@@ -86,6 +86,16 @@ interface VideoOverrideProps {
   srcOverride?: string
 }
 
+/** Hands the video override a ticketed (stream) source URL; renders nothing until it arrives. */
+function SignedVideoOverride({ Override, file, onClose }: {
+  Override: ComponentType<VideoOverrideProps>
+  file: FileItem
+  onClose: () => void
+}) {
+  const src = useSignedUrl(fileSourceUrl(file), { purpose: 'stream' })
+  return src ? <Override file={file} onClose={onClose} srcOverride={src} /> : null
+}
+
 interface ViewerProps {
   file:          FileItem
   files:         FileItem[]
@@ -124,7 +134,7 @@ function ExternalPreview(props: ViewerProps) {
       return <FilesFontViewer file={file} onClose={onClose} />
     case 'video':
       return VideoOverride
-        ? <VideoOverride file={file} onClose={onClose} srcOverride={fileSourceUrl(file)} />
+        ? <SignedVideoOverride Override={VideoOverride} file={file} onClose={onClose} />
         : <FilesVideoPlayer file={file} onClose={onClose} />
     case 'audio':
       return <ExternalAudioPlayer file={file} onClose={onClose} />

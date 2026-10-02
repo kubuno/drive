@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { type FileItem } from '@kubuno/drive'
-import { useImageCacheStore } from '@kubuno/sdk'
+import { useImageCacheStore, useSignedUrl, signedUrl, downloadSignedUrl } from '@kubuno/sdk'
 import { fileInlineUrl, fileSourceUrl, isExternalFile } from './externalPreview'
 import { MenuDropdown, type MenuItem } from '@ui'
 import {
@@ -45,7 +45,9 @@ export default function ImagePreviewOverlay({
   // (mail attachment…) is used as-is: no Drive route, no cache to bust.
   const external = isExternalFile(current)
   const thumbVer = useImageCacheStore(s => s.global + (s.versions[current.id] ?? 0))
-  const src = external ? fileInlineUrl(current) : `${fileInlineUrl(current)}&v=${thumbVer}`
+  const bareSrc = external ? fileInlineUrl(current) : `${fileInlineUrl(current)}&v=${thumbVer}`
+  // Ticketed form (undefined while the ticket is being fetched).
+  const src = useSignedUrl(bareSrc)
 
   // ── Image natural size / load state ────────────────────────────────────────
   const [natural, setNatural] = useState<{ w: number; h: number } | null>(null)
@@ -105,7 +107,7 @@ export default function ImagePreviewOverlay({
 
   // ── Actions ────────────────────────────────────────────────────────────────
   const handleDownload = useCallback(() => {
-    window.open(fileSourceUrl(current), '_blank', 'noreferrer')
+    void downloadSignedUrl(fileSourceUrl(current), current.name)
   }, [current])
 
   // Prints the image from a same-origin iframe (full width, no margins).
@@ -114,6 +116,7 @@ export default function ImagePreviewOverlay({
     if (printingRef.current) return
     printingRef.current = true
     try {
+      const printSrc = await signedUrl(bareSrc)
       const iframe = document.createElement('iframe')
       Object.assign(iframe.style, { position: 'fixed', right: '0', bottom: '0', width: '0', height: '0', border: '0' })
       document.body.appendChild(iframe)
@@ -124,7 +127,7 @@ export default function ImagePreviewOverlay({
         @page { margin: 0; }
         html, body { margin: 0; padding: 0; }
         img { display: block; width: 100%; }
-      </style></head><body><img src="${src}"></body></html>`)
+      </style></head><body><img src="${printSrc}"></body></html>`)
       idoc.close()
       await Promise.all([...idoc.images].map(im =>
         im.complete ? Promise.resolve() : new Promise(r => { im.onload = im.onerror = () => r(null) })))
@@ -134,7 +137,7 @@ export default function ImagePreviewOverlay({
     } finally {
       printingRef.current = false
     }
-  }, [src])
+  }, [bareSrc])
 
   // ── Shell extensions ───────────────────────────────────────────────────────
 
@@ -259,16 +262,18 @@ export default function ImagePreviewOverlay({
                   <Loader2 size={24} className="animate-spin text-white/60" />
                 </div>
               )}
-              <img
-                key={`${current.id}-${thumbVer}`}
-                src={src}
-                alt={current.name}
-                draggable={false}
-                onLoad={e => setNatural({ w: e.currentTarget.naturalWidth || 1, h: e.currentTarget.naturalHeight || 1 })}
-                onError={() => setFailed(true)}
-                className="shadow-2xl select-none"
-                style={natural ? { width: cssW, height: cssH, maxWidth: 'none' } : { opacity: 0 }}
-              />
+              {src && (
+                <img
+                  key={`${current.id}-${thumbVer}`}
+                  src={src}
+                  alt={current.name}
+                  draggable={false}
+                  onLoad={e => setNatural({ w: e.currentTarget.naturalWidth || 1, h: e.currentTarget.naturalHeight || 1 })}
+                  onError={() => setFailed(true)}
+                  className="shadow-2xl select-none"
+                  style={natural ? { width: cssW, height: cssH, maxWidth: 'none' } : { opacity: 0 }}
+                />
+              )}
             </div>
           )}
         </div>

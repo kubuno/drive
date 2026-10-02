@@ -8,6 +8,7 @@ import { FloatingWindow } from '@ui'
 import { useWindowZStore } from '@ui'
 import { useFilesMediaPlayerStore } from '@kubuno/drive'
 import { formatSize, type FileItem } from '@kubuno/drive'
+import { downloadSignedUrl, signedUrl } from '@kubuno/sdk'
 import { fileSourceUrl, isExternalFile } from './externalPreview'
 
 // ── Playback controller ───────────────────────────────────────────────────────
@@ -110,20 +111,26 @@ function AudioPlayerCore({ ctl }: { ctl: PlayerController }) {
   useEffect(() => {
     const el = audioRef.current
     if (!el || !file) return
-    el.src = fileSourceUrl(file)
-    const pos = restorePosition
-    const startPlayback = () => {
-      if (pos > 0) {
-        el.currentTime = pos
-        _clearRestorePosition()
+    // The source needs a stream ticket; bail out if the track changed meanwhile.
+    let cancelled = false
+    void signedUrl(fileSourceUrl(file), { purpose: 'stream' }).then(src => {
+      if (cancelled) return
+      el.src = src
+      const pos = restorePosition
+      const startPlayback = () => {
+        if (pos > 0) {
+          el.currentTime = pos
+          _clearRestorePosition()
+        }
+        el.play().then(() => _setPlaying(true)).catch(() => {})
       }
-      el.play().then(() => _setPlaying(true)).catch(() => {})
-    }
-    if (pos > 0 && el.readyState < 3) {
-      el.addEventListener('canplay', startPlayback, { once: true })
-    } else {
-      startPlayback()
-    }
+      if (pos > 0 && el.readyState < 3) {
+        el.addEventListener('canplay', startPlayback, { once: true })
+      } else {
+        startPlayback()
+      }
+    }).catch(() => {})
+    return () => { cancelled = true }
   }, [file?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Drag ref for the mini widget (no shared drag state — each mousedown captures its own closure)
@@ -308,6 +315,7 @@ function AudioPlayerCore({ ctl }: { ctl: PlayerController }) {
         <a
           href={fileSourceUrl(file)}
           download={file.name}
+          onClick={e => { e.preventDefault(); void downloadSignedUrl(fileSourceUrl(file), file.name) }}
           className="flex items-center gap-1.5 px-4 py-1.5 text-xs text-text-secondary hover:text-text-primary border border-border rounded-md hover:bg-surface-1 transition-colors"
         >
           <Download size={13} />

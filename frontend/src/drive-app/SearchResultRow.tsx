@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Folder as FolderIcon, Star, Download } from 'lucide-react'
 import { filesApi, formatSize, getFileIcon, type FileItem, type SearchHit } from '@kubuno/drive'
-import { useImageCacheStore } from '@kubuno/sdk'
+import { useImageCacheStore, useSignedUrl, downloadSignedUrl } from '@kubuno/sdk'
 
 // ── Search helpers ────────────────────────────────────────────────────────────
 
@@ -20,10 +20,11 @@ export function sanitizeSnippet(raw: string): string {
 // Image/video thumbnail: the thumbnail is ALWAYS attempted (the server generates
 // it on the fly when missing — including videos via ffmpeg). On failure (corrupt
 // file, undecodable format…) it falls back to the type icon.
-function ThumbImg({ file, src, className }: { file: FileItem; src: string; className: string }) {
+function ThumbImg({ file, src, className }: { file: FileItem; src: string | undefined; className: string }) {
   const [err, setErr] = useState(false)
   const thumbable = file.mime_type.startsWith('image/') || file.mime_type.startsWith('video/')
   if (err || !thumbable) return <>{getFileIcon(file.mime_type, file.name)}</>
+  if (!src) return null
   return <img src={src} alt={file.name} className={className} loading="lazy" onError={() => setErr(true)} />
 }
 
@@ -35,7 +36,7 @@ export default function SearchResultRow({ file, onOpen }: { file: SearchHit; onO
     day: '2-digit', month: 'short', year: 'numeric',
   })
   const thumbVer = useImageCacheStore(s => s.global + (s.versions[file.id] ?? 0))
-  const thumbSrc = thumbVer ? `${filesApi.thumbnailUrl(file.id)}?v=${thumbVer}` : filesApi.thumbnailUrl(file.id)
+  const thumbSrc = useSignedUrl(thumbVer ? `${filesApi.thumbnailUrl(file.id)}?v=${thumbVer}` : filesApi.thumbnailUrl(file.id))
 
   return (
     <div className="group flex items-start gap-4 py-3 px-2 rounded-lg hover:bg-surface-1 transition-colors">
@@ -81,7 +82,7 @@ export default function SearchResultRow({ file, onOpen }: { file: SearchHit; onO
         target="_blank"
         rel="noreferrer"
         className="flex-shrink-0 p-1.5 rounded hover:bg-surface-2 opacity-0 group-hover:opacity-100 transition-all"
-        onClick={e => e.stopPropagation()}
+        onClick={e => { e.stopPropagation(); e.preventDefault(); void downloadSignedUrl(filesApi.downloadUrl(file.id), file.name) }}
         aria-label={`${t('common.download')} ${file.name}`}
       >
         <Download size={14} className="text-text-secondary" />
