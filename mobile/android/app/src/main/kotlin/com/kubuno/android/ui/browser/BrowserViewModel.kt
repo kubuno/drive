@@ -9,6 +9,7 @@ import com.kubuno.android.account.AccountGraph
 import com.kubuno.android.account.ActiveAccount
 import com.kubuno.android.sync.db.FileEntity
 import com.kubuno.android.sync.db.FolderEntity
+import com.kubuno.android.sync.outbox.NotSyncedSummary
 import com.kubuno.android.sync.work.SyncScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -99,6 +100,20 @@ class BrowserViewModel @Inject constructor(
     fun setView(mode: ViewMode) { _view.value = mode }
 
     fun refresh() { graph.value?.scheduler?.syncNow() }
+
+    // ---- changes not synced yet (outbox rows refused or failing) ---------
+
+    /** Shown by the shell's sync banner; empty when everything is synced. */
+    val notSynced: StateFlow<NotSyncedSummary> = graph
+        .flatMapLatest { g -> g?.outboxStatus?.notSynced ?: flowOf(NotSyncedSummary()) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NotSyncedSummary())
+
+    fun retryUnsynced(id: Long) = withGraph { it.outboxStatus.retryNow(id) }
+
+    fun retryAllUnsynced() = withGraph { it.outboxStatus.retryAll() }
+
+    /** Drops the change for good and undoes it locally. */
+    fun discardUnsynced(id: Long) = withGraph { it.outboxStatus.discard(id) }
 
     // ---- mutations: local first, replayed from the outbox ----------------
 

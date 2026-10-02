@@ -44,4 +44,10 @@ dependencies {
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.work)
     ksp(libs.androidx.hilt.compiler)
+
+    // JVM unit tests of the outbox policy, run against the shared conformance
+    // vectors vendored under src/test/resources/vectors.
+    testImplementation(libs.junit)
+    testImplementation(libs.coroutines.test)
+    testImplementation(project(":core-vectors"))
 }

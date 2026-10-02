@@ -1,0 +1,24 @@
+{
+  "$schema": "../conformance-vectors.schema.json",
+  "format": 1,
+  "suite": "sync.outbox.backoff",
+  "version": "1.0.0",
+  "description": "Delay before the next attempt of an outbox intent after a transient failure. base = min(2^clamp(attempts, 0, 20) x 2000 ms, 900000 ms); delay = round(base x (1 + 0.2 x (2 x jitter_unit - 1))). A server Retry-After replaces the schedule, capped at 900000 ms and not jittered. There is no attempt limit: an intent is never given up.",
+  "reference": "desktop/common/kubuno-sync-engine outbox::backoff (future kubuno-sync-core)",
+  "cases": [
+    { "id": "first-failure/centre", "input": { "attempts": 0, "retry_after_ms": null, "jitter_unit": 0.5 }, "expected": { "delay_ms": 2000 } },
+    { "id": "first-failure/low", "input": { "attempts": 0, "retry_after_ms": null, "jitter_unit": 0 }, "expected": { "delay_ms": 1600 } },
+    { "id": "first-failure/high", "input": { "attempts": 0, "retry_after_ms": null, "jitter_unit": 1 }, "expected": { "delay_ms": 2400 } },
+    { "id": "doubling/1", "input": { "attempts": 1, "retry_after_ms": null, "jitter_unit": 0.5 }, "expected": { "delay_ms": 4000 } },
+    { "id": "doubling/3", "input": { "attempts": 3, "retry_after_ms": null, "jitter_unit": 0.5 }, "expected": { "delay_ms": 16000 } },
+    { "id": "doubling/8", "input": { "attempts": 8, "retry_after_ms": null, "jitter_unit": 0.5 }, "expected": { "delay_ms": 512000 } },
+    { "id": "cap/9", "input": { "attempts": 9, "retry_after_ms": null, "jitter_unit": 0.5 }, "expected": { "delay_ms": 900000 }, "note": "2^9 x 2 s = 1024 s, capped at 15 min" },
+    { "id": "cap/30-low", "input": { "attempts": 30, "retry_after_ms": null, "jitter_unit": 0 }, "expected": { "delay_ms": 720000 } },
+    { "id": "cap/30-high", "input": { "attempts": 30, "retry_after_ms": null, "jitter_unit": 1 }, "expected": { "delay_ms": 1080000 } },
+    { "id": "never-give-up/10000", "input": { "attempts": 10000, "retry_after_ms": null, "jitter_unit": 0.5 }, "expected": { "delay_ms": 900000 }, "note": "no attempt limit: the intent is still scheduled" },
+    { "id": "negative-attempts", "input": { "attempts": -3, "retry_after_ms": null, "jitter_unit": 0.5 }, "expected": { "delay_ms": 2000 } },
+    { "id": "retry-after/honoured", "input": { "attempts": 3, "retry_after_ms": 7000, "jitter_unit": 1 }, "expected": { "delay_ms": 7000 }, "note": "Retry-After is not jittered" },
+    { "id": "retry-after/capped", "input": { "attempts": 0, "retry_after_ms": 3600000, "jitter_unit": 0.5 }, "expected": { "delay_ms": 900000 } },
+    { "id": "retry-after/zero", "input": { "attempts": 5, "retry_after_ms": 0, "jitter_unit": 0.5 }, "expected": { "delay_ms": 0 } }
+  ]
+}

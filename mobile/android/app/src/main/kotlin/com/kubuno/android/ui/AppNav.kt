@@ -19,6 +19,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.kubuno.android.sync.Ops
+import com.kubuno.android.sync.outbox.HttpClass
+import com.kubuno.android.sync.outbox.NotSyncedIntent
+import com.kubuno.android.sync.outbox.NotSyncedState
+import com.kubuno.android.ui.components.KubunoSyncIssue
+import com.kubuno.android.ui.components.KubunoSyncIssuesBanner
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kubuno.android.account.AccountId
@@ -142,6 +151,7 @@ private fun SignedInApp(nav: AppNavViewModel, onAddAccount: () -> Unit) {
     val transfersViewModel: TransfersViewModel = hiltViewModel()
     val content by viewModel.content.collectAsStateWithLifecycle()
     val transfers by transfersViewModel.transfers.collectAsStateWithLifecycle()
+    val notSynced by viewModel.notSynced.collectAsStateWithLifecycle()
     val browseViewModel: BrowseViewModel = hiltViewModel()
     val rootFolders by browseViewModel.rootFolders.collectAsStateWithLifecycle()
     var newFolderDialog by remember { mutableStateOf(false) }
@@ -275,6 +285,17 @@ private fun SignedInApp(nav: AppNavViewModel, onAddAccount: () -> Unit) {
         onNewFolder = { newFolderDialog = true },
         onUploadFiles = { picker.launch(arrayOf("*/*")) },
         onLogout = { nav.signOutActive() },
+        banner = {
+            // Never silent: a change the server refused, or one that keeps
+            // failing, stays visible until it syncs or the user discards it.
+            KubunoSyncIssuesBanner(
+                issues = notSynced.items.map { it.toSyncIssue() },
+                onRetryAll = viewModel::retryAllUnsynced,
+                onRetry = viewModel::retryUnsynced,
+                onDiscard = viewModel::discardUnsynced,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            )
+        },
     ) {
         // Settings and transfers take over the module surface rather than
         // becoming tabs: the four drive tabs are fixed by the web's design.
@@ -349,4 +370,32 @@ private fun openDeviceAccounts(context: Context) {
     } catch (e: ActivityNotFoundException) {
         Log.w("AppNav", "No account settings activity on this device", e)
     }
+}
+
+/** An outbox intent as the shared sync banner shows it. */
+@Composable
+private fun NotSyncedIntent.toSyncIssue(): KubunoSyncIssue {
+    val name = targetName ?: stringResource(R.string.sync_unknown_item)
+    val title = when (op) {
+        Ops.RENAME -> stringResource(R.string.sync_op_rename, name)
+        Ops.MOVE -> stringResource(R.string.sync_op_move, name)
+        Ops.TRASH -> stringResource(R.string.sync_op_trash, name)
+        Ops.RESTORE -> stringResource(R.string.sync_op_restore, name)
+        Ops.STAR -> stringResource(if (starred == false) R.string.sync_op_unstar else R.string.sync_op_star, name)
+        Ops.MKDIR -> stringResource(R.string.sync_op_mkdir, name)
+        else -> stringResource(R.string.sync_op_other, name)
+    }
+    val explained = when (errorClass) {
+        HttpClass.NOT_FOUND -> stringResource(R.string.sync_error_not_found)
+        HttpClass.CONFLICT -> stringResource(R.string.sync_error_conflict)
+        HttpClass.UNAUTHORIZED -> stringResource(R.string.sync_error_unauthorized)
+        else -> null
+    }
+    val raw = lastError?.let { stringResource(R.string.sync_error_last, it) }
+    return KubunoSyncIssue(
+        id = id,
+        title = title,
+        detail = listOfNotNull(explained, raw).joinToString("\n").ifEmpty { null },
+        rejected = state == NotSyncedState.REJECTED,
+    )
 }

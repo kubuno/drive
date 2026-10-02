@@ -197,4 +197,19 @@
     <string name="manage_device_accounts">Manage accounts on this device</string>
     <string name="remove_account">Remove this account</string>
     <string name="remove_account_confirm">Remove %1$s from this device? Files kept offline will be deleted; nothing is removed from the server.</string>
+
+    <!-- Changes that have not reached the server (sync banner details). -->
+    <string name="sync_op_rename">Rename of “%1$s”</string>
+    <string name="sync_op_move">Move of “%1$s”</string>
+    <string name="sync_op_trash">“%1$s” moved to the trash</string>
+    <string name="sync_op_restore">“%1$s” restored</string>
+    <string name="sync_op_star">“%1$s” added to starred</string>
+    <string name="sync_op_unstar">“%1$s” removed from starred</string>
+    <string name="sync_op_mkdir">New folder “%1$s”</string>
+    <string name="sync_op_other">Change to “%1$s”</string>
+    <string name="sync_unknown_item">an item</string>
+    <string name="sync_error_not_found">The item no longer exists on the server.</string>
+    <string name="sync_error_conflict">Conflicts with a change made on the server.</string>
+    <string name="sync_error_unauthorized">The server refused the session.</string>
+    <string name="sync_error_last">Last error: %1$s</string>
 </resources>

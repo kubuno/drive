@@ -58,10 +58,33 @@ interface FolderDao {
     suspend fun count(): Int
 }
 
+/**
+ * An outbox row the user should know about, with the name of the item it
+ * touches (looked up in the local tree; null when the item is no longer there).
+ */
+data class OutboxIssueRow(
+    val seq: Long,
+    val op: String,
+    val targetId: String?,
+    val isFolder: Boolean,
+    val payload: String,
+    val state: String,
+    val attempts: Int,
+    val lastError: String?,
+    val lastErrorClass: String?,
+    val nextAttemptAt: Long,
+    val createdAt: Long,
+    val targetName: String?,
+)
+
 @Dao
 interface OutboxDao {
+    /** Every row, oldest first, whatever its state. */
     @Query("SELECT * FROM outbox ORDER BY seq")
-    suspend fun pending(): List<OutboxEntity>
+    suspend fun all(): List<OutboxEntity>
+
+    @Query("SELECT * FROM outbox WHERE seq = :seq")
+    suspend fun get(seq: Long): OutboxEntity?
 
     @Query("SELECT COUNT(*) FROM outbox")
     fun pendingCount(): Flow<Int>
@@ -69,11 +92,58 @@ interface OutboxDao {
     @Insert
     suspend fun enqueue(entry: OutboxEntity): Long
 
+    /** Only for a row that reached the server, or an explicit user discard. */
     @Query("DELETE FROM outbox WHERE seq = :seq")
     suspend fun remove(seq: Long)
 
-    @Query("UPDATE outbox SET attempts = attempts + 1, lastError = :error WHERE seq = :seq")
-    suspend fun markFailed(seq: Long, error: String?)
+    @Query(
+        """UPDATE outbox SET state = 'pending', attempts = :attempts, nextAttemptAt = :nextAttemptAt,
+                  lastError = :error, lastErrorClass = :errorClass
+           WHERE seq = :seq"""
+    )
+    suspend fun reschedule(seq: Long, attempts: Int, nextAttemptAt: Long, error: String, errorClass: String)
+
+    @Query(
+        """UPDATE outbox SET state = 'failed', attempts = :attempts,
+                  lastError = :error, lastErrorClass = :errorClass
+           WHERE seq = :seq"""
+    )
+    suspend fun reject(seq: Long, attempts: Int, error: String, errorClass: String)
+
+    @Query(
+        """UPDATE outbox SET state = 'pending', attempts = 0, nextAttemptAt = 0,
+                  lastError = NULL, lastErrorClass = NULL
+           WHERE seq = :seq"""
+    )
+    suspend fun resetToPending(seq: Long)
+
+    @Query(
+        """UPDATE outbox SET state = 'pending', attempts = 0, nextAttemptAt = 0,
+                  lastError = NULL, lastErrorClass = NULL
+           WHERE state = 'failed' OR attempts > 0"""
+    )
+    suspend fun resetAllToPending()
+
+    @Query("SELECT MIN(nextAttemptAt) FROM outbox WHERE state = 'pending'")
+    suspend fun earliestPendingDue(): Long?
+
+    /**
+     * Not synced: refused by the server ("failed"), or still pending after at
+     * least [threshold] failed attempts. Observed, so the UI follows the drain.
+     */
+    @Query(
+        """SELECT o.seq AS seq, o.op AS op, o.targetId AS targetId, o.isFolder AS isFolder,
+                  o.payload AS payload, o.state AS state, o.attempts AS attempts,
+                  o.lastError AS lastError, o.lastErrorClass AS lastErrorClass,
+                  o.nextAttemptAt AS nextAttemptAt, o.createdAt AS createdAt,
+                  COALESCE(f.name, d.name) AS targetName
+           FROM outbox o
+           LEFT JOIN files f ON o.isFolder = 0 AND f.id = o.targetId
+           LEFT JOIN folders d ON o.isFolder = 1 AND d.id = o.targetId
+           WHERE o.state = 'failed' OR o.attempts >= :threshold
+           ORDER BY o.seq"""
+    )
+    fun notSynced(threshold: Int): Flow<List<OutboxIssueRow>>
 }
 
 @Dao

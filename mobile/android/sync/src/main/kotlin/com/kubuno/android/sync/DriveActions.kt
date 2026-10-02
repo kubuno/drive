@@ -34,14 +34,35 @@ class DriveActions(
 ) {
     private val json = Json
 
+    // rename and move also record the value before the edit (`prev_*`): the
+    // request ignores it, and it lets a discarded, never-synced change be
+    // rolled back locally (OutboxStatus.discard).
+
     suspend fun rename(id: String, isFolder: Boolean, newName: String) {
+        val previous = if (isFolder) db.folderDao().get(id)?.name else db.fileDao().get(id)?.name
         if (isFolder) db.folderDao().rename(id, newName) else db.fileDao().rename(id, newName)
-        enqueue(Ops.RENAME, id, isFolder, buildJsonObject { put("name", newName) })
+        enqueue(
+            Ops.RENAME, id, isFolder,
+            buildJsonObject {
+                put("name", newName)
+                if (previous != null) put("prev_name", previous)
+            },
+        )
     }
 
     suspend fun move(id: String, isFolder: Boolean, targetFolderId: String?) {
+        val folder = if (isFolder) db.folderDao().get(id) else null
+        val file = if (isFolder) null else db.fileDao().get(id)
+        val previousParent = folder?.parentId ?: file?.folderId
         if (isFolder) db.folderDao().move(id, targetFolderId) else db.fileDao().move(id, targetFolderId)
-        enqueue(Ops.MOVE, id, isFolder, buildJsonObject { put("target", targetFolderId) })
+        enqueue(
+            Ops.MOVE, id, isFolder,
+            buildJsonObject {
+                put("target", targetFolderId)
+                // Present (possibly null = root) only when the item was known.
+                if (folder != null || file != null) put("prev_parent", previousParent)
+            },
+        )
     }
 
     suspend fun trash(id: String, isFolder: Boolean) {

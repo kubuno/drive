@@ -1,5 +1,6 @@
 package com.kubuno.android.sync.db
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -29,22 +30,38 @@ data class FolderEntity(
  *
  * Each row carries the Idempotency-Key the request will use, so a replay after
  * a crash or a lost response is a no-op server-side rather than a duplicate.
- * Folder creation uses a key derived from its path (stable across retries);
- * everything else gets a UUID minted when the row is queued.
+ * Every row gets a UUID minted when it is queued.
+ *
+ * A row is never given up: a transient failure keeps it [state] = "pending"
+ * with a backoff persisted in [nextAttemptAt] (so the schedule survives process
+ * death), and a definitive refusal moves it to "failed", where it stays,
+ * visible to the user, until they retry or discard it. See
+ * [com.kubuno.android.sync.outbox.OutboxPolicy].
  */
 @Entity(tableName = "outbox")
 data class OutboxEntity(
     @PrimaryKey(autoGenerate = true) val seq: Long = 0,
     val idempotencyKey: String,
-    /** rename | move | trash | restore | star | unstar | mkdir */
+    /** rename | move | trash | restore | star | mkdir */
     val op: String,
     val targetId: String?,
     val isFolder: Boolean,
-    /** JSON payload; shape depends on [op]. */
+    /**
+     * JSON payload; shape depends on [op]. Besides the request fields it may
+     * hold the value before the edit (`prev_name`, `prev_parent`), used only to
+     * roll the local change back when the user discards the row.
+     */
     val payload: String,
+    /** Failed attempts so far; reset by a manual retry. */
     val attempts: Int = 0,
     val lastError: String? = null,
     val createdAt: Long,
+    /** pending | failed ([com.kubuno.android.sync.outbox.OutboxStates]). */
+    @ColumnInfo(defaultValue = "pending") val state: String = "pending",
+    /** Epoch ms before which the drain leaves the row alone; 0 = due now. */
+    @ColumnInfo(defaultValue = "0") val nextAttemptAt: Long = 0,
+    /** Class of the last failure ([com.kubuno.android.sync.outbox.HttpClass.wire]). */
+    val lastErrorClass: String? = null,
 )
 
 /**

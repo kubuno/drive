@@ -1,0 +1,31 @@
+{
+  "$schema": "../conformance-vectors.schema.json",
+  "format": 1,
+  "suite": "sync.http.classify",
+  "version": "1.0.0",
+  "description": "Class of an HTTP answer to a sync request, from its status and the API error code. transient: retry later with the same idempotency key, never give up. definitive: the server will never accept this request; the change is kept and shown as not synced until the user retries or discards it. conflict: run the conflict policy. not_found: the target is gone. unauthorized: refresh once, then treat as an expired session for this request. cursor_expired: reset the feed. protocol: unexpected answer, retried like transient but surfaced as an error.",
+  "reference": "desktop/common/kubuno-api-client error::classify_status (future kubuno-sync-core)",
+  "cases": [
+    { "id": "401", "input": { "status": 401, "code": null }, "expected": "unauthorized" },
+    { "id": "404", "input": { "status": 404, "code": null }, "expected": "not_found" },
+    { "id": "410/cursor-expired", "input": { "status": 410, "code": "CURSOR_EXPIRED" }, "expected": "cursor_expired" },
+    { "id": "410/gone", "input": { "status": 410, "code": null }, "expected": "not_found" },
+    { "id": "409/idempotency-reused", "input": { "status": 409, "code": "IDEMPOTENCY_KEY_REUSED" }, "expected": "definitive" },
+    { "id": "409/idempotency-mismatch", "input": { "status": 409, "code": "IDEMPOTENCY_MISMATCH" }, "expected": "definitive" },
+    { "id": "409/in-progress", "input": { "status": 409, "code": "IN_PROGRESS" }, "expected": "transient" },
+    { "id": "409/plain", "input": { "status": 409, "code": null }, "expected": "conflict" },
+    { "id": "412", "input": { "status": 412, "code": null }, "expected": "conflict" },
+    { "id": "408", "input": { "status": 408, "code": null }, "expected": "transient" },
+    { "id": "425", "input": { "status": 425, "code": null }, "expected": "transient" },
+    { "id": "429", "input": { "status": 429, "code": null }, "expected": "transient" },
+    { "id": "500", "input": { "status": 500, "code": null }, "expected": "transient" },
+    { "id": "503", "input": { "status": 503, "code": null }, "expected": "transient" },
+    { "id": "599", "input": { "status": 599, "code": null }, "expected": "transient" },
+    { "id": "400", "input": { "status": 400, "code": null }, "expected": "definitive" },
+    { "id": "403", "input": { "status": 403, "code": null }, "expected": "definitive" },
+    { "id": "413", "input": { "status": 413, "code": null }, "expected": "definitive" },
+    { "id": "422", "input": { "status": 422, "code": "VALIDATION" }, "expected": "definitive" },
+    { "id": "302", "input": { "status": 302, "code": null }, "expected": "protocol" },
+    { "id": "600", "input": { "status": 600, "code": null }, "expected": "protocol" }
+  ]
+}

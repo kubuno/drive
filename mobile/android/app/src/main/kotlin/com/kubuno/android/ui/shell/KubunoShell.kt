@@ -108,6 +108,8 @@ fun KubunoShell(
     onNewFolder: () -> Unit,
     onUploadFiles: () -> Unit,
     onLogout: () -> Unit,
+    /** Status strip above the module surface (e.g. changes not synced); empty by default. */
+    banner: @Composable () -> Unit = {},
     content: @Composable () -> Unit,
 ) {
     Box(
@@ -152,6 +154,7 @@ fun KubunoShell(
                         onOpenFolder = onOpenFolder,
                     )
                 }
+                banner()
                 Box(Modifier.weight(1f)) { content() }
             }
 

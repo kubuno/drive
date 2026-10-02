@@ -2,26 +2,42 @@ package com.kubuno.android.sync
 
 import android.util.Log
 import com.kubuno.android.api.KubunoClient
+import com.kubuno.android.api.auth.AuthException
 import com.kubuno.android.api.model.CreateFolderRequest
+import com.kubuno.android.api.model.FileEnvelope
+import com.kubuno.android.api.model.FolderEnvelope
 import com.kubuno.android.api.model.MoveRequest
 import com.kubuno.android.api.model.RenameRequest
 import com.kubuno.android.sync.db.KubunoDatabase
 import com.kubuno.android.sync.db.OutboxEntity
+import com.kubuno.android.sync.outbox.OutboxPolicy
+import com.kubuno.android.sync.outbox.OutboxProcessor
+import com.kubuno.android.sync.outbox.PassReport
+import com.kubuno.android.sync.outbox.RoomOutboxStore
+import com.kubuno.android.sync.outbox.SendResult
 import java.io.IOException
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.jsonPrimitive
 import retrofit2.Response
 
 /**
  * Replays queued mutations, oldest first, before the delta pull.
  *
- * A transient failure (network, 5xx, 429) stops the drain and leaves the entry
- * in place; WorkManager retries later. A definitive rejection drops the entry —
- * keeping it would block every later mutation behind a request that can never
- * succeed — and the following delta pull restores the server's truth over the
- * optimistic local edit.
+ * Decision Q5 (SHARED-CORES.md): an intent is never given up.
+ *  - A transient failure (network, timeout, 408/425/429, 5xx, 409 IN_PROGRESS,
+ *    unparseable answer) keeps the row pending with a capped, jittered backoff
+ *    persisted on the row ([OutboxPolicy.backoffMs]); the drain skips rows not
+ *    yet due and reports when it should run again, and the caller arms a
+ *    WorkManager wake-up for that time. WorkManager's own retry counter and
+ *    backoff are not part of the policy.
+ *  - A definitive refusal moves the row to "failed": kept, shown to the user
+ *    as not synced, until they retry or discard it ([com.kubuno.android.sync.outbox.OutboxStatus]).
+ *
+ * Nothing is deleted here except rows the server accepted (or whose goal state
+ * already holds, such as trashing an item that is gone).
  */
 class OutboxDrain(
     private val db: KubunoDatabase,
@@ -29,46 +45,49 @@ class OutboxDrain(
 ) {
     companion object {
         private const val TAG = "KubunoOutbox"
-        private const val MAX_ATTEMPTS = 5
     }
 
     private val json = Json
 
-    /** Throws [IOException] on a transient failure so the worker retries. */
-    suspend fun drain() {
-        for (entry in db.outboxDao().pending()) {
-            val outcome = runCatching { send(entry) }.getOrElse { error ->
-                if (error is IOException) throw error else Outcome.DEFINITIVE
-            }
-            when (outcome) {
-                Outcome.DONE -> db.outboxDao().remove(entry.seq)
-                Outcome.DEFINITIVE -> {
-                    Log.w(TAG, "dropping ${entry.op} on ${entry.targetId}: rejected by server")
-                    db.outboxDao().remove(entry.seq)
-                }
-                Outcome.TRANSIENT -> {
-                    db.outboxDao().markFailed(entry.seq, "transient")
-                    if (entry.attempts + 1 >= MAX_ATTEMPTS) {
-                        Log.w(TAG, "giving up on ${entry.op} after ${entry.attempts + 1} attempts")
-                        db.outboxDao().remove(entry.seq)
-                    }
-                    throw IOException("outbox entry ${entry.seq} needs a retry")
-                }
-            }
+    /**
+     * One pass over the outbox. Never throws for a failed row (the failure is
+     * recorded on it); [AuthException] and cancellation propagate.
+     */
+    suspend fun drain(): PassReport {
+        val report = OutboxProcessor(RoomOutboxStore(db.outboxDao())).runPass(::attempt)
+        if (report.rescheduled > 0 || report.rejected > 0) {
+            Log.i(
+                TAG,
+                "outbox pass: sent=${report.sent} rescheduled=${report.rescheduled} " +
+                    "rejected=${report.rejected} nextWakeAt=${report.nextWakeAt}",
+            )
         }
+        return report
     }
 
-    private enum class Outcome { DONE, DEFINITIVE, TRANSIENT }
+    private suspend fun attempt(entry: OutboxEntity): SendResult = try {
+        send(entry)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: AuthException) {
+        throw e
+    } catch (e: IOException) {
+        SendResult.Network(e.message ?: e.javaClass.simpleName)
+    } catch (e: Exception) {
+        // A response we could not read (converter failure on a success body…).
+        SendResult.Unparseable(e.message ?: e.javaClass.simpleName)
+    }
 
-    private suspend fun send(entry: OutboxEntity): Outcome {
+    private suspend fun send(entry: OutboxEntity): SendResult {
         val api = client.driveApi
-        val id = entry.targetId ?: return Outcome.DEFINITIVE
-        val payload = json.decodeFromString(JsonObject.serializer(), entry.payload)
+        val id = entry.targetId ?: return SendResult.Invalid("no target")
+        val payload = runCatching { json.decodeFromString(JsonObject.serializer(), entry.payload) }
+            .getOrNull() ?: return SendResult.Invalid("unreadable payload")
         val key = entry.idempotencyKey
 
         val response: Response<*> = when (entry.op) {
             Ops.RENAME -> {
-                val body = RenameRequest(name = payload.str("name") ?: return Outcome.DEFINITIVE)
+                val body = RenameRequest(name = payload.str("name") ?: return SendResult.Invalid("rename without a name"))
                 if (entry.isFolder) api.renameFolder(id, body, key) else api.renameFile(id, body, key)
             }
 
@@ -78,7 +97,8 @@ class OutboxDrain(
                 else api.moveFile(id, MoveRequest(folderId = target), key)
             }
 
-            // A trashed item that is already gone server-side is the goal state.
+            // A trashed item that is already gone server-side is the goal
+            // state: the policy turns its not_found into a success.
             Ops.TRASH ->
                 if (entry.isFolder) api.trashFolder(id, key) else api.trashFile(id, key)
 
@@ -89,17 +109,17 @@ class OutboxDrain(
 
             Ops.MKDIR -> api.createFolder(
                 CreateFolderRequest(
-                    name = payload.str("name") ?: return Outcome.DEFINITIVE,
+                    name = payload.str("name") ?: return SendResult.Invalid("mkdir without a name"),
                     parentId = payload.str("parent"),
                     id = id,
                 ),
                 key,
             )
 
-            else -> return Outcome.DEFINITIVE
+            else -> return SendResult.Invalid("unknown operation ${entry.op}")
         }
 
-        return classify(response, treat404AsSuccess = entry.op == Ops.TRASH)
+        return response.toSendResult()
     }
 
     /**
@@ -112,32 +132,36 @@ class OutboxDrain(
         id: String,
         key: String,
         payload: JsonObject,
-    ): Outcome {
-        val desired = payload["starred"]?.jsonPrimitive?.boolean ?: return Outcome.DEFINITIVE
+    ): SendResult {
+        val desired = payload["starred"]?.jsonPrimitive?.booleanOrNull
+            ?: return SendResult.Invalid("star without a value")
         val api = client.driveApi
         val response = if (entry.isFolder) api.toggleFolderStar(id, key) else api.toggleFileStar(id, key)
-        if (!response.isSuccessful) return classify(response, treat404AsSuccess = false)
+        if (!response.isSuccessful) return response.toSendResult()
 
         val actual = if (entry.isFolder) {
-            (response.body() as? com.kubuno.android.api.model.FolderEnvelope)?.folder?.isStarred
+            (response.body() as? FolderEnvelope)?.folder?.isStarred
         } else {
-            (response.body() as? com.kubuno.android.api.model.FileEnvelope)?.file?.isStarred
+            (response.body() as? FileEnvelope)?.file?.isStarred
         }
         // One extra toggle when the first landed on the wrong side. A distinct
         // key is required: replaying the first would return its cached response.
         if (actual != null && actual != desired) {
             val second = if (entry.isFolder) api.toggleFolderStar(id, "$key-2")
             else api.toggleFileStar(id, "$key-2")
-            return classify(second, treat404AsSuccess = false)
+            return second.toSendResult()
         }
-        return Outcome.DONE
+        return SendResult.Success
     }
 
-    private fun classify(response: Response<*>, treat404AsSuccess: Boolean): Outcome = when {
-        response.isSuccessful -> Outcome.DONE
-        response.code() == 404 && treat404AsSuccess -> Outcome.DONE
-        response.code() == 429 || response.code() >= 500 -> Outcome.TRANSIENT
-        else -> Outcome.DEFINITIVE
+    private fun Response<*>.toSendResult(): SendResult {
+        if (isSuccessful) return SendResult.Success
+        val body = runCatching { errorBody()?.string() }.getOrNull()
+        return SendResult.Http(
+            status = code(),
+            code = OutboxPolicy.parseErrorCode(body),
+            retryAfterMs = OutboxPolicy.parseRetryAfterMs(headers()["Retry-After"], System.currentTimeMillis()),
+        )
     }
 }
 

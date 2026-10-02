@@ -191,4 +191,18 @@
     <string name="manage_device_accounts">Gérer les comptes sur cet appareil</string>
     <string name="remove_account">Retirer ce compte</string>
     <string name="remove_account_confirm">Retirer %1$s de cet appareil ? Les fichiers gardés hors-ligne seront supprimés ; rien n’est retiré du serveur.</string>
+
+    <string name="sync_op_rename">Renommage de « %1$s »</string>
+    <string name="sync_op_move">Déplacement de « %1$s »</string>
+    <string name="sync_op_trash">« %1$s » mis à la corbeille</string>
+    <string name="sync_op_restore">« %1$s » restauré</string>
+    <string name="sync_op_star">« %1$s » ajouté aux favoris</string>
+    <string name="sync_op_unstar">« %1$s » retiré des favoris</string>
+    <string name="sync_op_mkdir">Nouveau dossier « %1$s »</string>
+    <string name="sync_op_other">Modification de « %1$s »</string>
+    <string name="sync_unknown_item">un élément</string>
+    <string name="sync_error_not_found">L’élément n’existe plus sur le serveur.</string>
+    <string name="sync_error_conflict">Conflit avec une modification faite sur le serveur.</string>
+    <string name="sync_error_unauthorized">Le serveur a refusé la session.</string>
+    <string name="sync_error_last">Dernière erreur : %1$s</string>
 </resources>

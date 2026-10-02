@@ -9,6 +9,7 @@ import com.kubuno.android.sync.DriveActions
 import com.kubuno.android.sync.OfflineFiles
 import com.kubuno.android.sync.OutboxDrain
 import com.kubuno.android.sync.SyncEngine
+import com.kubuno.android.sync.outbox.OutboxStatus
 import com.kubuno.android.sync.db.KubunoDatabase
 import com.kubuno.android.sync.realtime.DriveEventsClient
 import com.kubuno.android.sync.transfer.TransferQueue
@@ -35,6 +36,8 @@ class AccountGraph(
     val prefs: AccountPrefs,
     val engine: SyncEngine,
     val outbox: OutboxDrain,
+    /** The user-facing side of the outbox: what is not synced, retry, discard. */
+    val outboxStatus: OutboxStatus,
     val actions: DriveActions,
     val offline: OfflineFiles,
     val transfers: TransferQueue,
@@ -103,15 +106,21 @@ class AccountGraphFactory @Inject constructor(
         // apps, so every refresh stays behind a single lock.
         val client = clients.of(record.id)!!
         val db = Room.databaseBuilder(context, KubunoDatabase::class.java, dbName(record.id))
-            // Pre-release schema: recreating one account's cache is cheap, and
-            // the outbox is drained before any migration would matter.
-            .fallbackToDestructiveMigration(dropAllTables = true)
+            // From version 3 on, every schema change ships a migration: the
+            // outbox holds the user's unsynced edits and must survive upgrades.
+            .addMigrations(*KubunoDatabase.MIGRATIONS)
+            // Versions 1 and 2 were pre-release caches with no migration path;
+            // recreating them is all that can be done. A downgrade (older app
+            // over a newer database) has no path either.
+            .fallbackToDestructiveMigrationFrom(true, 1, 2)
+            .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
             .build()
         val prefs = AccountPrefs(context, record.id)
         val offline = OfflineFiles(context, record.id, db, client)
         val engine = SyncEngine(db, client)
         val outbox = OutboxDrain(db, client)
         val scheduler = SyncScheduler(workManager, record.id)
+        val outboxStatus = OutboxStatus(db, scheduler)
         val actions = DriveActions(db, scheduler)
         val transfers = TransferQueue(context, record.id, db, workManager)
         val events = DriveEventsClient(client)
@@ -123,6 +132,7 @@ class AccountGraphFactory @Inject constructor(
             prefs = prefs,
             engine = engine,
             outbox = outbox,
+            outboxStatus = outboxStatus,
             actions = actions,
             offline = offline,
             transfers = transfers,
