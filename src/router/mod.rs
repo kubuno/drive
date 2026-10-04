@@ -153,11 +153,6 @@ pub fn build(state: AppState) -> Router {
         .layer(middleware::from_fn_with_state(state.clone(), crate::middleware::idempotency::idempotency))
         .with_state(state.clone());
 
-    // Scan (sans auth — appelé par le core ou en local; protéger par réseau en prod)
-    let system_authed = Router::new()
-        .route("/scan", post(scan::scan))
-        .with_state(state.clone());
-
     // WebDAV protocol (Basic Auth inside the handler, no JWT middleware)
     let webdav_routes = Router::new()
         .route("/webdav",       axum::routing::any(webdav::webdav_dispatch))
@@ -192,6 +187,12 @@ pub fn build(state: AppState) -> Router {
         // Résolveur canonique interne (sans session) pour les modules / jobs de fond.
         .route("/ipc/resolve/:uid/browse",        get(resolve::ipc_browse))
         .route("/ipc/resolve/:uid/file",          get(resolve::ipc_file))
+        // Disk / database reconciliation (walks the whole storage tree, adds and removes
+        // rows): an operator or core action, never a client one. It lives under `/ipc`
+        // because the core proxy forwards every client request WITH this module's
+        // internal secret: only the `/ipc` and `/internal` prefixes are refused to
+        // clients by the proxy, so the secret alone would not have protected `/scan`.
+        .route("/ipc/scan",                      post(scan::scan))
         .layer(middleware::from_fn_with_state(state.clone(), require_ipc_secret))
         .with_state(state.clone());
 
@@ -202,7 +203,6 @@ pub fn build(state: AppState) -> Router {
 
     Router::new()
         .merge(system)
-        .merge(system_authed)
         .merge(public)
         .merge(webdav_routes)
         .merge(ipc_routes)

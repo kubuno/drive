@@ -102,6 +102,13 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 ### Security
 
+- **The storage rescan is no longer reachable without authentication.** The
+  maintenance route that re-synchronises files on disk with the database (adding
+  and removing entries) could be triggered by anyone, including through the
+  public API. It now requires the module's internal secret and is refused to
+  clients. Internal calls are compared in constant time and refused when the
+  module has no internal secret configured.
+
 - **Thumbnails, previews, the video and audio players, downloads (files, archive members, fonts) and the
   image editor no longer rely on the access-token cookie the web client used to keep readable by page
   scripts.** They load with short-lived signed tickets bound to your session and to the exact file.
