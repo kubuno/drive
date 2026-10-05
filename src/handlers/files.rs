@@ -300,30 +300,7 @@ fn parse_byte_range(header: Option<&str>, len: u64) -> std::result::Result<Optio
     Ok(Some((start, end)))
 }
 
-#[cfg(test)]
-mod range_tests {
-    use super::parse_byte_range;
-
-    #[test]
-    fn byte_ranges() {
-        assert_eq!(parse_byte_range(None, 100), Ok(None));
-        assert_eq!(parse_byte_range(Some("bytes=0-9"), 100), Ok(Some((0, 9))));
-        assert_eq!(parse_byte_range(Some("bytes=90-"), 100), Ok(Some((90, 99))));
-        assert_eq!(parse_byte_range(Some("bytes=-10"), 100), Ok(Some((90, 99))));
-        assert_eq!(parse_byte_range(Some("bytes=-500"), 100), Ok(Some((0, 99))));
-        assert_eq!(parse_byte_range(Some("bytes=50-500"), 100), Ok(Some((50, 99))));
-        assert_eq!(parse_byte_range(Some("bytes=100-"), 100), Err(()));
-        assert_eq!(parse_byte_range(Some("bytes=-0"), 100), Err(()));
-        assert_eq!(parse_byte_range(Some("bytes=0-"), 0), Err(()));
-        // Ignored: another unit, several ranges, reversed or garbled.
-        assert_eq!(parse_byte_range(Some("items=0-9"), 100), Ok(None));
-        assert_eq!(parse_byte_range(Some("bytes=0-9,20-29"), 100), Ok(None));
-        assert_eq!(parse_byte_range(Some("bytes=9-0"), 100), Ok(None));
-        assert_eq!(parse_byte_range(Some("bytes=a-b"), 100), Ok(None));
-    }
-}
-
-/// Thumbnail du fichier
+/// File thumbnail
 pub async fn thumbnail(
     State(state): State<AppState>,
     Extension(user): Extension<FilesUser>,
@@ -561,4 +538,27 @@ pub async fn compress(
         .map_err(|e| FilesError::Internal(anyhow::anyhow!(e)))?;
 
     Ok(response)
+}
+
+#[cfg(test)]
+mod range_tests {
+    use super::parse_byte_range;
+
+    #[test]
+    fn byte_ranges() {
+        assert_eq!(parse_byte_range(None, 100), Ok(None));
+        assert_eq!(parse_byte_range(Some("bytes=0-9"), 100), Ok(Some((0, 9))));
+        assert_eq!(parse_byte_range(Some("bytes=90-"), 100), Ok(Some((90, 99))));
+        assert_eq!(parse_byte_range(Some("bytes=-10"), 100), Ok(Some((90, 99))));
+        assert_eq!(parse_byte_range(Some("bytes=-500"), 100), Ok(Some((0, 99))));
+        assert_eq!(parse_byte_range(Some("bytes=50-500"), 100), Ok(Some((50, 99))));
+        assert_eq!(parse_byte_range(Some("bytes=100-"), 100), Err(()));
+        assert_eq!(parse_byte_range(Some("bytes=-0"), 100), Err(()));
+        assert_eq!(parse_byte_range(Some("bytes=0-"), 0), Err(()));
+        // Ignored: another unit, several ranges, reversed or garbled.
+        assert_eq!(parse_byte_range(Some("items=0-9"), 100), Ok(None));
+        assert_eq!(parse_byte_range(Some("bytes=0-9,20-29"), 100), Ok(None));
+        assert_eq!(parse_byte_range(Some("bytes=9-0"), 100), Ok(None));
+        assert_eq!(parse_byte_range(Some("bytes=a-b"), 100), Ok(None));
+    }
 }
