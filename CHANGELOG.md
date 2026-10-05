@@ -18,6 +18,8 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 ### Fixed
 
+- **Files kept on the server's local storage are found again on Windows and under symlinked storage
+  roots** (shared storage layer updated to kubuno-storage 0.1.2).
 - **MariaDB and Oracle MySQL installs use the migrations written for them.** The module now runs its `mysql-mariadb` or `mysql-oracle` migration set when the database is MariaDB or Oracle MySQL, instead of the generic MySQL set.
 - **Drive starts on MySQL and MariaDB again.** Migration 2 ("one live file per
   name and folder") declared its uniqueness key as a `STORED` generated column
