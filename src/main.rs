@@ -586,6 +586,8 @@ async fn main() -> Result<()> {
             "./migrations/postgres",
             "./migrations/mysql",
             "./migrations/sqlite",
+            mariadb = "./migrations/mysql-mariadb",
+            oracle_mysql = "./migrations/mysql-oracle",
         )
         .run(&pool, kubuno_drive::SCHEMA)
         .await
