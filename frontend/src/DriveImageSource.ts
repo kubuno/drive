@@ -5,7 +5,6 @@ import { bind, type MouseEventArgs } from '@kubuno/views'
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useQuery } from "@tanstack/react-query"
-import { Folder } from "lucide-react"
 import { filesApi, type FileItem, type FilesSearchFilters } from "@kubuno/drive"
 import { type ImageSourceProps } from "@kubuno/sdk"
 
@@ -94,7 +93,7 @@ export class DriveImageSource extends ViewBase {
     return this.scope === 'mine' && !this.searching
   }
 
-  get folders(): import('@kubuno/drive').Folder[] {
+  get folders(): import("@kubuno/drive").Folder[] {
     return this.memo('folders', [this.browsing, this.foldersQ], () => this.browsing ? (this.foldersQ.data?.folders ?? []) : [])
   }
 

@@ -34,7 +34,7 @@ export class ImageSearchResultsView extends ViewBase {
   }
 
   get text() {
-    return this.memo('text', [this.tr], () => " " + this.tr('app.clear_search'))
+    return this.memo('text', [this.tr], () => [" ", this.tr('app.clear_search')] as unknown as string)
   }
 
   get show_not_state_loading() {

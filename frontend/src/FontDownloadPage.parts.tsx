@@ -15,9 +15,9 @@ interface CartFamily {
   variants: CartVariant[]
 }
 
-const absUrl = (u: string) => (/^https?:\/\//i.test(u) ? u : `${window.location.origin}${u}`)
-
 const SAMPLE = 'Your cloud, your rules, your data, your way'
+
+const absUrl = (u: string) => (/^https?:\/\//i.test(u) ? u : `${window.location.origin}${u}`)
 
 function embedCss(families: CartFamily[]): string {
   return families.flatMap(f => f.variants.map(v =>

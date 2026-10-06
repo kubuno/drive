@@ -27,7 +27,6 @@ import {
 import { useFilesStore, useFilesDialogStore, filesApi } from '@kubuno/drive'
 import './index.css'
 import './i18n'
-import viewsDefaults from './views-defaults.json'
 import DriveLogo from './DriveLogo'
 import { openPreview, canPreview } from './previewService'
 import { filesNewActionItems } from './FilesNewActions'
@@ -50,25 +49,6 @@ export const sdkVersion = SDK_VERSION
 // The `.kbview` plan format this bundle's views were compiled to (the host refuses a format its runtime cannot read).
 // A literal on purpose: `VIEWS_ABI` of `@kubuno/views` would be the host's own value at run time.
 export const viewsAbi = 1
-
-// Default texts of the views: the `{Res}` keys missing from the module catalogue (the TSX passed them as
-// `t(key, { defaultValue })`), collected by the codemod in views-defaults.json. Added to every language without
-// replacing a translated text, so a missing key shows its default text as before instead of the key itself.
-function registerViewsDefaults(defaults: Record<string, Record<string, string>>) {
-  for (const [ns, flat] of Object.entries(defaults)) {
-    const nested: Record<string, unknown> = {}
-    for (const [key, text] of Object.entries(flat)) {
-      const path = key.split('.')
-      let node = nested
-      for (const part of path.slice(0, -1)) node = (node[part] ??= {}) as Record<string, unknown>
-      node[path[path.length - 1]] = text
-    }
-    for (const lng of ['en', 'fr', 'es', 'pt', 'it', 'de', 'el', 'ru', 'ar', 'he', 'hi', 'zh', 'ja']) {
-      i18n.addResourceBundle(lng, ns, nested, true, false)
-    }
-  }
-}
-registerViewsDefaults(viewsDefaults)
 
 export function register() {
   FaviconRegistry.register('drive', '/drive-logo.png')

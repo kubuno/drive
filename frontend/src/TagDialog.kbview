@@ -20,7 +20,7 @@
       <Label HtmlTag="Span" Text="{Binding span_text}" FontWeight="Medium" Overflow="Wrap" ForeColor="TextPrimary" InheritFontSize="true"/>
     </Panel>
     <Panel BackColor="Surface1" Class="border border-border rounded-lg p-3 mb-4 space-y-2">
-      <TextField Text="{Binding newName, Mode=TwoWay}" Placeholder="Nouvelle étiquette…" OnKeyDown="text_field_key_down" Class="mb-2"/>
+      <TextField Text="{Binding newName, Mode=TwoWay}" Placeholder="Nouvelle étiquette…" OnKeyDown="text_field_key_down"/>
       <Stack Direction="LeftToRight" CrossAlign="Center" Justify="SpaceBetween">
         <!-- TODO(views-migrate): <ColorPalette> is no .kbview element (a local or dynamic component) -->
         <ReactHost Component="{Binding ColorPalette}" Props="{Binding color_palette_props}"/>

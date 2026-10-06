@@ -60,7 +60,7 @@ export class FontDownloadPage extends ViewBase {
   get h1_text() {
     return this.memo('h1_text', [this.props, this.embed], () => {
       if (!(!(this.props.families.length === 0)) || !(!(this.embed))) return undefined as never
-      return String(this.props.families.length) + " famille" + String(this.props.families.length > 1 ? 's' : '') + " sélectionnée" + String(this.props.families.length > 1 ? 's' : '')
+      return [((v: unknown) => (v == null || typeof v === 'boolean' ? null : String(v)))(this.props.families.length), " famille", ((v: unknown) => (v == null || typeof v === 'boolean' ? null : String(v)))(this.props.families.length > 1 ? 's' : ''), " sélectionnée", ((v: unknown) => (v == null || typeof v === 'boolean' ? null : String(v)))(this.props.families.length > 1 ? 's' : '')] as unknown as string
     })
   }
 
@@ -87,7 +87,7 @@ export class FontDownloadPage extends ViewBase {
     return this.memo('rows_families', [this.props, this.embed, this.fade], () => {
       if (!(!(this.props.families.length === 0)) || !(!(this.embed))) return undefined as never
       return this.props.families.map((f) => {
-      return { f, span_text: ((!(this.props.families.length === 0)) && (!(this.embed))) ? (String(f.styleCount) + " style" + String(f.styleCount > 1 ? 's' : '')) : undefined, part1_props: ((!(this.props.families.length === 0)) && (!(this.embed))) ? ({ onRemove: this.props.onRemove, f: f }) : undefined, part2_props: ((!(this.props.families.length === 0)) && (!(this.embed))) ? ({ onDownloadFamily: this.props.onDownloadFamily, f: f }) : undefined, part3_props: ((!(this.props.families.length === 0)) && (!(this.embed))) ? ({ f: f, fade: this.fade }) : undefined, key: f.name }
+      return { f, span_text: ((!(this.props.families.length === 0)) && (!(this.embed))) ? ([((v: unknown) => (v == null || typeof v === 'boolean' ? null : String(v)))(f.styleCount), " style", ((v: unknown) => (v == null || typeof v === 'boolean' ? null : String(v)))(f.styleCount > 1 ? 's' : '')] as unknown as string) : undefined, part1_props: ((!(this.props.families.length === 0)) && (!(this.embed))) ? ({ onRemove: this.props.onRemove, f: f }) : undefined, part2_props: ((!(this.props.families.length === 0)) && (!(this.embed))) ? ({ onDownloadFamily: this.props.onDownloadFamily, f: f }) : undefined, part3_props: ((!(this.props.families.length === 0)) && (!(this.embed))) ? ({ f: f, fade: this.fade }) : undefined, key: f.name }
     })
     })
   }

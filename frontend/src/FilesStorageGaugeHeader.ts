@@ -76,16 +76,8 @@ export class FilesStorageGaugeHeader extends ViewBase {
   get span_text() {
     return this.memo('span_text', [this.user, this.onDrive], () => {
       if (!(!(!this.onDrive || !this.user || this.user.quota_bytes === 0))) return undefined as never
-      return String(formatSize(this.user.used_bytes)) + " / " + String(formatSize(this.user.quota_bytes))
+      return [((v: unknown) => (v == null || typeof v === 'boolean' ? null : String(v)))(formatSize(this.user.used_bytes)), " / ", ((v: unknown) => (v == null || typeof v === 'boolean' ? null : String(v)))(formatSize(this.user.quota_bytes))] as unknown as string
     })
-  }
-
-  get used_text(): string {
-    return this.user ? String(formatSize(this.user.used_bytes)) : ''
-  }
-
-  get quota_text(): string {
-    return this.user ? String(formatSize(this.user.quota_bytes)) : ''
   }
 
   get tooltip() {

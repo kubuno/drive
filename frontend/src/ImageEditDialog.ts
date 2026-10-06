@@ -253,7 +253,7 @@ export class ImageEditDialog extends ViewBase {
     })
   }
 
-  /** A part of the screen still written in React (<input> has no .kbview element yet). */
+  /** A part of the screen still written in React (<label> around an <input>/<select>/<textarea> (its text stays a bare text node of the label)). */
   get Part8() {
     if (!(this.panel === 'resize')) return undefined as never
     return __parts.Part8
@@ -286,7 +286,7 @@ export class ImageEditDialog extends ViewBase {
     })
   }
 
-  /** A part of the screen still written in React (<input> has no .kbview element yet). */
+  /** A part of the screen still written in React (<label> around an <input>/<select>/<textarea> (its text stays a bare text node of the label)). */
   get Part9() {
     if (!(this.panel === 'resize')) return undefined as never
     return __parts.Part9
@@ -312,7 +312,7 @@ export class ImageEditDialog extends ViewBase {
     })
   }
 
-  /** A part of the screen still written in React (<input> has no .kbview element yet). */
+  /** A part of the screen still written in React (<label> around an <input>/<select>/<textarea> (its text stays a bare text node of the label)). */
   get Part11() {
     if (!(this.panel === 'crop')) return undefined as never
     return __parts.Part11
@@ -385,7 +385,7 @@ export class ImageEditDialog extends ViewBase {
   get span_text() {
     return this.memo('span_text', [this.rotate], () => {
       if (!(this.rotate !== 0)) return undefined as never
-      return String(this.rotate) + "°"
+      return [((v: unknown) => (v == null || typeof v === 'boolean' ? null : String(v)))(this.rotate), "°"] as unknown as string
     })
   }
 

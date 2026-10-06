@@ -137,21 +137,27 @@ export function Part7({ resizeOn, togglePanel }: { resizeOn: NonNullable<ImageEd
 
 export function Part8({ resizeOn, setResizeOn }: { resizeOn: NonNullable<ImageEditDialog['resizeOn']>; setResizeOn: NonNullable<ImageEditDialog['setResizeOn']> }) {
   return (
-    <input
+    <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+                      <input
                         type="checkbox"
                         checked={resizeOn}
                         onChange={(e) => setResizeOn(e.target.checked)}
                       />
+                      Redimensionner
+                    </label>
   )
 }
 
 export function Part9({ keepAspect, setKeepAspect }: { keepAspect: NonNullable<ImageEditDialog['keepAspect']>; setKeepAspect: NonNullable<ImageEditDialog['setKeepAspect']> }) {
   return (
-    <input
+    <label className="mt-3 flex items-center gap-2 text-sm text-text-secondary">
+                      <input
                         type="checkbox"
                         checked={keepAspect}
                         onChange={(e) => setKeepAspect(e.target.checked)}
                       />
+                      Conserver les proportions
+                    </label>
   )
 }
 
@@ -171,11 +177,14 @@ export function Part10({ cropOn, togglePanel }: { cropOn: NonNullable<ImageEditD
 
 export function Part11({ cropOn, setCropOn }: { cropOn: NonNullable<ImageEditDialog['cropOn']>; setCropOn: NonNullable<ImageEditDialog['setCropOn']> }) {
   return (
-    <input
+    <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+                      <input
                         type="checkbox"
                         checked={cropOn}
                         onChange={(e) => setCropOn(e.target.checked)}
                       />
+                      Activer le recadrage
+                    </label>
   )
 }
 

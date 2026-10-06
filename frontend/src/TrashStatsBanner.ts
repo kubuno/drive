@@ -58,14 +58,14 @@ export class TrashStatsBanner extends ViewBase {
   get span_text() {
     return this.memo('span_text', [this.files, this.folders, this.stats], () => {
       if (!(!(!this.stats || (this.stats.file_count === 0 && this.stats.folder_count === 0)))) return undefined as never
-      return String(this.files) + String(this.folders) + " · " + String(formatSize(this.stats.size_bytes))
+      return [((v: unknown) => (v == null || typeof v === 'boolean' ? null : String(v)))(this.files), ((v: unknown) => (v == null || typeof v === 'boolean' ? null : String(v)))(this.folders), " · ", ((v: unknown) => (v == null || typeof v === 'boolean' ? null : String(v)))(formatSize(this.stats.size_bytes))] as unknown as string
     })
   }
 
   get text() {
     return this.memo('text', [this.stats], () => {
       if (!(!(!this.stats || (this.stats.file_count === 0 && this.stats.folder_count === 0)))) return undefined as never
-      return "Suppression définitive après " + String(this.stats.retention_days) + " jours"
+      return ["Suppression définitive après ", ((v: unknown) => (v == null || typeof v === 'boolean' ? null : String(v)))(this.stats.retention_days), " jours"] as unknown as string
     })
   }
 

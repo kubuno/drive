@@ -179,7 +179,7 @@ export class SearchResultsView extends ViewBase {
   get text() {
     return this.memo('text', [this.tr, this.isLoading, this.results, this.pageCount], () => {
       if (!(!(this.isLoading)) || !(!(this.results.length === 0)) || !(this.pageCount > 1)) return undefined as never
-      return " " + this.tr('app.prev', { defaultValue: 'Précédent' })
+      return [" ", this.tr('app.prev', { defaultValue: 'Précédent' })] as unknown as string
     })
   }
 
@@ -196,7 +196,7 @@ export class SearchResultsView extends ViewBase {
   get text2() {
     return this.memo('text2', [this.tr, this.isLoading, this.results, this.pageCount], () => {
       if (!(!(this.isLoading)) || !(!(this.results.length === 0)) || !(this.pageCount > 1)) return undefined as never
-      return this.tr('app.next', { defaultValue: 'Suivant' }) + " "
+      return [this.tr('app.next', { defaultValue: 'Suivant' }), " "] as unknown as string
     })
   }
 

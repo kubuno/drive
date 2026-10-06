@@ -44,7 +44,7 @@ export class DriveSettingsPage extends ViewBase {
   }
 
   get div_class() {
-    return `flex items-end border-b border-[#e8eaed] flex-shrink-0 overflow-x-auto [background:#fff] ${this.isMobile ? 'px-1' : 'px-4'}`
+    return `flex items-end border-b border-[#e8eaed] flex-shrink-0 overflow-x-auto ${this.isMobile ? 'px-1' : 'px-4'} [background:#fff]`
   }
 
   /** The rows of the Repeater over `visibleTabs`. */

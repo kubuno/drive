@@ -89,7 +89,7 @@ export class SearchResultRow extends ViewBase {
   }
 
   get p_text() {
-    return this.memo('p_text', [this.props, this.updated], () => String(formatSize(this.props.file.size_bytes)) + " · " + String(this.updated))
+    return this.memo('p_text', [this.props, this.updated], () => [((v: unknown) => (v == null || typeof v === 'boolean' ? null : String(v)))(formatSize(this.props.file.size_bytes)), " · ", ((v: unknown) => (v == null || typeof v === 'boolean' ? null : String(v)))(this.updated)] as unknown as string)
   }
 
   get part2_props() {

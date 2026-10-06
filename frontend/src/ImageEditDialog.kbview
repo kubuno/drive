@@ -57,33 +57,24 @@
         <!-- TODO(views-migrate): <ToolButton> is no .kbview element (a local or dynamic component) -->
         <ReactHost Component="{Binding Part7}" Props="{Binding part7_props}"/>
         <Panel Visible="{Binding show_panel_resize}" Class="{Binding panelCls}">
-          <Panel HtmlTag="Label" ForeColor="TextSecondary" Class="flex items-center gap-2 text-sm font-medium">
-            <!-- TODO(views-migrate): <input> has no .kbview element yet -->
-            <ReactHost Component="{Binding Part8}" Props="{Binding part8_props}"/>
-            <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="Redimensionner"/>
-          </Panel>
+          <!-- TODO(views-migrate): <label> around an <input>/<select>/<textarea> (its text stays a bare text node of the label) -->
+          <ReactHost Component="{Binding Part8}" Props="{Binding part8_props}"/>
           <Stack Direction="LeftToRight" Gap="12" CrossAlign="End" Class="mt-3">
             <!-- TODO(views-migrate): <NumField> is no .kbview element (a local or dynamic component) -->
             <ReactHost Component="{Binding NumField}" Props="{Binding num_field_props}"/>
             <!-- TODO(views-migrate): <NumField> is no .kbview element (a local or dynamic component) -->
             <ReactHost Component="{Binding NumField}" Props="{Binding num_field_props2}"/>
           </Stack>
-          <Panel HtmlTag="Label" ForeColor="TextSecondary" Class="mt-3 flex items-center gap-2 text-sm">
-            <!-- TODO(views-migrate): <input> has no .kbview element yet -->
-            <ReactHost Component="{Binding Part9}" Props="{Binding part9_props}"/>
-            <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="Conserver les proportions"/>
-          </Panel>
+          <!-- TODO(views-migrate): <label> around an <input>/<select>/<textarea> (its text stays a bare text node of the label) -->
+          <ReactHost Component="{Binding Part9}" Props="{Binding part9_props}"/>
         </Panel>
       </Panel>
       <Panel Class="relative">
         <!-- TODO(views-migrate): <ToolButton> is no .kbview element (a local or dynamic component) -->
         <ReactHost Component="{Binding Part10}" Props="{Binding part10_props}"/>
         <Panel Visible="{Binding show_panel_crop}" Class="{Binding panelCls}">
-          <Panel HtmlTag="Label" ForeColor="TextSecondary" Class="flex items-center gap-2 text-sm font-medium">
-            <!-- TODO(views-migrate): <input> has no .kbview element yet -->
-            <ReactHost Component="{Binding Part11}" Props="{Binding part11_props}"/>
-            <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="Activer le recadrage"/>
-          </Panel>
+          <!-- TODO(views-migrate): <label> around an <input>/<select>/<textarea> (its text stays a bare text node of the label) -->
+          <ReactHost Component="{Binding Part11}" Props="{Binding part11_props}"/>
           <Panel Class="mt-3 grid grid-cols-2 gap-3">
             <!-- TODO(views-migrate): <NumField> is no .kbview element (a local or dynamic component) -->
             <ReactHost Component="{Binding NumField2}" Props="{Binding num_field_props3}"/>

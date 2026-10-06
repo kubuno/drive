@@ -193,7 +193,7 @@ export class DriveContentGrid extends ViewBase {
   get span_text() {
     return this.memo('span_text', [this.props], () => {
       if (!(!(this.props.isLoading)) || !(!(this.props.hasError)) || !(!(this.props.folders.length === 0 && this.props.filteredFiles.length === 0)) || !(this.props.filteredFiles.length > 0) || !(this.props.view.typeFilter && this.props.filteredFiles.length !== this.props.files.length)) return undefined as never
-      return "— " + String(this.props.filteredFiles.length) + " / " + String(this.props.files.length)
+      return ["— ", ((v: unknown) => (v == null || typeof v === 'boolean' ? null : String(v)))(this.props.filteredFiles.length), " / ", ((v: unknown) => (v == null || typeof v === 'boolean' ? null : String(v)))(this.props.files.length)] as unknown as string
     })
   }
 

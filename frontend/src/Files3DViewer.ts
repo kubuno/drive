@@ -135,7 +135,7 @@ export class Files3DViewer extends ViewBase {
   get p_text() {
     return this.memo('p_text', [this.ext, this.format, this.data, this.modelError], () => {
       if (!(!this.format && this.data && !this.modelError)) return undefined as never
-      return "Format 3D non supporté : " + String(this.ext)
+      return ["Format 3D non supporté : ", ((v: unknown) => (v == null || typeof v === 'boolean' ? null : String(v)))(this.ext)] as unknown as string
     })
   }
 

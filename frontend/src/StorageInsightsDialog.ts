@@ -149,7 +149,7 @@ export class StorageInsightsDialog extends ViewBase {
       return this.sortedCategories.map((cat) => {
       const Icon = iconFor(cat.category)
       const pct = (cat.size / this.maxSize) * 100
-      return { cat, Icon, pct, part1_props: ((!(this.loading || !this.overview))) ? ({ Icon: Icon }) : undefined, span_text: ((!(this.loading || !this.overview))) ? (labelFor(cat.category)) : undefined, span_text2: ((!(this.loading || !this.overview))) ? (String(cat.count) + " · " + String(formatSize(cat.size))) : undefined, part2_props: ((!(this.loading || !this.overview))) ? ({ pct: pct }) : undefined, key: cat.category }
+      return { cat, Icon, pct, part1_props: ((!(this.loading || !this.overview))) ? ({ Icon: Icon }) : undefined, span_text: ((!(this.loading || !this.overview))) ? (labelFor(cat.category)) : undefined, span_text2: ((!(this.loading || !this.overview))) ? ([((v: unknown) => (v == null || typeof v === 'boolean' ? null : String(v)))(cat.count), " · ", ((v: unknown) => (v == null || typeof v === 'boolean' ? null : String(v)))(formatSize(cat.size))] as unknown as string) : undefined, part2_props: ((!(this.loading || !this.overview))) ? ({ pct: pct }) : undefined, key: cat.category }
     })
     })
   }

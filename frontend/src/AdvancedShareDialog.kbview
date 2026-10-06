@@ -37,26 +37,26 @@
       </Panel>
       <Panel Class="space-y-2">
         <Label Text="Permissions" Role="Meta" FontWeight="SemiBold" Overflow="Wrap" ForeColor="TextTertiary" Class="uppercase tracking-wide"/>
-        <!-- TODO(views-migrate): <label> around an <input> (checkbox): the label stays in React with its bare text -->
+        <!-- TODO(views-migrate): <label> around an <input>/<select>/<textarea> (its text stays a bare text node of the label) -->
         <ReactHost Component="{Binding Part1}" Props="{Binding part1_props}"/>
-        <!-- TODO(views-migrate): <label> around an <input> (checkbox): the label stays in React with its bare text -->
+        <!-- TODO(views-migrate): <label> around an <input>/<select>/<textarea> (its text stays a bare text node of the label) -->
         <ReactHost Component="{Binding Part2}" Props="{Binding part2_props}"/>
-        <!-- TODO(views-migrate): <label> around an <input> (checkbox): the label stays in React with its bare text -->
+        <!-- TODO(views-migrate): <label> around an <input>/<select>/<textarea> (its text stays a bare text node of the label) -->
         <ReactHost Component="{Binding Part3}" Props="{Binding part3_props}"/>
       </Panel>
       <Panel Class="space-y-2">
-        <!-- TODO(views-migrate): <label> around an <input> (checkbox): the label stays in React with its bare text -->
+        <!-- TODO(views-migrate): <label> around an <input>/<select>/<textarea> (its text stays a bare text node of the label) -->
         <ReactHost Component="{Binding Part4}" Props="{Binding part4_props}"/>
         <TextField Text="{Binding password, Mode=TwoWay}" InputType="Password" Placeholder="Mot de passe" Visible="{Binding pwEnabled}"/>
       </Panel>
       <Panel Class="space-y-2">
-        <!-- TODO(views-migrate): <label> around an <input> (checkbox): the label stays in React with its bare text -->
+        <!-- TODO(views-migrate): <label> around an <input>/<select>/<textarea> (its text stays a bare text node of the label) -->
         <ReactHost Component="{Binding Part5}" Props="{Binding part5_props}"/>
         <!-- TODO(views-migrate): <TextField type="datetime-local">: no .kbview value -->
         <ReactHost Component="{Binding Part6}" Props="{Binding part6_props}" Visible="{Binding expEnabled}"/>
       </Panel>
       <Panel Class="space-y-2">
-        <!-- TODO(views-migrate): <label> around an <input> (checkbox): the label stays in React with its bare text -->
+        <!-- TODO(views-migrate): <label> around an <input>/<select>/<textarea> (its text stays a bare text node of the label) -->
         <ReactHost Component="{Binding Part7}" Props="{Binding part7_props}"/>
         <!-- TODO(views-migrate): <TextField> min: no .kbview property -->
         <ReactHost Component="{Binding Part8}" Props="{Binding part8_props}" Visible="{Binding maxEnabled}"/>

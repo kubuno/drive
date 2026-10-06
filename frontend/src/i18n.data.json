@@ -373,7 +373,8 @@
       "del_pending_trash": "Moving {{count}} item(s) to trash",
       "del_pending_perm": "Deleting {{count}} item(s)",
       "listing_failed": "This folder could not be listed",
-      "mount_reconnect_hint": "Open Remote storage and reconnect this mount to enter its credentials again."
+      "mount_reconnect_hint": "Open Remote storage and reconnect this mount to enter its credentials again.",
+      "page_of": "Page {{page}} / {{total}}"
     },
     "viewer": {
       "close_esc": "Close (Esc)"
@@ -514,7 +515,9 @@
     },
     "search": {
       "badge_semantic": "Semantic",
-      "semantic_on": "Semantic search"
+      "semantic_on": "Semantic search",
+      "similar_to": "Images similaires à « {{name}} »",
+      "no_similar": "Aucune image similaire trouvée"
     },
     "view": {
       "menu": "View",
@@ -677,7 +680,8 @@
     "dual": {
       "title": "Two panes",
       "transferred": "\"{{name}}\" transferred"
-    }
+    },
+    "drive_settings_title": "Réglages"
   },
   "fr": {
     "storage": {

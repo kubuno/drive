@@ -247,7 +247,7 @@ export class AdvancedShareDialog extends ViewBase {
     })
   }
 
-  /** A part of the screen still written in React (<input> has no .kbview element yet). */
+  /** A part of the screen still written in React (<label> around an <input>/<select>/<textarea> (its text stays a bare text node of the label)). */
   get Part1() {
     if (!(this.tab === 'new' && this.props.target)) return undefined as never
     return __parts.Part1
@@ -260,7 +260,7 @@ export class AdvancedShareDialog extends ViewBase {
     })
   }
 
-  /** A part of the screen still written in React (<input> has no .kbview element yet). */
+  /** A part of the screen still written in React (<label> around an <input>/<select>/<textarea> (its text stays a bare text node of the label)). */
   get Part2() {
     if (!(this.tab === 'new' && this.props.target)) return undefined as never
     return __parts.Part2
@@ -273,7 +273,7 @@ export class AdvancedShareDialog extends ViewBase {
     })
   }
 
-  /** A part of the screen still written in React (<input> has no .kbview element yet). */
+  /** A part of the screen still written in React (<label> around an <input>/<select>/<textarea> (its text stays a bare text node of the label)). */
   get Part3() {
     if (!(this.tab === 'new' && this.props.target)) return undefined as never
     return __parts.Part3
@@ -286,7 +286,7 @@ export class AdvancedShareDialog extends ViewBase {
     })
   }
 
-  /** A part of the screen still written in React (<input> has no .kbview element yet). */
+  /** A part of the screen still written in React (<label> around an <input>/<select>/<textarea> (its text stays a bare text node of the label)). */
   get Part4() {
     if (!(this.tab === 'new' && this.props.target)) return undefined as never
     return __parts.Part4
@@ -299,7 +299,7 @@ export class AdvancedShareDialog extends ViewBase {
     })
   }
 
-  /** A part of the screen still written in React (<input> has no .kbview element yet). */
+  /** A part of the screen still written in React (<label> around an <input>/<select>/<textarea> (its text stays a bare text node of the label)). */
   get Part5() {
     if (!(this.tab === 'new' && this.props.target)) return undefined as never
     return __parts.Part5
@@ -325,7 +325,7 @@ export class AdvancedShareDialog extends ViewBase {
     })
   }
 
-  /** A part of the screen still written in React (<input> has no .kbview element yet). */
+  /** A part of the screen still written in React (<label> around an <input>/<select>/<textarea> (its text stays a bare text node of the label)). */
   get Part7() {
     if (!(this.tab === 'new' && this.props.target)) return undefined as never
     return __parts.Part7
@@ -407,7 +407,7 @@ export class AdvancedShareDialog extends ViewBase {
     return this.memo('rows_my_shares', [this.myShares, this.tab, this.loadingMine, this.copiedId, this.handleCopy], () => {
       if (!(this.tab === 'mine') || !(!(this.loadingMine && this.myShares.length === 0)) || !(!(this.myShares.length === 0))) return undefined as never
       return this.myShares.map((share) => {
-      return { share, span_text: ((this.tab === 'mine') && (!(this.loadingMine && this.myShares.length === 0)) && (!(this.myShares.length === 0))) ? (share.item_name ?? 'Élément') : undefined, show_share_expires_at: ((this.tab === 'mine') && (!(this.loadingMine && this.myShares.length === 0)) && (!(this.myShares.length === 0))) ? (!!(share.expires_at)) : undefined, text: ((this.tab === 'mine') && (!(this.loadingMine && this.myShares.length === 0)) && (!(this.myShares.length === 0)) && (share.expires_at)) ? (" " + String(formatDate(share.expires_at))) : undefined, text2: ((this.tab === 'mine') && (!(this.loadingMine && this.myShares.length === 0)) && (!(this.myShares.length === 0))) ? (" " + String(share.download_count) + "/" + String(share.max_downloads ?? '∞')) : undefined, part10_props: ((this.tab === 'mine') && (!(this.loadingMine && this.myShares.length === 0)) && (!(this.myShares.length === 0))) ? ({ copiedId: this.copiedId, share: share, handleCopy: this.handleCopy }) : undefined, key: share.id }
+      return { share, span_text: ((this.tab === 'mine') && (!(this.loadingMine && this.myShares.length === 0)) && (!(this.myShares.length === 0))) ? (share.item_name ?? 'Élément') : undefined, show_share_expires_at: ((this.tab === 'mine') && (!(this.loadingMine && this.myShares.length === 0)) && (!(this.myShares.length === 0))) ? (!!(share.expires_at)) : undefined, text: ((this.tab === 'mine') && (!(this.loadingMine && this.myShares.length === 0)) && (!(this.myShares.length === 0)) && (share.expires_at)) ? ([" ", ((v: unknown) => (v == null || typeof v === 'boolean' ? null : String(v)))(formatDate(share.expires_at))] as unknown as string) : undefined, text2: ((this.tab === 'mine') && (!(this.loadingMine && this.myShares.length === 0)) && (!(this.myShares.length === 0))) ? ([" ", ((v: unknown) => (v == null || typeof v === 'boolean' ? null : String(v)))(share.download_count), "/", ((v: unknown) => (v == null || typeof v === 'boolean' ? null : String(v)))(share.max_downloads ?? '∞')] as unknown as string) : undefined, part10_props: ((this.tab === 'mine') && (!(this.loadingMine && this.myShares.length === 0)) && (!(this.myShares.length === 0))) ? ({ copiedId: this.copiedId, share: share, handleCopy: this.handleCopy }) : undefined, key: share.id }
     })
     })
   }
@@ -455,7 +455,7 @@ export class AdvancedShareDialog extends ViewBase {
     return this.memo('rows_received_shares', [this.receivedShares, this.tab, this.loadingReceived], () => {
       if (!(this.tab === 'received') || !(!(this.loadingReceived && this.receivedShares.length === 0)) || !(!(this.receivedShares.length === 0))) return undefined as never
       return this.receivedShares.map((share) => {
-      return { share, span_text: ((this.tab === 'received') && (!(this.loadingReceived && this.receivedShares.length === 0)) && (!(this.receivedShares.length === 0))) ? (share.item_name ?? 'Élément') : undefined, p_text: ((this.tab === 'received') && (!(this.loadingReceived && this.receivedShares.length === 0)) && (!(this.receivedShares.length === 0))) ? ("Partagé par " + String(share.owner_name ?? 'quelqu’un')) : undefined, span_text2: ((this.tab === 'received') && (!(this.loadingReceived && this.receivedShares.length === 0)) && (!(this.receivedShares.length === 0))) ? (share.item_kind === 'folder' ? 'Dossier' : 'Fichier') : undefined, key: share.id }
+      return { share, span_text: ((this.tab === 'received') && (!(this.loadingReceived && this.receivedShares.length === 0)) && (!(this.receivedShares.length === 0))) ? (share.item_name ?? 'Élément') : undefined, p_text: ((this.tab === 'received') && (!(this.loadingReceived && this.receivedShares.length === 0)) && (!(this.receivedShares.length === 0))) ? (["Partagé par ", ((v: unknown) => (v == null || typeof v === 'boolean' ? null : String(v)))(share.owner_name ?? 'quelqu’un')] as unknown as string) : undefined, span_text2: ((this.tab === 'received') && (!(this.loadingReceived && this.receivedShares.length === 0)) && (!(this.receivedShares.length === 0))) ? (share.item_kind === 'folder' ? 'Dossier' : 'Fichier') : undefined, key: share.id }
     })
     })
   }

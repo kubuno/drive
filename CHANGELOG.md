@@ -14,11 +14,17 @@ number at release time, and CI publishes that section as the GitHub Release note
 - **The Drive screens can be edited in the Visual Studio designer**: the Drive page, its toolbar, breadcrumb, file grid, sort and filter bar, search results (files and images), empty states, lock and version badges, the video player overlay, the « Import from a URL », duplicates and storage overview dialogs, the advanced share dialog and the details panel are views (`.kbview` + code-behind, converted with `@kubuno/views-migrate`). The Drive page (my files, home, starred, shared, recent, trash, search results) and the « Import from a URL » dialog were checked identical to the previous screens (pixels, text, accessibility tree and keyboard order; light and dark, French, English and Arabic, desktop and phone). The file explorer itself (`StorageExplorer` of `@kubuno/drive`), the cards and rows of files and folders, the context menu, the viewers and the remaining dialogs stay React for now. The bundle declares the views format it was compiled for (`viewsAbi`).
 - **More Drive screens are views**: the Drive settings page (preferences, WebDAV, about), the storage page, the search filter panel, the sidebar tree, the storage gauge in the top bar, the trash summary, the side-panel mini view, the Drive tab of the image picker, the archive browser, the 3D viewer, the image editing dialog, the labels dialog, badges and information section, the fonts pages (search bar, specimen, selection) and the breadcrumb and tree of the open / save / folder dialogs. Every Drive view was converted again from its original screen with `@kubuno/views-migrate` 0.1.1. All of them, and the screens converted earlier but not checked yet (duplicates, storage overview, advanced sharing, the video player, image search results), were checked identical to the previous screens (pixels, text, accessibility tree and keyboard order; light and dark, French, English and Arabic, desktop and phone).
 - **The views open in the Visual Studio designer with their code-behind**: `kubuno.views.json` names the module's design setup (`index.css`, `i18n.ts`) for the module design page of `@kubuno/host-runtime`.
+- **Every Drive view converted again with `@kubuno/views-migrate` 0.1.2, with no hand corrections left**: texts made of
+  several parts (« 71 KB / 10 GB », « 3 éléments dans l'archive ») keep one text node per part as before, the
+  checkboxes of the image editing dialog keep their label around them, and the labels dialog's name field gets its
+  spacing from the host's views runtime (core with `@kubuno/views` 0.1.4). Checked identical to the original screens
+  again (pixels, text, accessibility tree and keyboard order; light and dark, French, English and Arabic, desktop and
+  phone).
 - Requires `@kubuno/ui` 0.1.16, `@kubuno/views` 0.1.3 and `@kubuno/views-compiler` 0.1.2 at build time.
 
 ### Fixed
 
-- **Texts with a default value show again in the views** (« Réglages », « Images similaires à … », « Page n / N »): the default texts of keys missing from the translation catalogue are registered for every language instead of showing the key.
+- **Texts with a default value show again in the views** (« Réglages », « Images similaires à … », « Page n / N »): the default texts of keys missing from the translation catalogue are now part of the catalogue itself (`src/i18n.data.json`, fallback language) instead of showing the key.
 - **`build_kbpkg.sh` packs on Windows without `zip` or 7-Zip**: the PowerShell fallback received Git Bash paths and wrote a `.zip` with backslash entry names; it now writes the `.kbpkg` itself with `/` separators.
 
 ## [0.1.12] - 2026-10-05

@@ -102,7 +102,7 @@ export class ArchiveBrowser extends ViewBase {
   }
 
   get div_text() {
-    return this.memo('div_text', [this.data], () => String(this.data?.total ?? 0) + " élément" + String((this.data?.total ?? 0) !== 1 ? 's' : '') + " dans l'archive")
+    return this.memo('div_text', [this.data], () => [((v: unknown) => (v == null || typeof v === 'boolean' ? null : String(v)))(this.data?.total ?? 0), " élément", ((v: unknown) => (v == null || typeof v === 'boolean' ? null : String(v)))((this.data?.total ?? 0) !== 1 ? 's' : ''), " dans l'archive"] as unknown as string)
   }
 
   navigate(newPath: string) {
