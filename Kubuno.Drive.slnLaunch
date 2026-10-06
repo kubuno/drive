@@ -3,7 +3,7 @@
     "Name": "Drive (Kubuno Core + browser)",
     "Projects": [
       {
-        "Path": "Kubuno.Drive.Server.rsproj",
+        "Path": "server\Kubuno.Drive.Server.rsproj",
         "Action": "Start"
       },
       {
