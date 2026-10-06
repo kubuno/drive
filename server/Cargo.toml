@@ -29,6 +29,8 @@ server = [
 
 [dependencies]
 # ── Face CLIENT (toujours compilée, légère) ──────────────────────────────────
+# The name rules shared with every other Drive client (common/core, sans-IO).
+kubuno-drive-core = { path = "../common/core" }
 serde          = { workspace = true }
 serde_json     = { workspace = true }
 reqwest        = { workspace = true }

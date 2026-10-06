@@ -1,5 +1,5 @@
 use kubuno_db::{params, DbPool, DbQueryBuilder, DbValue};
-use kubuno_storage::{path as storage_path, unique_dir_name, StorageBackend};
+use kubuno_storage::{path as storage_path, StorageBackend};
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -12,6 +12,12 @@ use crate::{
     },
     services::{blob_gc, files},
 };
+
+/// `name`, or the first free `name (n)` among `existing`, compared byte for byte: the numbering every
+/// Drive client shares (kubuno-drive-core).
+fn unique_dir_name(name: &str, existing: &[String]) -> String {
+    kubuno_drive_core::unique_name_among(name, true, existing, kubuno_drive_core::CaseRule::Sensitive)
+}
 
 // ── Small row projections ─────────────────────────────────────────────────────
 #[derive(sqlx::FromRow)]
@@ -904,18 +910,20 @@ pub async fn merge_into_folder(
     Ok(())
 }
 
+/// The server's name rule, shared with every client (`kubuno-drive-core`, profile `Server`): not empty,
+/// at most 255 bytes, not `.` or `..`, no `/`, `\` or NUL. A backslash is a path separator on Windows:
+/// it would split the name into several directories (and `..\..` would climb out of the owner's tree).
 fn validate_folder_name(name: &str) -> Result<()> {
-    if name.is_empty() || name.len() > 255 {
-        return Err(FilesError::Validation("Nom de dossier invalide".into()));
-    }
-    // A backslash is a path separator on Windows: it would split the name into
-    // several directories (and `..\..` would climb out of the owner's tree).
-    if name.contains(['/', '\\', '\0']) || name == ".." || name == "." {
-        return Err(FilesError::Validation(
+    use kubuno_drive_core::{verdict, InvalidReason, Profile, Verdict};
+    match verdict(name, Profile::Server) {
+        Verdict::Invalid(InvalidReason::Empty | InvalidReason::TooLong) => {
+            Err(FilesError::Validation("Nom de dossier invalide".into()))
+        }
+        Verdict::Invalid(_) => Err(FilesError::Validation(
             "Le nom de dossier ne peut pas contenir '/', '\\', '..' ou '.'".into(),
-        ));
+        )),
+        Verdict::Valid | Verdict::PortableWarning(_) => Ok(()),
     }
-    Ok(())
 }
 
 // ── Corbeille — vidage ────────────────────────────────────────────────────────

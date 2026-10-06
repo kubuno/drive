@@ -20,11 +20,33 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with: { components: clippy }
       - uses: Swatinem/rust-cache@v2
+        with: { workspaces: server }
       # clippy --all-targets also compiles the test code (catching test
       # build breakage). Running the backend suites needs a Postgres service
       # per repo — wired as a follow-up.
       - name: clippy (deny warnings)
+        working-directory: server
         run: cargo clippy --all-targets -- -D warnings
+
+  # The shared rules of every client (common/core, kubuno-drive-core): sans-IO, so the same
+  # tests (and conformance vectors, common/vectors) run on the three systems.
+  common-core:
+    strategy:
+      matrix: { os: [ubuntu-latest, windows-latest, macos-latest] }
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: common/core
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with: { components: clippy }
+      - uses: Swatinem/rust-cache@v2
+        with: { workspaces: common/core }
+      - name: clippy (deny warnings)
+        run: cargo clippy --locked --all-targets -- -D warnings
+      - name: test (with the conformance vectors)
+        run: cargo test --locked
 
   audit:
     runs-on: ubuntu-latest
@@ -34,6 +56,7 @@ jobs:
       - uses: taiki-e/install-action@v2
         with: { tool: cargo-audit }
       - name: cargo audit
+        working-directory: server
         run: cargo audit
 
   frontend:

@@ -1,0 +1,16 @@
+[package]
+name        = "kubuno-drive-core"
+version     = "0.1.0"
+edition     = "2021"
+description = "Kubuno Drive shared core (sans-IO): file and folder name rules per platform, comparison keys and numbered or conflict-copy names, used by the server and the desktop app and held together with the other clients by the conformance vectors of common/vectors"
+license     = "AGPL-3.0"
+repository  = "https://github.com/kubuno/drive"
+
+# Sans-IO (vskubuno docs/SHARED-CORES.md §6.1): no network, database, file system, clock, async
+# runtime, UI or C library. Data in, data out; it builds for every target (wasm32 included).
+[dependencies]
+unicode-normalization = "0.1"
+
+[dev-dependencies]
+serde_json     = "1"
+kubuno-vectors = { git = "https://github.com/kubuno/core", tag = "vectors-v0.1.0", package = "kubuno-vectors" }

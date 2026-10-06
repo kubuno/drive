@@ -1,0 +1,25 @@
+{
+  "$schema": "https://github.com/kubuno/core/blob/main/vectors/conformance-vectors.schema.json",
+  "format": 1,
+  "suite": "drive.names.numbering",
+  "version": "1.0.0",
+  "description": "The first free name for a new file or folder. Input: { desired, folder, existing: [name…], case: 'sensitive' | 'insensitive' }. Output: desired itself when no existing name equals it, else the first of 'stem (2).ext', 'stem (3).ext'… (a folder: 'name (2)', the number at the end) that no existing name equals. 'insensitive' compares by the comparison key (NFC, lower case). A file's extension is the part from its last dot; a leading dot is not an extension.",
+  "reference": "drive/common/core (kubuno-drive-core) names::unique_name_among",
+  "cases": [
+    { "id": "free", "input": { "desired": "rapport.pdf", "folder": false, "existing": [], "case": "sensitive" }, "expected": "rapport.pdf" },
+    { "id": "first-conflict", "input": { "desired": "rapport.pdf", "folder": false, "existing": ["rapport.pdf"], "case": "sensitive" }, "expected": "rapport (2).pdf" },
+    { "id": "second-conflict", "input": { "desired": "rapport.pdf", "folder": false, "existing": ["rapport.pdf", "rapport (2).pdf"], "case": "sensitive" }, "expected": "rapport (3).pdf" },
+    { "id": "gap-is-reused", "input": { "desired": "a.txt", "folder": false, "existing": ["a.txt", "a (3).txt"], "case": "sensitive" }, "expected": "a (2).txt" },
+    { "id": "no-extension", "input": { "desired": "Makefile", "folder": false, "existing": ["Makefile"], "case": "sensitive" }, "expected": "Makefile (2)" },
+    { "id": "double-extension", "input": { "desired": "site.tar.gz", "folder": false, "existing": ["site.tar.gz"], "case": "sensitive" }, "expected": "site.tar (2).gz" },
+    { "id": "dotfile", "input": { "desired": ".env", "folder": false, "existing": [".env"], "case": "sensitive" }, "expected": ".env (2)" },
+    { "id": "trailing-dot", "input": { "desired": "fin.", "folder": false, "existing": ["fin."], "case": "sensitive" }, "expected": "fin (2)." },
+    { "id": "folder", "input": { "desired": "Documents", "folder": true, "existing": ["Documents"], "case": "sensitive" }, "expected": "Documents (2)" },
+    { "id": "folder-with-dot", "input": { "desired": "v1.2", "folder": true, "existing": ["v1.2", "v1.2 (2)"], "case": "sensitive" }, "expected": "v1.2 (3)" },
+    { "id": "case/sensitive-coexist", "input": { "desired": "A.txt", "folder": false, "existing": ["a.txt"], "case": "sensitive" }, "expected": "A.txt" },
+    { "id": "case/insensitive-clash", "input": { "desired": "A.txt", "folder": false, "existing": ["a.txt"], "case": "insensitive" }, "expected": "A (2).txt" },
+    { "id": "case/insensitive-numbered-clash", "input": { "desired": "A.txt", "folder": false, "existing": ["a.txt", "a (2).TXT"], "case": "insensitive" }, "expected": "A (3).txt" },
+    { "id": "nfc/insensitive-clash", "input": { "desired": "Eté.txt", "folder": false, "existing": ["Eté.txt"], "case": "insensitive" }, "expected": "Eté (2).txt" },
+    { "id": "nfc/sensitive-coexist", "input": { "desired": "Eté.txt", "folder": false, "existing": ["Eté.txt"], "case": "sensitive" }, "expected": "Eté.txt" }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://github.com/kubuno/core/blob/main/vectors/conformance-vectors.schema.json",
+  "format": 1,
+  "suite": "drive.names.comparison-key",
+  "version": "1.0.0",
+  "description": "The key names are compared by on a case-insensitive, normalisation-insensitive file system (Windows, macOS): the name in Unicode NFC, then lower-cased (full Unicode lower case, final sigma included). Input: { name }. Output: the key.",
+  "reference": "drive/common/core (kubuno-drive-core) names::comparison_key",
+  "cases": [
+    { "id": "ascii", "input": { "name": "Rapport.PDF" }, "expected": "rapport.pdf" },
+    { "id": "nfd-to-nfc", "input": { "name": "Été" }, "expected": "été" },
+    { "id": "nfc-unchanged", "input": { "name": "été" }, "expected": "été" },
+    { "id": "upper-accent", "input": { "name": "ÉCOLE" }, "expected": "école" },
+    { "id": "german-sharp-s", "input": { "name": "Straße" }, "expected": "straße" },
+    { "id": "greek-final-sigma", "input": { "name": "ΟΔΟΣ" }, "expected": "οδος" },
+    { "id": "empty", "input": { "name": "" }, "expected": "" }
+  ]
+}

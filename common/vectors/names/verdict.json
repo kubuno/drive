@@ -1,0 +1,64 @@
+{
+  "$schema": "https://github.com/kubuno/core/blob/main/vectors/conformance-vectors.schema.json",
+  "format": 1,
+  "suite": "drive.names.verdict",
+  "version": "1.0.0",
+  "description": "The verdict on a file or folder name for a profile. Input: { name, profile } with profile one of server, windows, macos, linux, portable. Output: { verdict: 'valid' } | { verdict: 'invalid', reason } (the first failing rule in the order empty, dot-name, too-long, nul-char, separator, control-char, reserved-char, trailing-dot-or-space, reserved-device-name) | { verdict: 'portable-warning', issues: [reason…] } (server profile only: a name the server stores but some system cannot, every portable rule it breaks, in that order). Lengths: 255 UTF-8 bytes, 255 UTF-16 units on Windows.",
+  "reference": "drive/common/core (kubuno-drive-core) names::verdict",
+  "cases": [
+    { "id": "plain/all-profiles-server", "input": { "name": "Rapport 2026.pdf", "profile": "server" }, "expected": { "verdict": "valid" } },
+    { "id": "plain/windows", "input": { "name": "Rapport 2026.pdf", "profile": "windows" }, "expected": { "verdict": "valid" } },
+    { "id": "plain/portable", "input": { "name": "notes.tar.gz", "profile": "portable" }, "expected": { "verdict": "valid" } },
+    { "id": "unicode/accents", "input": { "name": "Été — résumé.txt", "profile": "portable" }, "expected": { "verdict": "valid" } },
+    { "id": "dotfile", "input": { "name": ".gitignore", "profile": "portable" }, "expected": { "verdict": "valid" } },
+
+    { "id": "empty/server", "input": { "name": "", "profile": "server" }, "expected": { "verdict": "invalid", "reason": "empty" } },
+    { "id": "empty/linux", "input": { "name": "", "profile": "linux" }, "expected": { "verdict": "invalid", "reason": "empty" } },
+    { "id": "dot/server", "input": { "name": ".", "profile": "server" }, "expected": { "verdict": "invalid", "reason": "dot-name" } },
+    { "id": "dotdot/macos", "input": { "name": "..", "profile": "macos" }, "expected": { "verdict": "invalid", "reason": "dot-name" } },
+    { "id": "three-dots/linux", "input": { "name": "...", "profile": "linux" }, "expected": { "verdict": "valid" } },
+    { "id": "three-dots/windows", "input": { "name": "...", "profile": "windows" }, "expected": { "verdict": "invalid", "reason": "trailing-dot-or-space" } },
+
+    { "id": "slash/server", "input": { "name": "a/b", "profile": "server" }, "expected": { "verdict": "invalid", "reason": "separator" } },
+    { "id": "slash/linux", "input": { "name": "a/b", "profile": "linux" }, "expected": { "verdict": "invalid", "reason": "separator" } },
+    { "id": "backslash/server", "input": { "name": "..\\..\\evil", "profile": "server" }, "expected": { "verdict": "invalid", "reason": "separator" } },
+    { "id": "backslash/linux", "input": { "name": "a\\b", "profile": "linux" }, "expected": { "verdict": "valid" } },
+    { "id": "backslash/macos", "input": { "name": "a\\b", "profile": "macos" }, "expected": { "verdict": "valid" } },
+    { "id": "backslash/windows", "input": { "name": "a\\b", "profile": "windows" }, "expected": { "verdict": "invalid", "reason": "separator" } },
+    { "id": "nul/server", "input": { "name": "a\u0000b", "profile": "server" }, "expected": { "verdict": "invalid", "reason": "nul-char" } },
+    { "id": "nul-before-separator", "input": { "name": "a\u0000/b", "profile": "linux" }, "expected": { "verdict": "invalid", "reason": "nul-char" } },
+
+    { "id": "colon/server-warns", "input": { "name": "12:30 réunion.txt", "profile": "server" }, "expected": { "verdict": "portable-warning", "issues": ["reserved-char"] } },
+    { "id": "colon/windows", "input": { "name": "12:30 réunion.txt", "profile": "windows" }, "expected": { "verdict": "invalid", "reason": "reserved-char" } },
+    { "id": "colon/macos", "input": { "name": "12:30 réunion.txt", "profile": "macos" }, "expected": { "verdict": "invalid", "reason": "reserved-char" } },
+    { "id": "colon/linux", "input": { "name": "12:30 réunion.txt", "profile": "linux" }, "expected": { "verdict": "valid" } },
+    { "id": "question/windows", "input": { "name": "why?", "profile": "windows" }, "expected": { "verdict": "invalid", "reason": "reserved-char" } },
+    { "id": "question/macos", "input": { "name": "why?", "profile": "macos" }, "expected": { "verdict": "valid" } },
+    { "id": "star-pipe-quotes/windows", "input": { "name": "a*b|c\"d<e>f", "profile": "windows" }, "expected": { "verdict": "invalid", "reason": "reserved-char" } },
+    { "id": "control/windows", "input": { "name": "tab\there", "profile": "windows" }, "expected": { "verdict": "invalid", "reason": "control-char" } },
+    { "id": "control/linux", "input": { "name": "tab\there", "profile": "linux" }, "expected": { "verdict": "valid" } },
+    { "id": "control/server-warns", "input": { "name": "bell\u0007", "profile": "server" }, "expected": { "verdict": "portable-warning", "issues": ["control-char"] } },
+
+    { "id": "trailing-dot/windows", "input": { "name": "fin.", "profile": "windows" }, "expected": { "verdict": "invalid", "reason": "trailing-dot-or-space" } },
+    { "id": "trailing-space/portable", "input": { "name": "fin ", "profile": "portable" }, "expected": { "verdict": "invalid", "reason": "trailing-dot-or-space" } },
+    { "id": "trailing-space/linux", "input": { "name": "fin ", "profile": "linux" }, "expected": { "verdict": "valid" } },
+    { "id": "leading-space/windows", "input": { "name": " début", "profile": "windows" }, "expected": { "verdict": "valid" } },
+
+    { "id": "device/con", "input": { "name": "CON", "profile": "windows" }, "expected": { "verdict": "invalid", "reason": "reserved-device-name" } },
+    { "id": "device/lower-with-extension", "input": { "name": "nul.txt", "profile": "windows" }, "expected": { "verdict": "invalid", "reason": "reserved-device-name" } },
+    { "id": "device/double-extension", "input": { "name": "aux.tar.gz", "profile": "portable" }, "expected": { "verdict": "invalid", "reason": "reserved-device-name" } },
+    { "id": "device/com9", "input": { "name": "com9", "profile": "windows" }, "expected": { "verdict": "invalid", "reason": "reserved-device-name" } },
+    { "id": "device/com10-is-fine", "input": { "name": "COM10", "profile": "windows" }, "expected": { "verdict": "valid" } },
+    { "id": "device/prefix-is-fine", "input": { "name": "console.log", "profile": "windows" }, "expected": { "verdict": "valid" } },
+    { "id": "device/linux", "input": { "name": "CON", "profile": "linux" }, "expected": { "verdict": "valid" } },
+    { "id": "device/server-warns", "input": { "name": "prn.pdf", "profile": "server" }, "expected": { "verdict": "portable-warning", "issues": ["reserved-device-name"] } },
+
+    { "id": "several/server-lists-all", "input": { "name": "CON.a:b.", "profile": "server" }, "expected": { "verdict": "portable-warning", "issues": ["reserved-char", "trailing-dot-or-space", "reserved-device-name"] } },
+    { "id": "several/windows-first-wins", "input": { "name": "CON.a:b.", "profile": "windows" }, "expected": { "verdict": "invalid", "reason": "reserved-char" } },
+
+    { "id": "length/255-bytes", "input": { "name": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "profile": "server" }, "expected": { "verdict": "valid" } },
+    { "id": "length/256-bytes", "input": { "name": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "profile": "server" }, "expected": { "verdict": "invalid", "reason": "too-long" } },
+    { "id": "length/128-accents-linux", "input": { "name": "éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé", "profile": "linux" }, "expected": { "verdict": "invalid", "reason": "too-long" } },
+    { "id": "length/128-accents-windows", "input": { "name": "éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé", "profile": "windows" }, "expected": { "verdict": "valid" } }
+  ]
+}

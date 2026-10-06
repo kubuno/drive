@@ -1,7 +1,7 @@
 use bytes::Bytes;
 use kubuno_db::dialect::Backend;
 use kubuno_db::{params, DbPool, DbQueryBuilder, DbValue};
-use kubuno_storage::{path as storage_path, unique_file_name, StorageBackend};
+use kubuno_storage::{path as storage_path, StorageBackend};
 use mime_guess::MimeGuess;
 use std::sync::Arc;
 use uuid::Uuid;
@@ -14,6 +14,12 @@ use crate::{
 };
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
+
+/// `name`, or the first free `name (n).ext` among `existing`, compared byte for byte: the numbering every
+/// Drive client shares (kubuno-drive-core).
+fn unique_file_name(name: &str, existing: &[String]) -> String {
+    kubuno_drive_core::unique_name_among(name, false, existing, kubuno_drive_core::CaseRule::Sensitive)
+}
 
 /// Single-column projections used by a few list queries.
 #[derive(sqlx::FromRow)]
@@ -388,7 +394,7 @@ fn release_reservation(location: &str) {
 /// of the on-disk path, and a separator or a `..` would let it escape its folder
 /// — or the owner's tree.
 pub fn ensure_plain_name(name: &str) -> Result<()> {
-    if name.is_empty() || name == "." || name == ".." || name.contains(['/', '\\', '\0']) {
+    if !kubuno_drive_core::is_plain_segment(name) {
         return Err(FilesError::Validation("Nom de fichier invalide".into()));
     }
     Ok(())
@@ -715,7 +721,9 @@ pub async fn rename_file(
     dto: RenameFileDto,
 ) -> Result<File> {
     let name = dto.name.trim().to_string();
-    if name.is_empty() || name.len() > 1000 {
+    // The server's name rule (kubuno-drive-core, profile `Server`): at most 255 bytes like an uploaded
+    // name (sanitize-filename's limit) and every file system's.
+    if !kubuno_drive_core::verdict(&name, kubuno_drive_core::Profile::Server).is_accepted() {
         return Err(FilesError::Validation("Nom invalide".into()));
     }
     // Validated before anything is touched (the overwrite branch deletes).

@@ -1793,6 +1793,7 @@ dependencies = [
  "image",
  "kamadak-exif",
  "kubuno-db",
+ "kubuno-drive-core",
  "kubuno-modauth",
  "kubuno-storage",
  "mime_guess",
@@ -1822,6 +1823,13 @@ dependencies = [
  "validator",
  "walkdir",
  "zip",
+]
+
+[[package]]
+name = "kubuno-drive-core"
+version = "0.1.0"
+dependencies = [
+ "unicode-normalization",
 ]
 
 [[package]]

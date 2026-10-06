@@ -1,0 +1,16 @@
+{
+  "$schema": "https://github.com/kubuno/core/blob/main/vectors/conformance-vectors.schema.json",
+  "format": 1,
+  "suite": "drive.names.conflict-copy",
+  "version": "1.0.0",
+  "description": "The name of the copy a client keeps when its version conflicts with the server's. Input: { name, folder, machine, year, month, day, hour, minute }. Output: 'stem (conflit <machine> YYYY-MM-DD HH-MM).ext' for a file, 'name (conflit <machine> YYYY-MM-DD HH-MM)' for a folder. In the machine name, '/', '\\\\', NUL, control characters and < > : \" | ? * become '-'; it is trimmed, and an empty one becomes 'desktop'.",
+  "reference": "drive/common/core (kubuno-drive-core) names::conflict_copy_name",
+  "cases": [
+    { "id": "file", "input": { "name": "budget.xlsx", "folder": false, "machine": "PC-MARTIN", "year": 2026, "month": 10, "day": 6, "hour": 14, "minute": 5 }, "expected": "budget (conflit PC-MARTIN 2026-10-06 14-05).xlsx" },
+    { "id": "folder", "input": { "name": "Photos", "folder": true, "machine": "mac", "year": 2026, "month": 1, "day": 2, "hour": 3, "minute": 4 }, "expected": "Photos (conflit mac 2026-01-02 03-04)" },
+    { "id": "no-extension", "input": { "name": "README", "folder": false, "machine": "laptop", "year": 2027, "month": 12, "day": 31, "hour": 23, "minute": 59 }, "expected": "README (conflit laptop 2027-12-31 23-59)" },
+    { "id": "dotfile", "input": { "name": ".env", "folder": false, "machine": "srv", "year": 2026, "month": 10, "day": 6, "hour": 0, "minute": 0 }, "expected": ".env (conflit srv 2026-10-06 00-00)" },
+    { "id": "machine-sanitised", "input": { "name": "a.txt", "folder": false, "machine": "host:1/b?", "year": 2026, "month": 10, "day": 6, "hour": 9, "minute": 30 }, "expected": "a (conflit host-1-b- 2026-10-06 09-30).txt" },
+    { "id": "machine-empty", "input": { "name": "a.txt", "folder": false, "machine": "  ", "year": 2026, "month": 10, "day": 6, "hour": 9, "minute": 30 }, "expected": "a (conflit desktop 2026-10-06 09-30).txt" }
+  ]
+}
