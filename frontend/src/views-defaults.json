@@ -1,0 +1,7 @@
+{
+  "drive": {
+    "search.similar_to": "Images similaires à « {{name}} »",
+    "search.no_similar": "Aucune image similaire trouvée",
+    "app.page_of": "Page {{page}} / {{total}}"
+  }
+}

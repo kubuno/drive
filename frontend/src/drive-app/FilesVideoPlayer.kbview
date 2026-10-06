@@ -1,0 +1,28 @@
+<!-- FilesVideoPlayer — converted from FilesVideoPlayer.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<Stack x:Props="FilesVideoPlayerProps" Gap="0" Class="fixed inset-0 z-50 bg-black/95" OnClick="stack_click">
+  <Stack Direction="LeftToRight"
+         Gap="0"
+         CrossAlign="Center"
+         Justify="SpaceBetween"
+         Class="px-4 py-3 bg-black/60 shrink-0"
+         OnClick="stack_click2">
+    <Panel>
+      <Label Text="{Binding props.file.name}" FontWeight="Medium" Class="text-white max-w-[60vw]"/>
+      <Label Text="{Binding p_text}" Role="Meta" Overflow="Wrap" Visible="{Binding show_is_external_file_file}" Class="text-white/50"/>
+    </Panel>
+    <Stack Direction="LeftToRight" CrossAlign="Center">
+      <!-- TODO(views-migrate): <a download>: attribute(s) without a .kbview property -->
+      <ReactHost Component="{Binding Part1}" Props="{Binding part1_props}"/>
+      <Panel AccessibleRole="PushButton"
+             AutoSize="true"
+             Class="p-2 hover:bg-white/10 rounded-full text-white transition-colors"
+             OnClick="panel_click">
+        <Icon Name="X" Size="18"/>
+      </Panel>
+    </Stack>
+  </Stack>
+  <Stack Direction="LeftToRight" Gap="0" CrossAlign="Center" Justify="Center" Class="flex-1 p-6" OnClick="stack_click3">
+    <!-- TODO(views-migrate): <video> has no .kbview element yet -->
+    <ReactHost Component="{Binding Part2}" Props="{Binding part2_props}" Visible="{Binding show_video_src}"/>
+  </Stack>
+</Stack>

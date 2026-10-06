@@ -10,11 +10,13 @@
     "noEmit": true,
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": false,
-    "types": ["vite/client"],
+    "types": ["vite/client", "@kubuno/views-compiler/client"],
     "paths": {
       "@ui": ["./node_modules/@kubuno/ui/types/index.d.ts"],
       "@ui/*": ["./node_modules/@kubuno/ui/types/*.d.ts"]
-    }
+    },
+    // Generated `.kbview` declarations (`ViewBase`), written by the views compiler (kbview-tsc, the Vite plugin).
+    "rootDirs": [".", ".kubuno/views"]
   },
-  "include": ["src"]
+  "include": ["src", ".kubuno/views"]
 }

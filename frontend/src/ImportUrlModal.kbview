@@ -1,0 +1,63 @@
+<!-- ImportUrlModal — converted from ImportUrlModal.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<Stack Direction="LeftToRight" Gap="0" CrossAlign="Center" Justify="Center" Visible="{Binding show_main}" Class="fixed inset-0 z-50">
+  <Panel Class="absolute inset-0 bg-black/40" OnClick="handleClose"/>
+  <Panel Class="relative bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
+    <Stack Direction="LeftToRight" Gap="0" CrossAlign="Center" Justify="SpaceBetween" Class="mb-5">
+      <Stack Direction="LeftToRight" CrossAlign="Center">
+        <Icon Name="Link2" Class="text-primary"/>
+        <Label HtmlTag="H2"
+               Text="{Res importurl.title, Source=drive}"
+               FontWeight="SemiBold"
+               Overflow="Wrap"
+               ForeColor="TextPrimary"
+               Class="text-lg"/>
+      </Stack>
+      <Panel AccessibleRole="PushButton"
+             AutoSize="true"
+             ForeColor="TextSecondary"
+             Class="p-1 rounded-lg hover:bg-surface-2 transition-colors"
+             OnClick="handleClose">
+        <Icon Name="X" Size="18"/>
+      </Panel>
+    </Stack>
+    <Panel HtmlTag="Form" Class="space-y-4" OnSubmit="panel_submit">
+      <Panel>
+        <Panel HtmlTag="Label" ForeColor="TextSecondary" Class="block text-sm font-medium mb-1">
+          <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="{Res importurl.url_label, Source=drive}"/>
+          <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text=" "/>
+          <Label HtmlTag="Span" Text="*" Overflow="Wrap" ForeColor="Danger" InheritFontSize="true"/>
+        </Panel>
+        <!-- TODO(views-migrate): <TextField> autoFocus: no .kbview property -->
+        <ReactHost Component="{Binding Part1}" Props="{Binding part1_props}"/>
+      </Panel>
+      <Panel>
+        <Panel HtmlTag="Label" ForeColor="TextSecondary" Class="block text-sm font-medium mb-1">
+          <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="{Res importurl.name_label, Source=drive}"/>
+          <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text=" "/>
+          <Label HtmlTag="Span"
+                 Text="{Res common.optional, Source=drive}"
+                 FontWeight="Regular"
+                 Overflow="Wrap"
+                 ForeColor="TextTertiary"
+                 InheritFontSize="true"/>
+        </Panel>
+        <TextField Text="{Binding name, Mode=TwoWay}" Placeholder="{Res importurl.name_ph, Source=drive}"/>
+      </Panel>
+      <Label Text="{Binding p_text}"
+             Overflow="Wrap"
+             ForeColor="Danger"
+             Visible="{Binding mutation.isError}"
+             Class="bg-danger/5 border border-danger/20 rounded-lg px-3 py-2"/>
+      <Stack Direction="LeftToRight" Justify="End" Class="pt-1">
+        <Button Variant="Secondary"
+                Enabled="{Binding enabled_unless_mutation_is_pending}"
+                Text="{Res common.cancel, Source=drive}"
+                OnClick="handleClose"/>
+        <Button ButtonType="Submit"
+                Enabled="{Binding enabled_unless_url_trim}"
+                Loading="{Binding mutation.isPending}"
+                Text="{Res common.import, Source=drive}"/>
+      </Stack>
+    </Panel>
+  </Panel>
+</Stack>

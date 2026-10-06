@@ -1,0 +1,41 @@
+<!-- DriveApp — converted from DriveApp.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<Stack x:Props="Props"
+       Direction="LeftToRight"
+       Gap="0"
+       Class="relative h-full overflow-hidden"
+       OnDragEnter="stack_drag_enter"
+       OnDragLeave="stack_drag_leave"
+       OnDragOver="stack_drag_over"
+       OnDragDrop="stack_drag_drop">
+  <!-- TODO(views-migrate): <input> has no .kbview element yet -->
+  <ReactHost Component="{Binding Part1}" Props="{Binding part1_props}"/>
+  <!-- TODO(views-migrate): <input> has no .kbview element yet -->
+  <ReactHost Component="{Binding Part2}" Props="{Binding part1_props}"/>
+  <Stack Gap="12"
+         CrossAlign="Center"
+         Justify="Center"
+         Visible="{Binding show_imports_is_drag_over_is_plain_normal}"
+         Class="pointer-events-none absolute inset-0 z-20 rounded-2xl border-2 border-dashed border-primary bg-primary/5 transition-all">
+    <Icon Name="CloudUpload" Size="52" Class="text-primary opacity-80"/>
+    <Label Text="{Res mfb.drop_here, Source=drive}" FontWeight="Medium" Overflow="Wrap" ForeColor="Primary"/>
+    <Label Text="{Res app.accepted, Source=drive}" Role="Meta" Overflow="Wrap" Class="text-primary/60"/>
+  </Stack>
+  <!-- TODO(views-migrate): <StorageExplorer> is no .kbview element (@kubuno/drive#StorageExplorer) -->
+  <ReactHost Component="{Binding StorageExplorer}" Props="{Binding storage_explorer_props}" Visible="{Binding isPlainNormal}"/>
+  <!-- TODO(views-migrate): <StorageExplorer> is no .kbview element (@kubuno/drive#StorageExplorer) -->
+  <ReactHost Component="{Binding StorageExplorer2}" Props="{Binding storage_explorer_props2}" Visible="{Binding show_special_source}"/>
+  <!-- TODO(views-migrate): <div ref onPointerDown onPointerMove onPointerUp onPointerCancel>: attribute(s) without a .kbview property -->
+  <ReactHost Component="{Binding Part3}" Props="{Binding part3_props}" Visible="{Binding show_is_plain_normal_special_source}"/>
+  <!-- TODO(views-migrate): <DriveContextMenu> is no .kbview element (./drive-app/DriveContextMenu#default) -->
+  <ReactHost Component="{Binding DriveContextMenu}"
+             Props="{Binding drive_context_menu_props}"
+             Visible="{Binding show_item_menu_menu_item_menu}"/>
+  <!-- TODO(views-migrate): <div> with a computed style -->
+  <ReactHost Component="{Binding Part4}" Props="{Binding part4_props}" Visible="{Binding show_selection_marquee_style_selection}"/>
+  <!-- TODO(views-migrate): <DriveDialogs> is no .kbview element (./drive-app/DriveDialogs#default) -->
+  <ReactHost Component="{Binding DriveDialogs}" Props="{Binding drive_dialogs_props}"/>
+  <!-- TODO(views-migrate): <DriveViewersLayer> is no .kbview element (./drive-app/DriveViewersLayer#default) -->
+  <ReactHost Component="{Binding DriveViewersLayer}" Props="{Binding drive_viewers_layer_props}"/>
+  <!-- TODO(views-migrate): <ConfirmDialog {...spread}> (spread props) -->
+  <ReactHost Component="{Binding ConfirmDialog}" Props="{Binding confirm_dialog_props}" Visible="{Binding show_confirm_state}"/>
+</Stack>

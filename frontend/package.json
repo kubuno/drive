@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "vite build",
+    "build": "kbview-tsc -b && vite build",
     "dev": "vite",
-    "typecheck": "tsc -b"
+    "typecheck": "kbview-tsc -b"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",
@@ -31,6 +31,8 @@
     "@kubuno/drive": "^0.1.7",
     "@kubuno/sdk": "^0.1.12",
     "@kubuno/ui": "^0.1.15",
+    "@kubuno/views": "^0.1.2",
+    "@kubuno/views-compiler": "^0.1.1",
     "@radix-ui/react-dropdown-menu": "^2.0.0",
     "@tailwindcss/vite": "^4.3.0",
     "@tanstack/react-query": "^5.0.0",

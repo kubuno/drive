@@ -1,0 +1,58 @@
+<!-- DuplicatesDialog — converted from DuplicatesDialog.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<Stack x:Props="Props" Direction="LeftToRight" Gap="0" CrossAlign="Center" Justify="Center" Class="fixed inset-0 z-50">
+  <Panel Class="absolute inset-0 bg-black/40" OnClick="panel_click"/>
+  <Panel Class="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 p-6 max-h-[85vh] overflow-auto">
+    <Stack Direction="LeftToRight" Gap="0" CrossAlign="Center" Justify="SpaceBetween" Class="mb-4">
+      <Stack Direction="LeftToRight" CrossAlign="Center">
+        <Icon Name="Copy" Class="text-primary"/>
+        <Label HtmlTag="H2" Text="Fichiers en double" FontWeight="SemiBold" Overflow="Wrap" ForeColor="TextPrimary" Class="text-lg"/>
+      </Stack>
+      <Panel AccessibleRole="PushButton"
+             AutoSize="true"
+             ForeColor="TextSecondary"
+             AccessibleName="Fermer"
+             Class="p-1 rounded-lg hover:bg-surface-2 transition-colors"
+             OnClick="panel_click2">
+        <Icon Name="X" Size="18"/>
+      </Panel>
+    </Stack>
+    <Panel ForeColor="TextSecondary"
+           BackColor="Surface1"
+           Visible="{Binding show_loading_groups}"
+           Class="mb-4 rounded-lg border border-border px-3 py-2 text-sm">
+      <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="{Binding groups.length}"/>
+      <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text=" groupe"/>
+      <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="{Binding text}"/>
+      <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text=" ·"/>
+      <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text=" "/>
+      <Label HtmlTag="Span" Text="{Binding span_text}" FontWeight="Medium" Overflow="Wrap" ForeColor="TextPrimary" InheritFontSize="true"/>
+      <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text=" récupérable"/>
+      <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="{Binding text2}"/>
+    </Panel>
+    <Stack Direction="LeftToRight" Gap="0" CrossAlign="Center" Justify="Center" Visible="{Binding loading}" Class="py-16">
+      <Icon Name="Loader2" Size="24" Class="animate-spin text-text-tertiary"/>
+    </Stack>
+    <Stack CrossAlign="Center" Justify="Center" ForeColor="TextTertiary" Visible="{Binding visible}" Class="py-16">
+      <!-- TODO(views-migrate): <CheckCircle2 strokeWidth>: an icon attribute without a property -->
+      <ReactHost Component="{Binding Part1}"/>
+      <Label Text="Aucun doublon détecté 🎉" Overflow="Wrap"/>
+    </Stack>
+    <Panel Visible="{Binding visible2}">
+      <Repeater ItemKey="key" ItemsSource="{Binding rows_groups}">
+        <Panel Class="border border-border rounded-lg p-3 mb-3">
+          <Panel Class="space-y-1">
+            <!-- TODO(views-migrate): a list inside a list (nested Repeater) -->
+            <ReactHost Component="{Binding Part2}" Props="{Binding part2_props}"/>
+          </Panel>
+          <Stack Direction="LeftToRight" Gap="0" Justify="End" Visible="{Binding show_group_files}" Class="mt-2">
+            <!-- TODO(views-migrate): <Button> with element children -->
+            <ReactHost Component="{Binding Part3}" Props="{Binding part3_props}"/>
+          </Stack>
+        </Panel>
+      </Repeater>
+    </Panel>
+    <Stack Direction="LeftToRight" Gap="0" Justify="End" Class="pt-2">
+      <Button Variant="Secondary" Text="Fermer" OnClick="button_click"/>
+    </Stack>
+  </Panel>
+</Stack>

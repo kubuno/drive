@@ -1,15 +1,20 @@
-import React from 'react'
-import { useTranslation } from 'react-i18next'
-import { Info, Loader2 } from 'lucide-react'
-import { ViewMenu, VIEW_SPECS, type FileItem, type Folder } from '@kubuno/drive'
-import TrashStatsBanner from '../TrashStatsBanner'
-import EmptyState from './EmptyState'
-import FileCard from './FileCard'
-import FileRow from './FileRow'
-import FolderCard from './FolderCard'
-import SortFilterBar from './SortFilterBar'
-import type { DriveSelection } from './useDriveSelection'
-import type { DriveViewOptions } from './useDriveViewOptions'
+/**
+ * Code-behind of `DriveContentGrid.kbview` (converted from `DriveContentGrid.tsx` by @kubuno/views-migrate).
+ */
+import { Fragment } from 'react'
+import React from "react"
+import { useTranslation } from "react-i18next"
+import { ViewMenu, VIEW_SPECS, type FileItem, type Folder } from "@kubuno/drive"
+import TrashStatsBanner from "../TrashStatsBanner"
+import EmptyState from "./EmptyState"
+import FileCard from "./FileCard"
+import FileRow from "./FileRow"
+import SortFilterBar from "./SortFilterBar"
+import type { DriveSelection } from "./useDriveSelection"
+import type { DriveViewOptions } from "./useDriveViewOptions"
+
+import { ViewBase } from './DriveContentGrid.kbview'
+import * as __parts from './DriveContentGrid.parts'
 
 interface Props {
   folders:       Folder[]
@@ -36,145 +41,198 @@ interface Props {
   onDeleteFile:  (id: string) => void
 }
 
-/** Folder + file listing of the DriveApp views (all layout modes). */
-export default function DriveContentGrid({
-  folders, files, filteredFiles, isLoading, hasError,
-  trashed, starred, shared, recent,
-  view, selection, orderedIds,
-  dragOverFolderId, setDragOverFolderId, setDraggingItem, onDropOnFolder,
-  onNavigate, onOpenMenu, onOpenFile, onRestoreFile, onDeleteFile,
-}: Props) {
-  const { t } = useTranslation('drive')
-  const {
-    selectedIds, setSelectedIds, preSelectedIds, cursorId,
-    handleItemSelect, lastSelectedIdxRef,
-  } = selection
+export type { Props }
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center gap-2 text-text-secondary text-sm py-16 justify-center">
-        <Loader2 size={18} className="animate-spin" />
-        {t('common.loading')}
-      </div>
-    )
-  }
-  if (hasError) {
-    return (
-      <div className="flex flex-col items-center justify-center py-24 text-center gap-3">
-        <Info size={36} className="text-danger" />
-        <p className="text-danger text-sm font-medium">{t('app.module_down_title')}</p>
-        <p className="text-text-tertiary text-xs">{t('app.module_down_hint')}</p>
-      </div>
-    )
-  }
-  if (folders.length === 0 && filteredFiles.length === 0) {
-    return <EmptyState trashed={trashed} starred={starred} shared={shared} recent={recent} />
+export class DriveContentGrid extends ViewBase {
+  tr!: DriveContentGridStores['t']
+
+  /** The screen's hooks that read nothing of the view (stores, translations…), as the TSX called them. React's rules apply: `use()` runs them on every render. */
+  useStores() {
+    const { t } = useTranslation('drive')
+    return { t }
   }
 
-  return (
-    <div className="space-y-6">
-      {/* Trash information banner (counter + auto-purge). */}
-      {trashed && <TrashStatsBanner />}
-      {/* Sort / filter bar */}
-      {files.length > 0 && !trashed && !recent && !starred && !shared && (
-        <SortFilterBar
-          sortField={view.sortField}
-          sortDir={view.sortDir}
-          typeFilter={view.typeFilter}
-          onSortField={view.setSortField}
-          onSortDir={view.setSortDir}
-          onTypeFilter={view.setTypeFilter}
-          viewMode={view.viewMode}
-          onViewMode={view.setViewMode}
-          showHidden={view.showHidden}
-          onShowHidden={view.setShowHidden}
-        />
-      )}
+  /** Runs the hooks and publishes what they give as fields (the bindings, the getters and the methods read them). */
+  use(): void {
+    const s = this.useStores()
+    this.publish({ tr: s.t })
+  }
 
-      {/* Special views (recent/starred/trash/shared): "Display" menu only. */}
-      {files.length > 0 && (trashed || recent || starred || shared) && (
-        <div className="flex items-center pb-3 -mx-6 px-6 border-b border-border">
-          <div className="ml-auto">
-            <ViewMenu
-              value={view.viewMode} onChange={view.setViewMode}
-              showHidden={view.showHidden} onShowHidden={view.setShowHidden}
-              t={t}
-            />
-          </div>
-        </div>
-      )}
+  get selectedIds() {
+    return this.memo('selectedIds', [this.props], () => (this.props.selection).selectedIds)
+  }
 
-      {folders.length > 0 && (
-        <section>
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary mb-2">
-            {trashed ? t('app.folders_trash') : t('app.folders')}
-          </h2>
-          {/* Folders always render as cards here; only the icon views widen. */}
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))]"
-               style={{ gap: VIEW_SPECS[view.viewMode].kind === 'icons' ? 16 : 8 }}>
-            {folders.map(folder => (
-              <FolderCard
-                key={folder.id}
-                folder={folder}
-                isDragTarget={dragOverFolderId === folder.id}
-                selected={selectedIds.has(folder.id)}
-                preSelected={preSelectedIds.has(folder.id)}
-                focused={cursorId === folder.id}
-                trashed={trashed}
-                onSelect={handleItemSelect}
-                onOpen={() => { if (!trashed) onNavigate(folder.id) }}
-                onContextMenu={e => onOpenMenu(e, 'folder', folder)}
-                onDragStart={() => {
-                  if (!selectedIds.has(folder.id)) { setSelectedIds(new Set([folder.id])); lastSelectedIdxRef.current = orderedIds.indexOf(folder.id) }
-                  setDraggingItem({ type: 'folder', id: folder.id })
-                }}
-                onDragOver={e => { e.preventDefault(); e.stopPropagation(); setDragOverFolderId(folder.id) }}
-                onDragLeave={() => setDragOverFolderId(null)}
-                onDrop={e => onDropOnFolder(e, folder.id)}
-              />
-            ))}
-          </div>
-        </section>
-      )}
+  get setSelectedIds() {
+    return this.memo('setSelectedIds', [this.props], () => (this.props.selection).setSelectedIds)
+  }
 
-      {filteredFiles.length > 0 && (
-        <section>
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary mb-2">
-            {trashed ? t('app.files_trash') : t('app.files')}
-            {view.typeFilter && filteredFiles.length !== files.length && (
-              <span className="ml-2 normal-case font-normal text-text-tertiary">
-                — {filteredFiles.length} / {files.length}
-              </span>
-            )}
-          </h2>
-          {(() => {
-            const spec = VIEW_SPECS[view.viewMode]
+  get preSelectedIds() {
+    return this.memo('preSelectedIds', [this.props], () => (this.props.selection).preSelectedIds)
+  }
+
+  get cursorId() {
+    return (this.props.selection).cursorId
+  }
+
+  get handleItemSelect() {
+    return this.memo('handleItemSelect', [this.props], () => (this.props.selection).handleItemSelect)
+  }
+
+  get lastSelectedIdxRef() {
+    return this.memo('lastSelectedIdxRef', [this.props], () => (this.props.selection).lastSelectedIdxRef)
+  }
+
+  get show_case_1() {
+    return !!(this.props.isLoading)
+  }
+
+  get show_case_2() {
+    return !(this.props.isLoading) && !!(this.props.hasError)
+  }
+
+  get show_case_3() {
+    return !(this.props.isLoading) && !(this.props.hasError) && !!(this.props.folders.length === 0 && this.props.filteredFiles.length === 0)
+  }
+
+  /** `<EmptyState>`, rendered by a ReactHost. */
+  get EmptyState() {
+    if (!(!(this.props.isLoading)) || !(!(this.props.hasError)) || !(this.props.folders.length === 0 && this.props.filteredFiles.length === 0)) return undefined as never
+    return EmptyState
+  }
+
+  get empty_state_props() {
+    return this.memo('empty_state_props', [this.props], () => {
+      if (!(!(this.props.isLoading)) || !(!(this.props.hasError)) || !(this.props.folders.length === 0 && this.props.filteredFiles.length === 0)) return undefined as never
+      return ({ trashed: this.props.trashed, starred: this.props.starred, shared: this.props.shared, recent: this.props.recent })
+    })
+  }
+
+  get show_main() {
+    return !(this.props.isLoading) && !(this.props.hasError) && !(this.props.folders.length === 0 && this.props.filteredFiles.length === 0)
+  }
+
+  /** `<TrashStatsBanner>`, rendered by a ReactHost. */
+  get TrashStatsBanner() {
+    return TrashStatsBanner
+  }
+
+  get show_files_trashed_recent() {
+    if (!(!(this.props.isLoading)) || !(!(this.props.hasError)) || !(!(this.props.folders.length === 0 && this.props.filteredFiles.length === 0))) return undefined as never
+    return this.props.files.length > 0 && !this.props.trashed && !this.props.recent && !this.props.starred && !this.props.shared
+  }
+
+  /** `<SortFilterBar>`, rendered by a ReactHost. */
+  get SortFilterBar() {
+    if (!(!(this.props.isLoading)) || !(!(this.props.hasError)) || !(!(this.props.folders.length === 0 && this.props.filteredFiles.length === 0)) || !(this.props.files.length > 0 && !this.props.trashed && !this.props.recent && !this.props.starred && !this.props.shared)) return undefined as never
+    return SortFilterBar
+  }
+
+  get sort_filter_bar_props() {
+    return this.memo('sort_filter_bar_props', [this.props], () => {
+      if (!(!(this.props.isLoading)) || !(!(this.props.hasError)) || !(!(this.props.folders.length === 0 && this.props.filteredFiles.length === 0)) || !(this.props.files.length > 0 && !this.props.trashed && !this.props.recent && !this.props.starred && !this.props.shared)) return undefined as never
+      return ({ sortField: this.props.view.sortField, sortDir: this.props.view.sortDir, typeFilter: this.props.view.typeFilter, onSortField: this.props.view.setSortField, onSortDir: this.props.view.setSortDir, onTypeFilter: this.props.view.setTypeFilter, viewMode: this.props.view.viewMode, onViewMode: this.props.view.setViewMode, showHidden: this.props.view.showHidden, onShowHidden: this.props.view.setShowHidden })
+    })
+  }
+
+  get show_files_trashed_recent2() {
+    if (!(!(this.props.isLoading)) || !(!(this.props.hasError)) || !(!(this.props.folders.length === 0 && this.props.filteredFiles.length === 0))) return undefined as never
+    return this.props.files.length > 0 && (this.props.trashed || this.props.recent || this.props.starred || this.props.shared)
+  }
+
+  /** `<ViewMenu>`, rendered by a ReactHost. */
+  get ViewMenu() {
+    if (!(!(this.props.isLoading)) || !(!(this.props.hasError)) || !(!(this.props.folders.length === 0 && this.props.filteredFiles.length === 0)) || !(this.props.files.length > 0 && (this.props.trashed || this.props.recent || this.props.starred || this.props.shared))) return undefined as never
+    return ViewMenu
+  }
+
+  get view_menu_props() {
+    return this.memo('view_menu_props', [this.props, this.tr], () => {
+      if (!(!(this.props.isLoading)) || !(!(this.props.hasError)) || !(!(this.props.folders.length === 0 && this.props.filteredFiles.length === 0)) || !(this.props.files.length > 0 && (this.props.trashed || this.props.recent || this.props.starred || this.props.shared))) return undefined as never
+      return ({ value: this.props.view.viewMode, onChange: this.props.view.setViewMode, showHidden: this.props.view.showHidden, onShowHidden: this.props.view.setShowHidden, t: this.tr })
+    })
+  }
+
+  get show_folders() {
+    if (!(!(this.props.isLoading)) || !(!(this.props.hasError)) || !(!(this.props.folders.length === 0 && this.props.filteredFiles.length === 0))) return undefined as never
+    return this.props.folders.length > 0
+  }
+
+  get h2_text() {
+    if (!(!(this.props.isLoading)) || !(!(this.props.hasError)) || !(!(this.props.folders.length === 0 && this.props.filteredFiles.length === 0)) || !(this.props.folders.length > 0)) return undefined as never
+    return this.props.trashed ? this.tr('app.folders_trash') : this.tr('app.folders')
+  }
+
+  get part1_props() {
+    return this.memo('part1_props', [this.props, this.selectedIds, this.preSelectedIds, this.cursorId, this.handleItemSelect, this.setSelectedIds, this.lastSelectedIdxRef], () => {
+      if (!(!(this.props.isLoading)) || !(!(this.props.hasError)) || !(!(this.props.folders.length === 0 && this.props.filteredFiles.length === 0)) || !(this.props.folders.length > 0)) return undefined as never
+      return ({ view: this.props.view, folders: this.props.folders, dragOverFolderId: this.props.dragOverFolderId, selectedIds: this.selectedIds, preSelectedIds: this.preSelectedIds, cursorId: this.cursorId, trashed: this.props.trashed, handleItemSelect: this.handleItemSelect, onNavigate: this.props.onNavigate, onOpenMenu: this.props.onOpenMenu, setSelectedIds: this.setSelectedIds, lastSelectedIdxRef: this.lastSelectedIdxRef, orderedIds: this.props.orderedIds, setDraggingItem: this.props.setDraggingItem, setDragOverFolderId: this.props.setDragOverFolderId, onDropOnFolder: this.props.onDropOnFolder })
+    })
+  }
+
+  /** A part of the screen still written in React (<div> with a computed style). */
+  get Part1() {
+    if (!(!(this.props.isLoading)) || !(!(this.props.hasError)) || !(!(this.props.folders.length === 0 && this.props.filteredFiles.length === 0)) || !(this.props.folders.length > 0)) return undefined as never
+    return __parts.Part1
+  }
+
+  get show_filtered_files() {
+    if (!(!(this.props.isLoading)) || !(!(this.props.hasError)) || !(!(this.props.folders.length === 0 && this.props.filteredFiles.length === 0))) return undefined as never
+    return this.props.filteredFiles.length > 0
+  }
+
+  get text() {
+    if (!(!(this.props.isLoading)) || !(!(this.props.hasError)) || !(!(this.props.folders.length === 0 && this.props.filteredFiles.length === 0)) || !(this.props.filteredFiles.length > 0)) return undefined as never
+    return this.props.trashed ? this.tr('app.files_trash') : this.tr('app.files')
+  }
+
+  get show_view_type_filter_filtered_files() {
+    if (!(!(this.props.isLoading)) || !(!(this.props.hasError)) || !(!(this.props.folders.length === 0 && this.props.filteredFiles.length === 0)) || !(this.props.filteredFiles.length > 0)) return undefined as never
+    return !!(this.props.view.typeFilter && this.props.filteredFiles.length !== this.props.files.length)
+  }
+
+  get span_text() {
+    return this.memo('span_text', [this.props], () => {
+      if (!(!(this.props.isLoading)) || !(!(this.props.hasError)) || !(!(this.props.folders.length === 0 && this.props.filteredFiles.length === 0)) || !(this.props.filteredFiles.length > 0) || !(this.props.view.typeFilter && this.props.filteredFiles.length !== this.props.files.length)) return undefined as never
+      return "— " + String(this.props.filteredFiles.length) + " / " + String(this.props.files.length)
+    })
+  }
+
+  /** `React.Fragment`: renders the elements an expression holds. */
+  get Fragment() {
+    return Fragment
+  }
+
+  get content_const_spec_view() {
+    return this.memo('content_const_spec_view', [this.props, this.selectedIds, this.preSelectedIds, this.cursorId, this.handleItemSelect, this.setSelectedIds, this.lastSelectedIdxRef], () => {
+      if (!(!(this.props.isLoading)) || !(!(this.props.hasError)) || !(!(this.props.folders.length === 0 && this.props.filteredFiles.length === 0)) || !(this.props.filteredFiles.length > 0)) return undefined as never
+      return ({ children: (() => {
+            const spec = VIEW_SPECS[this.props.view.viewMode]
             // Shared selection props → same behaviour across every layout.
             const sel = (file: FileItem) => ({
-              selected: selectedIds.has(file.id), preSelected: preSelectedIds.has(file.id), focused: cursorId === file.id, canMove: !trashed,
-              onSelect: handleItemSelect,
-              onDragStart: () => { if (!selectedIds.has(file.id)) { setSelectedIds(new Set([file.id])); lastSelectedIdxRef.current = orderedIds.indexOf(file.id) } setDraggingItem({ type: 'file', id: file.id }) },
+              selected: this.selectedIds.has(file.id), preSelected: this.preSelectedIds.has(file.id), focused: this.cursorId === file.id, canMove: !this.props.trashed,
+              onSelect: this.handleItemSelect,
+              onDragStart: () => { if (!this.selectedIds.has(file.id)) { this.setSelectedIds(new Set([file.id])); this.lastSelectedIdxRef.current = this.props.orderedIds.indexOf(file.id) } this.props.setDraggingItem({ type: 'file', id: file.id }) },
             })
             if (spec.kind === 'icons') {
               return (
                 <div className="grid" style={{ gridTemplateColumns: `repeat(auto-fill,minmax(${spec.min}px,1fr))`, gap: 24 }}>
-                  {filteredFiles.map(file => (
+                  {this.props.filteredFiles.map(file => (
                     <FileCard
                       key={file.id}
                       file={file}
-                      trashed={trashed}
-                      selected={selectedIds.has(file.id)}
-                      preSelected={preSelectedIds.has(file.id)}
-                      focused={cursorId === file.id}
-                      onSelect={handleItemSelect}
-                      onContextMenu={e => onOpenMenu(e, 'file', file)}
+                      trashed={this.props.trashed}
+                      selected={this.selectedIds.has(file.id)}
+                      preSelected={this.preSelectedIds.has(file.id)}
+                      focused={this.cursorId === file.id}
+                      onSelect={this.handleItemSelect}
+                      onContextMenu={e => this.props.onOpenMenu(e, 'file', file)}
                       onDragStart={() => {
-                        if (!selectedIds.has(file.id)) { setSelectedIds(new Set([file.id])); lastSelectedIdxRef.current = orderedIds.indexOf(file.id) }
-                        setDraggingItem({ type: 'file', id: file.id })
+                        if (!this.selectedIds.has(file.id)) { this.setSelectedIds(new Set([file.id])); this.lastSelectedIdxRef.current = this.props.orderedIds.indexOf(file.id) }
+                        this.props.setDraggingItem({ type: 'file', id: file.id })
                       }}
-                      onRestore={() => onRestoreFile(file.id)}
-                      onDelete={() => onDeleteFile(file.id)}
-                      onOpen={() => onOpenFile(file)}
+                      onRestore={() => this.props.onRestoreFile(file.id)}
+                      onDelete={() => this.props.onDeleteFile(file.id)}
+                      onOpen={() => this.props.onOpenFile(file)}
                       thumbH={spec.thumbH}
                       iconScale={spec.iconScale}
                       dense={spec.dense}
@@ -186,22 +244,26 @@ export default function DriveContentGrid({
             if (spec.multicol) {
               return (
                 <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill,minmax(240px,1fr))', gap: 2 }}>
-                  {filteredFiles.map(file => (
-                    <FileRow key={file.id} file={file} trashed={trashed} {...sel(file)} onContextMenu={e => onOpenMenu(e, 'file', file)} onRestore={() => onRestoreFile(file.id)} onDelete={() => onDeleteFile(file.id)} onOpen={() => onOpenFile(file)} density="compact" hideMeta />
+                  {this.props.filteredFiles.map(file => (
+                    <FileRow key={file.id} file={file} trashed={this.props.trashed} {...sel(file)} onContextMenu={e => this.props.onOpenMenu(e, 'file', file)} onRestore={() => this.props.onRestoreFile(file.id)} onDelete={() => this.props.onDeleteFile(file.id)} onOpen={() => this.props.onOpenFile(file)} density="compact" hideMeta />
                   ))}
                 </div>
               )
             }
             return (
               <div className="divide-y divide-border rounded-xl border border-border overflow-hidden">
-                {filteredFiles.map(file => (
-                  <FileRow key={file.id} file={file} trashed={trashed} {...sel(file)} onContextMenu={e => onOpenMenu(e, 'file', file)} onRestore={() => onRestoreFile(file.id)} onDelete={() => onDeleteFile(file.id)} onOpen={() => onOpenFile(file)} density={spec.density} />
+                {this.props.filteredFiles.map(file => (
+                  <FileRow key={file.id} file={file} trashed={this.props.trashed} {...sel(file)} onContextMenu={e => this.props.onOpenMenu(e, 'file', file)} onRestore={() => this.props.onRestoreFile(file.id)} onDelete={() => this.props.onDeleteFile(file.id)} onOpen={() => this.props.onOpenFile(file)} density={spec.density} />
                 ))}
               </div>
             )
-          })()}
-        </section>
-      )}
-    </div>
-  )
+          })() })
+    })
+  }
+
 }
+
+/** What `useStores()` gives (the types of the fields it fills). */
+export type DriveContentGridStores = ReturnType<DriveContentGrid['useStores']>
+
+export default DriveContentGrid.component()

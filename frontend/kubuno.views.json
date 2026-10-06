@@ -1,0 +1,8 @@
+{
+  "target": "web",
+  "hostRegistry": "node_modules/@kubuno/ui/kbview-registry.web.json",
+  "registries": [],
+  "sources": [
+    "src"
+  ]
+}

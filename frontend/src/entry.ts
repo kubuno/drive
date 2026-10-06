@@ -46,6 +46,9 @@ import FilesFolderPickerDialog from './FilesFolderPickerDialog'
 import FilesFloatingAudioPlayer from './FilesFloatingAudioPlayer'
 
 export const sdkVersion = SDK_VERSION
+// The `.kbview` plan format this bundle's views were compiled to (the host refuses a format its runtime cannot read).
+// A literal on purpose: `VIEWS_ABI` of `@kubuno/views` would be the host's own value at run time.
+export const viewsAbi = 1
 
 export function register() {
   FaviconRegistry.register('drive', '/drive-logo.png')

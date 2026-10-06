@@ -1,0 +1,187 @@
+<!-- AdvancedShareDialog — converted from AdvancedShareDialog.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<Stack x:Props="Props" Direction="LeftToRight" Gap="0" CrossAlign="Center" Justify="Center" Class="fixed inset-0 z-[55]">
+  <Panel Class="absolute inset-0 bg-black/40" OnClick="panel_click"/>
+  <Panel Class="relative bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 p-6 max-h-[88vh] overflow-auto">
+    <Stack Direction="LeftToRight" Gap="0" CrossAlign="Center" Justify="SpaceBetween" Class="mb-4">
+      <Stack Direction="LeftToRight" CrossAlign="Center">
+        <Icon Name="Share2" Class="text-primary"/>
+        <Label HtmlTag="H2" Text="Partage" FontWeight="SemiBold" Overflow="Wrap" ForeColor="TextPrimary" Class="text-lg"/>
+      </Stack>
+      <Panel AccessibleRole="PushButton"
+             AutoSize="true"
+             ForeColor="TextSecondary"
+             Class="p-1 rounded-lg hover:bg-surface-2 transition-colors"
+             OnClick="panel_click2">
+        <Icon Name="X" Size="18"/>
+      </Panel>
+    </Stack>
+    <Stack Direction="LeftToRight" Gap="4" CrossAlign="Center" Class="border-b border-border mb-4">
+      <Panel AccessibleRole="PushButton"
+             AutoSize="true"
+             Visible="{Binding show_target}"
+             Class="{Binding button_class}"
+             OnClick="panel_click3">
+        <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="Nouveau lien"/>
+      </Panel>
+      <Panel AccessibleRole="PushButton" AutoSize="true" Class="{Binding button_class2}" OnClick="panel_click4">
+        <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="Mes liens"/>
+      </Panel>
+      <Panel AccessibleRole="PushButton" AutoSize="true" Class="{Binding button_class3}" OnClick="panel_click5">
+        <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="Partagés avec moi"/>
+      </Panel>
+    </Stack>
+    <Panel Visible="{Binding show_tab_new_target}" Class="space-y-4">
+      <Panel HtmlTag="P" ForeColor="TextSecondary" Class="text-sm">
+        <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="Partager : "/>
+        <Label HtmlTag="Span" Text="{Binding span_text}" FontWeight="Medium" Overflow="Wrap" ForeColor="TextPrimary" InheritFontSize="true"/>
+      </Panel>
+      <Panel Class="space-y-2">
+        <Label Text="Permissions" Role="Meta" FontWeight="SemiBold" Overflow="Wrap" ForeColor="TextTertiary" Class="uppercase tracking-wide"/>
+        <Panel HtmlTag="Label" ForeColor="TextPrimary" Class="flex items-center gap-2 text-sm cursor-pointer">
+          <!-- TODO(views-migrate): <input> has no .kbview element yet -->
+          <ReactHost Component="{Binding Part1}" Props="{Binding part1_props}"/>
+          <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="Autoriser le téléchargement"/>
+        </Panel>
+        <Panel HtmlTag="Label" ForeColor="TextPrimary" Class="flex items-center gap-2 text-sm cursor-pointer">
+          <!-- TODO(views-migrate): <input> has no .kbview element yet -->
+          <ReactHost Component="{Binding Part2}" Props="{Binding part2_props}"/>
+          <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="Autoriser l’envoi de fichiers"/>
+        </Panel>
+        <Panel HtmlTag="Label" ForeColor="TextPrimary" Class="flex items-center gap-2 text-sm cursor-pointer">
+          <!-- TODO(views-migrate): <input> has no .kbview element yet -->
+          <ReactHost Component="{Binding Part3}" Props="{Binding part3_props}"/>
+          <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="Autoriser la suppression"/>
+        </Panel>
+      </Panel>
+      <Panel Class="space-y-2">
+        <Panel HtmlTag="Label" ForeColor="TextPrimary" Class="flex items-center gap-2 text-sm cursor-pointer">
+          <!-- TODO(views-migrate): <input> has no .kbview element yet -->
+          <ReactHost Component="{Binding Part4}" Props="{Binding part4_props}"/>
+          <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="Protéger par un mot de passe"/>
+        </Panel>
+        <TextField Text="{Binding password, Mode=TwoWay}" InputType="Password" Placeholder="Mot de passe" Visible="{Binding pwEnabled}"/>
+      </Panel>
+      <Panel Class="space-y-2">
+        <Panel HtmlTag="Label" ForeColor="TextPrimary" Class="flex items-center gap-2 text-sm cursor-pointer">
+          <!-- TODO(views-migrate): <input> has no .kbview element yet -->
+          <ReactHost Component="{Binding Part5}" Props="{Binding part5_props}"/>
+          <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="Date d’expiration"/>
+        </Panel>
+        <!-- TODO(views-migrate): <TextField type="datetime-local">: no .kbview value -->
+        <ReactHost Component="{Binding Part6}" Props="{Binding part6_props}" Visible="{Binding expEnabled}"/>
+      </Panel>
+      <Panel Class="space-y-2">
+        <Panel HtmlTag="Label" ForeColor="TextPrimary" Class="flex items-center gap-2 text-sm cursor-pointer">
+          <!-- TODO(views-migrate): <input> has no .kbview element yet -->
+          <ReactHost Component="{Binding Part7}" Props="{Binding part7_props}"/>
+          <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="Limiter le nombre de téléchargements"/>
+        </Panel>
+        <!-- TODO(views-migrate): <TextField> min: no .kbview property -->
+        <ReactHost Component="{Binding Part8}" Props="{Binding part8_props}" Visible="{Binding maxEnabled}"/>
+      </Panel>
+      <Label Text="{Binding createError}"
+             Overflow="Wrap"
+             ForeColor="Danger"
+             BackColor="DangerLight"
+             Visible="{Binding show_create_error}"
+             Class="rounded-lg px-3 py-2"/>
+      <Panel BackColor="Surface1" Visible="{Binding show_created_url}" Class="border border-border rounded-lg p-3 space-y-2">
+        <Stack Direction="LeftToRight" CrossAlign="Center" ForeColor="TextSecondary" Class="text-sm">
+          <Icon Name="Link" Size="16" Class="text-primary shrink-0"/>
+          <Label HtmlTag="Span" Text="{Binding createdUrl}" ForeColor="TextPrimary" InheritFontSize="true"/>
+        </Stack>
+        <Stack Direction="LeftToRight" Gap="0" CrossAlign="Center" Justify="SpaceBetween">
+          <Label HtmlTag="Span" Text="{Binding span_text2}" Role="Meta" Overflow="Wrap" ForeColor="TextTertiary"/>
+          <!-- TODO(views-migrate): <Button Icon>: an icon that is not a Lucide icon -->
+          <ReactHost Component="{Binding Part9}" Props="{Binding part9_props}"/>
+        </Stack>
+      </Panel>
+      <Stack Direction="LeftToRight" Gap="0" Justify="End" Class="pt-1">
+        <Button Loading="{Binding creating}" Text="Créer le lien" OnClick="button_click"/>
+      </Stack>
+    </Panel>
+    <Panel Visible="{Binding show_tab_mine}" Class="space-y-3">
+      <Label Text="Chargement…"
+             TextAlign="TopCenter"
+             Overflow="Wrap"
+             ForeColor="TextTertiary"
+             Visible="{Binding show_loading_mine_my_shares}"
+             Class="py-6"/>
+      <Stack CrossAlign="Center" ForeColor="TextTertiary" Visible="{Binding visible}" Class="py-8">
+        <Icon Name="Link" Size="28"/>
+        <Label Text="Aucun lien actif" Overflow="Wrap"/>
+      </Stack>
+      <Repeater ItemKey="key" ItemsSource="{Binding rows_my_shares}" Visible="{Binding visible2}">
+        <Panel BackColor="Surface1" Class="border border-border rounded-lg p-3 space-y-2">
+          <Stack Direction="LeftToRight" CrossAlign="Center">
+            <Icon Name="Link" Size="16" Class="text-primary shrink-0"/>
+            <Label HtmlTag="Span" Text="{Binding span_text}" FontWeight="Medium" ForeColor="TextPrimary"/>
+          </Stack>
+          <Stack Direction="LeftToRight" CrossAlign="Center" WrapContents="true" ForeColor="TextSecondary" Class="text-xs">
+            <Panel HtmlTag="Span"
+                   BackColor="Surface2"
+                   Visible="{Binding share.password_protected}"
+                   Class="inline-flex items-center gap-1 rounded px-1.5 py-0.5">
+              <Icon Name="Lock" Size="12"/>
+              <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text=" Protégé"/>
+            </Panel>
+            <Panel HtmlTag="Span"
+                   BackColor="Surface2"
+                   Visible="{Binding show_share_expires_at}"
+                   Class="inline-flex items-center gap-1 rounded px-1.5 py-0.5">
+              <Icon Name="Calendar" Size="12"/>
+              <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="{Binding text}"/>
+            </Panel>
+            <Panel HtmlTag="Span" BackColor="Surface2" Class="inline-flex items-center gap-1 rounded px-1.5 py-0.5">
+              <Icon Name="Download" Size="12"/>
+              <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="{Binding text2}"/>
+            </Panel>
+          </Stack>
+          <Stack Direction="LeftToRight" CrossAlign="Center" Justify="End">
+            <!-- TODO(views-migrate): <Button Icon>: an icon that is not a Lucide icon -->
+            <ReactHost Component="{Binding Part10}" Props="{Binding part10_props}"/>
+            <Button Variant="Danger" Size="Sm" IconSize="14" Icon="Trash2" Text="Révoquer" OnClick="button_click2"/>
+          </Stack>
+        </Panel>
+      </Repeater>
+    </Panel>
+    <Panel Visible="{Binding show_tab_received}" Class="space-y-3">
+      <Label Text="Chargement…"
+             TextAlign="TopCenter"
+             Overflow="Wrap"
+             ForeColor="TextTertiary"
+             Visible="{Binding show_loading_received_received_shares}"
+             Class="py-6"/>
+      <Stack CrossAlign="Center" ForeColor="TextTertiary" Visible="{Binding visible3}" Class="py-8">
+        <Icon Name="Inbox" Size="28"/>
+        <Label Text="Rien ne vous a été partagé" Overflow="Wrap"/>
+      </Stack>
+      <Repeater ItemKey="key" ItemsSource="{Binding rows_received_shares}" Visible="{Binding visible4}">
+        <Panel BackColor="Surface1" Class="border border-border rounded-lg p-3 space-y-1.5">
+          <Stack Direction="LeftToRight" CrossAlign="Center">
+            <Label HtmlTag="Span" Text="{Binding span_text}" FontWeight="Medium" ForeColor="TextPrimary"/>
+          </Stack>
+          <Label Text="{Binding p_text}" Role="Meta" Overflow="Wrap" ForeColor="TextSecondary"/>
+          <Stack Direction="LeftToRight" CrossAlign="Center" WrapContents="true" ForeColor="TextTertiary" Class="text-xs">
+            <Label HtmlTag="Span"
+                   Text="{Binding span_text2}"
+                   Overflow="Wrap"
+                   BackColor="Surface2"
+                   InheritFontSize="true"
+                   Class="rounded px-1.5 py-0.5"/>
+            <Panel HtmlTag="Span"
+                   BackColor="Surface2"
+                   Visible="{Binding share.can_download}"
+                   Class="inline-flex items-center gap-1 rounded px-1.5 py-0.5">
+              <Icon Name="Download" Size="12"/>
+              <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text=" Téléchargement"/>
+            </Panel>
+          </Stack>
+        </Panel>
+      </Repeater>
+    </Panel>
+    <Stack Direction="LeftToRight" Gap="0" Justify="End" Class="pt-5">
+      <Button Variant="Secondary" Text="Fermer" OnClick="button_click3"/>
+    </Stack>
+  </Panel>
+</Stack>

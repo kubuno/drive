@@ -9,6 +9,10 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 ## [Unreleased]
 
+### Changed
+
+- **The Drive screens can be edited in the Visual Studio designer**: the Drive page, its toolbar, breadcrumb, file grid, sort and filter bar, search results (files and images), empty states, lock and version badges, the video player overlay, the « Import from a URL », duplicates and storage overview dialogs, the advanced share dialog and the details panel are views (`.kbview` + code-behind, converted with `@kubuno/views-migrate`). The Drive page (my files, home, starred, shared, recent, trash, search results) and the « Import from a URL » dialog were checked identical to the previous screens (pixels, text, accessibility tree and keyboard order; light and dark, French, English and Arabic, desktop and phone). The file explorer itself (`StorageExplorer` of `@kubuno/drive`), the cards and rows of files and folders, the context menu, the viewers and the remaining dialogs stay React for now. The bundle declares the views format it was compiled for (`viewsAbi`).
+
 ## [0.1.12] - 2026-10-05
 
 ### Changed

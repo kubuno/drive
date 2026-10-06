@@ -1,0 +1,84 @@
+<!-- StorageInsightsDialog — converted from StorageInsightsDialog.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<Stack x:Props="Props" Direction="LeftToRight" Gap="0" CrossAlign="Center" Justify="Center" Class="fixed inset-0 z-50">
+  <Panel Class="absolute inset-0 bg-black/40" OnClick="panel_click"/>
+  <Panel Class="relative bg-white rounded-xl shadow-2xl w-full max-w-xl mx-4 p-6 max-h-[85vh] overflow-auto">
+    <Stack Direction="LeftToRight" Gap="0" CrossAlign="Center" Justify="SpaceBetween" Class="mb-5">
+      <Stack Direction="LeftToRight" CrossAlign="Center">
+        <Icon Name="HardDrive" Class="text-primary"/>
+        <Label HtmlTag="H2" Text="Vue d'ensemble du stockage" FontWeight="SemiBold" Overflow="Wrap" ForeColor="TextPrimary" Class="text-lg"/>
+      </Stack>
+      <Panel AccessibleRole="PushButton"
+             AutoSize="true"
+             ForeColor="TextSecondary"
+             Class="p-1 rounded-lg hover:bg-surface-2 transition-colors"
+             OnClick="panel_click2">
+        <Icon Name="X" Size="18"/>
+      </Panel>
+    </Stack>
+    <Stack Direction="LeftToRight"
+           Gap="0"
+           CrossAlign="Center"
+           Justify="Center"
+           ForeColor="TextSecondary"
+           Visible="{Binding show_loading_overview}"
+           Class="py-16">
+      <Icon Name="Loader2" Size="28" Class="animate-spin"/>
+    </Stack>
+    <Panel Visible="{Binding show_not_loading_overview}" Class="space-y-6">
+      <Panel Class="grid grid-cols-3 gap-3">
+        <Panel BackColor="Surface1" Class="rounded-lg p-3 text-center">
+          <Label HtmlTag="Div" Text="{Binding div_text}" FontWeight="SemiBold" Overflow="Wrap" ForeColor="TextPrimary" Class="text-2xl"/>
+          <Label HtmlTag="Div" Text="Fichiers" Role="Meta" Overflow="Wrap" ForeColor="TextSecondary" Class="mt-1"/>
+        </Panel>
+        <Panel BackColor="Surface1" Class="rounded-lg p-3 text-center">
+          <Label HtmlTag="Div" Text="{Binding div_text2}" FontWeight="SemiBold" Overflow="Wrap" ForeColor="TextPrimary" Class="text-2xl"/>
+          <Label HtmlTag="Div" Text="Dossiers" Role="Meta" Overflow="Wrap" ForeColor="TextSecondary" Class="mt-1"/>
+        </Panel>
+        <Panel BackColor="Surface1" Class="rounded-lg p-3 text-center">
+          <Label HtmlTag="Div" Text="{Binding div_text3}" FontWeight="SemiBold" Overflow="Wrap" ForeColor="TextPrimary" Class="text-2xl"/>
+          <Label HtmlTag="Div" Text="Corbeille" Role="Meta" Overflow="Wrap" ForeColor="TextSecondary" Class="mt-1"/>
+        </Panel>
+      </Panel>
+      <Panel>
+        <Label HtmlTag="H3" Text="Répartition par type" FontWeight="SemiBold" Overflow="Wrap" ForeColor="TextPrimary" Class="mb-3"/>
+        <Panel Class="space-y-3">
+          <Repeater ItemKey="key" ItemsSource="{Binding rows_sorted_categories}">
+            <Stack Direction="LeftToRight" Gap="12" CrossAlign="Center">
+              <!-- TODO(views-migrate): <Icon> is no .kbview element (a local or dynamic component) -->
+              <ReactHost Component="{Binding Part1}" Props="{Binding part1_props}"/>
+              <Panel Class="flex-1 min-w-0">
+                <Stack Direction="LeftToRight" Gap="0" CrossAlign="Center" Justify="SpaceBetween" Class="mb-1">
+                  <Label HtmlTag="Span" Text="{Binding span_text}" ForeColor="TextPrimary"/>
+                  <Label HtmlTag="Span"
+                         Text="{Binding span_text2}"
+                         Role="Meta"
+                         Overflow="Wrap"
+                         ForeColor="TextTertiary"
+                         Class="shrink-0 ml-2"/>
+                </Stack>
+                <Panel BackColor="Surface2" Class="rounded-full h-2 overflow-hidden">
+                  <!-- TODO(views-migrate): <div> with a computed style -->
+                  <ReactHost Component="{Binding Part2}" Props="{Binding part2_props}"/>
+                </Panel>
+              </Panel>
+            </Stack>
+          </Repeater>
+        </Panel>
+      </Panel>
+      <Panel>
+        <Label HtmlTag="H3" Text="Plus gros fichiers" FontWeight="SemiBold" Overflow="Wrap" ForeColor="TextPrimary" Class="mb-3"/>
+        <Panel Class="space-y-1">
+          <Repeater ItemKey="key" ItemsSource="{Binding rows_largest}">
+            <Panel Class="{Binding div_class}" OnClick="panel_click3">
+              <Label HtmlTag="Span" Text="{Binding f.name}" ForeColor="TextPrimary"/>
+              <Label HtmlTag="Span" Text="{Binding span_text}" Role="Meta" Overflow="Wrap" ForeColor="TextTertiary" Class="shrink-0"/>
+            </Panel>
+          </Repeater>
+        </Panel>
+      </Panel>
+    </Panel>
+    <Stack Direction="LeftToRight" Gap="0" Justify="End" Class="mt-6">
+      <Button Variant="Secondary" Text="Fermer" OnClick="button_click"/>
+    </Stack>
+  </Panel>
+</Stack>

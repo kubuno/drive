@@ -1,0 +1,28 @@
+<!-- EmptyState — converted from EmptyState.tsx by @kubuno/views-migrate. -->
+<Panel x:Props="EmptyStateProps" Class="contents">
+  <Stack Gap="12" CrossAlign="Center" Justify="Center" Visible="{Binding show_case_1}" Class="py-24 text-center">
+    <Icon Name="Trash2" Size="52" Class="text-text-tertiary"/>
+    <Label Text="{Res app.empty_trash_state, Source=drive}" Overflow="Wrap" ForeColor="TextSecondary"/>
+  </Stack>
+  <Stack Gap="12" CrossAlign="Center" Justify="Center" Visible="{Binding show_case_2}" Class="py-24 text-center">
+    <Icon Name="Star" Size="52" Class="text-text-tertiary"/>
+    <Label Text="{Res app.empty_starred, Source=drive}" Overflow="Wrap" ForeColor="TextSecondary"/>
+    <Label Text="{Res app.empty_starred_hint, Source=drive}" Role="Meta" Overflow="Wrap" ForeColor="TextTertiary"/>
+  </Stack>
+  <Stack Gap="12" CrossAlign="Center" Justify="Center" Visible="{Binding show_case_3}" Class="py-24 text-center">
+    <Icon Name="Share2" Size="52" Class="text-text-tertiary"/>
+    <Label Text="{Res app.empty_shared, Source=drive}" Overflow="Wrap" ForeColor="TextSecondary"/>
+  </Stack>
+  <Stack Gap="12" CrossAlign="Center" Justify="Center" Visible="{Binding show_case_4}" Class="py-24 text-center">
+    <Icon Name="Folder" Size="52" Class="text-text-tertiary"/>
+    <Label Text="{Res app.empty_recent, Source=drive}" Overflow="Wrap" ForeColor="TextSecondary"/>
+  </Stack>
+  <Stack Gap="12" CrossAlign="Center" Justify="Center" Visible="{Binding show_main}" Class="py-24 text-center">
+    <Icon Name="CloudUpload" Size="52" Class="text-text-tertiary"/>
+    <Label Text="{Res app.empty_folder, Source=drive}" Overflow="Wrap" ForeColor="TextSecondary"/>
+    <Label Text="{Res app.dnd_hint, Source=drive, Import={Binding dnd_hint_import}, Folder={Binding dnd_hint_folder}}"
+           Role="Meta"
+           Overflow="Wrap"
+           ForeColor="TextTertiary"/>
+  </Stack>
+</Panel>

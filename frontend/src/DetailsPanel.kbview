@@ -1,0 +1,57 @@
+<!-- DetailsPanel — converted from DetailsPanel.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<Panel x:Props="Props" Class="contents">
+  <Panel HtmlTag="Aside"
+         Visible="{Binding show_main}"
+         Class="fixed top-0 right-0 h-full w-80 bg-white border-l border-border shadow-xl z-40 flex flex-col">
+    <Stack Direction="LeftToRight"
+           Gap="0"
+           CrossAlign="Center"
+           Justify="SpaceBetween"
+           Class="sticky top-0 px-4 py-3 border-b border-border bg-white">
+      <Label HtmlTag="H2" Text="Détails" FontWeight="SemiBold" Overflow="Wrap" ForeColor="TextPrimary" Class="text-base"/>
+      <Panel AccessibleRole="PushButton"
+             AutoSize="true"
+             ForeColor="TextSecondary"
+             ToolTip="Fermer"
+             Class="p-1 rounded-lg hover:bg-surface-2 transition-colors"
+             OnClick="panel_click">
+        <Icon Name="X" Size="18"/>
+      </Panel>
+    </Stack>
+    <Panel Class="flex-1 overflow-auto p-4 space-y-4">
+      <Stack Direction="LeftToRight" Gap="0" CrossAlign="Center" Justify="Center" BackColor="Surface1" Class="rounded-lg p-3 min-h-[8rem]">
+        <!-- TODO(views-migrate): <img> has no .kbview element yet -->
+        <ReactHost Component="{Binding Part1}" Props="{Binding part1_props}" Visible="{Binding show_file_has_thumbnail}"/>
+        <Icon Name="Image" Size="56" Visible="{Binding show_not_file_has_thumbnail}" Class="text-text-tertiary"/>
+      </Stack>
+      <Panel>
+        <Label Text="{Binding p_text}" FontWeight="Bold" Overflow="Wrap" ForeColor="TextPrimary" InheritFontSize="true" Class="break-words"/>
+        <Label Text="{Binding p_text2}" Role="Meta" Overflow="Wrap" ForeColor="TextTertiary" Class="mt-0.5"/>
+      </Panel>
+      <Stack Direction="LeftToRight" CrossAlign="Center">
+        <Label HtmlTag="Span" Text="Étiquettes" Overflow="Wrap" ForeColor="TextTertiary"/>
+        <!-- TODO(views-migrate): <TagDots> is no .kbview element (./TagUI#TagDots) -->
+        <ReactHost Component="{Binding TagDots}" Props="{Binding tag_dots_props}"/>
+        <Panel AccessibleRole="PushButton"
+               AutoSize="true"
+               ForeColor="Primary"
+               ToolTip="Gérer les étiquettes"
+               Class="ml-auto inline-flex items-center gap-1 text-xs hover:underline"
+               OnClick="panel_click2">
+          <Icon Name="Tag" Size="13"/>
+          <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text=" Gérer"/>
+        </Panel>
+      </Stack>
+      <!-- TODO(views-migrate): <Section> is no .kbview element (a local or dynamic component) -->
+      <ReactHost Component="{Binding Part2}" Props="{Binding part2_props}"/>
+      <!-- TODO(views-migrate): <Section> is no .kbview element (a local or dynamic component) -->
+      <ReactHost Component="{Binding Part3}" Props="{Binding part3_props}"/>
+      <!-- TODO(views-migrate): <Section> is no .kbview element (a local or dynamic component) -->
+      <ReactHost Component="{Binding Part4}" Props="{Binding part4_props}" Visible="{Binding show_is_image_has_dims_exif_rows}"/>
+      <!-- TODO(views-migrate): <Section> is no .kbview element (a local or dynamic component) -->
+      <ReactHost Component="{Binding Part5}" Props="{Binding part5_props}"/>
+    </Panel>
+  </Panel>
+  <!-- TODO(views-migrate): <VersionHistoryModal> is no .kbview element (@kubuno/drive#VersionHistoryModal) -->
+  <ReactHost Component="{Binding VersionHistoryModal}" Props="{Binding version_history_modal_props}" Visible="{Binding show_main}"/>
+</Panel>
