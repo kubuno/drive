@@ -59,7 +59,8 @@ number at release time, and CI publishes that section as the GitHub Release note
   grouped by role: `views/`, `dialogs/`, `pages/` (the pieces one screen places), `controls/` (the pieces several
   place), `model/` (stores), `services/` (API clients, preview and menu services), the fonts browser in `fonts/` and
   the Drive page's parts in `drive-app/`. The breadcrumb and the empty state became `DriveBreadcrumb` and
-  `DriveEmptyState` (their names were host elements'). Nothing changes on screen; it needs a core whose views runtime
+  `DriveEmptyState` (their names were host elements'). In Visual Studio each view or user control holds its
+  code-behind and React parts (`frontend/.filenesting.json`). Nothing changes on screen; it needs a core whose views runtime
   renders a converted user control without a box of its own (core `[Unreleased]`).
 
 - **The Drive screens can be edited in the Visual Studio designer**: the Drive page, its toolbar, breadcrumb, file grid, sort and filter bar, search results (files and images), empty states, lock and version badges, the video player overlay, the « Import from a URL », duplicates and storage overview dialogs, the advanced share dialog and the details panel are views (`.kbview` + code-behind, converted with `@kubuno/views-migrate`). The Drive page (my files, home, starred, shared, recent, trash, search results) and the « Import from a URL » dialog were checked identical to the previous screens (pixels, text, accessibility tree and keyboard order; light and dark, French, English and Arabic, desktop and phone). The file explorer itself (`StorageExplorer` of `@kubuno/drive`), the cards and rows of files and folders, the context menu, the viewers and the remaining dialogs stay React for now. The bundle declares the views format it was compiled for (`viewsAbi`).

@@ -1,0 +1,20 @@
+{
+  "help": "Solution Explorer nesting of the web views (vskubuno docs/VIEWS-SPEC.md §1.2): a view or user control holds its code-behind, its React parts and its design data.",
+  "root": true,
+  "dependentFileProviders": {
+    "add": {
+      "extensionToExtension": {
+        "add": {
+          ".ts": [".kbview", ".kbcontrol"],
+          ".tsx": [".kbview", ".kbcontrol"]
+        }
+      },
+      "fileSuffixToExtension": {
+        "add": {
+          ".parts.tsx": [".kbview", ".kbcontrol"]
+        }
+      },
+      "addedExtension": {}
+    }
+  }
+}
