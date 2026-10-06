@@ -3,11 +3,20 @@
     "Name": "Drive (Kubuno Core + browser)",
     "Projects": [
       {
-        "Path": "server\Kubuno.Drive.Server.rsproj",
+        "Path": "server\\Kubuno.Drive.Server.rsproj",
         "Action": "Start"
       },
       {
         "Path": "frontend\\Kubuno.Drive.Web.esproj",
+        "Action": "Start"
+      }
+    ]
+  },
+  {
+    "Name": "Drive desktop (Windows)",
+    "Projects": [
+      {
+        "Path": "desktop\\windows\\kubuno-drive-desktop\\Kubuno.Drive.Desktop.rsproj",
         "Action": "Start"
       }
     ]

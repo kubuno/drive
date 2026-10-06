@@ -18,10 +18,13 @@ number at release time, and CI publishes that section as the GitHub Release note
   desktop app and later the mobile apps share it; the conformance vectors in `common/vectors/names` (verdicts,
   numbering, comparison keys, conflict copies) hold any other implementation (web, Android) to the same answers. The
   server now checks folder and file names and numbers duplicates (`report (2).pdf`) with it.
+- **Desktop: `--sample`** opens a small fixed folder (`Kubuno Drive sample`), created on first use under
+  `KUBUNO_SANDBOX_DIR` when a sandbox is set, else in the temporary folder, for tests and screenshots.
+- **`mobile/`** is reserved for the mobile apps, organised like the desktop app (`common`, `android`, `ios`).
 - **The Windows desktop app joins this repository**: Kubuno Drive for Windows (`drive.exe`, the Rust port of Files)
   and its engine crates (`kubuno-drive-desktop`, `-app-storage`, `-core-storage`, `-localization`) moved here from
-  `kubuno/desktop` with their history, under `desktop/windows/` (with `desktop/linux` and `desktop/macos` reserved for
-  the other platforms), keeping their MIT licence (`desktop/windows/LICENSE-MIT` credits the Files Community). The app
+  `kubuno/desktop` with their history, under `desktop/` (see below for its split into `desktop/common` and the OS folders),
+  keeping their MIT licence (`desktop/LICENSE-MIT` credits the Files Community). The app
   builds on its own from this repository — the Kubuno desktop framework, including the painting surface ported from
   Files, comes from `kubuno/desktop` by the git tag `desktop-v0.1.0-alpha` and is linked statically — has its own CI
   workflow (`desktop.yml`, Windows) and appears in `Kubuno.Drive.slnx` under **Desktop** (`Kubuno.Drive.Desktop` and its
@@ -35,6 +38,19 @@ number at release time, and CI publishes that section as the GitHub Release note
   the same way and keeps the same layout (`build_kbpkg.sh` finds the server in `server/` and still accepts the older
   layout), the CI workflows build from the new folders, and `kubuno-drive` (the client crate other modules take by git
   tag) is found in `server/` by Cargo.
+- **The desktop app is one portable app plus its Windows overrides**: `desktop/` is a single Cargo workspace;
+  `desktop/common` holds the complete app that no system does differently (the listed item and folder listing, the
+  settings and their store, layouts, sort and grouping, date formatting, file operation history, localisation,
+  storage abstractions, start-up and command line) with its platform extension points (`FileSystem`, `Shell`,
+  `Culture`, `Locale`, `UiHost`: traits with portable defaults), and it builds and runs on Windows, Linux and macOS;
+  `desktop/windows` holds only what Windows does differently (the Win32 window painted with Direct2D, the shell and
+  storage services, the Windows implementations of the extension points) and `drive.exe`, a few-line entry point
+  that registers them. `desktop/linux` and `desktop/macos` start the portable app with a text listing until the
+  desktop framework renders there. The Windows app looks and behaves as before; `desktop/README.md` lists what still
+  depends on Windows and why. The CI tests the portable app on Linux and macOS and checks it for the other targets.
+- **Desktop: new and copied items are numbered like on the server** (`name (2).ext`, a folder `name (2)` even when
+  its name has a dot), and bulk renames compare names ignoring case and Unicode normalisation, through
+  `kubuno-drive-core`.
 - **Renaming a file accepts names up to 255 bytes** (was 1000), like an uploaded file's name and every file system's.
 - **The Drive screens can be edited in the Visual Studio designer**: the Drive page, its toolbar, breadcrumb, file grid, sort and filter bar, search results (files and images), empty states, lock and version badges, the video player overlay, the « Import from a URL », duplicates and storage overview dialogs, the advanced share dialog and the details panel are views (`.kbview` + code-behind, converted with `@kubuno/views-migrate`). The Drive page (my files, home, starred, shared, recent, trash, search results) and the « Import from a URL » dialog were checked identical to the previous screens (pixels, text, accessibility tree and keyboard order; light and dark, French, English and Arabic, desktop and phone). The file explorer itself (`StorageExplorer` of `@kubuno/drive`), the cards and rows of files and folders, the context menu, the viewers and the remaining dialogs stay React for now. The bundle declares the views format it was compiled for (`viewsAbi`).
 - **More Drive screens are views**: the Drive settings page (preferences, WebDAV, about), the storage page, the search filter panel, the sidebar tree, the storage gauge in the top bar, the trash summary, the side-panel mini view, the Drive tab of the image picker, the archive browser, the 3D viewer, the image editing dialog, the labels dialog, badges and information section, the fonts pages (search bar, specimen, selection) and the breadcrumb and tree of the open / save / folder dialogs. Every Drive view was converted again from its original screen with `@kubuno/views-migrate` 0.1.1. All of them, and the screens converted earlier but not checked yet (duplicates, storage overview, advanced sharing, the video player, image search results), were checked identical to the previous screens (pixels, text, accessibility tree and keyboard order; light and dark, French, English and Arabic, desktop and phone).

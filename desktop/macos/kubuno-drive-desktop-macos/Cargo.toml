@@ -1,0 +1,13 @@
+[package]
+name = "kubuno-drive-desktop-macos"
+description = "Kubuno Drive for macOS: the entry point running the app of desktop/common with the portable platform (no macOS-specific override yet)"
+version = "0.1.0"   # Drive desktop's own version
+edition.workspace = true
+license = "MIT"     # the licence of Files, the project it is ported from (LICENSE-MIT)
+
+[[bin]]
+name = "kubuno-drive-desktop"
+path = "src/main.rs"
+
+[dependencies]
+kubuno-drive-desktop-common.workspace = true

@@ -55,8 +55,10 @@ core (kubuno/core)  ──proxy──►  kubuno-drive (this repo, :3101)
        └─ serves /modules/drive/entry.js (React frontend, loaded at runtime)
 ```
 
-- **Backend** — `src/`: Axum + SQLx through the shared `kubuno-db` layer — PostgreSQL (schema `drive`), MySQL/MariaDB or SQLite; migrations in `migrations/`.
+- **Server** — `server/`: Axum + SQLx through the shared `kubuno-db` layer — PostgreSQL (schema `drive`), MySQL/MariaDB or SQLite; migrations in `server/migrations/`.
 - **Frontend** — `frontend/`: a React bundle built to `entry.js`, consuming `@kubuno/sdk`, `@kubuno/ui` and `@kubuno/drive` from npm (provided by the host at runtime via the import map).
+- **Shared rules** — `common/core` (`kubuno-drive-core`): the file and folder name rules of every client (server, desktop, and later mobile), sans-IO, held together by the conformance vectors of `common/vectors`.
+- **Desktop** — `desktop/`: the native file manager; `desktop/common` is the complete portable app, `desktop/windows` only the Windows overrides (see [Desktop app](#desktop-app)).
 
 ## Install
 
@@ -84,8 +86,8 @@ A `.kbpkg` is attached to every tagged [GitHub Release](https://github.com/kubun
 **Requirements:** Rust ≥ 1.82, Node.js ≥ 24, and PostgreSQL 16, MySQL/MariaDB or SQLite (no server needed).
 
 ```bash
-cargo build --release                      # → target/release/kubuno-drive
-cd frontend && npm ci && npm run build      # → dist/{entry.js, entry.css}
+cd server && cargo build --release          # → server/target/release/kubuno-drive
+cd frontend && npm ci && npm run build      # → frontend/dist/{entry.js, entry.css}
 bash build_kbpkg.sh                         # → dist/drive-<version>-<os>-<arch>.kbpkg
 ```
 
@@ -95,20 +97,22 @@ bash build_kbpkg.sh                         # → dist/drive-<version>-<os>-<arc
 
 ### Desktop app
 
-The native Windows file manager, **Kubuno Drive for Windows** (`drive.exe`, a Rust port of
-[Files](https://github.com/files-community/Files), MIT — see `desktop/windows/LICENSE-MIT`), lives in
-[`desktop/windows/`](desktop/windows/README.md): a Cargo workspace of its own (`kubuno-drive-desktop` and its engine
-crates), built on the Kubuno desktop framework (`kubuno/desktop`, by git tag, linked statically). `desktop/linux` and
-`desktop/macos` are reserved for the other desktop platforms. In Visual Studio, `Kubuno.Drive.slnx` lists it under
-**Desktop**.
+The native file manager, **Kubuno Drive** (a Rust port of [Files](https://github.com/files-community/Files), MIT —
+see `desktop/LICENSE-MIT`), is one Cargo workspace in [`desktop/`](desktop/README.md): `desktop/common` holds the
+complete portable app (model, settings, view models, localisation, start-up) and its platform extension points (traits
+with portable defaults); `desktop/windows` holds only the Windows overrides — the Win32 window painted with Direct2D
+through the Kubuno desktop framework (`kubuno/desktop`, by git tag, linked statically), the shell integration — and
+`drive.exe`, the entry point that registers them; `desktop/linux` and `desktop/macos` are thin entry points running
+the portable app. In Visual Studio, `Kubuno.Drive.slnx` lists it under **Desktop** (Common, Windows, Linux, macOS).
 
 ```powershell
-cd desktop\windows; cargo build --release -p kubuno-drive-desktop   # → target\release\drive.exe
+cd desktop; cargo build --release -p kubuno-drive-desktop   # → target\release\drive.exe (Windows)
+cargo run -p kubuno-drive-desktop-linux -- --sample          # the portable app on Linux (text interface)
 ```
 
 ## Configuration
 
-Copy `config.toml.example` → `config.toml`, or use environment variables (`KUBUNO_CORE_URL`, `KUBUNO_INTERNAL_SECRET`, `KUBUNO_DB_*`). The database engine is the administrator's choice, set in `[database] engine` — `postgres` (default), `mysql`/`mariadb` or `sqlite` — and read at start-up: the same binary connects to whichever is named, and SQLite needs no server at all. Under the Kubuno supervisor the connection settings are injected by the core. See `module.toml` for the manifest (id, port, routes, sidebar entry, settings).
+Copy `server/config.toml.example` → `config.toml`, or use environment variables (`KUBUNO_CORE_URL`, `KUBUNO_INTERNAL_SECRET`, `KUBUNO_DB_*`). The database engine is the administrator's choice, set in `[database] engine` — `postgres` (default), `mysql`/`mariadb` or `sqlite` — and read at start-up: the same binary connects to whichever is named, and SQLite needs no server at all. Under the Kubuno supervisor the connection settings are injected by the core. See `module.toml` for the manifest (id, port, routes, sidebar entry, settings).
 
 ## Tech stack
 

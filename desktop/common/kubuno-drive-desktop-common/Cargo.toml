@@ -1,0 +1,18 @@
+[package]
+name = "kubuno-drive-desktop-common"
+description = "Kubuno Drive desktop, the portable app: model, settings, view models, date formatting, file history and the platform extension points every OS entry point registers"
+version = "0.1.0"   # Drive desktop's own version
+edition.workspace = true
+license = "MIT"     # the licence of Files, the project it is ported from (LICENSE-MIT)
+
+# Portable on purpose: no `windows` crate, no UI framework, no C library. `cargo check` passes for
+# x86_64-pc-windows-msvc, x86_64-unknown-linux-gnu and aarch64-apple-darwin (CI: desktop.yml).
+[dependencies]
+kubuno-drive-core.workspace = true
+kubuno-drive-desktop-localization.workspace = true
+# The settings store (vskubuno docs/STORAGE-COMPONENTS.md, lot ST-2): sandbox-aware, portable.
+kubuno-desktop-app-storage.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+chrono.workspace = true
+tracing.workspace = true

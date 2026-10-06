@@ -1,0 +1,67 @@
+# Kubuno Drive desktop: the desktop file manager of the drive module, a Rust port of Files (MIT, see
+# LICENSE-MIT and README.md). ONE Cargo workspace for every operating system, independent of the server's
+# (../server/Cargo.toml):
+#
+#   common/   the complete app, portable: model, settings, view models, localisation, storage abstractions,
+#             and the platform extension points (traits with portable defaults, `platform.rs`)
+#   windows/  only what Windows does differently (the Win32 window painted with Direct2D, the shell,
+#             the storage layer over IShellItem) and the `drive.exe` entry point that registers it
+#   linux/, macos/  thin entry points running the common app with the portable defaults
+#
+# The Kubuno desktop framework (kubuno-desktop-ui, kubuno-desktop-controls, the painting surface
+# kubuno-drive-desktop-app-controls and its helpers kubuno-drive-desktop-shared) and the common crates of
+# kubuno/desktop come from that repository by git tag, never by path: the app builds from this repository
+# alone, and links the framework statically. The Windows-only crates are built on Windows only (CI selects
+# the packages per OS: `-p`).
+[workspace]
+resolver = "2"
+members  = [
+    "common/kubuno-drive-desktop-common",
+    "common/kubuno-drive-desktop-core-storage",
+    "common/kubuno-drive-desktop-localization",
+    "windows/kubuno-drive-desktop",
+    "windows/kubuno-drive-desktop-windows",
+    "windows/kubuno-drive-desktop-app-storage",
+    "linux/kubuno-drive-desktop-linux",
+    "macos/kubuno-drive-desktop-macos",
+]
+# Vendored sources kept for reference, never built.
+exclude  = ["common/vendor"]
+
+[workspace.package]
+edition    = "2021"
+repository = "https://github.com/kubuno/drive"
+
+[workspace.dependencies]
+kubuno-drive-desktop-common       = { path = "common/kubuno-drive-desktop-common" }
+kubuno-drive-desktop-core-storage = { path = "common/kubuno-drive-desktop-core-storage" }
+kubuno-drive-desktop-localization = { path = "common/kubuno-drive-desktop-localization" }
+kubuno-drive-desktop-windows      = { path = "windows/kubuno-drive-desktop-windows" }
+kubuno-drive-desktop-app-storage  = { path = "windows/kubuno-drive-desktop-app-storage" }
+# The rules every Drive client shares (names, numbering, conflict copies), with the server.
+kubuno-drive-core                 = { path = "../common/core" }
+
+# One tag of kubuno/desktop pins every framework and common crate (kubuno/desktop README,
+# "Versions and tags"). Bump them together.
+kubuno-desktop-ui                 = { git = "https://github.com/kubuno/desktop", tag = "desktop-v0.1.0-alpha" }
+kubuno-desktop-controls           = { git = "https://github.com/kubuno/desktop", tag = "desktop-v0.1.0-alpha" }
+kubuno-drive-desktop-app-controls = { git = "https://github.com/kubuno/desktop", tag = "desktop-v0.1.0-alpha" }
+kubuno-drive-desktop-shared       = { git = "https://github.com/kubuno/desktop", tag = "desktop-v0.1.0-alpha" }
+kubuno-desktop-app-storage        = { git = "https://github.com/kubuno/desktop", tag = "desktop-v0.1.0-alpha" }
+
+windows          = { version = "0.62" }
+windows-core     = { version = "0.62" }
+thiserror        = "2"
+chrono           = { version = "0.4", features = ["unstable-locales"] }
+async-trait      = "0.1"
+bitflags         = "2"
+futures          = "0.3"
+windows-numerics = "0.3"
+serde            = { version = "1", features = ["derive"] }
+serde_json       = "1"
+tokio            = { version = "1", features = ["rt-multi-thread", "sync", "fs", "macros", "time", "io-util"] }
+suppaftp         = { version = "10.0.2", default-features = false, features = ["tokio"] }
+tracing          = "0.1"
+tracing-subscriber = "0.3"
+# LibGit2 bindings (Drive's git integration). `vendored` builds libgit2 with the crate.
+git2 = { version = "0.19", default-features = false, features = ["vendored-libgit2"] }

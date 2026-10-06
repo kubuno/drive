@@ -1,4 +1,10 @@
 # Kubuno Drive for macOS
 
-Not written yet. The macOS app will be a Cargo workspace in this folder, built on the Kubuno desktop framework
-(`kubuno/desktop`, by git tag) like [the Windows app](../windows/README.md).
+`kubuno-drive-desktop-macos` (binary `kubuno-drive-desktop`): the app of [`../common`](../common/README.md) with the
+portable platform, and its text interface (`app::TextUi`) until the Kubuno desktop framework renders on macOS. macOS
+overrides nothing yet: its native window and services will join this folder as implementations of the extension
+points of `kubuno_drive_desktop_common::platform` (see [`../README.md`](../README.md#platform-extension-points)).
+
+```sh
+cargo run -p kubuno-drive-desktop-macos -- --sample      # from desktop/
+```

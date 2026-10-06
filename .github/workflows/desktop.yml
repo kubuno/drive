@@ -1,33 +1,65 @@
 name: Desktop
 
-# The module's desktop apps (desktop/<os>/), apart from the server's workflows. Windows
-# today: Kubuno Drive for Windows (drive.exe, a Rust port of Files), a native Win32 app built against the
-# Kubuno desktop framework, taken from kubuno/desktop by git tag and linked statically.
-# Linux and macOS jobs join when desktop/linux and desktop/macos get their apps.
+# The module's desktop app (desktop/, one Cargo workspace), apart from the server's workflows.
+# - common: the portable app (desktop/common) and the thin Linux/macOS entry points, tested on Linux and
+#   macOS, and checked for the other systems' targets;
+# - windows: the whole workspace with the Windows overrides (desktop/windows): Kubuno Drive for Windows
+#   (drive.exe, a Rust port of Files), a native Win32 app built against the Kubuno desktop framework, taken
+#   from kubuno/desktop by git tag and linked statically.
 on:
   push:
     branches: [main]
-    paths: ['desktop/**', '.github/workflows/desktop.yml']
+    paths: ['desktop/**', 'common/**', '.github/workflows/desktop.yml']
     tags: ['v*']
   pull_request:
     branches: [main]
-    paths: ['desktop/**', '.github/workflows/desktop.yml']
+    paths: ['desktop/**', 'common/**', '.github/workflows/desktop.yml']
   workflow_dispatch:
 
 jobs:
+  common:
+    name: common (${{ matrix.os }})
+    strategy:
+      matrix:
+        include:
+          - { os: ubuntu-latest, entry: kubuno-drive-desktop-linux, other: aarch64-apple-darwin }
+          - { os: macos-latest, entry: kubuno-drive-desktop-macos, other: x86_64-unknown-linux-gnu }
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: desktop
+    env:
+      PACKAGES: -p kubuno-drive-desktop-common -p kubuno-drive-desktop-core-storage -p kubuno-drive-desktop-localization -p ${{ matrix.entry }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with: { components: clippy, targets: "${{ matrix.other }},x86_64-pc-windows-msvc" }
+      - uses: Swatinem/rust-cache@v2
+        with: { workspaces: desktop }
+      - name: clippy (deny warnings)
+        run: cargo clippy --locked $PACKAGES --all-targets -- -D warnings
+      - name: test
+        run: cargo test --locked $PACKAGES
+      - name: check for the other targets
+        run: |
+          cargo check --locked $PACKAGES --target ${{ matrix.other }}
+          cargo check --locked -p kubuno-drive-desktop-common --target x86_64-pc-windows-msvc
+      - name: run (text interface, sample folder in a sandbox)
+        run: KUBUNO_SANDBOX_DIR="$RUNNER_TEMP/sandbox" cargo run --locked -p ${{ matrix.entry }} -- --sample
+
   windows:
     name: windows
     runs-on: windows-latest
     defaults:
       run:
-        working-directory: desktop/windows
+        working-directory: desktop
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
       - uses: dtolnay/rust-toolchain@stable
         with: { components: clippy }
       - uses: Swatinem/rust-cache@v2
-        with: { workspaces: desktop/windows }
+        with: { workspaces: desktop }
       - name: clippy (deny warnings)
         run: cargo clippy --locked --workspace --all-targets -- -D warnings
       - name: test
@@ -37,4 +69,4 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: kubuno-drive-windows-x64
-          path: desktop/windows/target/release/drive.exe
+          path: desktop/target/release/drive.exe

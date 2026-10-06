@@ -1,0 +1,20 @@
+[package]
+name = "kubuno-drive-desktop"
+description = "Kubuno Drive for Windows (drive.exe): the entry point that registers the Windows platform and runs the app of desktop/common"
+version = "0.1.0"   # Drive desktop's own version
+edition.workspace = true
+license = "MIT"     # the licence of Files, the project it is ported from (LICENSE-MIT)
+
+[[bin]]
+name = "drive"
+path = "src/main.rs"
+
+[dependencies]
+kubuno-drive-desktop-common.workspace = true
+kubuno-drive-desktop-windows.workspace = true
+
+[build-dependencies]
+# embed manifest for DPI awareness + common controls v6
+embed-manifest = "1.4"
+# embed the app icon (assets/drive.ico, the Drive web logo) into the exe
+winresource = "0.1"

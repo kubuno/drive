@@ -1,0 +1,11 @@
+[package]
+name = "kubuno-drive-desktop-localization"
+description = "Localisation from .resw resources with culture fallback (port of StringsPropertyGenerator + AppLocalizationService), portable"
+version = "0.1.0"   # Drive desktop's own version
+edition.workspace = true
+license = "MIT"     # the licence of Files, the project it is ported from (LICENSE-MIT)
+build = "build.rs"
+
+# No dependency: the user's culture comes from the platform (`kubuno-drive-desktop-common`'s `Culture`
+# extension point; Windows asks `GetUserDefaultLocaleName` in desktop/windows).
+[dependencies]
