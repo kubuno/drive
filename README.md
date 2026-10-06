@@ -56,7 +56,7 @@ core (kubuno/core)  ──proxy──►  kubuno-drive (this repo, :3101)
 ```
 
 - **Server** — `server/`: Axum + SQLx through the shared `kubuno-db` layer — PostgreSQL (schema `drive`), MySQL/MariaDB or SQLite; migrations in `server/migrations/`.
-- **Frontend** — `frontend/`: a React bundle built to `entry.js`, consuming `@kubuno/sdk`, `@kubuno/ui` and `@kubuno/drive` from npm (provided by the host at runtime via the import map).
+- **Web** — `web/`: a React bundle built to `entry.js`, consuming `@kubuno/sdk`, `@kubuno/ui` and `@kubuno/drive` from npm (provided by the host at runtime via the import map).
 - **Shared rules** — `common/core` (`kubuno-drive-core`): the file and folder name rules of every client (server, desktop, and later mobile), sans-IO, held together by the conformance vectors of `common/vectors`.
 - **Desktop** — `desktop/`: the native file manager; `desktop/common` is the complete portable app, `desktop/windows` only the Windows overrides (see [Desktop app](#desktop-app)).
 
@@ -87,7 +87,7 @@ A `.kbpkg` is attached to every tagged [GitHub Release](https://github.com/kubun
 
 ```bash
 cd server && cargo build --release          # → server/target/release/kubuno-drive
-cd frontend && npm ci && npm run build      # → frontend/dist/{entry.js, entry.css}
+cd web && npm ci && npm run build           # → web/dist/{entry.js, entry.css}
 bash build_kbpkg.sh                         # → dist/drive-<version>-<os>-<arch>.kbpkg
 ```
 

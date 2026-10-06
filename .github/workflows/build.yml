@@ -31,7 +31,7 @@ jobs:
         with:
           node-version: 24
       - name: build frontend
-        working-directory: frontend
+        working-directory: web
         run: |
           npm ci
           npm run build

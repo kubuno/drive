@@ -33,7 +33,7 @@ number at release time, and CI publishes that section as the GitHub Release note
 ### Changed
 
 - **The repository is organised by platform**: `server/` holds the Rust server (its `Cargo.toml`, `src/`,
-  `migrations/`, tests and fonts), `common/` the code every client shares (`common/core`, `common/vectors`); the
+  `migrations/`, tests and fonts), `web/` the web frontend (formerly `frontend/`, moved with its history), `common/` the code every client shares (`common/core`, `common/vectors`); the
   module manifest, `build_kbpkg.sh`, the README, this changelog and the licence stay at the root. The `.kbpkg` is built
   the same way and keeps the same layout (`build_kbpkg.sh` finds the server in `server/` and still accepts the older
   layout), the CI workflows build from the new folders, and `kubuno-drive` (the client crate other modules take by git

@@ -1,13 +1,13 @@
 .PHONY: build build-front dev kbpkg install check fmt clean
 
-# Repository layout (README "Repository layout"): server/ the Rust server, frontend/ the web
+# Repository layout (README "Repository layout"): server/ the Rust server, web/ the web
 # frontend, common/ the rules shared by every client, desktop/ the desktop apps.
 
 build:        ## Build the module's server binary
 	cd server && cargo build --release --bin kubuno-drive
 
 build-front:  ## Build the frontend bundle (dist/entry.js)
-	cd frontend && npm run build
+	cd web && npm run build
 
 dev:          ## Run the server in watch mode
 	cd server && cargo watch -q -c -x 'run --bin kubuno-drive'
@@ -20,11 +20,11 @@ install:      ## Build and install the package into the local core
 
 check:        ## cargo check + frontend typecheck
 	cd server && cargo check --bin kubuno-drive
-	cd frontend && npm run typecheck
+	cd web && npm run typecheck
 
 fmt:          ## Format the code
 	cd server && cargo fmt
 
 clean:        ## Remove build outputs
 	cd server && cargo clean
-	rm -rf frontend/dist dist
+	rm -rf web/dist dist
