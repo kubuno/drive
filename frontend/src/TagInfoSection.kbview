@@ -1,0 +1,15 @@
+<!-- TagInfoSection — converted from TagInfoSection.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<Panel Visible="{Binding show_main}" Class="mb-4">
+  <Label Text="Étiquettes" Role="Meta" FontWeight="SemiBold" Overflow="Wrap" ForeColor="TextTertiary" Class="uppercase tracking-wider mb-2"/>
+  <Label Text="Aucune étiquette — créez-en via « Étiquettes… » dans le menu contextuel."
+         FontStyle="Italic"
+         Overflow="Wrap"
+         ForeColor="TextTertiary"
+         Visible="{Binding show_tags}"/>
+  <Stack Direction="LeftToRight" Gap="6" WrapContents="true" Visible="{Binding show_not_tags}">
+    <Repeater ItemKey="key" ItemsSource="{Binding rows_tags}">
+      <!-- TODO(views-migrate): <button> with a computed style -->
+      <ReactHost Component="{Binding Part1}" Props="{Binding part1_props}"/>
+    </Repeater>
+  </Stack>
+</Panel>

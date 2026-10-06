@@ -1,26 +1,11 @@
-import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { ChevronRight, Folder as FolderIcon, HardDrive, Server } from 'lucide-react'
-import { filesApi, FolderGlyph, type Folder, type RemoteEntry } from '@kubuno/drive'
-
-// Folder tree of the CURRENTLY SELECTED storage, shown on the left of the file
-// dialogs (open / save / folder picker). It drives the dialog's selection: clicking
-// a node jumps the dialog there (the dialog rebuilds its breadcrumb). Self-contained
-// (no router / context menus), unlike the app's FilesTreeSidebar.
-
-interface Props {
-  /** null = local Drive ; otherwise a remote mount id. */
-  sourceId:           string | null
-  rootLabel:          string
-  /** Highlight: current local folder (null = root). */
-  selectedFolderId:   string | null
-  /** Highlight: current remote path ('' = root). */
-  selectedRemotePath: string
-  onPickLocal:        (folderId: string | null) => void
-  onPickRemote:       (path: string) => void
-}
-
-// ── Local (Drive) nodes ─────────────────────────────────────────────────────────
+/**
+ * The parts of `DialogTree.kbview` still written in React (the codemod could not convert them; see the
+ * TODO comments in the view). Each is rendered by a `<ReactHost>` with the values it reads as props.
+ */
+import { useState } from "react"
+import { useQuery } from "@tanstack/react-query"
+import { ChevronRight, Folder as FolderIcon, HardDrive, Server } from "lucide-react"
+import { filesApi, FolderGlyph, type Folder, type RemoteEntry } from "@kubuno/drive"
 
 function LocalNode({
   folder, depth, selectedFolderId, onPick,
@@ -65,6 +50,7 @@ function LocalNode({
     </div>
   )
 }
+export { LocalNode }
 
 function LocalTree({ rootLabel, selectedFolderId, onPick }: {
   rootLabel: string
@@ -106,8 +92,7 @@ function LocalTree({ rootLabel, selectedFolderId, onPick }: {
     </div>
   )
 }
-
-// ── Remote (mount) nodes ─────────────────────────────────────────────────────────
+export { LocalTree }
 
 function RemoteNode({
   mountId, entry, depth, selectedRemotePath, onPick,
@@ -153,6 +138,7 @@ function RemoteNode({
     </div>
   )
 }
+export { RemoteNode }
 
 function RemoteTree({ mountId, rootLabel, selectedRemotePath, onPick }: {
   mountId: string
@@ -195,19 +181,4 @@ function RemoteTree({ mountId, rootLabel, selectedRemotePath, onPick }: {
     </div>
   )
 }
-
-// ── Public component ─────────────────────────────────────────────────────────────
-
-export default function DialogTree({
-  sourceId, rootLabel, selectedFolderId, selectedRemotePath, onPickLocal, onPickRemote,
-}: Props) {
-  return (
-    <div className="w-52 flex-shrink-0 border-r border-border bg-surface-1 overflow-y-auto p-2">
-      {sourceId === null ? (
-        <LocalTree rootLabel={rootLabel} selectedFolderId={selectedFolderId} onPick={onPickLocal} />
-      ) : (
-        <RemoteTree mountId={sourceId} rootLabel={rootLabel} selectedRemotePath={selectedRemotePath} onPick={onPickRemote} />
-      )}
-    </div>
-  )
-}
+export { RemoteTree }

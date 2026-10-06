@@ -1,23 +1,20 @@
-import { cn } from '@ui'
-// Google-Fonts-like specimen page shown when a font family is opened. Four tabs:
-// Specimen (hero + type tester + styles list + size ramp), About (description &
-// designer, from the font's `name` table), License (copyright + license text),
-// and Glyphs & languages (a character grid + supported scripts). Everything is
-// rendered in the real font — each variant file is its own registered `FontFace`.
-//
-// Built from the shared @ui primitives (Tabs, Accordion, Dropdown, Input, Button,
-// Tooltip) rather than hand-rolled controls.
-import { useState } from 'react'
-import { Trash2, RotateCcw, Download, Type, Info, FileText, Languages, Globe } from 'lucide-react'
-import { Button, Tabs, Accordion, Dropdown, Input, Editable, Tooltip, type TabDef, type DropdownOption } from '@ui'
-
-export interface SpecimenVariant {
+/**
+ * The parts of `FontSpecimenPage.kbview` still written in React (the codemod could not convert them; see the
+ * TODO comments in the view). Each is rendered by a `<ReactHost>` with the values it reads as props.
+ */
+import { cn } from "@ui"
+import { useState } from "react"
+import { RotateCcw, Type, Info, FileText, Languages, Globe } from "lucide-react"
+import { Tabs, Accordion, Dropdown, Input, Editable, Tooltip, type TabDef, type DropdownOption } from "@ui"
+import type { FontSpecimenPage } from './FontSpecimenPage'
+interface SpecimenVariant {
   id: string
   cssFamily: string
   weight: number
   italic: boolean
 }
-export interface FontSpecimenData {
+
+interface FontSpecimenData {
   name: string
   designer: string
   designerUrl?: string
@@ -41,18 +38,20 @@ const WEIGHT_NAMES: Record<number, string> = {
   100: 'Thin', 200: 'ExtraLight', 300: 'Light', 400: 'Regular',
   500: 'Medium', 600: 'SemiBold', 700: 'Bold', 800: 'ExtraBold', 900: 'Black',
 }
+
 const weightName = (w: number) => WEIGHT_NAMES[Math.round(w / 100) * 100] ?? String(w)
+
 const styleLabel = (v: SpecimenVariant) => `${weightName(v.weight)} ${v.weight}${v.italic ? ' Italic' : ''}`
+
 const fontStack = (cssFamily: string) => (cssFamily ? `'${cssFamily}', system-ui` : 'system-ui')
 
 const DEFAULT_PREVIEW = 'Your cloud, your rules, your data, your way'
+
 const BODY_PARAGRAPH =
   'Everyone has the right to freedom of thought, conscience and religion; this right includes freedom to change one’s beliefs, and freedom, either alone or in community with others and in public or private, to manifest them.'
 
-// Preset sizes offered by the size Dropdowns.
 const SIZE_OPTS: DropdownOption[] = [12, 16, 20, 24, 28, 32, 40, 48, 64, 80, 96, 120].map(s => ({ value: String(s), label: `${s}px` }))
 
-// Glyph groups shown in the Glyphs tab (a representative subset).
 const GLYPH_GROUPS: { label: string; chars: string[] }[] = [
   { label: 'Minuscules latines', chars: [...'abcdefghijklmnopqrstuvwxyzàáâãäåāăąæçćĉčċďđèéêëēĕėęěìíîïĩīĭįıĵ'] },
   { label: 'Majuscules latines', chars: [...'ABCDEFGHIJKLMNOPQRSTUVWXYZÀÁÂÃÄÅĀĂĄÆÇĆĈČĊĎĐÈÉÊËĒĔĖĘĚÌÍÎÏĨĪĬĮİ'] },
@@ -61,9 +60,16 @@ const GLYPH_GROUPS: { label: string; chars: string[] }[] = [
 ]
 
 const withProto = (u: string) => (/^https?:\/\//i.test(u) ? u : `https://${u}`)
+
 const cleanUrl = (u: string) => u.replace(/^https?:\/\//i, '').replace(/\/$/, '')
 
-// ── Specimen tab ─────────────────────────────────────────────────────────────
+const TABS: TabDef<Tab>[] = [
+  { id: 'specimen', label: 'Spécimen', icon: Type },
+  { id: 'about', label: 'À propos', icon: Info },
+  { id: 'license', label: 'Licence', icon: FileText },
+  { id: 'glyphs', label: 'Glyphes & langues', icon: Languages },
+]
+
 function SpecimenTab({ data }: { data: FontSpecimenData }) {
   const styles = [...data.variants].sort((a, b) => a.weight - b.weight || Number(a.italic) - Number(b.italic))
   const rep = styles.find(v => v.weight === 400 && !v.italic) ?? styles[0]
@@ -135,8 +141,8 @@ function SpecimenTab({ data }: { data: FontSpecimenData }) {
     </>
   )
 }
+export { SpecimenTab }
 
-// ── About tab ────────────────────────────────────────────────────────────────
 function AboutTab({ data }: { data: FontSpecimenData }) {
   const facts: [string, string][] = [
     ['Styles', String(data.variants.length)],
@@ -175,8 +181,8 @@ function AboutTab({ data }: { data: FontSpecimenData }) {
     </div>
   )
 }
+export { AboutTab }
 
-// ── License tab ──────────────────────────────────────────────────────────────
 function LicenseTab({ data }: { data: FontSpecimenData }) {
   const hasText = !!(data.license || data.copyright)
   return (
@@ -201,8 +207,8 @@ function LicenseTab({ data }: { data: FontSpecimenData }) {
     </div>
   )
 }
+export { LicenseTab }
 
-// ── Glyphs & languages tab ───────────────────────────────────────────────────
 function GlyphsTab({ data }: { data: FontSpecimenData }) {
   const rep = [...data.variants].sort((a, b) => a.weight - b.weight)[0]
   const family = fontStack(rep.cssFamily)
@@ -244,42 +250,22 @@ function GlyphsTab({ data }: { data: FontSpecimenData }) {
     </>
   )
 }
+export { GlyphsTab }
 
-// ── Page ─────────────────────────────────────────────────────────────────────
-const TABS: TabDef<Tab>[] = [
-  { id: 'specimen', label: 'Spécimen', icon: Type },
-  { id: 'about', label: 'À propos', icon: Info },
-  { id: 'license', label: 'Licence', icon: FileText },
-  { id: 'glyphs', label: 'Glyphes & langues', icon: Languages },
-]
-
-export default function FontSpecimenPage({ data, onDelete, onDownload }: { data: FontSpecimenData; onDelete?: () => void; onDownload?: () => void }) {
-  const [tab, setTab] = useState<Tab>('specimen')
-  const rep = [...data.variants].sort((a, b) => a.weight - b.weight)[0]
-  const link = data.vendorUrl || data.designerUrl
-
+export function Part1({ tab, setTab }: { tab: NonNullable<FontSpecimenPage['tab']>; setTab: NonNullable<FontSpecimenPage['setTab']> }) {
   return (
-    <div className="max-w-6xl mx-auto pb-16">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="flex-1 min-w-0"><Tabs tabs={TABS} value={tab} onChange={setTab} variant="pills" /></div>
-        {onDownload && <Button variant="primary" size="sm" icon={<Download size={15} />} onClick={onDownload}>Télécharger</Button>}
-      </div>
+    <Tabs tabs={TABS} value={tab} onChange={setTab} variant="pills" />
+  )
+}
 
-      <header className="pb-6">
-        <div className="flex items-start justify-between gap-4">
-          <h1 className="text-5xl sm:text-6xl font-semibold text-text-primary tracking-tight break-words" style={{ fontFamily: fontStack(rep.cssFamily) }}>{data.name}</h1>
-          {onDelete && <Button variant="secondary" size="sm" icon={<Trash2 size={15} />} onClick={onDelete}>Supprimer</Button>}
-        </div>
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-text-secondary">
-          {data.designer && <span>Conçu par <span className="text-text-primary font-medium">{data.designer}</span></span>}
-          {link && <a href={withProto(link)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-primary hover:underline"><Globe size={14} />{cleanUrl(link)}</a>}
-        </div>
-      </header>
+export function Part2({ rep, data }: { rep: NonNullable<FontSpecimenPage['rep']>; data: NonNullable<FontSpecimenPage['props']['data']> }) {
+  return (
+    <h1 className="text-5xl sm:text-6xl font-semibold text-text-primary tracking-tight break-words" style={{ fontFamily: fontStack(rep.cssFamily) }}>{data.name}</h1>
+  )
+}
 
-      {tab === 'specimen' && <SpecimenTab data={data} />}
-      {tab === 'about' && <AboutTab data={data} />}
-      {tab === 'license' && <LicenseTab data={data} />}
-      {tab === 'glyphs' && <GlyphsTab data={data} />}
-    </div>
+export function Part3({ link }: { link: NonNullable<FontSpecimenPage['link']> }) {
+  return (
+    <a href={withProto(link)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-primary hover:underline"><Globe size={14} />{cleanUrl(link)}</a>
   )
 }

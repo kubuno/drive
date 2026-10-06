@@ -1,0 +1,46 @@
+<!-- TagDialog — converted from TagDialog.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<Stack x:Props="TagDialogProps" Direction="LeftToRight" Gap="0" CrossAlign="Center" Justify="Center" Class="fixed inset-0 z-[60]">
+  <Panel Class="absolute inset-0 bg-black/40" OnClick="panel_click"/>
+  <Panel Class="relative bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 max-h-[85vh] overflow-auto">
+    <Stack Direction="LeftToRight" Gap="0" CrossAlign="Center" Justify="SpaceBetween" Class="mb-1">
+      <Stack Direction="LeftToRight" CrossAlign="Center">
+        <Icon Name="Tag" Class="text-primary"/>
+        <Label HtmlTag="H2" Text="Étiquettes" FontWeight="SemiBold" Overflow="Wrap" ForeColor="TextPrimary" Class="text-lg"/>
+      </Stack>
+      <Panel AccessibleRole="PushButton"
+             AutoSize="true"
+             ForeColor="TextSecondary"
+             Class="p-1 rounded-lg hover:bg-surface-2"
+             OnClick="panel_click2">
+        <Icon Name="X" Size="18"/>
+      </Panel>
+    </Stack>
+    <Panel HtmlTag="P" ForeColor="TextSecondary" Visible="{Binding show_target}" Class="text-sm mb-4 truncate">
+      <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="Étiqueter : "/>
+      <Label HtmlTag="Span" Text="{Binding span_text}" FontWeight="Medium" Overflow="Wrap" ForeColor="TextPrimary" InheritFontSize="true"/>
+    </Panel>
+    <Panel BackColor="Surface1" Class="border border-border rounded-lg p-3 mb-4 space-y-2">
+      <TextField Text="{Binding newName, Mode=TwoWay}" Placeholder="Nouvelle étiquette…" OnKeyDown="text_field_key_down" Class="mb-2"/>
+      <Stack Direction="LeftToRight" CrossAlign="Center" Justify="SpaceBetween">
+        <!-- TODO(views-migrate): <ColorPalette> is no .kbview element (a local or dynamic component) -->
+        <ReactHost Component="{Binding ColorPalette}" Props="{Binding color_palette_props}"/>
+        <!-- TODO(views-migrate): <Button> with element children -->
+        <ReactHost Component="{Binding Part1}" Props="{Binding part1_props}"/>
+      </Stack>
+      <Label Text="{Binding error}" Role="Meta" Overflow="Wrap" ForeColor="Danger" Visible="{Binding show_error}"/>
+    </Panel>
+    <Panel Class="space-y-1">
+      <Label Text="Aucune étiquette pour l'instant."
+             TextAlign="TopCenter"
+             Overflow="Wrap"
+             ForeColor="TextTertiary"
+             Visible="{Binding show_tags}"
+             Class="py-4"/>
+      <!-- TODO(views-migrate): a list whose item is not a single element -->
+      <ReactHost Component="{Binding Part2}" Props="{Binding part2_props}"/>
+    </Panel>
+    <Stack Direction="LeftToRight" Gap="0" Justify="End" Class="pt-4">
+      <Button Variant="Secondary" Text="Fermer" OnClick="button_click"/>
+    </Stack>
+  </Panel>
+</Stack>

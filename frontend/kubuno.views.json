@@ -4,5 +4,8 @@
   "registries": [],
   "sources": [
     "src"
-  ]
+  ],
+  "design": {
+    "setup": ["src/index.css", "src/i18n.ts"]
+  }
 }

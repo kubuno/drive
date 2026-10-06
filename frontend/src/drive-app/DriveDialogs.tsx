@@ -12,8 +12,8 @@ import ImageEditDialog from '../ImageEditDialog'
 import ImportUrlModal from '../ImportUrlModal'
 import StorageInsightsDialog from '../StorageInsightsDialog'
 import { useDriveExtras } from '../driveExtras'
-import { TagDialog } from '../TagUI'
 import type { DriveDialogs as DriveDialogsState } from './useDriveDialogs'
+import TagDialog from '../TagDialog'
 
 interface Props {
   dialogs:  DriveDialogsState

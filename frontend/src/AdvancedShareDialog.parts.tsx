@@ -50,51 +50,66 @@ const EMPTY_SHARE: Share = {
 
 export function Part1({ canDownload, setCanDownload }: { canDownload: NonNullable<AdvancedShareDialog['canDownload']>; setCanDownload: NonNullable<AdvancedShareDialog['setCanDownload']> }) {
   return (
-    <input
-                      type="checkbox"
-                      checked={canDownload}
-                      onChange={e => setCanDownload(e.target.checked)}
-                    />
+    <label className="flex items-center gap-2 text-sm text-text-primary cursor-pointer">
+      <input
+                        type="checkbox"
+                        checked={canDownload}
+                        onChange={e => setCanDownload(e.target.checked)}
+                      />
+      Autoriser le téléchargement
+    </label>
   )
 }
 
 export function Part2({ canUpload, setCanUpload }: { canUpload: NonNullable<AdvancedShareDialog['canUpload']>; setCanUpload: NonNullable<AdvancedShareDialog['setCanUpload']> }) {
   return (
-    <input
-                      type="checkbox"
-                      checked={canUpload}
-                      onChange={e => setCanUpload(e.target.checked)}
-                    />
+    <label className="flex items-center gap-2 text-sm text-text-primary cursor-pointer">
+      <input
+                        type="checkbox"
+                        checked={canUpload}
+                        onChange={e => setCanUpload(e.target.checked)}
+                      />
+      Autoriser l’envoi de fichiers
+    </label>
   )
 }
 
 export function Part3({ canDelete, setCanDelete }: { canDelete: NonNullable<AdvancedShareDialog['canDelete']>; setCanDelete: NonNullable<AdvancedShareDialog['setCanDelete']> }) {
   return (
-    <input
-                      type="checkbox"
-                      checked={canDelete}
-                      onChange={e => setCanDelete(e.target.checked)}
-                    />
+    <label className="flex items-center gap-2 text-sm text-text-primary cursor-pointer">
+      <input
+                        type="checkbox"
+                        checked={canDelete}
+                        onChange={e => setCanDelete(e.target.checked)}
+                      />
+      Autoriser la suppression
+    </label>
   )
 }
 
 export function Part4({ pwEnabled, setPwEnabled }: { pwEnabled: NonNullable<AdvancedShareDialog['pwEnabled']>; setPwEnabled: NonNullable<AdvancedShareDialog['setPwEnabled']> }) {
   return (
-    <input
-                      type="checkbox"
-                      checked={pwEnabled}
-                      onChange={e => setPwEnabled(e.target.checked)}
-                    />
+    <label className="flex items-center gap-2 text-sm text-text-primary cursor-pointer">
+      <input
+                        type="checkbox"
+                        checked={pwEnabled}
+                        onChange={e => setPwEnabled(e.target.checked)}
+                      />
+      Protéger par un mot de passe
+    </label>
   )
 }
 
 export function Part5({ expEnabled, setExpEnabled }: { expEnabled: NonNullable<AdvancedShareDialog['expEnabled']>; setExpEnabled: NonNullable<AdvancedShareDialog['setExpEnabled']> }) {
   return (
-    <input
-                      type="checkbox"
-                      checked={expEnabled}
-                      onChange={e => setExpEnabled(e.target.checked)}
-                    />
+    <label className="flex items-center gap-2 text-sm text-text-primary cursor-pointer">
+      <input
+                        type="checkbox"
+                        checked={expEnabled}
+                        onChange={e => setExpEnabled(e.target.checked)}
+                      />
+      Date d’expiration
+    </label>
   )
 }
 
@@ -110,11 +125,14 @@ export function Part6({ expiresAt, setExpiresAt }: { expiresAt: NonNullable<Adva
 
 export function Part7({ maxEnabled, setMaxEnabled }: { maxEnabled: NonNullable<AdvancedShareDialog['maxEnabled']>; setMaxEnabled: NonNullable<AdvancedShareDialog['setMaxEnabled']> }) {
   return (
-    <input
-                      type="checkbox"
-                      checked={maxEnabled}
-                      onChange={e => setMaxEnabled(e.target.checked)}
-                    />
+    <label className="flex items-center gap-2 text-sm text-text-primary cursor-pointer">
+      <input
+                        type="checkbox"
+                        checked={maxEnabled}
+                        onChange={e => setMaxEnabled(e.target.checked)}
+                      />
+      Limiter le nombre de téléchargements
+    </label>
   )
 }
 

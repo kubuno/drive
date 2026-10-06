@@ -1,0 +1,85 @@
+<!-- DriveImageSource — converted from DriveImageSource.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<Stack x:Props="ImageSourceProps" Class="h-full">
+  <Stack Direction="LeftToRight" Gap="4" CrossAlign="Center" Class="shrink-0 border-b border-border">
+    <Repeater ItemKey="key" ItemsSource="{Binding rows_scopes}">
+      <!-- TODO(views-migrate): <button> with a computed style -->
+      <ReactHost Component="{Binding Part1}" Props="{Binding part1_props}"/>
+    </Repeater>
+    <Panel Class="flex-1"/>
+    <!-- TODO(views-migrate): <button> with a computed style -->
+    <ReactHost Component="{Binding Part2}" Props="{Binding part2_props}"/>
+    <!-- TODO(views-migrate): <button> with a computed style -->
+    <ReactHost Component="{Binding Part3}" Props="{Binding part2_props}"/>
+  </Stack>
+  <Stack Direction="LeftToRight"
+         Gap="2"
+         CrossAlign="Center"
+         ForeColor="TextSecondary"
+         Visible="{Binding show_browsing_crumbs}"
+         Class="shrink-0 text-sm">
+    <Repeater ItemKey="key" ItemsSource="{Binding rows_crumbs}">
+      <Panel HtmlTag="Span" Class="flex items-center gap-0.5">
+        <Icon Name="ChevronRight" Size="14" Visible="{Binding show_i}" Class="text-text-tertiary"/>
+        <Panel AccessibleRole="PushButton"
+               AutoSize="true"
+               Class="px-1 rounded hover:bg-surface-2 truncate max-w-[10rem]"
+               OnClick="panel_click">
+          <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="{Binding c.name}"/>
+        </Panel>
+      </Panel>
+    </Repeater>
+  </Stack>
+  <Panel Class="flex-1 min-h-0 overflow-y-auto">
+    <Stack Direction="LeftToRight" CrossAlign="Center" ForeColor="TextTertiary" Visible="{Binding loading}" Class="text-sm py-6">
+      <Icon Name="Loader2" Size="16" Class="animate-spin"/>
+      <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text=" Chargement…"/>
+    </Stack>
+    <Label Text="Aucune image ici." Overflow="Wrap" ForeColor="TextTertiary" Visible="{Binding show_loading_folders_files}" Class="py-6"/>
+    <Label Text="Dossiers" Role="Meta" Overflow="Wrap" ForeColor="TextTertiary" Visible="{Binding show_folders}" Class="mb-2"/>
+    <Panel Visible="{Binding show_folders}" Class="{Binding div_class}">
+      <Repeater ItemKey="key" ItemsSource="{Binding rows_folders}">
+        <Panel AccessibleRole="PushButton"
+               AutoSize="true"
+               Class="flex items-center gap-2 px-3 h-11 rounded-lg bg-surface-1 hover:bg-surface-2 text-left transition-colors"
+               OnDoubleClick="panel_double_click"
+               OnClick="panel_click2">
+          <Icon Name="Folder" Size="16" Class="shrink-0 text-text-secondary"/>
+          <Label HtmlTag="Span" Text="{Binding f.name}" ForeColor="TextPrimary"/>
+        </Panel>
+      </Repeater>
+    </Panel>
+    <Label Text="Images" Role="Meta" Overflow="Wrap" ForeColor="TextTertiary" Visible="{Binding visible}" Class="mb-2"/>
+    <Panel Visible="{Binding visible2}" Class="grid grid-cols-4 gap-2 content-start">
+      <Repeater ItemKey="key" ItemsSource="{Binding rows_files}">
+        <Panel AccessibleRole="PushButton"
+               AutoSize="true"
+               BackColor="Surface2"
+               ToolTip="{Binding f.name}"
+               Class="rounded-lg overflow-hidden hover:opacity-80 transition-opacity"
+               OnClick="panel_click3">
+          <!-- TODO(views-migrate): <SignedImg> is no .kbview element (a local or dynamic component) -->
+          <ReactHost Component="{Binding SignedImg}" Props="{Binding signed_img_props}" Visible="{Binding f.has_thumbnail}"/>
+          <Panel HtmlTag="Span"
+                 ForeColor="TextTertiary"
+                 Visible="{Binding show_not_f_has_thumbnail}"
+                 Class="flex items-center justify-center w-full aspect-square">
+            <Icon Name="Image" Size="22"/>
+          </Panel>
+        </Panel>
+      </Repeater>
+    </Panel>
+    <Panel Visible="{Binding visible3}" Class="space-y-1">
+      <Repeater ItemKey="key" ItemsSource="{Binding rows_files2}">
+        <Panel AccessibleRole="PushButton"
+               AutoSize="true"
+               Class="w-full flex items-center gap-3 px-3 h-11 rounded-lg hover:bg-surface-2 text-left transition-colors"
+               OnClick="panel_click4">
+          <!-- TODO(views-migrate): <SignedImg> is no .kbview element (a local or dynamic component) -->
+          <ReactHost Component="{Binding SignedImg2}" Props="{Binding signed_img_props}" Visible="{Binding f.has_thumbnail}"/>
+          <Icon Name="Image" Size="16" Visible="{Binding show_not_f_has_thumbnail}" Class="shrink-0 text-text-tertiary"/>
+          <Label HtmlTag="Span" Text="{Binding f.name}" ForeColor="TextPrimary"/>
+        </Panel>
+      </Repeater>
+    </Panel>
+  </Panel>
+</Stack>

@@ -4,10 +4,10 @@ import { Star, Trash2, RotateCcw, MoreVertical } from 'lucide-react'
 import { filesApi, formatSize, getFileIcon, type FileItem } from '@kubuno/drive'
 import { useImageCacheStore, useSignedUrl, usePendingKind, pendingBoxClass, pendingBoxStyle } from '@kubuno/sdk'
 import { openable, useLongPress } from '../openable'
-import { TagDots } from '../TagUI'
 import type { FileVersionStats } from '../fileVersions'
 import LockBadge from './LockBadge'
 import VersionBadge from './VersionBadge'
+import TagDots from '../TagDots'
 
 // ── FileRow (list view) ───────────────────────────────────────────────────────
 

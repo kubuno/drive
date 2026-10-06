@@ -1,0 +1,44 @@
+<!-- Files3DViewer — converted from Files3DViewer.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<Stack x:Props="Files3DViewerProps" Gap="0" Class="fixed inset-0 z-50 bg-[#1a1a2e]">
+  <Stack Direction="LeftToRight" Gap="12" CrossAlign="Center" Class="px-4 py-3 bg-black/60 border-b border-white/10">
+    <Icon Name="Box" Size="15" Class="text-white/50 flex-shrink-0"/>
+    <Label HtmlTag="Span" Text="{Binding props.file.name}" FontWeight="Medium" Class="text-white flex-1"/>
+    <Label HtmlTag="Span" Text="{Binding ext}" Overflow="Wrap" Class="text-[11px] text-white/40 bg-white/10 px-2 py-0.5 rounded font-mono"/>
+    <Stack Direction="LeftToRight" Gap="4" CrossAlign="Center" Class="ml-2">
+      <Panel AccessibleRole="PushButton" AutoSize="true" Class="{Binding button_class}" OnClick="panel_click">
+        <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="Auto-rotation"/>
+      </Panel>
+      <!-- TODO(views-migrate): <a download>: attribute(s) without a .kbview property -->
+      <ReactHost Component="{Binding Part1}" Props="{Binding part1_props}"/>
+      <Panel AccessibleRole="PushButton"
+             AutoSize="true"
+             ToolTip="{Res viewer.close_esc, Source=drive}"
+             Class="p-2 rounded text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+             OnClick="panel_click2">
+        <Icon Name="X" Size="15"/>
+      </Panel>
+    </Stack>
+  </Stack>
+  <Panel Class="flex-1 relative overflow-hidden">
+    <Stack Gap="12" CrossAlign="Center" Justify="Center" Visible="{Binding loading}" Class="absolute inset-0 text-white/60">
+      <Icon Name="Loader2" Size="28" Class="animate-spin"/>
+      <Label HtmlTag="Span" Text="Chargement du modèle…" Overflow="Wrap"/>
+    </Stack>
+    <Stack Gap="12" CrossAlign="Center" Justify="Center" Visible="{Binding show_error_model_error}" Class="absolute inset-0">
+      <Icon Name="AlertTriangle" Size="28" Class="text-danger"/>
+      <Label HtmlTag="Span" Text="{Binding span_text}" Overflow="Wrap" Class="text-white/70"/>
+    </Stack>
+    <Stack CrossAlign="Center" Justify="Center" Visible="{Binding show_format_data_model_error}" Class="absolute inset-0 text-white/50">
+      <Icon Name="Box" Size="40"/>
+      <Label Text="{Binding p_text}" Overflow="Wrap"/>
+    </Stack>
+    <!-- TODO(views-migrate): <Canvas> is no .kbview element (@react-three/fiber#Canvas) -->
+    <ReactHost Component="{Binding Part2}" Props="{Binding part2_props}" Visible="{Binding show_data_format_model_error}"/>
+    <Label HtmlTag="Div"
+           Text="Clic gauche : rotation · Molette : zoom · Clic droit : déplacement"
+           Role="Meta"
+           Overflow="Wrap"
+           Visible="{Binding show_data_format_model_error}"
+           Class="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/30 pointer-events-none select-none whitespace-nowrap"/>
+  </Panel>
+</Stack>

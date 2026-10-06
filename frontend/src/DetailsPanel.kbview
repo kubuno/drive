@@ -30,7 +30,7 @@
       </Panel>
       <Stack Direction="LeftToRight" CrossAlign="Center">
         <Label HtmlTag="Span" Text="Étiquettes" Overflow="Wrap" ForeColor="TextTertiary"/>
-        <!-- TODO(views-migrate): <TagDots> is no .kbview element (./TagUI#TagDots) -->
+        <!-- TODO(views-migrate): <TagDots> is no .kbview element (./TagDots#default) -->
         <ReactHost Component="{Binding TagDots}" Props="{Binding tag_dots_props}"/>
         <Panel AccessibleRole="PushButton"
                AutoSize="true"

@@ -1,0 +1,135 @@
+<!-- ImageEditDialog — converted from ImageEditDialog.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<Stack x:Props="Props" Direction="LeftToRight" Gap="0" CrossAlign="Center" Justify="Center" Class="fixed inset-0 z-[60]">
+  <Panel Class="absolute inset-0 bg-black/40" OnClick="panel_click"/>
+  <Panel Class="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 p-6 max-h-[90vh] overflow-visible">
+    <Stack Direction="LeftToRight" Gap="16" CrossAlign="Start" Justify="SpaceBetween">
+      <Stack Direction="LeftToRight" Gap="12" CrossAlign="Center">
+        <Stack Direction="LeftToRight"
+               Gap="0"
+               CrossAlign="Center"
+               Justify="Center"
+               ForeColor="Primary"
+               Class="h-10 w-10 rounded-lg bg-primary/10">
+          <Icon Name="Image"/>
+        </Stack>
+        <Panel>
+          <Label HtmlTag="H2" Text="Modifier l'image" FontWeight="SemiBold" Overflow="Wrap" ForeColor="TextPrimary" Class="text-lg"/>
+          <Label Text="{Binding props.file.name}" ForeColor="TextTertiary" Class="max-w-[20rem]"/>
+        </Panel>
+      </Stack>
+      <Panel AccessibleRole="PushButton"
+             AutoSize="true"
+             ToolTip="Fermer"
+             Class="rounded-lg p-2 text-text-tertiary transition-colors hover:bg-surface-2 hover:text-text-secondary"
+             OnClick="panel_click2">
+        <Icon Name="X" Size="18"/>
+      </Panel>
+    </Stack>
+    <Stack Direction="LeftToRight"
+           Gap="0"
+           CrossAlign="Center"
+           Justify="Center"
+           BackColor="Surface1"
+           Class="mt-4 rounded-lg border border-border p-3">
+      <!-- TODO(views-migrate): <img> has no .kbview element yet -->
+      <ReactHost Component="{Binding Part1}" Props="{Binding part1_props}" Visible="{Binding show_preview}"/>
+      <Label HtmlTag="Div"
+             Text="Chargement de l'aperçu…"
+             Overflow="Wrap"
+             ForeColor="TextTertiary"
+             Visible="{Binding show_not_preview}"
+             Class="flex h-72 w-full items-center justify-center"/>
+    </Stack>
+    <Panel Visible="{Binding show_panel}" Class="fixed inset-0 z-10" OnClick="panel_click3"/>
+    <Stack Direction="LeftToRight" Gap="6" CrossAlign="Center" Class="relative z-20 mt-4">
+      <!-- TODO(views-migrate): <ToolButton> is no .kbview element (a local or dynamic component) -->
+      <ReactHost Component="{Binding Part2}" Props="{Binding part2_props}"/>
+      <!-- TODO(views-migrate): <ToolButton> is no .kbview element (a local or dynamic component) -->
+      <ReactHost Component="{Binding Part3}" Props="{Binding part3_props}"/>
+      <!-- TODO(views-migrate): <ToolButton> is no .kbview element (a local or dynamic component) -->
+      <ReactHost Component="{Binding Part4}" Props="{Binding part4_props}"/>
+      <!-- TODO(views-migrate): <ToolButton> is no .kbview element (a local or dynamic component) -->
+      <ReactHost Component="{Binding Part5}" Props="{Binding part5_props}"/>
+      <!-- TODO(views-migrate): <ToolButton> is no .kbview element (a local or dynamic component) -->
+      <ReactHost Component="{Binding Part6}" Props="{Binding part6_props}"/>
+      <Panel Class="mx-1 h-6 w-px bg-border"/>
+      <Panel Class="relative">
+        <!-- TODO(views-migrate): <ToolButton> is no .kbview element (a local or dynamic component) -->
+        <ReactHost Component="{Binding Part7}" Props="{Binding part7_props}"/>
+        <Panel Visible="{Binding show_panel_resize}" Class="{Binding panelCls}">
+          <Panel HtmlTag="Label" ForeColor="TextSecondary" Class="flex items-center gap-2 text-sm font-medium">
+            <!-- TODO(views-migrate): <input> has no .kbview element yet -->
+            <ReactHost Component="{Binding Part8}" Props="{Binding part8_props}"/>
+            <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="Redimensionner"/>
+          </Panel>
+          <Stack Direction="LeftToRight" Gap="12" CrossAlign="End" Class="mt-3">
+            <!-- TODO(views-migrate): <NumField> is no .kbview element (a local or dynamic component) -->
+            <ReactHost Component="{Binding NumField}" Props="{Binding num_field_props}"/>
+            <!-- TODO(views-migrate): <NumField> is no .kbview element (a local or dynamic component) -->
+            <ReactHost Component="{Binding NumField}" Props="{Binding num_field_props2}"/>
+          </Stack>
+          <Panel HtmlTag="Label" ForeColor="TextSecondary" Class="mt-3 flex items-center gap-2 text-sm">
+            <!-- TODO(views-migrate): <input> has no .kbview element yet -->
+            <ReactHost Component="{Binding Part9}" Props="{Binding part9_props}"/>
+            <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="Conserver les proportions"/>
+          </Panel>
+        </Panel>
+      </Panel>
+      <Panel Class="relative">
+        <!-- TODO(views-migrate): <ToolButton> is no .kbview element (a local or dynamic component) -->
+        <ReactHost Component="{Binding Part10}" Props="{Binding part10_props}"/>
+        <Panel Visible="{Binding show_panel_crop}" Class="{Binding panelCls}">
+          <Panel HtmlTag="Label" ForeColor="TextSecondary" Class="flex items-center gap-2 text-sm font-medium">
+            <!-- TODO(views-migrate): <input> has no .kbview element yet -->
+            <ReactHost Component="{Binding Part11}" Props="{Binding part11_props}"/>
+            <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="Activer le recadrage"/>
+          </Panel>
+          <Panel Class="mt-3 grid grid-cols-2 gap-3">
+            <!-- TODO(views-migrate): <NumField> is no .kbview element (a local or dynamic component) -->
+            <ReactHost Component="{Binding NumField2}" Props="{Binding num_field_props3}"/>
+            <!-- TODO(views-migrate): <NumField> is no .kbview element (a local or dynamic component) -->
+            <ReactHost Component="{Binding NumField2}" Props="{Binding num_field_props4}"/>
+            <!-- TODO(views-migrate): <NumField> is no .kbview element (a local or dynamic component) -->
+            <ReactHost Component="{Binding NumField2}" Props="{Binding num_field_props5}"/>
+            <!-- TODO(views-migrate): <NumField> is no .kbview element (a local or dynamic component) -->
+            <ReactHost Component="{Binding NumField2}" Props="{Binding num_field_props6}"/>
+          </Panel>
+        </Panel>
+      </Panel>
+      <Panel Class="mx-1 h-6 w-px bg-border"/>
+      <Panel Class="relative">
+        <!-- TODO(views-migrate): <ToolButton> is no .kbview element (a local or dynamic component) -->
+        <ReactHost Component="{Binding Part12}" Props="{Binding part12_props}"/>
+        <Panel Visible="{Binding show_panel_format}" Class="{Binding panelCls}">
+          <Label Text="Format de sortie" FontWeight="Medium" Overflow="Wrap" ForeColor="TextSecondary" Class="mb-2"/>
+          <!-- TODO(views-migrate): a list callback destructuring its item -->
+          <ReactHost Component="{Binding Part13}" Props="{Binding part13_props}"/>
+          <Panel Visible="{Binding showQuality}" Class="mt-3 border-t border-border pt-3">
+            <Stack Direction="LeftToRight" Gap="0" CrossAlign="Center" Justify="SpaceBetween" ForeColor="TextTertiary" Class="mb-1 text-xs">
+              <Label HtmlTag="Span" Text="Qualité" Overflow="Wrap" InheritFontSize="true"/>
+              <Label HtmlTag="Span" Text="{Binding quality}" Overflow="Wrap" ForeColor="TextSecondary" InheritFontSize="true"/>
+            </Stack>
+            <Slider Value="{Binding quality, Mode=TwoWay}" Minimum="1" Maximum="100" AccessibleName="Qualité" Class="w-full"/>
+          </Panel>
+        </Panel>
+      </Panel>
+      <Label HtmlTag="Span"
+             Text="{Binding span_text}"
+             Role="Meta"
+             Overflow="Wrap"
+             ForeColor="TextTertiary"
+             Visible="{Binding show_rotate}"
+             Class="ml-auto"/>
+    </Stack>
+    <Label Text="{Binding error}"
+           Overflow="Wrap"
+           ForeColor="Danger"
+           BackColor="Surface2"
+           Visible="{Binding show_error}"
+           Class="mt-4 rounded-lg px-3 py-2"/>
+    <Stack Direction="LeftToRight" Gap="12" Justify="End" Class="mt-5">
+      <Button Variant="Secondary" Enabled="{Binding enabled_unless_saving}" Text="Annuler" OnClick="button_click"/>
+      <Button Loading="{Binding saving}" Text="Appliquer" OnClick="button_click2"/>
+    </Stack>
+  </Panel>
+</Stack>

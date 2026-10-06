@@ -1,11 +1,13 @@
-// Shared breadcrumb for the file/folder selector dialogs (open / save / folder picker).
-// The first element is a *storage source* dropdown (My Drive + external mounts) so external
-// storages read as separate roots — not as folders living inside the local drive. The rest
-// mirrors the main Drive breadcrumb: `>` chevrons, clickable ancestors, a bold current crumb.
-import { ChevronDown, ChevronRight, HardDrive, Server } from 'lucide-react'
-import { MenuDropdown, useMenuDropdown, type MenuItem } from '@ui'
+/**
+ * Code-behind of `DialogBreadcrumb.kbview` (converted from `DialogBreadcrumb.tsx` by @kubuno/views-migrate).
+ */
+import { type MouseEventArgs } from '@kubuno/views'
+import { HardDrive, Server } from "lucide-react"
+import { useMenuDropdown, type MenuItem } from "@ui"
 
-/** A selectable storage: id=null means the local "My Drive", otherwise a remote mount id. */
+import { ViewBase } from './DialogBreadcrumb.kbview'
+import * as __parts from './DialogBreadcrumb.parts'
+
 export interface StorageOpt {
   id:      string | null
   name:    string
@@ -23,59 +25,110 @@ interface Props {
   onNavigatePath:  (idx: number) => void
 }
 
-export default function DialogBreadcrumb({
-  sources, currentSourceId, onSelectSource, pathCrumbs, onNavigatePath,
-}: Props) {
-  const menu    = useMenuDropdown()
-  const current = sources.find(s => s.id === currentSourceId) ?? sources[0]
-  const multi   = sources.length > 1
+export type { Props }
 
-  const items: MenuItem[] = sources.map(s => ({
+export class DialogBreadcrumb extends ViewBase {
+  menu!: DialogBreadcrumbStores['menu']
+
+  /** The screen's hooks that read nothing of the view (stores, translations…), as the TSX called them. React's rules apply: `use()` runs them on every render. */
+  useStores() {
+    const menu    = useMenuDropdown()
+    return { menu }
+  }
+
+  /** Runs the hooks and publishes what they give as fields (the bindings, the getters and the methods read them). */
+  use(): void {
+    const s = this.useStores()
+    this.publish({ menu: s.menu })
+  }
+
+  get current(): StorageOpt {
+    return this.memo('current', [this.props], () => {
+      const currentSourceId = this.props.currentSourceId
+      return this.props.sources.find(s => s.id === currentSourceId) ?? this.props.sources[0]
+    })
+  }
+
+  get multi(): boolean {
+    return this.props.sources.length > 1
+  }
+
+  get items(): MenuItem[] {
+    return this.memo('items', [this.props], () => {
+      const currentSourceId = this.props.currentSourceId
+      return this.props.sources.map(s => ({
     type:    'action',
     label:   s.name,
     icon:    s.remote ? <Server size={14} /> : <HardDrive size={14} />,
     checked: s.id === currentSourceId,
-    onClick: () => onSelectSource(s.id),
+    onClick: () => this.props.onSelectSource(s.id),
   }))
+    })
+  }
 
-  return (
-    <nav className="flex items-center gap-0.5 flex-1 min-w-0 overflow-x-auto" aria-label="breadcrumb">
-      {/* Storage source selector */}
-      <button
-        onClick={multi ? menu.open : undefined}
-        disabled={!multi}
-        className={`flex items-center gap-1 text-sm font-medium text-text-primary rounded px-1.5 py-1 flex-shrink-0 ${
-          multi ? 'hover:bg-surface-2' : 'cursor-default'
-        }`}
-      >
-        {current?.remote
-          ? <Server size={13} className="flex-shrink-0 text-primary" />
-          : <HardDrive size={13} className="flex-shrink-0 text-text-secondary" />}
-        <span className="truncate max-w-[160px]">{current?.name}</span>
-        {multi && <ChevronDown size={13} className="flex-shrink-0 text-text-tertiary" />}
-      </button>
-      {menu.isOpen && menu.pos && (
-        <MenuDropdown items={items} pos={menu.pos} onClose={menu.close} minWidth={200} />
-      )}
+  get button_class() {
+    return `flex items-center gap-1 text-sm font-medium text-text-primary rounded px-1.5 py-1 flex-shrink-0 ${
+          this.multi ? 'hover:bg-surface-2' : 'cursor-default'
+        }`
+  }
 
-      {/* Path within the current storage */}
-      {pathCrumbs.map((c, idx) => {
-        const isLast = idx === pathCrumbs.length - 1
-        return (
-          <span key={idx} className="flex items-center gap-0.5 flex-shrink-0">
-            <ChevronRight size={16} className="text-text-tertiary flex-shrink-0" />
-            <button
-              onClick={() => onNavigatePath(idx)}
-              disabled={isLast}
-              className={`text-sm font-medium leading-tight rounded px-0.5 transition-colors ${
+  get enabled_unless_multi() {
+    return !(!this.multi)
+  }
+
+  get show_current_remote() {
+    return !!(this.current?.remote)
+  }
+
+  get show_not_current_remote() {
+    return !(this.current?.remote)
+  }
+
+  get span_text() {
+    return this.current?.name
+  }
+
+  get show_menu_is_open_menu() {
+    return this.memo('show_menu_is_open_menu', [this.menu], () => !!(this.menu.isOpen && this.menu.pos))
+  }
+
+  get part1_props() {
+    return this.memo('part1_props', [this.items, this.menu], () => {
+      if (!(this.menu.isOpen && this.menu.pos)) return undefined as never
+      return ({ items: this.items, menu_pos: this.menu?.pos, menu: this.menu })
+    })
+  }
+
+  /** A part of the screen still written in React (<ContextMenu> pos, onClose, minWidth: no .kbview property). */
+  get Part1() {
+    if (!(this.menu.isOpen && this.menu.pos)) return undefined as never
+    return __parts.Part1
+  }
+
+  /** The rows of the Repeater over `pathCrumbs`. */
+  get rows_path_crumbs() {
+    return this.memo('rows_path_crumbs', [this.props], () => this.props.pathCrumbs.map((c, idx) => {
+      const isLast = idx === this.props.pathCrumbs.length - 1
+      return { c, idx, isLast, button_class: `text-sm font-medium leading-tight rounded px-0.5 transition-colors ${
                 isLast ? 'text-text-primary cursor-default' : 'text-text-secondary hover:text-primary'
-              }`}
-            >
-              <span className="truncate max-w-[160px] inline-block align-bottom">{c.name}</span>
-            </button>
-          </span>
-        )
-      })}
-    </nav>
-  )
+              }`, enabled_unless_is_last: !(isLast), key: idx }
+    }))
+  }
+
+  panel_click(_sender: unknown, args: MouseEventArgs) {
+    return (this.multi ? this.menu.open : undefined)?.(args.native as never)
+  }
+
+  panel_click2(_sender: unknown, args: MouseEventArgs) {
+    const { idx } = args.row as RowOf_rows_path_crumbs
+    this.props.onNavigatePath(idx)
+  }
+
 }
+
+type RowOf_rows_path_crumbs = DialogBreadcrumb['rows_path_crumbs'][number]
+
+/** What `useStores()` gives (the types of the fields it fills). */
+export type DialogBreadcrumbStores = ReturnType<DialogBreadcrumb['useStores']>
+
+export default DialogBreadcrumb.component()

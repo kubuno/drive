@@ -1,20 +1,14 @@
-import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
-import { FolderOpen, ArrowLeft, ExternalLink, Check } from 'lucide-react'
-import { Toggle, Button, Radio, useSaveShortcut } from '@ui'
-import { useModulePrefs } from './userPrefs'
-import { useIsMobile } from './openable'
-import FilesWebDavSettings from './FilesWebDavSettings'
-
-// This page holds ONLY per-user preferences. Instance-wide (admin) settings —
-// the default storage quota among them — live in the core admin console, under
-// Storage and under Modules ▸ Drive, never in a user's own settings page.
-
-// ── Per-user preferences (backend, cross-device via core users.preferences) ─────
-
-// `type`, not `interface`: only a type alias gets the implicit index signature
-// that `useModulePrefs<T extends Record<string, unknown>>` requires.
+/**
+ * The parts of `DriveSettingsPage.kbview` still written in React (the codemod could not convert them; see the
+ * TODO comments in the view). Each is rendered by a `<ReactHost>` with the values it reads as props.
+ */
+import React, { useState } from "react"
+import { useTranslation } from "react-i18next"
+import { FolderOpen, ExternalLink, Check } from "lucide-react"
+import { Toggle, Button, Radio, useSaveShortcut } from "@ui"
+import { useModulePrefs } from "./userPrefs"
+import { useIsMobile } from "./openable"
+import FilesWebDavSettings from "./FilesWebDavSettings"
 type DrivePrefs = {
   view:          string   // 'grid' | 'list'
   density:       string   // 'compact' | 'normal' | 'comfortable'
@@ -27,8 +21,6 @@ const DEFAULT_PREFS: DrivePrefs = {
   view: 'grid', density: 'normal', sort: 'name',
   showHidden: false, confirmDelete: true,
 }
-
-// ── Mail-style layout helpers ───────────────────────────────────────────────────
 
 function SettingsRow({ label, description, children }: {
   label: string; description?: string; children: React.ReactNode
@@ -56,6 +48,7 @@ function SettingsRow({ label, description, children }: {
     </div>
   )
 }
+export { SettingsRow }
 
 function RadioGroup({ options, value, onChange }: {
   options: { value: string; label: string }[]; value: string; onChange: (v: string) => void
@@ -68,8 +61,7 @@ function RadioGroup({ options, value, onChange }: {
     </div>
   )
 }
-
-// ── Préférences tab (per-user) ──────────────────────────────────────────────────
+export { RadioGroup }
 
 function PreferencesTab() {
   const { t } = useTranslation('drive')
@@ -170,14 +162,14 @@ function PreferencesTab() {
     </div>
   )
 }
-
-// ── WebDAV tab (per-user, reuses the existing FilesWebDavSettings component) ─────
+export { PreferencesTab }
 
 function WebDavTab() {
   // FilesWebDavSettings ships its own card/header; render it directly. Its top
   // margin (`mt-8`) is harmless inside the tab content area.
   return <FilesWebDavSettings />
 }
+export { WebDavTab }
 
 function AboutTab() {
   const { t } = useTranslation('drive')
@@ -202,66 +194,4 @@ function AboutTab() {
     </div>
   )
 }
-
-// ── Main page (mail-style breadcrumb + tab bar) ─────────────────────────────────
-
-type Tab = 'preferences' | 'webdav' | 'about'
-
-export default function DriveSettingsPage() {
-  const { t } = useTranslation('drive')
-  const [tab, setTab] = useState<Tab>('preferences')
-  const isMobile = useIsMobile()
-
-  // Per-user only: nothing here is instance-wide, so no admin gating.
-  const visibleTabs: { id: Tab; label: string }[] = [
-    { id: 'preferences', label: t('drive_tab_preferences', { defaultValue: 'Préférences' }) },
-    { id: 'webdav',      label: t('drive_tab_webdav', { defaultValue: 'WebDAV' }) },
-    { id: 'about',       label: t('drive_tab_about', { defaultValue: 'À propos' }) },
-  ]
-
-  return (
-    <div className="flex flex-col h-full bg-white overflow-hidden">
-      {/* Breadcrumb header — a back row on mobile (the trail has nowhere to go). */}
-      {isMobile ? (
-        <div className="flex items-center gap-2 px-1 py-1 border-b border-[#e8eaed] flex-shrink-0" style={{ background: '#f8f9fa' }}>
-          <Link to="/drive" className="flex items-center gap-2 h-11 px-2 rounded-lg text-text-primary active:bg-surface-2 transition-colors">
-            <ArrowLeft size={20} className="shrink-0" />
-            <span className="text-lg font-medium">{t('drive_settings_title', { defaultValue: 'Réglages' })}</span>
-          </Link>
-        </div>
-      ) : (
-        <div className="flex items-center gap-2 px-6 py-2.5 border-b border-[#e8eaed] flex-shrink-0" style={{ background: '#f8f9fa' }}>
-          <Link to="/drive" className="flex items-center gap-1.5 text-sm text-[#1a73e8] hover:underline">
-            <ArrowLeft size={14} />
-            Drive
-          </Link>
-          <span className="text-text-tertiary text-sm">/</span>
-          <div className="flex items-center gap-1.5">
-            <FolderOpen size={15} className="text-text-secondary" />
-            <span className="text-sm text-text-primary">{t('drive_settings_title', { defaultValue: 'Réglages' })}</span>
-          </div>
-        </div>
-      )}
-
-      {/* Tab bar (Gmail-style) — taller targets and edge-to-edge scroll on touch. */}
-      <div className={`flex items-end border-b border-[#e8eaed] flex-shrink-0 overflow-x-auto ${isMobile ? 'px-1' : 'px-4'}`} style={{ background: '#fff' }}>
-        {visibleTabs.map(tb => (
-          <button key={tb.id} onClick={() => setTab(tb.id)}
-            className={`border-b-2 -mb-px transition-colors whitespace-nowrap ${isMobile ? 'px-4 h-12 text-[15px]' : 'px-4 py-3 text-sm'} ${
-              tab === tb.id ? 'border-[#1a73e8] text-[#1a73e8] font-medium' : 'border-transparent text-[#5f6368] hover:text-[#202124] hover:bg-[#f1f3f4]'}`}>
-            {tb.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto">
-        <div className={`max-w-3xl mx-auto ${isMobile ? 'px-4 py-4' : 'px-8 py-6'}`}>
-          {tab === 'preferences' && <PreferencesTab />}
-          {tab === 'webdav'  && <WebDavTab />}
-          {tab === 'about'   && <AboutTab />}
-        </div>
-      </div>
-    </div>
-  )
-}
+export { AboutTab }

@@ -17,7 +17,8 @@ import {
   type ExternalSource,
 } from './externalPreview'
 import { ExternalPreviewContext, type SaveToDriveState } from './previewActions'
-import { TagDialog, type TagDialogTarget } from './TagUI'
+import { type TagDialogTarget } from './TagUI'
+import TagDialog from './TagDialog'
 
 /**
  * `drive.openPreview` — the viewer other modules call (mail attachments, chat

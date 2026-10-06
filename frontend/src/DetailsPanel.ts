@@ -6,8 +6,8 @@ import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { api, useAuthStore } from "@kubuno/sdk"
 import { VersionHistoryModal, type FileItem } from "@kubuno/drive"
-import { TagDots } from "./TagUI"
 import { type FileVersionStats } from "./fileVersions"
+import TagDots from "./TagDots"
 
 import { ViewBase } from './DetailsPanel.kbview'
 import * as __parts from './DetailsPanel.parts'

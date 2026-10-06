@@ -1,0 +1,185 @@
+<!-- FilesStoragePage — converted from FilesStoragePage.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<Panel Class="h-full overflow-y-auto py-6 px-6">
+  <Stack Direction="LeftToRight" Gap="12" CrossAlign="Center" Class="mb-6">
+    <Panel AccessibleRole="PushButton"
+           AutoSize="true"
+           ForeColor="TextSecondary"
+           ToolTip="Retour"
+           Class="p-1.5 rounded-full hover:bg-surface-2 transition-colors"
+           OnClick="panel_click">
+      <Icon Name="ChevronLeft"/>
+    </Panel>
+    <Label HtmlTag="H1" Text="{Res storage.title, Source=drive}" FontWeight="Medium" Overflow="Wrap" ForeColor="TextPrimary" Class="text-xl"/>
+  </Stack>
+  <Panel Class="bg-white rounded-xl border border-border p-6 mb-6">
+    <Panel HtmlTag="P" ForeColor="TextPrimary" Class="text-3xl font-light mb-1">
+      <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="{Binding text}"/>
+      <Label HtmlTag="Span"
+             Text="{Res storage.used_suffix, Source=drive, Quota={Binding used_suffix_quota}}"
+             FontWeight="Regular"
+             Overflow="Wrap"
+             ForeColor="TextSecondary"
+             Class="text-base ml-2"/>
+    </Panel>
+    <!-- TODO(views-migrate): <StatsBar> is no .kbview element (a local or dynamic component) -->
+    <ReactHost Component="{Binding StatsBar}" Props="{Binding stats_bar_props}"/>
+    <Label Text="{Res storage.percent_used, Source=drive, Pct={Binding pct}}"
+           Role="Meta"
+           Overflow="Wrap"
+           ForeColor="TextTertiary"
+           Class="mt-2"/>
+    <Stack Direction="LeftToRight" Class="mt-5">
+      <Button Size="Sm" Variant="Secondary" IconSize="14" Icon="Trash2" Text="{Res storage.free_space, Source=drive}" OnClick="button_click"/>
+    </Stack>
+  </Panel>
+  <!-- TODO(views-migrate): <VersionsBanner> is no .kbview element (a local or dynamic component) -->
+  <ReactHost Component="{Binding VersionsBanner}"
+             Props="{Binding versions_banner_props}"
+             Visible="{Binding show_version_summary_version_summary_total}"/>
+  <!-- TODO(views-migrate): <Tabs> tabs: no .kbview property -->
+  <ReactHost Component="{Binding Part1}" Props="{Binding part1_props}"/>
+  <Panel Class="bg-white rounded-xl border border-border overflow-hidden">
+    <Stack Direction="LeftToRight" CrossAlign="Center" Justify="Center" ForeColor="TextSecondary" Visible="{Binding loading}" Class="py-12">
+      <Icon Name="Loader2" Size="18" Class="animate-spin"/>
+      <Label HtmlTag="Span" Text="Chargement…" Overflow="Wrap"/>
+    </Stack>
+    <!-- TODO(views-migrate): <SelectionBar> is no .kbview element (a local or dynamic component) -->
+    <ReactHost Component="{Binding SelectionBar}" Props="{Binding selection_bar_props}" Visible="{Binding visible12}"/>
+    <Label Text="{Res storage.no_files, Source=drive}"
+           TextAlign="TopCenter"
+           Overflow="Wrap"
+           ForeColor="TextTertiary"
+           Visible="{Binding visible13}"
+           Class="py-12"/>
+    <Stack Direction="LeftToRight" Gap="12" CrossAlign="Center" BackColor="Surface1" Visible="{Binding visible14}" Class="px-4 py-2">
+      <CheckBox Checked="{Binding allFilesOnPage}" OnCheckedChanged="toggleAllFiles"/>
+      <Label HtmlTag="Span"
+             Text="{Res storage.col_name, Source=drive}"
+             Role="Meta"
+             FontWeight="Medium"
+             Overflow="Wrap"
+             ForeColor="TextTertiary"
+             Class="flex-1 uppercase tracking-wide"/>
+      <Label HtmlTag="Span"
+             Text="{Res storage.col_size, Source=drive}"
+             Role="Meta"
+             FontWeight="Medium"
+             Overflow="Wrap"
+             ForeColor="TextTertiary"
+             Class="uppercase tracking-wide"/>
+    </Stack>
+    <Panel Visible="{Binding visible14}" Class="divide-y divide-border/50">
+      <Repeater ItemKey="key" ItemsSource="{Binding rows_page_files}">
+        <Panel Class="{Binding div_class}" OnClick="panel_click2">
+          <CheckBox Checked="{Binding checked}" OnCheckedChanged="check_box_checked_changed"/>
+          <!-- TODO(views-migrate): <span> with a computed style -->
+          <ReactHost Component="{Binding Part2}" Props="{Binding part2_props}"/>
+          <Label HtmlTag="Span" Text="{Binding file.name}" ForeColor="TextPrimary" Class="flex-1"/>
+          <Label HtmlTag="Span" Text="{Binding span_text}" Overflow="Wrap" ForeColor="TextSecondary" Class="tabular-nums shrink-0"/>
+        </Panel>
+      </Repeater>
+    </Panel>
+    <!-- TODO(views-migrate): <Pager> is no .kbview element (a local or dynamic component) -->
+    <ReactHost Component="{Binding Pager}" Props="{Binding pager_props}" Visible="{Binding visible14}"/>
+    <Label Text="{Res version.none, Source=drive}"
+           TextAlign="TopCenter"
+           Overflow="Wrap"
+           ForeColor="TextTertiary"
+           Visible="{Binding visible15}"
+           Class="py-12"/>
+    <Stack Direction="LeftToRight" Gap="12" CrossAlign="Center" BackColor="Surface1" Visible="{Binding visible16}" Class="px-4 py-2">
+      <Label HtmlTag="Span"
+             Text="{Res storage.col_name, Source=drive}"
+             Role="Meta"
+             FontWeight="Medium"
+             Overflow="Wrap"
+             ForeColor="TextTertiary"
+             Class="flex-1 uppercase tracking-wide"/>
+      <Label HtmlTag="Span"
+             Text="{Res version.col_history, Source=drive}"
+             Role="Meta"
+             FontWeight="Medium"
+             Overflow="Wrap"
+             ForeColor="TextTertiary"
+             Class="uppercase tracking-wide w-44 text-right"/>
+      <Panel HtmlTag="Span" Class="w-24"/>
+    </Stack>
+    <Panel Visible="{Binding visible16}" Class="divide-y divide-border">
+      <Repeater ItemKey="key" ItemsSource="{Binding rows_versioned_files}">
+        <Stack Direction="LeftToRight" Gap="12" CrossAlign="Center" Class="px-4 py-2.5 transition-colors hover:bg-surface-1">
+          <!-- TODO(views-migrate): <span> with a computed style -->
+          <ReactHost Component="{Binding Part3}" Props="{Binding part3_props}"/>
+          <Label HtmlTag="Span" Text="{Binding file.name}" ForeColor="TextPrimary" ToolTip="{Binding file.name}" Class="flex-1"/>
+          <Label HtmlTag="Span"
+                 Text="{Res version.stats, Source=drive, Count={Binding stats_count}, Size={Binding stats_size}}"
+                 Overflow="Wrap"
+                 ForeColor="TextSecondary"
+                 Class="tabular-nums shrink-0 w-44 text-right"/>
+          <Panel HtmlTag="Span" Class="w-24 flex justify-end shrink-0">
+            <Button Size="Sm"
+                    Variant="Danger"
+                    IconSize="14"
+                    Icon="Eraser"
+                    Text="{Res version.purge_confirm, Source=drive}"
+                    OnClick="button_click2"/>
+          </Panel>
+        </Stack>
+      </Repeater>
+    </Panel>
+    <!-- TODO(views-migrate): <SelectionBar> is no .kbview element (a local or dynamic component) -->
+    <ReactHost Component="{Binding SelectionBar2}" Props="{Binding selection_bar_props2}" Visible="{Binding visible17}"/>
+    <Label Text="{Res storage.no_folders, Source=drive}"
+           TextAlign="TopCenter"
+           Overflow="Wrap"
+           ForeColor="TextTertiary"
+           Visible="{Binding visible18}"
+           Class="py-12"/>
+    <Stack Direction="LeftToRight" Gap="12" CrossAlign="Center" BackColor="Surface1" Visible="{Binding visible19}" Class="px-4 py-2">
+      <CheckBox Checked="{Binding allFoldersOnPage}" OnCheckedChanged="toggleAllFolders"/>
+      <Label HtmlTag="Span"
+             Text="{Res storage.col_name, Source=drive}"
+             Role="Meta"
+             FontWeight="Medium"
+             Overflow="Wrap"
+             ForeColor="TextTertiary"
+             Class="flex-1 uppercase tracking-wide"/>
+      <Label HtmlTag="Span"
+             Text="{Res storage.col_files, Source=drive}"
+             Role="Meta"
+             FontWeight="Medium"
+             Overflow="Wrap"
+             ForeColor="TextTertiary"
+             Class="uppercase tracking-wide w-20 text-right"/>
+      <Label HtmlTag="Span"
+             Text="{Res storage.col_size, Source=drive}"
+             Role="Meta"
+             FontWeight="Medium"
+             Overflow="Wrap"
+             ForeColor="TextTertiary"
+             Class="uppercase tracking-wide w-24 text-right"/>
+    </Stack>
+    <Panel Visible="{Binding visible19}" Class="divide-y divide-border/50">
+      <Repeater ItemKey="key" ItemsSource="{Binding rows_page_folders}">
+        <Panel Class="{Binding div_class}" OnClick="panel_click3">
+          <CheckBox Checked="{Binding checked}" OnCheckedChanged="check_box_checked_changed2"/>
+          <Icon Name="Folder" Size="16" Class="shrink-0 text-text-secondary"/>
+          <Label HtmlTag="Span" Text="{Binding folder.name}" ForeColor="TextPrimary" ToolTip="{Binding folder.path}" Class="flex-1"/>
+          <Label HtmlTag="Span"
+                 Text="{Binding folder.file_count}"
+                 Overflow="Wrap"
+                 ForeColor="TextTertiary"
+                 Class="tabular-nums shrink-0 w-20 text-right"/>
+          <Label HtmlTag="Span"
+                 Text="{Binding span_text}"
+                 Overflow="Wrap"
+                 ForeColor="TextSecondary"
+                 Class="tabular-nums shrink-0 w-24 text-right"/>
+        </Panel>
+      </Repeater>
+    </Panel>
+    <!-- TODO(views-migrate): <Pager> is no .kbview element (a local or dynamic component) -->
+    <ReactHost Component="{Binding Pager2}" Props="{Binding pager_props2}" Visible="{Binding visible19}"/>
+  </Panel>
+  <!-- TODO(views-migrate): <ConfirmDialog {...spread}> (spread props) -->
+  <ReactHost Component="{Binding ConfirmDialog}" Props="{Binding confirm_dialog_props}" Visible="{Binding show_confirm_state}"/>
+</Panel>

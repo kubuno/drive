@@ -1,0 +1,73 @@
+<!-- ArchiveBrowser — converted from ArchiveBrowser.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<Stack x:Props="Props"
+       Direction="LeftToRight"
+       Gap="0"
+       CrossAlign="Center"
+       Justify="Center"
+       Class="fixed inset-0 z-50 bg-black/40 p-4"
+       OnClick="stack_click">
+  <Stack Gap="0" Class="bg-white rounded-xl shadow-2xl w-full max-w-3xl h-[80vh] overflow-hidden">
+    <Stack Direction="LeftToRight" Gap="12" CrossAlign="Start" Class="px-4 py-3 border-b border-border flex-shrink-0">
+      <Icon Name="Package" Class="text-text-secondary flex-shrink-0 mt-0.5"/>
+      <Panel Class="flex-1 min-w-0">
+        <Label Text="{Binding props.file.name}" FontWeight="Medium" ForeColor="TextPrimary"/>
+        <Panel HtmlTag="Nav" Class="flex items-center flex-wrap gap-0.5 mt-0.5">
+          <Panel AccessibleRole="PushButton"
+                 AutoSize="true"
+                 Class="text-xs text-text-secondary hover:text-primary transition-colors"
+                 OnClick="panel_click">
+            <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="Racine"/>
+          </Panel>
+          <Repeater ItemKey="key" ItemsSource="{Binding rows_parts}">
+            <Panel HtmlTag="Span" Class="flex items-center gap-0.5">
+              <Icon Name="ChevronRight" Size="12" Class="text-text-tertiary"/>
+              <Panel AccessibleRole="PushButton"
+                     AutoSize="true"
+                     Class="text-xs text-text-secondary hover:text-primary transition-colors"
+                     OnClick="panel_click2">
+                <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="{Binding part}"/>
+              </Panel>
+            </Panel>
+          </Repeater>
+        </Panel>
+      </Panel>
+      <Panel AccessibleRole="PushButton"
+             AutoSize="true"
+             ForeColor="TextSecondary"
+             Class="p-1 rounded hover:bg-surface-2 transition-colors flex-shrink-0"
+             OnClick="panel_click3">
+        <Icon Name="X" Size="18"/>
+      </Panel>
+    </Stack>
+    <Stack Direction="LeftToRight"
+           CrossAlign="Center"
+           Visible="{Binding show_path}"
+           Class="px-3 py-1.5 border-b border-border flex-shrink-0">
+      <Panel AccessibleRole="PushButton"
+             AutoSize="true"
+             ForeColor="TextPrimary"
+             Class="flex items-center gap-1.5 text-xs hover:bg-surface-2 px-2 py-1 rounded transition-colors"
+             OnClick="goUp">
+        <Icon Name="ArrowLeft" Size="13"/>
+        <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="Niveau supérieur"/>
+      </Panel>
+    </Stack>
+    <Panel Class="flex-1 overflow-y-auto">
+      <Stack Direction="LeftToRight" Gap="0" CrossAlign="Center" Justify="Center" Visible="{Binding isLoading}" Class="h-32">
+        <Icon Name="Loader2" Size="22" Class="animate-spin text-primary"/>
+      </Stack>
+      <Stack CrossAlign="Center" Justify="Center" ForeColor="TextSecondary" Visible="{Binding visible}" Class="h-32">
+        <Icon Name="Folder" Size="32" Class="opacity-40"/>
+        <Label HtmlTag="Span" Text="{Res common.empty_folder, Source=drive}" Overflow="Wrap"/>
+      </Stack>
+      <!-- TODO(views-migrate): <table> has no .kbview element yet -->
+      <ReactHost Component="{Binding Part1}" Props="{Binding part1_props}" Visible="{Binding visible2}"/>
+    </Panel>
+    <Label HtmlTag="Div"
+           Text="{Binding div_text}"
+           Role="Meta"
+           Overflow="Wrap"
+           ForeColor="TextTertiary"
+           Class="px-4 py-2 border-t border-border flex-shrink-0"/>
+  </Stack>
+</Stack>

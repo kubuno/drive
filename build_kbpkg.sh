@@ -134,8 +134,20 @@ archive() {
   elif command -v 7z >/dev/null 2>&1; then
     ( cd "$root" && 7z a -tzip -mx=9 -bso0 -bsp0 "$out" . >/dev/null )
   elif command -v powershell.exe >/dev/null 2>&1; then
-    powershell.exe -NoProfile -NonInteractive -Command \
-      "Compress-Archive -Path '$root/*' -DestinationPath '$out' -CompressionLevel Optimal -Force"
+    # PowerShell needs Windows paths (Git Bash hands it /tmp/…, /e/…). Not Compress-Archive: it only writes a
+    # `.zip` and, in Windows PowerShell 5.1, stores `frontend\entry.js` with backslashes; the entries are written
+    # one by one with `/` separators instead.
+    local wroot="$root" wout="$out"
+    if command -v cygpath >/dev/null 2>&1; then wroot=$(cygpath -w "$root"); wout=$(cygpath -w "$out"); fi
+    powershell.exe -NoProfile -NonInteractive -Command "
+      \$ErrorActionPreference = 'Stop'
+      Add-Type -AssemblyName System.IO.Compression, System.IO.Compression.FileSystem
+      \$zip = [IO.Compression.ZipFile]::Open('$wout', 'Create')
+      try {
+        Get-ChildItem -LiteralPath '$wroot' -Recurse -File -Name | ForEach-Object {
+          [void][IO.Compression.ZipFileExtensions]::CreateEntryFromFile(\$zip, (Join-Path '$wroot' \$_), \$_.Replace('\\', '/'), 'Optimal')
+        }
+      } finally { \$zip.Dispose() }"
   else
     echo "Aucun outil d'archivage disponible (zip, 7z ou PowerShell)" >&2
     return 1

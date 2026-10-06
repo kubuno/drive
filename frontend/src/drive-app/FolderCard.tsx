@@ -3,7 +3,7 @@ import { Star, Trash2, MoreVertical } from 'lucide-react'
 import { FolderGlyph, type Folder } from '@kubuno/drive'
 import { usePendingKind, pendingBoxClass, pendingBoxStyle } from '@kubuno/sdk'
 import { openable, useLongPress } from '../openable'
-import { TagDots } from '../TagUI'
+import TagDots from '../TagDots'
 
 export default function FolderCard({
   folder, isDragTarget, selected, preSelected, focused, trashed, onSelect, onOpen, onContextMenu, onDragStart, onDragOver, onDragLeave, onDrop,

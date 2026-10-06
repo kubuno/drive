@@ -1,0 +1,41 @@
+<!-- DriveSettingsPage — converted from DriveSettingsPage.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<Stack Gap="0" Class="h-full bg-white overflow-hidden">
+  <Panel Visible="{Binding isMobile}" Class="flex items-center gap-2 px-1 py-1 border-b border-[#e8eaed] flex-shrink-0 [background:#f8f9fa]">
+    <Panel Href="/drive"
+           ForeColor="TextPrimary"
+           Class="flex items-center gap-2 h-11 px-2 rounded-lg active:bg-surface-2 transition-colors"
+           OnClick="panel_click">
+      <Icon Name="ArrowLeft" Class="shrink-0"/>
+      <Label HtmlTag="Span" Text="{Res drive_settings_title, Source=drive}" FontWeight="Medium" Overflow="Wrap" Class="text-lg"/>
+    </Panel>
+  </Panel>
+  <Panel Visible="{Binding show_not_is_mobile}"
+         Class="flex items-center gap-2 px-6 py-2.5 border-b border-[#e8eaed] flex-shrink-0 [background:#f8f9fa]">
+    <Panel Href="/drive" Class="flex items-center gap-1.5 text-sm text-[#1a73e8] hover:underline" OnClick="panel_click2">
+      <Icon Name="ArrowLeft" Size="14"/>
+      <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="Drive"/>
+    </Panel>
+    <Label HtmlTag="Span" Text="/" Overflow="Wrap" ForeColor="TextTertiary"/>
+    <Stack Direction="LeftToRight" Gap="6" CrossAlign="Center">
+      <Icon Name="FolderOpen" Size="15" Class="text-text-secondary"/>
+      <Label HtmlTag="Span" Text="{Res drive_settings_title, Source=drive}" Overflow="Wrap" ForeColor="TextPrimary"/>
+    </Stack>
+  </Panel>
+  <Panel Class="{Binding div_class}">
+    <Repeater ItemKey="key" ItemsSource="{Binding rows_visible_tabs}">
+      <Panel AccessibleRole="PushButton" AutoSize="true" Class="{Binding button_class}" OnClick="panel_click3">
+        <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="{Binding tb.label}"/>
+      </Panel>
+    </Repeater>
+  </Panel>
+  <Panel Class="flex-1 overflow-y-auto">
+    <Panel Class="{Binding div_class2}">
+      <!-- TODO(views-migrate): <PreferencesTab> is no .kbview element (a local or dynamic component) -->
+      <ReactHost Component="{Binding PreferencesTab}" Visible="{Binding show_tab_preferences}"/>
+      <!-- TODO(views-migrate): <WebDavTab> is no .kbview element (a local or dynamic component) -->
+      <ReactHost Component="{Binding WebDavTab}" Visible="{Binding show_tab_webdav}"/>
+      <!-- TODO(views-migrate): <AboutTab> is no .kbview element (a local or dynamic component) -->
+      <ReactHost Component="{Binding AboutTab}" Visible="{Binding show_tab_about}"/>
+    </Panel>
+  </Panel>
+</Stack>

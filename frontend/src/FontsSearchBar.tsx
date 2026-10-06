@@ -1,105 +1,113 @@
-import { cn } from '@ui'
-// Custom search bar for the Fonts view — registered into the core shell's search
-// slot (useSearchStore) so it fully replaces the generic search pill while the
-// Fonts view is mounted. Google-Fonts-like: a search field on the left and a
-// compact "Trier par" (sort-by) button docked on the right.
-import { useRef, useState } from 'react'
-import { Search, X, ChevronDown, ArrowUpDown, Check, ShoppingBag } from 'lucide-react'
-import { MenuDropdown, Tooltip, type MenuItem, type MenuDropdownPos } from '@ui'
-import { useFontsUiStore, FONT_SORT_LABELS, type FontSort } from './fontsUiStore'
+/**
+ * Code-behind of `FontsSearchBar.kbview` (converted from `FontsSearchBar.tsx` by @kubuno/views-migrate).
+ */
+import { bind } from '@kubuno/views'
+import { useRef } from "react"
+import { Check } from "lucide-react"
+import { type MenuItem, type MenuDropdownPos } from "@ui"
+import { useFontsUiStore, FONT_SORT_LABELS, type FontSort } from "./fontsUiStore"
 
-export default function FontsSearchBar() {
-  const query      = useFontsUiStore(s => s.query)
-  const setQuery   = useFontsUiStore(s => s.setQuery)
-  const sort       = useFontsUiStore(s => s.sort)
-  const setSort    = useFontsUiStore(s => s.setSort)
-  const cartCount  = useFontsUiStore(s => s.cart.length)
-  const cartOpen   = useFontsUiStore(s => s.cartOpen)
-  const toggleCart = useFontsUiStore(s => s.toggleCart)
+import { ViewBase } from './FontsSearchBar.kbview'
+import * as __parts from './FontsSearchBar.parts'
 
-  const [focused, setFocused] = useState(false)
-  const [menu, setMenu] = useState<MenuDropdownPos | null>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const isActive = focused || !!menu
+export class FontsSearchBar extends ViewBase {
+  @bind accessor focused = false
+  @bind accessor menu: MenuDropdownPos | null = null
+  query!: string
+  setQuery!: (q: string) => void
+  sort!: FontSort
+  setSort!: (s: FontSort) => void
+  cartCount!: number
+  cartOpen!: boolean
+  toggleCart!: () => void
+  inputRef!: FontsSearchBarStores['inputRef']
 
-  const openSortMenu = (e: React.MouseEvent) => {
-    const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
-    // Right-align the menu under the button (MenuDropdown has no align option).
-    setMenu({ top: r.bottom + 6, left: Math.max(8, r.right - 220), minWidth: 210 })
+  /** The screen's hooks that read nothing of the view (stores, translations…), as the TSX called them. React's rules apply: `use()` runs them on every render. */
+  useStores() {
+    const query      = useFontsUiStore(s => s.query)
+    const setQuery   = useFontsUiStore(s => s.setQuery)
+    const sort       = useFontsUiStore(s => s.sort)
+    const setSort    = useFontsUiStore(s => s.setSort)
+    const cartCount  = useFontsUiStore(s => s.cart.length)
+    const cartOpen   = useFontsUiStore(s => s.cartOpen)
+    const toggleCart = useFontsUiStore(s => s.toggleCart)
+    const inputRef = useRef<HTMLInputElement>(null)
+    return { query, setQuery, sort, setSort, cartCount, cartOpen, toggleCart, inputRef }
   }
-  const sortItems: MenuItem[] = (Object.keys(FONT_SORT_LABELS) as FontSort[]).map(k => ({
+
+  /** Runs the hooks and publishes what they give as fields (the bindings, the getters and the methods read them). */
+  use(): void {
+    const s = this.useStores()
+    this.publish({ query: s.query, setQuery: s.setQuery, sort: s.sort, setSort: s.setSort, cartCount: s.cartCount, cartOpen: s.cartOpen, toggleCart: s.toggleCart, inputRef: s.inputRef })
+  }
+
+  get isActive(): boolean {
+    return this.focused || !!this.menu
+  }
+
+  get sortItems(): MenuItem[] {
+    return this.memo('sortItems', [this.sort, this.setSort], () => (Object.keys(FONT_SORT_LABELS) as FontSort[]).map(k => ({
     type: 'action',
     label: FONT_SORT_LABELS[k],
-    icon: sort === k ? <Check size={15} /> : undefined,
-    onClick: () => setSort(k),
-  }))
+    icon: this.sort === k ? <Check size={15} /> : undefined,
+    onClick: () => this.setSort(k),
+  })))
+  }
 
-  return (
-    <div className="flex items-center gap-2 w-full">
-      <div
-        className="relative flex-1 min-w-0 transition-all"
-        style={{
-          background:   isActive ? '#ffffff' : 'var(--color-search-bg)',
-          boxShadow:    isActive ? '0 1px 3px rgba(0,0,0,0.2), 0 2px 6px rgba(0,0,0,0.1)' : 'none',
-          border:       `1px solid ${isActive ? '#e0e0e0' : 'transparent'}`,
-          borderRadius: '9999px',
-        }}
-      >
-        <div className="flex items-center h-12 flex-shrink-0">
-          <div className="pl-4 pr-2 flex-shrink-0">
-            <Search size={20} className="text-text-secondary" />
-          </div>
-          <input
-            ref={inputRef}
-            type="search"
-            value={query}
-            placeholder="Rechercher des polices…"
-            onChange={e => setQuery(e.target.value)}
-            onFocus={() => setFocused(true)}
-            onBlur={() => setFocused(false)}
-            className="flex-1 bg-transparent outline-none min-w-0 text-text-primary placeholder:text-text-tertiary"
-          />
-          {query && (
-            <button
-              onMouseDown={e => { e.preventDefault(); setQuery(''); inputRef.current?.focus() }}
-              className="flex-shrink-0 px-1 text-text-tertiary hover:text-text-primary"
-              aria-label="Effacer"
-            >
-              <X size={16} />
-            </button>
-          )}
-          <div className="w-px h-6 mx-1 flex-shrink-0 bg-border" />
-          {/* Sort-by button (Google-Fonts-style) */}
-          <button
-            onClick={openSortMenu}
-            aria-label="Trier par"
-            className="group flex items-center gap-1.5 h-9 pl-3 pr-2.5 mr-1.5 rounded-md text-text-secondary hover:bg-[#e8f0fe] transition-colors flex-shrink-0"
-          >
-            <ArrowUpDown size={16} className="hidden sm:block flex-shrink-0" />
-            <span className="hidden sm:block text-left leading-tight">
-              <span className="block text-[10px] text-text-tertiary">Trier par</span>
-              <span className="block text-xs font-medium text-text-primary whitespace-nowrap">{FONT_SORT_LABELS[sort]}</span>
-            </span>
-            <ChevronDown size={16} className="flex-shrink-0" />
-          </button>
-        </div>
-      </div>
-      {/* Selection "bag" (Google-Fonts-style) — opens the download page, badges
-          the number of selected families. */}
-      <Tooltip label="Polices sélectionnées">
-        <button
-          onClick={toggleCart}
-          aria-label="Polices sélectionnées"
-          className={cn('relative shrink-0 w-11 h-11 flex items-center justify-center rounded-full transition-colors',
-            cartOpen ? 'bg-primary-light text-primary' : 'text-text-secondary hover:bg-[#e8f0fe]')}
-        >
-          <ShoppingBag size={20} />
-          {cartCount > 0 && (
-            <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-white text-[11px] font-semibold flex items-center justify-center">{cartCount}</span>
-          )}
-        </button>
-      </Tooltip>
-      {menu && <MenuDropdown pos={menu} onClose={() => setMenu(null)} items={sortItems} />}
-    </div>
-  )
+  get part1_props() {
+    return this.memo('part1_props', [this.isActive, this.inputRef, this.query, this.setQuery, this.memo, this.focused, this.menu, this.sort], () => ({ isActive: this.isActive, inputRef: this.inputRef, query: this.query, setQuery: this.setQuery, setFocused: this.memo("setFocused:bound", [], () => this.setFocused.bind(this)), openSortMenu: this.memo("openSortMenu:bound", [], () => this.openSortMenu.bind(this)), sort: this.sort }))
+  }
+
+  /** A part of the screen still written in React (<div> with a computed style). */
+  get Part1() {
+    return __parts.Part1
+  }
+
+  get part2_props() {
+    return this.memo('part2_props', [this.toggleCart, this.cartOpen, this.cartCount], () => ({ toggleCart: this.toggleCart, cartOpen: this.cartOpen, cartCount: this.cartCount }))
+  }
+
+  /** A part of the screen still written in React (<ToolTip> label: no .kbview property). */
+  get Part2() {
+    return __parts.Part2
+  }
+
+  get show_menu() {
+    return this.memo('show_menu', [this.menu], () => !!(this.menu))
+  }
+
+  get part3_props() {
+    return this.memo('part3_props', [this.menu, this.memo, this.sortItems], () => {
+      if (!(this.menu)) return undefined as never
+      return ({ menu: this.menu, setMenu: this.memo("setMenu:bound", [], () => this.setMenu.bind(this)), sortItems: this.sortItems })
+    })
+  }
+
+  /** A part of the screen still written in React (<ContextMenu> pos, onClose: no .kbview property). */
+  get Part3() {
+    if (!(this.menu)) return undefined as never
+    return __parts.Part3
+  }
+
+  openSortMenu(e: React.MouseEvent) {
+    const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    // Right-align the menu under the button (MenuDropdown has no align option).
+    this.menu = { top: r.bottom + 6, left: Math.max(8, r.right - 220), minWidth: 210 }
+  }
+
+  /** `setFocused` of the TSX: a value, or an update of the previous one. */
+  setFocused(value: FontsSearchBar['focused'] | ((prev: FontsSearchBar['focused']) => FontsSearchBar['focused'])) {
+    this.focused = typeof value === 'function' ? (value as (prev: FontsSearchBar['focused']) => FontsSearchBar['focused'])(this.focused) : value
+  }
+
+  /** `setMenu` of the TSX: a value, or an update of the previous one. */
+  setMenu(value: MenuDropdownPos | null | ((prev: MenuDropdownPos | null) => MenuDropdownPos | null)) {
+    this.menu = typeof value === 'function' ? (value as (prev: MenuDropdownPos | null) => MenuDropdownPos | null)(this.menu) : value
+  }
+
 }
+
+/** What `useStores()` gives (the types of the fields it fills). */
+export type FontsSearchBarStores = ReturnType<FontsSearchBar['useStores']>
+
+export default FontsSearchBar.component()
