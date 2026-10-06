@@ -1,0 +1,9 @@
+<!-- DialogTree — converted from DialogTree.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<UserControl x:Props="Props">
+  <Panel BackColor="Surface1" Class="w-52 flex-shrink-0 border-r border-border overflow-y-auto p-2">
+    <!-- TODO(views-migrate): <LocalTree> is no .kbview element (a local or dynamic component) -->
+    <ReactHost Component="{Binding LocalTree}" Props="{Binding local_tree_props}" Visible="{Binding show_source_id}"/>
+    <!-- TODO(views-migrate): <RemoteTree> is no .kbview element (a local or dynamic component) -->
+    <ReactHost Component="{Binding RemoteTree}" Props="{Binding remote_tree_props}" Visible="{Binding show_not_source_id}"/>
+  </Panel>
+</UserControl>

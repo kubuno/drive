@@ -4,7 +4,7 @@
  */
 import { Download } from "lucide-react"
 import { downloadSignedUrl } from "@kubuno/sdk"
-import { fileSourceUrl } from "../externalPreview"
+import { fileSourceUrl } from "../services/externalPreview"
 import type { FilesVideoPlayer } from './FilesVideoPlayer'
 
 export function Part1({ file, t }: { file: NonNullable<FilesVideoPlayer['props']['file']>; t: NonNullable<FilesVideoPlayer['tr']> }) {

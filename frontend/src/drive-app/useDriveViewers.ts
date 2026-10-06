@@ -2,8 +2,8 @@ import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { filesApi, isTextFile, useFilesMediaPlayerStore, useFilesVideoPlayerStore, type FileItem } from '@kubuno/drive'
 import { api, downloadSignedUrl, FileTypeRegistry, ModuleServiceRegistry } from '@kubuno/sdk'
-import { is3dFile } from '../Files3DViewer'
-import { isFontFile } from '../FilesFontViewer'
+import { is3dFile } from '../views/Files3DViewer'
+import { isFontFile } from '../views/FilesFontViewer'
 import { isArchiveFile } from './fileKinds'
 
 /** Native viewers state plus the "open a file" strategies. */

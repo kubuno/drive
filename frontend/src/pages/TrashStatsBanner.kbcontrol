@@ -1,0 +1,16 @@
+<!-- TrashStatsBanner — converted from TrashStatsBanner.tsx by @kubuno/views-migrate. -->
+<UserControl>
+  <Stack Direction="LeftToRight"
+         Gap="12"
+         CrossAlign="Center"
+         BackColor="Surface1"
+         Visible="{Binding show_main}"
+         Class="px-4 py-2.5 rounded-lg border border-border text-sm">
+    <Icon Name="Trash2" Size="16" Class="text-text-tertiary shrink-0"/>
+    <Label HtmlTag="Span" Text="{Binding span_text}" Overflow="Wrap" ForeColor="TextSecondary" InheritFontSize="true"/>
+    <Panel HtmlTag="Span" ForeColor="TextTertiary" Class="ml-auto flex items-center gap-1.5 text-xs">
+      <Icon Name="Clock" Size="13"/>
+      <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="{Binding text}"/>
+    </Panel>
+  </Stack>
+</UserControl>

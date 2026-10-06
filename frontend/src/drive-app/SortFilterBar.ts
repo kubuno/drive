@@ -1,13 +1,13 @@
 /**
- * Code-behind of `SortFilterBar.kbview` (converted from `SortFilterBar.tsx` by @kubuno/views-migrate).
+ * Code-behind of `SortFilterBar.kbcontrol` (converted from `SortFilterBar.tsx` by @kubuno/views-migrate).
  */
 import { type ValueChangedEventArgs, type MouseEventArgs } from '@kubuno/views'
 import { useTranslation } from "react-i18next"
 import { ViewMenu, type ViewMode } from "@kubuno/drive"
-import { useDriveExtras } from "../driveExtras"
+import { useDriveExtras } from "../model/driveExtras"
 import type { SortDir, SortField } from "./types"
 
-import { ViewBase } from './SortFilterBar.kbview'
+import { ViewBase } from './SortFilterBar.kbcontrol'
 
 export type SortFilterBarProps = {
   sortField: SortField

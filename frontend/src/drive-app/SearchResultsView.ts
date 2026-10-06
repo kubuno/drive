@@ -1,5 +1,5 @@
 /**
- * Code-behind of `SearchResultsView.kbview` (converted from `SearchResultsView.tsx` by @kubuno/views-migrate).
+ * Code-behind of `SearchResultsView.kbcontrol` (converted from `SearchResultsView.tsx` by @kubuno/views-migrate).
  */
 import { bind, type MouseEventArgs } from '@kubuno/views'
 import { useEffect, useMemo, useState } from "react"
@@ -7,11 +7,11 @@ import { useTranslation } from "react-i18next"
 import { useQuery } from "@tanstack/react-query"
 import { filesApi, type FileItem, type FilesSearchFilters } from "@kubuno/drive"
 import { prompt } from "@kubuno/sdk"
-import { useDriveExtras } from "../driveExtras"
+import { useDriveExtras } from "../model/driveExtras"
 import { isPreviewable } from "./fileKinds"
 import SearchResultRow from "./SearchResultRow"
 
-import { ViewBase } from './SearchResultsView.kbview'
+import { ViewBase } from './SearchResultsView.kbcontrol'
 
 export type SearchResultsViewProps = {
   searchQuery: string

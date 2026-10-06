@@ -1,12 +1,12 @@
 /**
- * Code-behind of `ImageSearchResultsView.kbview` (converted from `ImageSearchResultsView.tsx` by @kubuno/views-migrate).
+ * Code-behind of `ImageSearchResultsView.kbcontrol` (converted from `ImageSearchResultsView.tsx` by @kubuno/views-migrate).
  */
 import { type MouseEventArgs } from '@kubuno/views'
 import { useTranslation } from "react-i18next"
 import type { FileItem, SearchHit } from "@kubuno/drive"
 import SearchResultRow from "./SearchResultRow"
 
-import { ViewBase } from './ImageSearchResultsView.kbview'
+import { ViewBase } from './ImageSearchResultsView.kbcontrol'
 
 export type ImageSearchResultsViewProps = {
   state: { name: string; loading: boolean; results: SearchHit[]; total: number }

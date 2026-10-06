@@ -6,7 +6,7 @@ import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { formatSize, type FileItem } from "@kubuno/drive"
 import { useSignedUrl } from "@kubuno/sdk"
-import { fileSourceUrl, isExternalFile } from "../externalPreview"
+import { fileSourceUrl, isExternalFile } from "../services/externalPreview"
 
 import { ViewBase } from './FilesVideoPlayer.kbview'
 import * as __parts from './FilesVideoPlayer.parts'

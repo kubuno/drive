@@ -1,7 +1,7 @@
 import type { FileItem } from '@kubuno/drive'
 import { isTextFile } from '@kubuno/drive'
-import { is3dFile } from '../Files3DViewer'
-import { isFontFile } from '../FilesFontViewer'
+import { is3dFile } from '../views/Files3DViewer'
+import { isFontFile } from '../views/FilesFontViewer'
 
 // File-kind predicates shared by the Drive views, the openers and the previewer.
 

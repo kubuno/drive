@@ -9,11 +9,11 @@ import {
 } from '@kubuno/drive'
 import { FileTypeRegistry, SlotRegistry, useConfirm, useModulesStore } from '@kubuno/sdk'
 import type { MenuItem } from '@ui'
-import { useDriveExtras } from '../driveExtras'
-import { useFilesContextMenuStore } from '../filesContextMenuStore'
+import { useDriveExtras } from '../model/driveExtras'
+import { useFilesContextMenuStore } from '../model/filesContextMenuStore'
 import {
   purgeFileVersions, versionBytes, versionCount, VERSIONS_SUMMARY_KEY, type FileVersionStats,
-} from '../fileVersions'
+} from '../model/fileVersions'
 import type { ItemMenuHandlers } from './itemMenu'
 import type { MenuTarget, MoveTarget } from './types'
 import type { DriveDialogs } from './useDriveDialogs'

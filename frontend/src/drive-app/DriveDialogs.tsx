@@ -5,15 +5,15 @@ import {
   UploadPanel, VersionHistoryModal, useBatchRenameStore, useFilesStore,
   type FileItem, type Folder,
 } from '@kubuno/drive'
-import AdvancedShareDialog from '../AdvancedShareDialog'
-import ArchiveBrowser from '../ArchiveBrowser'
-import DuplicatesDialog from '../DuplicatesDialog'
-import ImageEditDialog from '../ImageEditDialog'
-import ImportUrlModal from '../ImportUrlModal'
-import StorageInsightsDialog from '../StorageInsightsDialog'
-import { useDriveExtras } from '../driveExtras'
+import AdvancedShareDialog from '../dialogs/AdvancedShareDialog'
+import ArchiveBrowser from '../views/ArchiveBrowser'
+import DuplicatesDialog from '../dialogs/DuplicatesDialog'
+import ImageEditDialog from '../dialogs/ImageEditDialog'
+import ImportUrlModal from '../dialogs/ImportUrlModal'
+import StorageInsightsDialog from '../dialogs/StorageInsightsDialog'
+import { useDriveExtras } from '../model/driveExtras'
 import type { DriveDialogs as DriveDialogsState } from './useDriveDialogs'
-import TagDialog from '../TagDialog'
+import TagDialog from '../dialogs/TagDialog'
 
 interface Props {
   dialogs:  DriveDialogsState

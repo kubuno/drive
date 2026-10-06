@@ -1,0 +1,75 @@
+<!-- FontDownloadPage — converted from FontDownloadPage.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<UserControl x:Props="FontDownloadPageProps">
+  <Panel Class="contents">
+    <Stack Gap="12" CrossAlign="Center" Justify="Center" Visible="{Binding show_case_1}" Class="max-w-6xl mx-auto py-24 text-center">
+      <Icon Name="Download" Size="40" Class="text-text-tertiary opacity-30"/>
+      <Label Text="Aucune police sélectionnée." Overflow="Wrap" ForeColor="TextSecondary" InheritFontSize="true"/>
+      <Label Text="Sélectionnez des polices (clic sur les cartes) pour les télécharger ou les intégrer d’un coup."
+             Role="Meta"
+             Overflow="Wrap"
+             ForeColor="TextTertiary"/>
+    </Stack>
+    <Panel Visible="{Binding show_case_2}" Class="max-w-6xl mx-auto pb-16">
+      <!-- TODO(views-migrate): <EmbedView> is no .kbview element (a local or dynamic component) -->
+      <ReactHost Component="{Binding EmbedView}" Props="{Binding embed_view_props}"/>
+    </Panel>
+    <Panel Visible="{Binding show_main}" Class="max-w-6xl mx-auto pb-16">
+      <Label HtmlTag="H1" Text="{Binding h1_text}" FontWeight="SemiBold" Overflow="Wrap" ForeColor="TextPrimary" Class="text-4xl mb-8"/>
+      <Panel Class="grid lg:grid-cols-[1fr_320px] gap-10 items-start">
+        <Panel Class="min-w-0">
+          <Stack Direction="LeftToRight" Gap="0" Justify="End" Class="mb-2">
+            <Panel AccessibleRole="PushButton"
+                   AutoSize="true"
+                   Class="flex items-center gap-1.5 text-xs text-text-secondary hover:text-danger px-2 py-1"
+                   OnClick="panel_click">
+              <Icon Name="Trash2" Size="15"/>
+              <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="Tout retirer"/>
+            </Panel>
+          </Stack>
+          <Panel Class="divide-y divide-border">
+            <Repeater ItemKey="key" ItemsSource="{Binding rows_families}">
+              <Panel Class="py-5">
+                <Stack Direction="LeftToRight" Gap="12" CrossAlign="Center" Justify="SpaceBetween" Class="mb-3">
+                  <Panel AccessibleRole="PushButton"
+                         AutoSize="true"
+                         Class="flex items-baseline gap-2 min-w-0 text-left group"
+                         OnClick="panel_click2">
+                    <Label HtmlTag="Span"
+                           Text="{Binding f.name}"
+                           FontWeight="Medium"
+                           ForeColor="TextPrimary"
+                           Class="text-[15px] group-hover:underline"/>
+                    <Label HtmlTag="Span"
+                           Text="{Binding span_text}"
+                           Role="Meta"
+                           Overflow="Wrap"
+                           ForeColor="TextTertiary"
+                           Class="whitespace-nowrap"/>
+                  </Panel>
+                  <Stack Direction="LeftToRight" Gap="4" CrossAlign="Center" Class="shrink-0">
+                    <!-- TODO(views-migrate): <ToolTip> label: no .kbview property -->
+                    <ReactHost Component="{Binding Part1}" Props="{Binding part1_props}"/>
+                    <!-- TODO(views-migrate): <ToolTip> label: no .kbview property -->
+                    <ReactHost Component="{Binding Part2}" Props="{Binding part2_props}"/>
+                  </Stack>
+                </Stack>
+                <!-- TODO(views-migrate): <p> with a computed style -->
+                <ReactHost Component="{Binding Part3}" Props="{Binding part3_props}"/>
+              </Panel>
+            </Repeater>
+          </Panel>
+        </Panel>
+        <Panel Class="lg:sticky lg:top-4 rounded-2xl bg-primary-light/60 p-5 space-y-3">
+          <Button IconSize="16" Icon="Code2" Text="Code d’intégration" Class="w-full justify-center" OnClick="button_click"/>
+          <Button IconSize="16" Icon="Download" Text="{Binding button_text}" Class="w-full justify-center" OnClick="button_click2"/>
+          <Label Text="Auto-hébergé sur votre instance Kubuno."
+                 Role="Meta"
+                 TextAlign="TopCenter"
+                 Overflow="Wrap"
+                 ForeColor="TextTertiary"
+                 Class="pt-1"/>
+        </Panel>
+      </Panel>
+    </Panel>
+  </Panel>
+</UserControl>

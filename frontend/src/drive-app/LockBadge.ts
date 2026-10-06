@@ -1,9 +1,9 @@
 /**
- * Code-behind of `LockBadge.kbview` (converted from `LockBadge.tsx` by @kubuno/views-migrate).
+ * Code-behind of `LockBadge.kbcontrol` (converted from `LockBadge.tsx` by @kubuno/views-migrate).
  */
-import { useDriveExtras } from "../driveExtras"
+import { useDriveExtras } from "../model/driveExtras"
 
-import { ViewBase } from './LockBadge.kbview'
+import { ViewBase } from './LockBadge.kbcontrol'
 
 export type LockBadgeProps = { fileId: string }
 

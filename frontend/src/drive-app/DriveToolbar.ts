@@ -1,13 +1,13 @@
 /**
- * Code-behind of `DriveToolbar.kbview` (converted from `DriveToolbar.tsx` by @kubuno/views-migrate).
+ * Code-behind of `DriveToolbar.kbcontrol` (converted from `DriveToolbar.tsx` by @kubuno/views-migrate).
  */
 import { type MouseEventArgs } from '@kubuno/views'
 import { useTranslation } from "react-i18next"
 import type { Folder, FolderAncestor } from "@kubuno/drive"
-import Breadcrumb from "./Breadcrumb"
+import Breadcrumb from "./DriveBreadcrumb"
 import type { DriveBulkActions } from "./useDriveBulkActions"
 
-import { ViewBase } from './DriveToolbar.kbview'
+import { ViewBase } from './DriveToolbar.kbcontrol'
 import * as __parts from './DriveToolbar.parts'
 
 interface Props {

@@ -1,12 +1,12 @@
 /**
- * Code-behind of `SearchResultRow.kbview` (converted from `SearchResultRow.tsx` by @kubuno/views-migrate).
+ * Code-behind of `SearchResultRow.kbcontrol` (converted from `SearchResultRow.tsx` by @kubuno/views-migrate).
  */
 import { type MouseEventArgs } from '@kubuno/views'
 import { useTranslation } from "react-i18next"
 import { filesApi, formatSize, type FileItem, type SearchHit } from "@kubuno/drive"
 import { useImageCacheStore, useSignedUrl } from "@kubuno/sdk"
 
-import { ViewBase } from './SearchResultRow.kbview'
+import { ViewBase } from './SearchResultRow.kbcontrol'
 import * as __parts from './SearchResultRow.parts'
 
 export function sanitizeSnippet(raw: string): string {

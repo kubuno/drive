@@ -1,0 +1,69 @@
+<!-- FilesFilterPanel — converted from FilesFilterPanel.tsx by @kubuno/views-migrate. -->
+<UserControl x:Props="FilesFilterPanelProps">
+  <Panel Class="py-5 px-6 space-y-4 [min-width:580px]">
+    <Panel Class="{Binding div_class}">
+      <Label HtmlTag="Span" Text="{Res filter.type, Source=drive}" Overflow="Wrap" InheritFontSize="true" Class="{Binding span_class}"/>
+      <Dropdown SelectedValue="{Binding searchFilters.type}"
+                ItemsSource="{Binding items_source}"
+                Class="flex-1"
+                OnSelectedValueChanged="dropdown_selected_value_changed"/>
+    </Panel>
+    <Panel Class="{Binding div_class}">
+      <Label HtmlTag="Span" Text="{Res filter.owner, Source=drive}" Overflow="Wrap" InheritFontSize="true" Class="{Binding span_class}"/>
+      <Dropdown SelectedValue="{Binding searchFilters.owner}"
+                ItemsSource="{Binding items_source2}"
+                Class="flex-1"
+                OnSelectedValueChanged="dropdown_selected_value_changed2"/>
+    </Panel>
+    <Panel Class="{Binding div_class}">
+      <Label HtmlTag="Label" Text="{Res filter.contains, Source=drive}" Overflow="Wrap" InheritFontSize="true" Class="{Binding span_class}"/>
+      <Panel Class="flex-1">
+        <TextField Placeholder="{Res filter.contains_ph, Source=drive}" Text="{Binding words}" OnTextChanged="text_field_text_changed"/>
+      </Panel>
+    </Panel>
+    <Panel Class="{Binding div_class}">
+      <Label HtmlTag="Label" Text="{Res filter.item_name, Source=drive}" Overflow="Wrap" InheritFontSize="true" Class="{Binding span_class}"/>
+      <Panel Class="flex-1">
+        <TextField Placeholder="{Res filter.name_ph, Source=drive}"
+                   Text="{Binding searchFilters.itemName}"
+                   OnTextChanged="text_field_text_changed2"/>
+      </Panel>
+    </Panel>
+    <Panel Class="{Binding div_class}">
+      <Label HtmlTag="Span" Text="{Res filter.location, Source=drive}" Overflow="Wrap" InheritFontSize="true" Class="{Binding span_class}"/>
+      <Stack>
+        <Dropdown SelectedValue="{Binding searchFilters.location}"
+                  ItemsSource="{Binding items_source3}"
+                  Class="flex-1"
+                  OnSelectedValueChanged="dropdown_selected_value_changed3"/>
+        <Stack Direction="LeftToRight" Gap="20" CrossAlign="Center" Class="mt-1">
+          <CheckBox Text="{Res filter.in_trash, Source=drive}"
+                    Checked="{Binding searchFilters.inTrash}"
+                    OnCheckedChanged="check_box_checked_changed"/>
+          <CheckBox Text="{Res filter.starred, Source=drive}"
+                    Checked="{Binding searchFilters.isStarred}"
+                    OnCheckedChanged="check_box_checked_changed2"/>
+        </Stack>
+      </Stack>
+    </Panel>
+    <Panel Class="{Binding div_class}">
+      <Label HtmlTag="Span" Text="{Res filter.modified, Source=drive}" Overflow="Wrap" InheritFontSize="true" Class="{Binding span_class}"/>
+      <Dropdown SelectedValue="{Binding searchFilters.modifiedDate}"
+                ItemsSource="{Binding items_source4}"
+                Class="flex-1"
+                OnSelectedValueChanged="dropdown_selected_value_changed4"/>
+    </Panel>
+    <Panel Class="{Binding div_class}">
+      <Label HtmlTag="Label" Text="{Res filter.shared_with, Source=drive}" Overflow="Wrap" InheritFontSize="true" Class="{Binding span_class}"/>
+      <Panel Class="flex-1">
+        <TextField Placeholder="{Res filter.shared_ph, Source=drive}"
+                   Text="{Binding searchFilters.sharedWith}"
+                   OnTextChanged="text_field_text_changed3"/>
+      </Panel>
+    </Panel>
+    <Stack Direction="LeftToRight" Justify="End" Class="pt-1">
+      <Button Variant="Ghost" Text="{Res filter.reset, Source=drive}" OnClick="handleReset"/>
+      <Button Text="{Res filter.search, Source=drive}" OnClick="handleSearch"/>
+    </Stack>
+  </Panel>
+</UserControl>

@@ -1,19 +1,19 @@
 /**
- * Code-behind of `DriveContentGrid.kbview` (converted from `DriveContentGrid.tsx` by @kubuno/views-migrate).
+ * Code-behind of `DriveContentGrid.kbcontrol` (converted from `DriveContentGrid.tsx` by @kubuno/views-migrate).
  */
 import { Fragment } from 'react'
 import React from "react"
 import { useTranslation } from "react-i18next"
 import { ViewMenu, VIEW_SPECS, type FileItem, type Folder } from "@kubuno/drive"
-import TrashStatsBanner from "../TrashStatsBanner"
-import EmptyState from "./EmptyState"
+import TrashStatsBanner from "../pages/TrashStatsBanner"
+import EmptyState from "./DriveEmptyState"
 import FileCard from "./FileCard"
 import FileRow from "./FileRow"
 import SortFilterBar from "./SortFilterBar"
 import type { DriveSelection } from "./useDriveSelection"
 import type { DriveViewOptions } from "./useDriveViewOptions"
 
-import { ViewBase } from './DriveContentGrid.kbview'
+import { ViewBase } from './DriveContentGrid.kbcontrol'
 import * as __parts from './DriveContentGrid.parts'
 
 interface Props {

@@ -1,0 +1,11 @@
+<!-- VersionBadge — converted from VersionBadge.tsx by @kubuno/views-migrate. -->
+<UserControl x:Props="VersionBadgeProps">
+  <Panel HtmlTag="Span"
+         ToolTip="{Binding title}"
+         AccessibleName="{Binding title}"
+         Visible="{Binding show_main}"
+         Class="{Binding span_class}">
+    <Icon Name="History" Size="10" Class="shrink-0"/>
+    <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="{Binding count}"/>
+  </Panel>
+</UserControl>

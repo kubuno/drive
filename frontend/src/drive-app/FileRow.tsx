@@ -3,11 +3,11 @@ import { useTranslation } from 'react-i18next'
 import { Star, Trash2, RotateCcw, MoreVertical } from 'lucide-react'
 import { filesApi, formatSize, getFileIcon, type FileItem } from '@kubuno/drive'
 import { useImageCacheStore, useSignedUrl, usePendingKind, pendingBoxClass, pendingBoxStyle } from '@kubuno/sdk'
-import { openable, useLongPress } from '../openable'
-import type { FileVersionStats } from '../fileVersions'
+import { openable, useLongPress } from '../controls/openable'
+import type { FileVersionStats } from '../model/fileVersions'
 import LockBadge from './LockBadge'
 import VersionBadge from './VersionBadge'
-import TagDots from '../TagDots'
+import TagDots from '../controls/TagDots'
 
 // ── FileRow (list view) ───────────────────────────────────────────────────────
 

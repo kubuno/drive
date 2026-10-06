@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { FileItem, InfoTarget, ShareTarget } from '@kubuno/drive'
-import type { TagDialogTarget } from '../TagUI'
+import type { TagDialogTarget } from '../model/TagUI'
 import type { AdvShareTarget, MoveTarget, RenameTarget } from './types'
 
 /** Targets of the modal dialogs opened from the menus, cards and previewers. */

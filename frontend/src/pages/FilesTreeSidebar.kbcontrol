@@ -1,0 +1,74 @@
+<!-- FilesTreeSidebar — converted from FilesTreeSidebar.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<UserControl x:Props="FilesTreeSidebarProps">
+  <Panel Class="contents">
+    <!-- TODO(views-migrate): <MobileDrawerNav> is no .kbview element (a local or dynamic component) -->
+    <ReactHost Component="{Binding MobileDrawerNav}" Props="{Binding mobile_drawer_nav_props}" Visible="{Binding show_case_1}"/>
+    <Panel HtmlTag="Nav" Visible="{Binding show_case_2}" Class="flex-1 overflow-y-auto px-2 py-2 space-y-0.5">
+      <!-- TODO(views-migrate): <SidebarNavItem> is no .kbview element (@kubuno/sdk#SidebarNavItem) -->
+      <ReactHost Component="{Binding SidebarNavItem}" Props="{Binding sidebar_nav_item_props}"/>
+      <!-- TODO(views-migrate): <SidebarNavItem> is no .kbview element (@kubuno/sdk#SidebarNavItem) -->
+      <ReactHost Component="{Binding SidebarNavItem}" Props="{Binding sidebar_nav_item_props2}"/>
+      <Repeater ItemKey="key" ItemsSource="{Binding rows_module_mounts}">
+        <!-- TODO(views-migrate): <SidebarNavItem> is no .kbview element (@kubuno/sdk#SidebarNavItem) -->
+        <ReactHost Component="{Binding SidebarNavItem}" Props="{Binding sidebar_nav_item_props}"/>
+      </Repeater>
+      <!-- TODO(views-migrate): <SidebarNavItem> is no .kbview element (@kubuno/sdk#SidebarNavItem) -->
+      <ReactHost Component="{Binding SidebarNavItem}" Props="{Binding sidebar_nav_item_props3}"/>
+      <!-- TODO(views-migrate): <SidebarNavItem> is no .kbview element (@kubuno/sdk#SidebarNavItem) -->
+      <ReactHost Component="{Binding SidebarNavItem}" Props="{Binding sidebar_nav_item_props4}"/>
+      <!-- TODO(views-migrate): <SidebarNavItem> is no .kbview element (@kubuno/sdk#SidebarNavItem) -->
+      <ReactHost Component="{Binding SidebarNavItem}" Props="{Binding sidebar_nav_item_props5}"/>
+      <!-- TODO(views-migrate): <SidebarNavItem> is no .kbview element (@kubuno/sdk#SidebarNavItem) -->
+      <ReactHost Component="{Binding SidebarNavItem}" Props="{Binding sidebar_nav_item_props6}"/>
+      <!-- TODO(views-migrate): <SidebarNavItem> is no .kbview element (@kubuno/sdk#SidebarNavItem) -->
+      <ReactHost Component="{Binding SidebarNavItem}" Props="{Binding sidebar_nav_item_props7}"/>
+      <!-- TODO(views-migrate): <SidebarNavItem> is no .kbview element (@kubuno/sdk#SidebarNavItem) -->
+      <ReactHost Component="{Binding SidebarNavItem2}" Props="{Binding sidebar_nav_item_props8}" Visible="{Binding isAdmin}"/>
+    </Panel>
+    <Stack Gap="0" Visible="{Binding show_main}" Class="flex-1 overflow-hidden">
+      <Panel HtmlTag="Nav" Class="flex-1 overflow-y-auto px-3 py-2 space-y-0.5">
+        <!-- TODO(views-migrate): <NavItem> is no .kbview element (a local or dynamic component) -->
+        <ReactHost Component="{Binding NavItem}" Props="{Binding nav_item_props}"/>
+        <!-- TODO(views-migrate): <DriveRootSection> is no .kbview element (a local or dynamic component) -->
+        <ReactHost Component="{Binding DriveRootSection}" Props="{Binding drive_root_section_props}"/>
+        <Repeater ItemKey="key" ItemsSource="{Binding rows_module_mounts2}">
+          <!-- TODO(views-migrate): <ModuleMountSection> is no .kbview element (a local or dynamic component) -->
+          <ReactHost Component="{Binding ModuleMountSection}" Props="{Binding module_mount_section_props}"/>
+        </Repeater>
+        <Repeater ItemKey="key" ItemsSource="{Binding rows_remotes}">
+          <!-- TODO(views-migrate): <RemoteSection> is no .kbview element (a local or dynamic component) -->
+          <ReactHost Component="{Binding RemoteSection}" Props="{Binding remote_section_props}"/>
+        </Repeater>
+        <Panel Class="h-px bg-border mx-1 my-1"/>
+        <!-- TODO(views-migrate): <NavItem> is no .kbview element (a local or dynamic component) -->
+        <ReactHost Component="{Binding NavItem}" Props="{Binding nav_item_props2}"/>
+        <!-- TODO(views-migrate): <NavItem> is no .kbview element (a local or dynamic component) -->
+        <ReactHost Component="{Binding NavItem}" Props="{Binding nav_item_props3}"/>
+        <!-- TODO(views-migrate): <NavItem> is no .kbview element (a local or dynamic component) -->
+        <ReactHost Component="{Binding NavItem}" Props="{Binding nav_item_props4}"/>
+        <!-- TODO(views-migrate): <NavItem> is no .kbview element (a local or dynamic component) -->
+        <ReactHost Component="{Binding NavItem}" Props="{Binding nav_item_props5}"/>
+        <!-- TODO(views-migrate): <NavItem> is no .kbview element (a local or dynamic component) -->
+        <ReactHost Component="{Binding NavItem}" Props="{Binding nav_item_props6}"/>
+        <!-- TODO(views-migrate): <NavItem> is no .kbview element (a local or dynamic component) -->
+        <ReactHost Component="{Binding NavItem2}" Props="{Binding nav_item_props7}" Visible="{Binding isAdmin}"/>
+        <Panel Visible="{Binding show_saved_searches}" Class="h-px bg-border mx-1 my-1"/>
+        <Label HtmlTag="Div"
+               Text="Recherches"
+               FontWeight="Medium"
+               Overflow="Wrap"
+               ForeColor="TextTertiary"
+               Visible="{Binding show_saved_searches}"
+               Class="px-3 py-1 text-[11px] uppercase tracking-wide select-none"/>
+        <Repeater ItemKey="key" ItemsSource="{Binding rows_saved_searches}" Visible="{Binding show_saved_searches}">
+          <!-- TODO(views-migrate): <div {...spread}> (spread props) -->
+          <ReactHost Component="{Binding Part1}" Props="{Binding part1_props}"/>
+        </Repeater>
+      </Panel>
+      <!-- TODO(views-migrate): <ContextMenu> pos, onClose: no .kbview property -->
+      <ReactHost Component="{Binding Part2}" Props="{Binding part2_props}" Visible="{Binding show_ctx}"/>
+      <!-- TODO(views-migrate): <ConfirmDialog {...spread}> (spread props) -->
+      <ReactHost Component="{Binding ConfirmDialog}" Props="{Binding confirm_dialog_props}" Visible="{Binding show_confirm_state}"/>
+    </Stack>
+  </Panel>
+</UserControl>

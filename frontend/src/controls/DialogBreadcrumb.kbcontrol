@@ -1,0 +1,29 @@
+<!-- DialogBreadcrumb — converted from DialogBreadcrumb.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<UserControl x:Props="Props">
+  <Panel HtmlTag="Nav" AccessibleName="breadcrumb" Class="flex items-center gap-0.5 flex-1 min-w-0 overflow-x-auto">
+    <Panel AccessibleRole="PushButton"
+           AutoSize="true"
+           Enabled="{Binding enabled_unless_multi}"
+           Class="{Binding button_class}"
+           OnClick="panel_click">
+      <Icon Name="Server" Size="13" Visible="{Binding show_current_remote}" Class="flex-shrink-0 text-primary"/>
+      <Icon Name="HardDrive" Size="13" Visible="{Binding show_not_current_remote}" Class="flex-shrink-0 text-text-secondary"/>
+      <Label HtmlTag="Span" Text="{Binding span_text}" InheritFontSize="true" Class="max-w-[160px]"/>
+      <Icon Name="ChevronDown" Size="13" Visible="{Binding multi}" Class="flex-shrink-0 text-text-tertiary"/>
+    </Panel>
+    <!-- TODO(views-migrate): <ContextMenu> pos, onClose, minWidth: no .kbview property -->
+    <ReactHost Component="{Binding Part1}" Props="{Binding part1_props}" Visible="{Binding show_menu_is_open_menu}"/>
+    <Repeater ItemKey="key" ItemsSource="{Binding rows_path_crumbs}">
+      <Panel HtmlTag="Span" Class="flex items-center gap-0.5 flex-shrink-0">
+        <Icon Name="ChevronRight" Size="16" Class="text-text-tertiary flex-shrink-0"/>
+        <Panel AccessibleRole="PushButton"
+               AutoSize="true"
+               Enabled="{Binding enabled_unless_is_last}"
+               Class="{Binding button_class}"
+               OnClick="panel_click2">
+          <Label HtmlTag="Span" Text="{Binding c.name}" InheritFontSize="true" Class="max-w-[160px] inline-block align-bottom"/>
+        </Panel>
+      </Panel>
+    </Repeater>
+  </Panel>
+</UserControl>

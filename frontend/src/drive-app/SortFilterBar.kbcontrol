@@ -1,0 +1,60 @@
+<!-- SortFilterBar — converted from SortFilterBar.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<UserControl x:Props="SortFilterBarProps">
+  <Stack Direction="LeftToRight"
+         CrossAlign="Center"
+         WrapContents="true"
+         Class="pb-3 -mx-6 px-6 border-b border-border">
+    <Stack Direction="LeftToRight" Gap="4" CrossAlign="Center">
+      <Label HtmlTag="Span"
+             Text="{Res app.sort_label, Source=drive}"
+             FontWeight="Medium"
+             Overflow="Wrap"
+             ForeColor="TextTertiary"
+             Class="select-none"/>
+      <Dropdown Variant="Ghost"
+                SelectedValue="{Binding props.sortField}"
+                ItemsSource="{Binding SORT_OPTIONS}"
+                OnSelectedValueChanged="dropdown_selected_value_changed"/>
+      <Panel AccessibleRole="PushButton"
+             AutoSize="true"
+             ToolTip="{Binding tooltip}"
+             Class="ml-0.5 text-sm text-text-secondary hover:text-primary transition-colors select-none"
+             OnClick="panel_click">
+        <Label HtmlTag="Span" InheritFontSize="true" Overflow="Wrap" Text="{Binding text}"/>
+      </Panel>
+    </Stack>
+    <Panel Class="h-5 w-px bg-border"/>
+    <Stack Direction="LeftToRight" Gap="4" CrossAlign="Center">
+      <Label HtmlTag="Span"
+             Text="{Res app.type_label, Source=drive}"
+             FontWeight="Medium"
+             Overflow="Wrap"
+             ForeColor="TextTertiary"
+             Class="select-none"/>
+      <Dropdown Variant="Ghost"
+                SelectedValue="{Binding selected_value}"
+                ItemsSource="{Binding TYPE_OPTIONS}"
+                OnSelectedValueChanged="dropdown_selected_value_changed2"/>
+    </Stack>
+    <Stack Direction="LeftToRight" Gap="4" CrossAlign="Center" Class="ml-auto">
+      <Panel AccessibleRole="PushButton"
+             AutoSize="true"
+             ForeColor="TextSecondary"
+             ToolTip="Fichiers en double"
+             Class="p-2 rounded-lg hover:bg-surface-2 transition-colors"
+             OnClick="panel_click2">
+        <Icon Name="Files" Size="16"/>
+      </Panel>
+      <Panel AccessibleRole="PushButton"
+             AutoSize="true"
+             ForeColor="TextSecondary"
+             ToolTip="Vue d'ensemble du stockage"
+             Class="p-2 rounded-lg hover:bg-surface-2 transition-colors"
+             OnClick="panel_click3">
+        <Icon Name="BarChart3" Size="16"/>
+      </Panel>
+      <!-- TODO(views-migrate): <ViewMenu> is no .kbview element (@kubuno/drive#ViewMenu) -->
+      <ReactHost Component="{Binding ViewMenu}" Props="{Binding view_menu_props}"/>
+    </Stack>
+  </Stack>
+</UserControl>

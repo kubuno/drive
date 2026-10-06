@@ -7,7 +7,7 @@ import {
 import { filesApi, FOLDER_COLORS, type Folder, type FileItem } from '@kubuno/drive'
 import { downloadSignedUrl } from '@kubuno/sdk'
 import type { MenuItem } from '@ui'
-import { hasReclaimableHistory, type FileVersionStats } from '../fileVersions'
+import { hasReclaimableHistory, type FileVersionStats } from '../model/fileVersions'
 import type { MenuTarget } from './types'
 
 // Item context menu: handlers contract, folder colour grid and the builder that

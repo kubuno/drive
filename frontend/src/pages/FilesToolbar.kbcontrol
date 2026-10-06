@@ -1,0 +1,6 @@
+<!-- FilesToolbar — converted from FilesToolbar.tsx by @kubuno/views-migrate. -->
+<UserControl>
+  <Stack Direction="LeftToRight" Gap="12" CrossAlign="Center" Class="h-14 px-4">
+    <Label HtmlTag="H1" Text="{Binding title}" FontWeight="Regular" ForeColor="TextPrimary" Class="text-[22px] flex-1 tracking-tight"/>
+  </Stack>
+</UserControl>

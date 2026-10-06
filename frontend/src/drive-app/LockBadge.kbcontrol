@@ -1,0 +1,4 @@
+<!-- LockBadge — converted from LockBadge.tsx by @kubuno/views-migrate. -->
+<UserControl x:Props="LockBadgeProps">
+  <Icon Name="Lock" Size="12" Visible="{Binding show_main}" Class="shrink-0 text-amber-500"/>
+</UserControl>

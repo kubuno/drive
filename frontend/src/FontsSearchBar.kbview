@@ -1,9 +1,0 @@
-<!-- FontsSearchBar — converted from FontsSearchBar.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
-<Stack Direction="LeftToRight" CrossAlign="Center" Class="w-full">
-  <!-- TODO(views-migrate): <div> with a computed style -->
-  <ReactHost Component="{Binding Part1}" Props="{Binding part1_props}"/>
-  <!-- TODO(views-migrate): <ToolTip> label: no .kbview property -->
-  <ReactHost Component="{Binding Part2}" Props="{Binding part2_props}"/>
-  <!-- TODO(views-migrate): <ContextMenu> pos, onClose: no .kbview property -->
-  <ReactHost Component="{Binding Part3}" Props="{Binding part3_props}" Visible="{Binding show_menu}"/>
-</Stack>

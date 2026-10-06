@@ -3,11 +3,11 @@ import { useTranslation } from 'react-i18next'
 import { Star, Trash2, RotateCcw, MoreVertical, Play } from 'lucide-react'
 import { filesApi, getFileIcon, type FileItem } from '@kubuno/drive'
 import { useAuthStore, useImageCacheStore, useSignedUrl, usePendingKind, pendingBoxClass, pendingBoxStyle } from '@kubuno/sdk'
-import { isCoarsePointer, useLongPress } from '../openable'
-import type { FileVersionStats } from '../fileVersions'
+import { isCoarsePointer, useLongPress } from '../controls/openable'
+import type { FileVersionStats } from '../model/fileVersions'
 import LockBadge from './LockBadge'
 import VersionBadge from './VersionBadge'
-import TagDots from '../TagDots'
+import TagDots from '../controls/TagDots'
 
 const _videoPreviewCache = new Map<string, string>()
 

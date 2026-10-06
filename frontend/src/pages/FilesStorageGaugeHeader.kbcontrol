@@ -1,0 +1,22 @@
+<!-- FilesStorageGaugeHeader — converted from FilesStorageGaugeHeader.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<UserControl>
+  <Panel AccessibleRole="PushButton"
+         AutoSize="true"
+         ToolTip="{Binding tooltip}"
+         AccessibleName="{Binding tooltip}"
+         Visible="{Binding show_main}"
+         Class="hidden lg:flex items-center gap-2 h-9 px-3 mr-1 rounded-md transition-colors select-none hover:bg-surface-3"
+         OnClick="panel_click">
+    <Icon Name="HardDrive" Size="16" Class="text-text-tertiary flex-shrink-0"/>
+    <Panel Class="w-20 h-1.5 bg-black/10 rounded-full overflow-hidden">
+      <!-- TODO(views-migrate): <div> with a computed style -->
+      <ReactHost Component="{Binding Part1}" Props="{Binding part1_props}"/>
+    </Panel>
+    <Label HtmlTag="Span"
+           Text="{Binding span_text}"
+           Role="Meta"
+           Overflow="Wrap"
+           ForeColor="TextSecondary"
+           Class="tabular-nums whitespace-nowrap"/>
+  </Panel>
+</UserControl>

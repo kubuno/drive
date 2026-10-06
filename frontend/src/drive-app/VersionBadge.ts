@@ -1,11 +1,11 @@
 /**
- * Code-behind of `VersionBadge.kbview` (converted from `VersionBadge.tsx` by @kubuno/views-migrate).
+ * Code-behind of `VersionBadge.kbcontrol` (converted from `VersionBadge.tsx` by @kubuno/views-migrate).
  */
 import { useTranslation } from "react-i18next"
 import { formatSize, type FileItem } from "@kubuno/drive"
-import { hasReclaimableHistory, versionBytes, versionCount, type FileVersionStats } from "../fileVersions"
+import { hasReclaimableHistory, versionBytes, versionCount, type FileVersionStats } from "../model/fileVersions"
 
-import { ViewBase } from './VersionBadge.kbview'
+import { ViewBase } from './VersionBadge.kbcontrol'
 
 export type VersionBadgeProps = {
   file: (FileItem & FileVersionStats) | FileVersionStats | null | undefined

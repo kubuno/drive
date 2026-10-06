@@ -1,2 +1,0 @@
-<!-- LockBadge — converted from LockBadge.tsx by @kubuno/views-migrate. -->
-<Icon x:Props="LockBadgeProps" Name="Lock" Size="12" Visible="{Binding show_main}" Class="shrink-0 text-amber-500"/>

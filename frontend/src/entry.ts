@@ -5,7 +5,7 @@
  */
 import { createElement, lazy } from 'react'
 import { Home, Star, Users, Folder, HardDrive } from 'lucide-react'
-import DriveMiniPanel from './DriveMiniPanel'
+import DriveMiniPanel from './pages/DriveMiniPanel'
 import {
   RouteRegistry,
   SlotRegistry,
@@ -27,23 +27,23 @@ import {
 import { useFilesStore, useFilesDialogStore, filesApi } from '@kubuno/drive'
 import './index.css'
 import './i18n'
-import DriveLogo from './DriveLogo'
-import { openPreview, canPreview } from './previewService'
-import { filesNewActionItems } from './FilesNewActions'
-import FilesTreeSidebar from './FilesTreeSidebar'
-import FilesPaintEditor from './FilesPaintEditor'
-import { filesContextMenuItems } from './FilesContextMenuItems'
-import FilesStorageGaugeHeader from './FilesStorageGaugeHeader'
-import FilesDashboardWidget from './FilesDashboardWidget'
-import FilesRecentWidget from './FilesRecentWidget'
-import FilesFilterPanel from './FilesFilterPanel'
-import FilesOpenDialog from './FilesOpenDialog'
-import DriveImageSource from './DriveImageSource'
-import FilesSaveDialog from './FilesSaveDialog'
-import RemoteStoragePanel from './RemoteStoragePanel'
-import FilesFolderPickerDialog from './FilesFolderPickerDialog'
-import FilesFloatingAudioPlayer from './FilesFloatingAudioPlayer'
-import TagInfoSection from './TagInfoSection'
+import DriveLogo from './pages/DriveLogo'
+import { openPreview, canPreview } from './services/previewService'
+import { filesNewActionItems } from './services/FilesNewActions'
+import FilesTreeSidebar from './pages/FilesTreeSidebar'
+import FilesPaintEditor from './views/FilesPaintEditor'
+import { filesContextMenuItems } from './services/FilesContextMenuItems'
+import FilesStorageGaugeHeader from './pages/FilesStorageGaugeHeader'
+import FilesDashboardWidget from './pages/FilesDashboardWidget'
+import FilesRecentWidget from './pages/FilesRecentWidget'
+import FilesFilterPanel from './pages/FilesFilterPanel'
+import FilesOpenDialog from './dialogs/FilesOpenDialog'
+import DriveImageSource from './pages/DriveImageSource'
+import FilesSaveDialog from './dialogs/FilesSaveDialog'
+import RemoteStoragePanel from './dialogs/RemoteStoragePanel'
+import FilesFolderPickerDialog from './dialogs/FilesFolderPickerDialog'
+import FilesFloatingAudioPlayer from './views/FilesFloatingAudioPlayer'
+import TagInfoSection from './pages/TagInfoSection'
 
 export const sdkVersion = SDK_VERSION
 // The `.kbview` plan format this bundle's views were compiled to (the host refuses a format its runtime cannot read).
@@ -185,16 +185,16 @@ export function register() {
   })
 
   // Routes
-  const FilesApp          = lazy(() => import('./DriveApp'))
-  const DriveSettingsPage = lazy(() => import('./DriveSettingsPage'))
-  const FilesStoragePage  = lazy(() => import('./FilesStoragePage'))
-  const RemoteBrowser     = lazy(() => import('./RemoteExplorer'))
-  const SystemBrowser     = lazy(() => import('./SystemExplorer'))
-  const DualPaneExplorer  = lazy(() => import('./DualPaneExplorer'))
-  const DrivePlayerPage   = lazy(() => import('./FilesStandalonePages'))
-  const DrivePaintPage    = lazy(() => import('./FilesStandalonePages').then(m => ({ default: m.DrivePaintPage })))
+  const FilesApp          = lazy(() => import('./views/DriveApp'))
+  const DriveSettingsPage = lazy(() => import('./views/DriveSettingsPage'))
+  const FilesStoragePage  = lazy(() => import('./views/FilesStoragePage'))
+  const RemoteBrowser     = lazy(() => import('./views/RemoteExplorer'))
+  const SystemBrowser     = lazy(() => import('./views/SystemExplorer'))
+  const DualPaneExplorer  = lazy(() => import('./views/DualPaneExplorer'))
+  const DrivePlayerPage   = lazy(() => import('./views/FilesStandalonePages'))
+  const DrivePaintPage    = lazy(() => import('./views/FilesStandalonePages').then(m => ({ default: m.DrivePaintPage })))
 
-  const DriveHome = lazy(() => import('./DriveHome'))
+  const DriveHome = lazy(() => import('./views/DriveHome'))
 
   RouteRegistry.register('drive',          FilesApp)
   RouteRegistry.register('drive/home',     DriveHome)
@@ -211,7 +211,7 @@ export function register() {
   RouteRegistry.register('drive/player',     DrivePlayerPage)
   RouteRegistry.register('drive/paint',      DrivePaintPage)
   // Storage mounts published by other active modules (e.g. p2pnas → "My Cloud").
-  const ModuleMountBrowser = lazy(() => import('./ModuleMountExplorer'))
+  const ModuleMountBrowser = lazy(() => import('./views/ModuleMountExplorer'))
   RouteRegistry.register('drive/m/:moduleId/:mountKey', ModuleMountBrowser)
 
   // API publique consommable par d'autres modules via ModuleServiceRegistry
