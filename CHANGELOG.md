@@ -32,6 +32,7 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 ### Changed
 
+- **Kubuno Drive desktop takes the Kubuno Desktop framework from the core repository**: the framework and common crates now come from `git = "https://github.com/kubuno/core"`, tag `desktop-v0.1.1-alpha` (Kubuno Desktop moved into the core repository, under `desktop/`; the former `kubuno/desktop` repository is retired). Nothing changes in the app.
 - **The repository is organised by platform**: `server/` holds the Rust server (its `Cargo.toml`, `src/`,
   `migrations/`, tests and fonts), `web/` the web frontend (formerly `frontend/`, moved with its history), `common/` the code every client shares (`common/core`, `common/vectors`); the
   module manifest, `build_kbpkg.sh`, the README, this changelog and the licence stay at the root. The `.kbpkg` is built

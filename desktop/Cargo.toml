@@ -10,7 +10,7 @@
 #
 # The Kubuno desktop framework (kubuno-desktop-ui, kubuno-desktop-controls, the painting surface
 # kubuno-drive-desktop-app-controls and its helpers kubuno-drive-desktop-shared) and the common crates of
-# kubuno/desktop come from that repository by git tag, never by path: the app builds from this repository
+# Kubuno Desktop come from the core repository (desktop/) by git tag, never by path: the app builds from this repository
 # alone, and links the framework statically. The Windows-only crates are built on Windows only (CI selects
 # the packages per OS: `-p`).
 [workspace]
@@ -41,13 +41,13 @@ kubuno-drive-desktop-app-storage  = { path = "windows/kubuno-drive-desktop-app-s
 # The rules every Drive client shares (names, numbering, conflict copies), with the server.
 kubuno-drive-core                 = { path = "../common/core" }
 
-# One tag of kubuno/desktop pins every framework and common crate (kubuno/desktop README,
+# One tag of the core repository pins every framework and common crate (core desktop/README.md,
 # "Versions and tags"). Bump them together.
-kubuno-desktop-ui                 = { git = "https://github.com/kubuno/desktop", tag = "desktop-v0.1.0-alpha" }
-kubuno-desktop-controls           = { git = "https://github.com/kubuno/desktop", tag = "desktop-v0.1.0-alpha" }
-kubuno-drive-desktop-app-controls = { git = "https://github.com/kubuno/desktop", tag = "desktop-v0.1.0-alpha" }
-kubuno-drive-desktop-shared       = { git = "https://github.com/kubuno/desktop", tag = "desktop-v0.1.0-alpha" }
-kubuno-desktop-app-storage        = { git = "https://github.com/kubuno/desktop", tag = "desktop-v0.1.0-alpha" }
+kubuno-desktop-ui                 = { git = "https://github.com/kubuno/core",    tag = "desktop-v0.1.1-alpha" }
+kubuno-desktop-controls           = { git = "https://github.com/kubuno/core",    tag = "desktop-v0.1.1-alpha" }
+kubuno-drive-desktop-app-controls = { git = "https://github.com/kubuno/core",    tag = "desktop-v0.1.1-alpha" }
+kubuno-drive-desktop-shared       = { git = "https://github.com/kubuno/core",    tag = "desktop-v0.1.1-alpha" }
+kubuno-desktop-app-storage        = { git = "https://github.com/kubuno/core",    tag = "desktop-v0.1.1-alpha" }
 
 windows          = { version = "0.62" }
 windows-core     = { version = "0.62" }
