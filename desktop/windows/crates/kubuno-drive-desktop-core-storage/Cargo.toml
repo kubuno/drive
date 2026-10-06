@@ -1,9 +1,9 @@
 [package]
 name = "kubuno-drive-desktop-core-storage"
 description = "Core storage abstractions (port of Files.Core.Storage)"
-version = "0.1.0"   # Drive's own version, not the desktop workspace's
+version = "0.1.0"   # Drive desktop's own version
 edition.workspace = true
-license = "MIT"     # Drive's own licence (see the desktop README)
+license = "MIT"     # the licence of Files, the project it is ported from (LICENSE-MIT)
 
 [dependencies]
 kubuno-drive-desktop-shared.workspace = true

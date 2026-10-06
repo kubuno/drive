@@ -1,9 +1,9 @@
 [package]
 name = "kubuno-drive-desktop"
 description = "Kubuno Drive desktop — a modern file manager with a pure Win32 UI"
-version = "0.1.0"   # Drive's own version, not the desktop workspace's
+version = "0.1.0"   # Drive desktop's own version
 edition.workspace = true
-license = "MIT"     # Drive's own licence (see the desktop README)
+license = "MIT"     # the licence of Files, the project it is ported from (LICENSE-MIT)
 
 [[bin]]
 name = "drive"
@@ -24,7 +24,7 @@ tokio.workspace = true
 git2.workspace = true
 tracing.workspace = true
 # The settings store (vskubuno docs/STORAGE-COMPONENTS.md, lot ST-2).
-kubuno-desktop-app-storage = { path = "../../../../../common/kubuno-desktop-app-storage" }
+kubuno-desktop-app-storage.workspace = true
 chrono.workspace = true
 windows-numerics.workspace = true
 # The WinRT collection / async plumbing the `windows` crate itself is built on:

@@ -1,0 +1,50 @@
+# Kubuno Drive for Windows (drive.exe): the desktop file manager of the drive module, a Rust
+# port of Files (MIT, see LICENSE-MIT and README.md).
+#
+# Its own Cargo workspace, independent of the server's (../../Cargo.toml). The Kubuno desktop
+# framework (kubuno-desktop-ui, kubuno-desktop-controls, the painting surface
+# kubuno-drive-desktop-app-controls and its helpers kubuno-drive-desktop-shared) and the common
+# crates come from the kubuno/desktop repository by git tag, never by path: the app builds from
+# this repository alone, and links the framework statically.
+[workspace]
+resolver = "2"
+members  = [
+    "crates/kubuno-drive-desktop",
+    "crates/kubuno-drive-desktop-app-storage",
+    "crates/kubuno-drive-desktop-core-storage",
+    "crates/kubuno-drive-desktop-localization",
+]
+
+[workspace.package]
+edition    = "2021"
+repository = "https://github.com/kubuno/drive"
+
+[workspace.dependencies]
+kubuno-drive-desktop-core-storage = { path = "crates/kubuno-drive-desktop-core-storage" }
+kubuno-drive-desktop-app-storage  = { path = "crates/kubuno-drive-desktop-app-storage" }
+kubuno-drive-desktop-localization = { path = "crates/kubuno-drive-desktop-localization" }
+
+# One tag of kubuno/desktop pins every framework and common crate (kubuno/desktop README,
+# "Versions and tags"). Bump them together.
+kubuno-desktop-ui                 = { git = "https://github.com/kubuno/desktop", tag = "desktop-v0.1.0-alpha" }
+kubuno-desktop-controls           = { git = "https://github.com/kubuno/desktop", tag = "desktop-v0.1.0-alpha" }
+kubuno-drive-desktop-app-controls = { git = "https://github.com/kubuno/desktop", tag = "desktop-v0.1.0-alpha" }
+kubuno-drive-desktop-shared       = { git = "https://github.com/kubuno/desktop", tag = "desktop-v0.1.0-alpha" }
+kubuno-desktop-app-storage        = { git = "https://github.com/kubuno/desktop", tag = "desktop-v0.1.0-alpha" }
+
+windows          = { version = "0.62" }
+windows-core     = { version = "0.62" }
+thiserror        = "2"
+chrono           = { version = "0.4", features = ["unstable-locales"] }
+async-trait      = "0.1"
+bitflags         = "2"
+futures          = "0.3"
+windows-numerics = "0.3"
+serde            = { version = "1", features = ["derive"] }
+serde_json       = "1"
+tokio            = { version = "1", features = ["rt-multi-thread", "sync", "fs", "macros", "time", "io-util"] }
+suppaftp         = { version = "10.0.2", default-features = false, features = ["tokio"] }
+tracing          = "0.1"
+tracing-subscriber = "0.3"
+# LibGit2 bindings (Drive's git integration). `vendored` builds libgit2 with the crate.
+git2 = { version = "0.19", default-features = false, features = ["vendored-libgit2"] }

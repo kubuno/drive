@@ -9,6 +9,17 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 ## [Unreleased]
 
+### Added
+
+- **The Windows desktop app joins this repository**: Kubuno Drive for Windows (`drive.exe`, the Rust port of Files)
+  and its engine crates (`kubuno-drive-desktop`, `-app-storage`, `-core-storage`, `-localization`) moved here from
+  `kubuno/desktop` with their history, under `desktop/windows/` (with `desktop/linux` and `desktop/macos` reserved for
+  the other platforms), keeping their MIT licence (`desktop/windows/LICENSE-MIT` credits the Files Community). The app
+  builds on its own from this repository — the Kubuno desktop framework, including the painting surface ported from
+  Files, comes from `kubuno/desktop` by the git tag `desktop-v0.1.0-alpha` and is linked statically — has its own CI
+  workflow (`desktop.yml`, Windows) and appears in `Kubuno.Drive.slnx` under **Desktop** (`Kubuno.Drive.Desktop` and its
+  engine crates). The app itself is unchanged for users.
+
 ### Changed
 
 - **The Drive screens can be edited in the Visual Studio designer**: the Drive page, its toolbar, breadcrumb, file grid, sort and filter bar, search results (files and images), empty states, lock and version badges, the video player overlay, the « Import from a URL », duplicates and storage overview dialogs, the advanced share dialog and the details panel are views (`.kbview` + code-behind, converted with `@kubuno/views-migrate`). The Drive page (my files, home, starred, shared, recent, trash, search results) and the « Import from a URL » dialog were checked identical to the previous screens (pixels, text, accessibility tree and keyboard order; light and dark, French, English and Arabic, desktop and phone). The file explorer itself (`StorageExplorer` of `@kubuno/drive`), the cards and rows of files and folders, the context menu, the viewers and the remaining dialogs stay React for now. The bundle declares the views format it was compiled for (`viewsAbi`).

@@ -93,6 +93,19 @@ bash build_kbpkg.sh                         # → dist/drive-<version>-<os>-<arc
 > - **Rust** — shared crates via tagged git dependencies on `kubuno/core`.
 > - **Frontend** — `@kubuno/sdk`, `@kubuno/ui`, `@kubuno/drive` from the `@kubuno` npm scope. They are `external` at runtime (the host provides the singletons via its import map); the npm packages supply the build-time type surface.
 
+### Desktop app
+
+The native Windows file manager, **Kubuno Drive for Windows** (`drive.exe`, a Rust port of
+[Files](https://github.com/files-community/Files), MIT — see `desktop/windows/LICENSE-MIT`), lives in
+[`desktop/windows/`](desktop/windows/README.md): a Cargo workspace of its own (`kubuno-drive-desktop` and its engine
+crates), built on the Kubuno desktop framework (`kubuno/desktop`, by git tag, linked statically). `desktop/linux` and
+`desktop/macos` are reserved for the other desktop platforms. In Visual Studio, `Kubuno.Drive.slnx` lists it under
+**Desktop**.
+
+```powershell
+cd desktop\windows; cargo build --release -p kubuno-drive-desktop   # → target\release\drive.exe
+```
+
 ## Configuration
 
 Copy `config.toml.example` → `config.toml`, or use environment variables (`KUBUNO_CORE_URL`, `KUBUNO_INTERNAL_SECRET`, `KUBUNO_DB_*`). The database engine is the administrator's choice, set in `[database] engine` — `postgres` (default), `mysql`/`mariadb` or `sqlite` — and read at start-up: the same binary connects to whichever is named, and SQLite needs no server at all. Under the Kubuno supervisor the connection settings are injected by the core. See `module.toml` for the manifest (id, port, routes, sidebar entry, settings).
