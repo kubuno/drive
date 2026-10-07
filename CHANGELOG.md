@@ -33,6 +33,10 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 ### Changed
 
+- **Android: the Kubuno logo is the current mark.** The app's copy of the `ic_kubuno_logo` drawable shows the
+  six aperture blades around the cube instead of the old "K" monogram, as a single-colour vector tinted by the
+  app, identical to the shared one in `com.kubuno.mobile:core-ui`.
+
 - **Kubuno Drive desktop takes the Kubuno Desktop framework from the core repository**: the framework and common crates now come from `git = "https://github.com/kubuno/core"`, tag `desktop-v0.1.1-alpha` (Kubuno Desktop moved into the core repository, under `desktop/`; the former `kubuno/desktop` repository is retired). Nothing changes in the app.
 - **The repository is organised by platform**: `server/` holds the Rust server (its `Cargo.toml`, `src/`,
   `migrations/`, tests and fonts), `web/` the web frontend (formerly `frontend/`, moved with its history), `common/` the code every client shares (`common/core`, `common/vectors`); the
