@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Libellés repris du bundle i18n du module drive. -->
+<resources>
+    <string name="app_name">Kubuno</string>
+
+    <!-- Onboarding : serveur -->
+    <string name="server_title">Connectez-vous à votre Kubuno</string>
+    <string name="server_subtitle">Saisissez l\'adresse de votre instance auto-hébergée.</string>
+    <string name="server_hint">cloud.exemple.fr</string>
+    <string name="server_continue">Continuer</string>
+    <string name="server_error_unreachable">Serveur injoignable. Vérifiez l\'adresse et votre connexion.</string>
+
+    <!-- Onboarding : connexion -->
+    <string name="login_title">Connexion</string>
+    <string name="login_login_label">E-mail ou nom d\'utilisateur</string>
+    <string name="login_password_label">Mot de passe</string>
+    <string name="login_submit">Se connecter</string>
+    <string name="login_error_credentials">Identifiants invalides.</string>
+    <string name="login_error_network">Erreur réseau. Réessayez.</string>
+    <string name="login_error_server">Erreur du serveur. Réessayez plus tard.</string>
+    <string name="login_change_server">Changer de serveur</string>
+
+    <!-- Onboarding : TOTP -->
+    <string name="totp_title">Authentification à deux facteurs</string>
+    <string name="totp_subtitle">Saisissez le code à 6 chiffres de votre application d\'authentification.</string>
+    <string name="totp_code_label">Code</string>
+    <string name="totp_submit">Vérifier</string>
+    <string name="totp_error">Code invalide.</string>
+
+    <!-- Onglets du bas (drive nav.*) -->
+    <string name="tab_home">Accueil</string>
+    <string name="tab_starred">Favoris</string>
+    <string name="tab_shared">Partagés</string>
+    <string name="tab_files">Fichiers</string>
+
+    <!-- Chrome de l'en-tête -->
+    <string name="menu">Menu</string>
+    <string name="search">Rechercher</string>
+    <string name="notifications">Notifications</string>
+    <string name="settings">Réglages</string>
+
+    <!-- Fil d'Ariane -->
+    <string name="breadcrumb_root">Mon Drive</string>
+    <string name="goto_folder">Aller à</string>
+
+    <!-- Actions « Nouveau » (FAB) -->
+    <string name="fab_new">Nouveau</string>
+    <string name="new_folder">Nouveau dossier</string>
+    <string name="upload_files">Importer des fichiers</string>
+
+    <!-- Sections et lignes -->
+    <string name="section_folders">Dossiers</string>
+    <string name="section_files">Fichiers</string>
+    <string name="row_modified">Modifié</string>
+    <string name="actions_more">Plus d\'actions</string>
+
+    <!-- États vides -->
+    <string name="browser_empty">Ce dossier est vide</string>
+    <string name="browser_empty_hint">Glissez-déposez des fichiers ici ou utilisez le bouton Importer.</string>
+    <string name="empty_starred">Aucun fichier suivi</string>
+    <string name="empty_starred_hint">Utilisez le menu d\'un fichier pour l\'ajouter aux suivis.</string>
+    <string name="empty_shared">Aucun fichier partagé avec vous</string>
+    <string name="empty_recent">Aucun fichier récent</string>
+
+    <!-- Tri et affichage -->
+    <string name="sort_by">Trier par</string>
+    <string name="sort_name">Nom</string>
+    <string name="sort_date">Date</string>
+    <string name="sort_size">Taille</string>
+    <string name="sort_type">Type</string>
+    <string name="sort_direction">Sens du tri</string>
+    <string name="sort_a_to_z">De A à Z</string>
+    <string name="sort_z_to_a">De Z à A</string>
+    <string name="sort_smallest">Du plus petit</string>
+    <string name="sort_largest">Du plus grand</string>
+    <string name="sort_oldest">Du plus ancien</string>
+    <string name="sort_newest">Du plus récent</string>
+    <string name="view_list">Liste</string>
+    <string name="view_grid">Grille</string>
+
+    <!-- Feuilles d'informations -->
+    <string name="ctx_info_file">Informations sur le fichier</string>
+    <string name="ctx_info_folder">Informations sur le dossier</string>
+    <string name="info_size">Taille</string>
+    <string name="info_type">Type</string>
+    <string name="info_path">Chemin</string>
+    <string name="info_checksum">Empreinte</string>
+
+    <!-- Unités de taille -->
+    <string name="unit_byte">o</string>
+    <string name="unit_kb">Ko</string>
+    <string name="unit_mb">Mo</string>
+    <string name="unit_gb">Go</string>
+
+    <!-- Session -->
+    <string name="home_logout">Se déconnecter</string>
+    <string name="session_expired">Votre session a expiré. Veuillez vous reconnecter.</string>
+
+    <!-- Item actions -->
+    <string name="action_download">Télécharger</string>
+    <string name="action_rename">Renommer</string>
+    <string name="action_move">Déplacer</string>
+    <string name="action_star">Ajouter aux suivis</string>
+    <string name="action_unstar">Retirer des suivis</string>
+    <string name="action_trash">Mettre à la corbeille</string>
+    <string name="action_restore">Restaurer</string>
+    <string name="action_confirm">Confirmer</string>
+    <string name="action_cancel">Annuler</string>
+    <string name="new_folder_hint">Nom du dossier</string>
+    <string name="transfers_title">Transferts</string>
+    <string name="transfers_empty">Aucun transfert</string>
+    <string name="transfer_retry">Réessayer</string>
+    <string name="transfer_clear">Effacer les terminés</string>
+    <string name="state_queued">En attente</string>
+    <string name="state_running">En cours</string>
+    <string name="state_done">Terminé</string>
+    <string name="state_failed">Échec</string>
+    <string name="open_with">Ouvrir avec</string>
+    <string name="download_done">%1$s téléchargé</string>
+
+    <!-- Offline pins -->
+    <string name="action_pin">Disponible hors-ligne</string>
+    <string name="action_unpin">Retirer du hors-ligne</string>
+    <string name="pinned_badge">Disponible hors-ligne</string>
+
+    <!-- Réglages -->
+    <string name="settings_account">Compte</string>
+    <string name="settings_server">Serveur</string>
+    <string name="settings_autoupload">Import automatique</string>
+    <string name="settings_offline">Stockage hors-ligne</string>
+    <string name="settings_about">À propos</string>
+    <string name="autoupload_enabled">Import automatique</string>
+    <string name="autoupload_wifi">Wi-Fi uniquement</string>
+    <string name="autoupload_charging">Seulement en charge</string>
+    <string name="autoupload_videos">Inclure les vidéos</string>
+    <string name="autoupload_count">Médias importés : %1$d</string>
+    <string name="offline_size">Copies locales</string>
+    <string name="offline_purge">Libérer l\'espace</string>
+    <string name="about_license">Licence AGPLv3</string>
+
+    <!-- Drawer, search, trash -->
+    <string name="nav_recent">Récents</string>
+    <string name="nav_trash">Corbeille</string>
+    <string name="empty_trash">La corbeille est vide</string>
+    <string name="search_hint">Rechercher dans les fichiers…</string>
+    <string name="search_prompt">Saisissez au moins deux caractères</string>
+    <string name="search_no_results">Aucun résultat</string>
+    <string name="search_clear">Effacer</string>
+    <string name="back">Retour</string>
+
+    <!-- Account panel -->
+    <string name="greeting">Bonjour %1$s !</string>
+    <string name="manage_account">Gérer votre compte</string>
+
+    <!-- Écran Compte -->
+    <string name="account_profile">Profil</string>
+    <string name="account_sessions">Sessions</string>
+    <string name="account_security">Sécurité</string>
+    <string name="account_username">Nom d\'utilisateur</string>
+    <string name="account_email">E-mail</string>
+    <string name="account_role">Rôle</string>
+    <string name="account_role_admin">Administrateur</string>
+    <string name="account_role_user">Utilisateur</string>
+    <string name="account_role_guest">Invité</string>
+    <string name="account_offline">Hors ligne — profil connu en dernier.</string>
+    <string name="account_error">Serveur injoignable.</string>
+    <string name="account_retry">Réessayer</string>
+    <string name="account_sessions_empty">Aucune session active</string>
+    <string name="account_session_current">Cet appareil</string>
+    <string name="account_session_last_used">Dernière activité %1$s</string>
+    <string name="account_session_revoke">Déconnecter cette session</string>
+    <string name="account_sessions_revoke_all">Déconnecter toutes les sessions</string>
+    <string name="account_sessions_revoke_all_message">Toutes les sessions sont déconnectées, celle-ci comprise. Vous devrez vous reconnecter.</string>
+    <string name="account_client_web">Navigateur</string>
+    <string name="account_client_native">Application mobile</string>
+    <string name="account_client_desktop">Application bureau</string>
+    <string name="account_client_api">Client API</string>
+    <string name="account_client_unknown">Client inconnu</string>
+    <string name="account_2fa">Validation en deux étapes</string>
+    <string name="account_2fa_on">Activée</string>
+    <string name="account_2fa_off">Désactivée</string>
+    <string name="account_manage_on_web">Gérer sur le web</string>
+
+    <!-- Avatar -->
+    <string name="avatar_change">Changer la photo de profil</string>
+    <string name="avatar_crop_title">Cadrez votre photo</string>
+    <string name="avatar_failed">Impossible de mettre à jour la photo</string>
+
+    <!-- Multi-account -->
+    <string name="add_account">Ajouter un compte</string>
+    <string name="manage_device_accounts">Gérer les comptes sur cet appareil</string>
+    <string name="remove_account">Retirer ce compte</string>
+    <string name="remove_account_confirm">Retirer %1$s de cet appareil ? Les fichiers gardés hors-ligne seront supprimés ; rien n’est retiré du serveur.</string>
+
+    <string name="sync_op_rename">Renommage de « %1$s »</string>
+    <string name="sync_op_move">Déplacement de « %1$s »</string>
+    <string name="sync_op_trash">« %1$s » mis à la corbeille</string>
+    <string name="sync_op_restore">« %1$s » restauré</string>
+    <string name="sync_op_star">« %1$s » ajouté aux favoris</string>
+    <string name="sync_op_unstar">« %1$s » retiré des favoris</string>
+    <string name="sync_op_mkdir">Nouveau dossier « %1$s »</string>
+    <string name="sync_op_other">Modification de « %1$s »</string>
+    <string name="sync_unknown_item">un élément</string>
+    <string name="sync_error_not_found">L’élément n’existe plus sur le serveur.</string>
+    <string name="sync_error_conflict">Conflit avec une modification faite sur le serveur.</string>
+    <string name="sync_error_unauthorized">Le serveur a refusé la session.</string>
+    <string name="sync_error_last">Dernière erreur : %1$s</string>
+</resources>

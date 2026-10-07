@@ -1,0 +1,10 @@
+{
+  "format": 1,
+  "source": "https://github.com/kubuno/core",
+  "ref": "vectors-v0.1.0",
+  "path": "vectors/sync",
+  "files": {
+    "http-classify.json": "sha256:37d87d5ca4fbfac801e409cbfc1e8f46bc344c127e4f90ee864e0d482e4e3a91",
+    "outbox-backoff.json": "sha256:a48edc9e8635477185a8a887dd0dbfb4b31c45ee326503e79863612152b79164"
+  }
+}

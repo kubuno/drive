@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Files cached for the in-app viewer, shared read-only on "open with". -->
+    <cache-path name="viewer" path="viewer/" />
+    <!-- Pinned offline copies live under filesDir/offline. -->
+    <files-path name="offline" path="offline/" />
+</paths>
