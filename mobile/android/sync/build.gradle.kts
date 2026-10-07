@@ -27,8 +27,8 @@ kotlin {
 }
 
 dependencies {
-    api(project(":core-api"))
-    api(project(":core-account"))
+    api(libs.kubuno.core.api)
+    api(libs.kubuno.core.account)
 
     implementation(libs.coroutines.android)
     implementation(libs.kotlinx.serialization.json)
@@ -49,5 +49,5 @@ dependencies {
     // vectors vendored under src/test/resources/vectors.
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)
-    testImplementation(project(":core-vectors"))
+    testImplementation(libs.kubuno.core.vectors)
 }

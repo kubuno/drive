@@ -10,6 +10,7 @@ number at release time, and CI publishes that section as the GitHub Release note
 ## [Unreleased]
 
 ### Added
+- **Mobile app**: the Kubuno Drive Android app now lives in this repository under `mobile/` (moved from the `kubuno/mobile` repository with its history). It builds on its own against the shared Kubuno mobile libraries published from the core (`com.kubuno.mobile:*`), and a `mobile-v<version>` tag releases its APK (workflow `mobile.yml`).
 
 - **One set of name rules for every Drive client** (`kubuno-drive-core`, in `common/core`): the verdict on a file or
   folder name for the server, Windows, macOS, Linux or all of them at once (empty, `.`/`..`, separators, NUL, control
