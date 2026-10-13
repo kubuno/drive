@@ -954,8 +954,8 @@ dependencies = [
 
 [[package]]
 name = "kubuno-desktop-app-storage"
-version = "0.1.1-alpha"
-source = "git+https://github.com/kubuno/core?tag=desktop-v0.1.1-alpha#93c321d4762b7cc8b2226c4b3be54d379e74fa41"
+version = "0.1.5-alpha"
+source = "git+https://github.com/kubuno/core?tag=desktop-v0.1.5-alpha#691b43b6dc75b06d63232977c1747168de44dcb4"
 dependencies = [
  "hex",
  "kubuno-desktop-secrets",
@@ -969,8 +969,8 @@ dependencies = [
 
 [[package]]
 name = "kubuno-desktop-controls"
-version = "0.1.1-alpha"
-source = "git+https://github.com/kubuno/core?tag=desktop-v0.1.1-alpha#93c321d4762b7cc8b2226c4b3be54d379e74fa41"
+version = "0.1.5-alpha"
+source = "git+https://github.com/kubuno/core?tag=desktop-v0.1.5-alpha#691b43b6dc75b06d63232977c1747168de44dcb4"
 dependencies = [
  "accesskit",
  "accesskit_windows",
@@ -984,8 +984,8 @@ dependencies = [
 
 [[package]]
 name = "kubuno-desktop-secrets"
-version = "0.1.1-alpha"
-source = "git+https://github.com/kubuno/core?tag=desktop-v0.1.1-alpha#93c321d4762b7cc8b2226c4b3be54d379e74fa41"
+version = "0.1.5-alpha"
+source = "git+https://github.com/kubuno/core?tag=desktop-v0.1.5-alpha#691b43b6dc75b06d63232977c1747168de44dcb4"
 dependencies = [
  "getrandom 0.2.17",
  "hex",
@@ -1000,8 +1000,8 @@ dependencies = [
 
 [[package]]
 name = "kubuno-desktop-ui"
-version = "0.1.1-alpha"
-source = "git+https://github.com/kubuno/core?tag=desktop-v0.1.1-alpha#93c321d4762b7cc8b2226c4b3be54d379e74fa41"
+version = "0.1.5-alpha"
+source = "git+https://github.com/kubuno/core?tag=desktop-v0.1.5-alpha#691b43b6dc75b06d63232977c1747168de44dcb4"
 dependencies = [
  "accesskit",
  "accesskit_windows",
@@ -1034,7 +1034,7 @@ dependencies = [
 [[package]]
 name = "kubuno-drive-desktop-app-controls"
 version = "0.1.0"
-source = "git+https://github.com/kubuno/core?tag=desktop-v0.1.1-alpha#93c321d4762b7cc8b2226c4b3be54d379e74fa41"
+source = "git+https://github.com/kubuno/core?tag=desktop-v0.1.5-alpha#691b43b6dc75b06d63232977c1747168de44dcb4"
 dependencies = [
  "kubuno-drive-desktop-shared",
  "tracing",
@@ -1104,7 +1104,7 @@ dependencies = [
 [[package]]
 name = "kubuno-drive-desktop-shared"
 version = "0.1.0"
-source = "git+https://github.com/kubuno/core?tag=desktop-v0.1.1-alpha#93c321d4762b7cc8b2226c4b3be54d379e74fa41"
+source = "git+https://github.com/kubuno/core?tag=desktop-v0.1.5-alpha#691b43b6dc75b06d63232977c1747168de44dcb4"
 dependencies = [
  "chrono",
  "crc32fast",

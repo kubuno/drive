@@ -43,11 +43,11 @@ kubuno-drive-core                 = { path = "../common/core" }
 
 # One tag of the core repository pins every framework and common crate (core desktop/README.md,
 # "Versions and tags"). Bump them together.
-kubuno-desktop-ui                 = { git = "https://github.com/kubuno/core",    tag = "desktop-v0.1.1-alpha" }
-kubuno-desktop-controls           = { git = "https://github.com/kubuno/core",    tag = "desktop-v0.1.1-alpha" }
-kubuno-drive-desktop-app-controls = { git = "https://github.com/kubuno/core",    tag = "desktop-v0.1.1-alpha" }
-kubuno-drive-desktop-shared       = { git = "https://github.com/kubuno/core",    tag = "desktop-v0.1.1-alpha" }
-kubuno-desktop-app-storage        = { git = "https://github.com/kubuno/core",    tag = "desktop-v0.1.1-alpha" }
+kubuno-desktop-ui                 = { git = "https://github.com/kubuno/core",    tag = "desktop-v0.1.5-alpha" }
+kubuno-desktop-controls           = { git = "https://github.com/kubuno/core",    tag = "desktop-v0.1.5-alpha" }
+kubuno-drive-desktop-app-controls = { git = "https://github.com/kubuno/core",    tag = "desktop-v0.1.5-alpha" }
+kubuno-drive-desktop-shared       = { git = "https://github.com/kubuno/core",    tag = "desktop-v0.1.5-alpha" }
+kubuno-desktop-app-storage        = { git = "https://github.com/kubuno/core",    tag = "desktop-v0.1.5-alpha" }
 
 windows          = { version = "0.62" }
 windows-core     = { version = "0.62" }

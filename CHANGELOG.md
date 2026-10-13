@@ -10,6 +10,9 @@ number at release time, and CI publishes that section as the GitHub Release note
 ## [Unreleased]
 
 ### Changed
+- **Desktop framework updated to `desktop-v0.1.5-alpha`: the Drive desktop app uses less memory.** On top of the
+  app's own bounded icon/thumbnail cache below, the framework now bounds its own Direct2D image and icon caches and
+  shares one HTTP client across all accounts instead of building a new TLS stack per sign-in.
 - **The desktop app bounds its icon and thumbnail cache (RAM).** The Direct2D cache of shell icons and content
   thumbnails (image/PDF previews) grew without limit — browsing thousands of images could retain hundreds of
   megabytes of preview bitmaps for the whole window lifetime. It now has a resident-byte budget (128 MB) with
