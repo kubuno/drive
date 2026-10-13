@@ -1,7 +1,7 @@
 /**
  * Code-behind of `SearchResultsView.kbcontrol` (converted from `SearchResultsView.tsx` by @kubuno/views-migrate).
  */
-import { bind, type MouseEventArgs } from '@kubuno/views'
+import { bind, type MouseEventArgs, type ValueChangedEventArgs } from '@kubuno/views'
 import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useQuery } from "@tanstack/react-query"
@@ -9,7 +9,6 @@ import { filesApi, type FileItem, type FilesSearchFilters } from "@kubuno/drive"
 import { prompt } from "@kubuno/sdk"
 import { useDriveExtras } from "../model/driveExtras"
 import { isPreviewable } from "./fileKinds"
-import SearchResultRow from "./SearchResultRow"
 
 import { ViewBase } from './SearchResultsView.kbcontrol'
 
@@ -150,20 +149,17 @@ export class SearchResultsView extends ViewBase {
     return `divide-y divide-border ${this.isFetching ? 'opacity-60' : ''}`
   }
 
-  /** `<SearchResultRow>`, rendered by a ReactHost. */
-  get SearchResultRow() {
-    if (!(!(this.isLoading)) || !(!(this.results.length === 0))) return undefined as never
-    return SearchResultRow
+  /** The rows of the Repeater over `results`: each is rendered by a native `<SearchResultRow>` element. */
+  get rows_results() {
+    return this.memo('rows_results', [this.results, this.isLoading], () => {
+      if (!(!(this.isLoading)) || !(!(this.results.length === 0))) return undefined as never
+      return this.results.map((file) => ({ file, key: file.id }))
+    })
   }
 
-  /** The rows of the Repeater over `results`. */
-  get rows_results() {
-    return this.memo('rows_results', [this.results, this.isLoading, this.props], () => {
-      if (!(!(this.isLoading)) || !(!(this.results.length === 0))) return undefined as never
-      return this.results.map((file) => {
-      return { file, search_result_row_props: ((!(this.isLoading)) && (!(this.results.length === 0))) ? ({ file: file, onOpen: this.props.onOpen }) : undefined, key: file.id }
-    })
-    })
+  /** `<SearchResultRow OnOpen>`: the row asks to open its file (`e.value`). */
+  open_result(_sender: unknown, e: ValueChangedEventArgs) {
+    this.props.onOpen(e.value as FileItem)
   }
 
   get show_page_count() {

@@ -9,6 +9,12 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 ## [Unreleased]
 
+### Changed
+- **The search results list composes a native view control.** Each search result row is now the
+  `SearchResultRow` control used directly as a typed element (`<SearchResultRow File="{Binding file}"
+  OnOpen="…"/>`), instead of being hosted through a React bridge — the first control-in-control composition
+  of the Drive views. Behaviour is unchanged. (Requires the WV-7 `@kubuno/views-compiler`.)
+
 ### Added
 - **Mobile app**: the Kubuno Drive Android app now lives in this repository under `mobile/` (moved from the `kubuno/mobile` repository with its history). It builds on its own against the shared Kubuno mobile libraries published from the core (`com.kubuno.mobile:*`), and a `mobile-v<version>` tag releases its APK (workflow `mobile.yml`).
 

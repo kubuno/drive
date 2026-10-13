@@ -55,8 +55,7 @@
     </Stack>
     <Panel Visible="{Binding visible3}" Class="{Binding div_class}">
       <Repeater ItemKey="key" ItemsSource="{Binding rows_results}">
-        <!-- TODO(views-migrate): <SearchResultRow> is no .kbview element (./SearchResultRow#default) -->
-        <ReactHost Component="{Binding SearchResultRow}" Props="{Binding search_result_row_props}"/>
+        <SearchResultRow File="{Binding file}" OnOpen="open_result"/>
       </Repeater>
     </Panel>
     <Stack Direction="LeftToRight" Gap="12" CrossAlign="Center" Justify="Center" Visible="{Binding visible4}" Class="mt-6">
