@@ -4,6 +4,7 @@
 //! shell icons (IShellItemImageFactory) as Direct2D bitmaps. The public API
 //! is exposed via `crate::services::storage::IconCache`.
 
+use std::cell::Cell;
 use std::collections::HashMap;
 
 use windows::Win32::Graphics::Direct2D::{ID2D1Bitmap1, ID2D1DeviceContext};
@@ -14,9 +15,32 @@ pub(crate) type Key = (String, i32, bool);
 /// Decoded pixels handed from the thumbnail worker to the UI thread.
 pub(crate) type ThumbResults = std::sync::Arc<std::sync::Mutex<Vec<(Key, Option<kubuno_drive_desktop_app_storage::ShellBitmap>)>>>;
 
+/// Resident-byte budget for cached icons and thumbnails. A grid thumbnail at 256 px
+/// decodes to ~256 KB; without a bound, browsing thousands of images retains hundreds
+/// of MB of never-freed bitmaps.
+const ICON_BUDGET_BYTES: usize = 128 * 1024 * 1024;
+
+struct Entry {
+    bitmap: Option<ID2D1Bitmap1>,
+    bytes: usize,
+    last: Cell<u64>,
+}
+
+/// The resident byte cost of a decoded bitmap (width*height*4).
+fn bitmap_bytes(b: &ID2D1Bitmap1) -> usize {
+    // SAFETY: a plain COM getter on a live bitmap.
+    let s = unsafe { b.GetPixelSize() };
+    (s.width as usize) * (s.height as usize) * 4
+}
+
 #[derive(Default)]
 pub struct IconCache {
-    map: HashMap<Key, Option<ID2D1Bitmap1>>,
+    /// Decoded icons/thumbnails, bounded by [`ICON_BUDGET_BYTES`] with LRU eviction.
+    map: HashMap<Key, Entry>,
+    /// Running sum of the resident bytes of the cached bitmaps.
+    bytes: usize,
+    /// Monotonic access clock for LRU recency (interior-mutable so `get` stays `&self`).
+    tick: Cell<u64>,
     /// Thumbnail requests already queued to the worker.
     pending: std::collections::HashSet<Key>,
     /// Decoded pixels delivered by the worker, awaiting D2D upload.
@@ -32,20 +56,49 @@ impl IconCache {
     /// Drops all cached bitmaps (device loss).
     pub fn clear(&mut self) {
         self.map.clear();
+        self.bytes = 0;
+    }
+
+    /// Refreshes an entry's LRU recency on access (interior-mutable, so callers keep `&self`).
+    fn touch(&self, e: &Entry) {
+        let t = self.tick.get() + 1;
+        self.tick.set(t);
+        e.last.set(t);
+    }
+
+    /// Inserts a decoded bitmap (replacing any previous one for `key`) and evicts the
+    /// least-recently-used entries until the cache is back under its byte budget.
+    fn put(&mut self, key: Key, bitmap: Option<ID2D1Bitmap1>) {
+        let bytes = bitmap.as_ref().map(bitmap_bytes).unwrap_or(0);
+        let t = self.tick.get() + 1;
+        self.tick.set(t);
+        if let Some(old) = self.map.insert(key, Entry { bitmap, bytes, last: Cell::new(t) }) {
+            self.bytes = self.bytes.saturating_sub(old.bytes);
+        }
+        self.bytes += bytes;
+        while self.bytes > ICON_BUDGET_BYTES && self.map.len() > 1 {
+            let Some(lru) = self.map.iter().min_by_key(|(_, e)| e.last.get()).map(|(k, _)| k.clone()) else { break };
+            if let Some(e) = self.map.remove(&lru) {
+                self.bytes = self.bytes.saturating_sub(e.bytes);
+            }
+        }
     }
 
     pub fn get(&self, path: &str, size_px: i32) -> Option<&ID2D1Bitmap1> {
-        self.map
-            .get(&(path.to_string(), size_px, false))
-            .and_then(|b| b.as_ref())
+        let e = self.map.get(&(path.to_string(), size_px, false))?;
+        self.touch(e);
+        e.bitmap.as_ref()
     }
 
     /// Content thumbnail (image/PDF preview) with icon fallback.
     pub fn get_thumbnail(&self, path: &str, size_px: i32) -> Option<&ID2D1Bitmap1> {
-        self.map
-            .get(&(path.to_string(), size_px, true))
-            .and_then(|b| b.as_ref())
-            .or_else(|| self.get(path, size_px))
+        if let Some(e) = self.map.get(&(path.to_string(), size_px, true)) {
+            self.touch(e);
+            if let Some(b) = e.bitmap.as_ref() {
+                return Some(b);
+            }
+        }
+        self.get(path, size_px)
     }
 
     /// Fetches and caches the shell icon for `path` if not already present.
@@ -58,9 +111,11 @@ impl IconCache {
     /// the sidebar's Drives/Network sections). Key "imageres:{index}".
     pub fn ensure_imageres(&mut self, ctx: &ID2D1DeviceContext, index: i32, size_px: i32) {
         let key = (format!("imageres:{index}"), size_px, false);
-        self.map.entry(key).or_insert_with(|| {
-            crate::utils::shell::imageres_icon(index, size_px).and_then(|b| upload(ctx, &b))
-        });
+        if self.map.contains_key(&key) {
+            return;
+        }
+        let bitmap = crate::utils::shell::imageres_icon(index, size_px).and_then(|b| upload(ctx, &b));
+        self.put(key, bitmap);
     }
 
     /// Same, but preferring the content thumbnail — fetched ASYNCHRONOUSLY on
@@ -89,7 +144,7 @@ impl IconCache {
         for (key, shell_bitmap) in results {
             self.pending.remove(&key);
             let bitmap = shell_bitmap.and_then(|b| upload(ctx, &b));
-            self.map.insert(key, bitmap);
+            self.put(key, bitmap);
         }
     }
 
@@ -99,6 +154,6 @@ impl IconCache {
             return;
         }
         let bitmap = fetch_icon(ctx, path, size_px, thumbnail);
-        self.map.insert(key, bitmap);
+        self.put(key, bitmap);
     }
 }

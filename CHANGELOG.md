@@ -10,6 +10,11 @@ number at release time, and CI publishes that section as the GitHub Release note
 ## [Unreleased]
 
 ### Changed
+- **The desktop app bounds its icon and thumbnail cache (RAM).** The Direct2D cache of shell icons and content
+  thumbnails (image/PDF previews) grew without limit — browsing thousands of images could retain hundreds of
+  megabytes of preview bitmaps for the whole window lifetime. It now has a resident-byte budget (128 MB) with
+  least-recently-used eviction (the entries you are still looking at are kept; the ones scrolled far away are
+  dropped), so memory stays bounded however long and however far you browse.
 - **Drive views compose their own controls natively.** Where a `.kbview` view previously hosted one of its own
   user controls through a React bridge, it now uses it directly as a typed element — the search results list and
   the image-search results use `<SearchResultRow File="…" OnOpen="…"/>`, the details panel uses `<TagDots>`, the
