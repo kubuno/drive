@@ -7,7 +7,6 @@ import { useTranslation } from "react-i18next"
 import { api, useAuthStore } from "@kubuno/sdk"
 import { VersionHistoryModal, type FileItem } from "@kubuno/drive"
 import { type FileVersionStats } from "../model/fileVersions"
-import TagDots from "../controls/TagDots"
 
 import { ViewBase } from './DetailsPanel.kbcontrol'
 import * as __parts from './DetailsPanel.parts.tsx'
@@ -214,17 +213,10 @@ export class DetailsPanel extends ViewBase {
     return this.props.file.mime_type
   }
 
-  /** `<TagDots>`, rendered by a ReactHost. */
-  get TagDots() {
-    if (!(!(!this.props.file))) return undefined as never
-    return TagDots
-  }
-
-  get tag_dots_props() {
-    return this.memo('tag_dots_props', [this.props], () => {
-      if (!(!(!this.props.file))) return undefined as never
-      return ({ itemId: this.props.file.id })
-    })
+  /** `<TagDots ItemId>`: the id of the file whose tags the native control shows. */
+  get tag_dots_item_id() {
+    if (!this.props.file) return undefined as never
+    return this.props.file.id
   }
 
   get part2_props() {

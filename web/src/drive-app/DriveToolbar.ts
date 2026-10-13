@@ -1,10 +1,9 @@
 /**
  * Code-behind of `DriveToolbar.kbcontrol` (converted from `DriveToolbar.tsx` by @kubuno/views-migrate).
  */
-import { type MouseEventArgs } from '@kubuno/views'
+import { type MouseEventArgs, type ValueChangedEventArgs } from '@kubuno/views'
 import { useTranslation } from "react-i18next"
 import type { Folder, FolderAncestor } from "@kubuno/drive"
-import Breadcrumb from "./DriveBreadcrumb"
 import type { DriveBulkActions } from "./useDriveBulkActions"
 
 import { ViewBase } from './DriveToolbar.kbcontrol'
@@ -48,13 +47,14 @@ export class DriveToolbar extends ViewBase {
     this.publish({ tr: s.t })
   }
 
-  /** `<Breadcrumb>`, rendered by a ReactHost. */
-  get Breadcrumb() {
-    return Breadcrumb
+  /** `<DriveBreadcrumb Folder>`: the current folder, or null in the starred / shared / recent / trash views. */
+  get breadcrumb_folder(): Folder | null {
+    return !this.props.starred && !this.props.shared && !this.props.recent && !this.props.trashed ? this.props.currentFolder : null
   }
 
-  get breadcrumb_props() {
-    return this.memo('breadcrumb_props', [this.props], () => ({ folder: !this.props.starred && !this.props.shared && !this.props.recent && !this.props.trashed ? this.props.currentFolder : null, ancestors: this.props.ancestors, pageTitle: this.props.pageTitle, onNavigate: this.props.onNavigate }))
+  /** `<DriveBreadcrumb OnNavigate>`: navigate to a folder id (`e.value`, null for the drive root). */
+  breadcrumb_navigate(_sender: unknown, e: ValueChangedEventArgs) {
+    this.props.onNavigate(e.value as string | null)
   }
 
   get show_selected_count() {

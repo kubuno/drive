@@ -2,8 +2,10 @@
 <UserControl x:Props="Props">
   <Stack Direction="LeftToRight" Gap="12" CrossAlign="Start" Class="mb-5">
     <Panel Class="flex-1 min-w-0">
-      <!-- TODO(views-migrate): <Breadcrumb> is no .kbview element (./Breadcrumb#default) -->
-      <ReactHost Component="{Binding Breadcrumb}" Props="{Binding breadcrumb_props}"/>
+      <DriveBreadcrumb Folder="{Binding breadcrumb_folder}"
+                       Ancestors="{Binding props.ancestors}"
+                       PageTitle="{Binding props.pageTitle}"
+                       OnNavigate="breadcrumb_navigate"/>
     </Panel>
     <Stack Direction="LeftToRight" Gap="6" CrossAlign="Center" Class="shrink-0 pt-0.5">
       <Label HtmlTag="Span"

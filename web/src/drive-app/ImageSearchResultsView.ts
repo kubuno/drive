@@ -1,10 +1,9 @@
 /**
  * Code-behind of `ImageSearchResultsView.kbcontrol` (converted from `ImageSearchResultsView.tsx` by @kubuno/views-migrate).
  */
-import { type MouseEventArgs } from '@kubuno/views'
+import { type MouseEventArgs, type ValueChangedEventArgs } from '@kubuno/views'
 import { useTranslation } from "react-i18next"
 import type { FileItem, SearchHit } from "@kubuno/drive"
-import SearchResultRow from "./SearchResultRow"
 
 import { ViewBase } from './ImageSearchResultsView.kbcontrol'
 
@@ -51,19 +50,11 @@ export class ImageSearchResultsView extends ViewBase {
     return !(this.props.state.results.length === 0)
   }
 
-  /** `<SearchResultRow>`, rendered by a ReactHost. */
-  get SearchResultRow() {
-    if (!(!(this.props.state.loading)) || !(!(this.props.state.results.length === 0))) return undefined as never
-    return SearchResultRow
-  }
-
-  /** The rows of the Repeater over `state.results`. */
+  /** The rows of the Repeater over `state.results`: each is rendered by a native `<SearchResultRow>` element. */
   get rows_results() {
     return this.memo('rows_results', [this.props], () => {
       if (!(!(this.props.state.loading)) || !(!(this.props.state.results.length === 0))) return undefined as never
-      return this.props.state.results.map((file) => {
-      return { file, search_result_row_props: ((!(this.props.state.loading)) && (!(this.props.state.results.length === 0))) ? ({ file: file, onOpen: this.props.onOpen }) : undefined, key: file.id }
-    })
+      return this.props.state.results.map((file) => ({ file, key: file.id }))
     })
   }
 
@@ -77,6 +68,11 @@ export class ImageSearchResultsView extends ViewBase {
 
   panel_click(_sender: unknown, _args: MouseEventArgs) {
     this.props.onClear?.()
+  }
+
+  /** `<SearchResultRow OnOpen>`: the row asks to open its file (`e.value`). */
+  open_result(_sender: unknown, e: ValueChangedEventArgs) {
+    this.props.onOpen(e.value as FileItem)
   }
 
 }

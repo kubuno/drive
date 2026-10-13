@@ -4,12 +4,11 @@
 import { Fragment } from 'react'
 import React from "react"
 import { useTranslation } from "react-i18next"
-import { ViewMenu, VIEW_SPECS, type FileItem, type Folder } from "@kubuno/drive"
-import TrashStatsBanner from "../pages/TrashStatsBanner"
-import EmptyState from "./DriveEmptyState"
+import { type ValueChangedEventArgs } from '@kubuno/views'
+import { ViewMenu, VIEW_SPECS, type FileItem, type Folder, type ViewMode } from "@kubuno/drive"
 import FileCard from "./FileCard"
 import FileRow from "./FileRow"
-import SortFilterBar from "./SortFilterBar"
+import type { SortDir, SortField } from "./types"
 import type { DriveSelection } from "./useDriveSelection"
 import type { DriveViewOptions } from "./useDriveViewOptions"
 
@@ -94,26 +93,8 @@ export class DriveContentGrid extends ViewBase {
     return !(this.props.isLoading) && !(this.props.hasError) && !!(this.props.folders.length === 0 && this.props.filteredFiles.length === 0)
   }
 
-  /** `<EmptyState>`, rendered by a ReactHost. */
-  get EmptyState() {
-    if (!(!(this.props.isLoading)) || !(!(this.props.hasError)) || !(this.props.folders.length === 0 && this.props.filteredFiles.length === 0)) return undefined as never
-    return EmptyState
-  }
-
-  get empty_state_props() {
-    return this.memo('empty_state_props', [this.props], () => {
-      if (!(!(this.props.isLoading)) || !(!(this.props.hasError)) || !(this.props.folders.length === 0 && this.props.filteredFiles.length === 0)) return undefined as never
-      return ({ trashed: this.props.trashed, starred: this.props.starred, shared: this.props.shared, recent: this.props.recent })
-    })
-  }
-
   get show_main() {
     return !(this.props.isLoading) && !(this.props.hasError) && !(this.props.folders.length === 0 && this.props.filteredFiles.length === 0)
-  }
-
-  /** `<TrashStatsBanner>`, rendered by a ReactHost. */
-  get TrashStatsBanner() {
-    return TrashStatsBanner
   }
 
   get show_files_trashed_recent() {
@@ -121,17 +102,29 @@ export class DriveContentGrid extends ViewBase {
     return this.props.files.length > 0 && !this.props.trashed && !this.props.recent && !this.props.starred && !this.props.shared
   }
 
-  /** `<SortFilterBar>`, rendered by a ReactHost. */
-  get SortFilterBar() {
-    if (!(!(this.props.isLoading)) || !(!(this.props.hasError)) || !(!(this.props.folders.length === 0 && this.props.filteredFiles.length === 0)) || !(this.props.files.length > 0 && !this.props.trashed && !this.props.recent && !this.props.starred && !this.props.shared)) return undefined as never
-    return SortFilterBar
+  /** `<SortFilterBar OnSortField>`: the sort field changed (`e.value`). */
+  sfb_sort_field(_sender: unknown, e: ValueChangedEventArgs) {
+    this.props.view.setSortField(e.value as SortField)
   }
 
-  get sort_filter_bar_props() {
-    return this.memo('sort_filter_bar_props', [this.props], () => {
-      if (!(!(this.props.isLoading)) || !(!(this.props.hasError)) || !(!(this.props.folders.length === 0 && this.props.filteredFiles.length === 0)) || !(this.props.files.length > 0 && !this.props.trashed && !this.props.recent && !this.props.starred && !this.props.shared)) return undefined as never
-      return ({ sortField: this.props.view.sortField, sortDir: this.props.view.sortDir, typeFilter: this.props.view.typeFilter, onSortField: this.props.view.setSortField, onSortDir: this.props.view.setSortDir, onTypeFilter: this.props.view.setTypeFilter, viewMode: this.props.view.viewMode, onViewMode: this.props.view.setViewMode, showHidden: this.props.view.showHidden, onShowHidden: this.props.view.setShowHidden })
-    })
+  /** `<SortFilterBar OnSortDir>`: the sort direction changed (`e.value`). */
+  sfb_sort_dir(_sender: unknown, e: ValueChangedEventArgs) {
+    this.props.view.setSortDir(e.value as SortDir)
+  }
+
+  /** `<SortFilterBar OnTypeFilter>`: the type filter changed (`e.value`, null for all types). */
+  sfb_type_filter(_sender: unknown, e: ValueChangedEventArgs) {
+    this.props.view.setTypeFilter(e.value as string | null)
+  }
+
+  /** `<SortFilterBar OnViewMode>`: the view mode (grid density / list) changed (`e.value`). */
+  sfb_view_mode(_sender: unknown, e: ValueChangedEventArgs) {
+    this.props.view.setViewMode(e.value as ViewMode)
+  }
+
+  /** `<SortFilterBar OnShowHidden>`: the "show hidden files" toggle changed (`e.value`). */
+  sfb_show_hidden(_sender: unknown, e: ValueChangedEventArgs) {
+    this.props.view.setShowHidden(e.value as boolean)
   }
 
   get show_files_trashed_recent2() {

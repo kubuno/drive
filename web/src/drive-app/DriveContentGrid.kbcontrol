@@ -15,13 +15,24 @@
       <Label Text="{Res app.module_down_title, Source=drive}" FontWeight="Medium" Overflow="Wrap" ForeColor="Danger"/>
       <Label Text="{Res app.module_down_hint, Source=drive}" Role="Meta" Overflow="Wrap" ForeColor="TextTertiary"/>
     </Stack>
-    <!-- TODO(views-migrate): <EmptyState> is no .kbview element (./EmptyState#default) -->
-    <ReactHost Component="{Binding EmptyState}" Props="{Binding empty_state_props}" Visible="{Binding show_case_3}"/>
+    <DriveEmptyState Trashed="{Binding props.trashed}"
+                     Starred="{Binding props.starred}"
+                     Shared="{Binding props.shared}"
+                     Recent="{Binding props.recent}"
+                     Visible="{Binding show_case_3}"/>
     <Panel Visible="{Binding show_main}" Class="space-y-6">
-      <!-- TODO(views-migrate): <TrashStatsBanner> is no .kbview element (../TrashStatsBanner#default) -->
-      <ReactHost Component="{Binding TrashStatsBanner}" Visible="{Binding props.trashed}"/>
-      <!-- TODO(views-migrate): <SortFilterBar> is no .kbview element (./SortFilterBar#default) -->
-      <ReactHost Component="{Binding SortFilterBar}" Props="{Binding sort_filter_bar_props}" Visible="{Binding show_files_trashed_recent}"/>
+      <TrashStatsBanner Visible="{Binding props.trashed}"/>
+      <SortFilterBar SortField="{Binding props.view.sortField}"
+                     SortDir="{Binding props.view.sortDir}"
+                     TypeFilter="{Binding props.view.typeFilter}"
+                     ViewMode="{Binding props.view.viewMode}"
+                     ShowHidden="{Binding props.view.showHidden}"
+                     OnSortField="sfb_sort_field"
+                     OnSortDir="sfb_sort_dir"
+                     OnTypeFilter="sfb_type_filter"
+                     OnViewMode="sfb_view_mode"
+                     OnShowHidden="sfb_show_hidden"
+                     Visible="{Binding show_files_trashed_recent}"/>
       <Stack Direction="LeftToRight"
              Gap="0"
              CrossAlign="Center"
