@@ -41,10 +41,10 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 ### Changed
 
-- **`.kbview` views use the published WV-7 compiler.** The `@kubuno/views-compiler` floor moves to `^0.1.4`, the
+- **`.kbview` views use the published WV-7 compiler.** The `@kubuno/views-compiler` floor moves to `^0.1.5`, the
   release in which a `.kbcontrol` user control becomes a native, typed element (its `x:Props` fields become bindable
-  properties and events). Existing views compile unchanged; new views can now compose user controls natively instead
-  of through a React host hole.
+  properties and events) and can host child elements when its props declare a `children` slot. Existing views
+  compile unchanged; new views can compose user controls natively instead of through a React host hole.
 
 - **Android: the Kubuno logo is the current mark.** The app's copy of the `ic_kubuno_logo` drawable shows the
   six aperture blades around the cube instead of the old "K" monogram, as a single-colour vector tinted by the
