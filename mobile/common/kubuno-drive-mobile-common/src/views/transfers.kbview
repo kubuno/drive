@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Drive · Transfers screen — converted from transfers/TransfersScreen.kt. The upload/download queue with
+  progress, retry and "clear completed". Rows inlined (TransferRow): direction icon + name + state/bytes +
+  a ProgressBar while running. Drive LIGHT theme, logical px (~390 wide). Screen root is a Panel.
+-->
+<Panel xmlns="https://kubuno.com/views" xmlns:x="https://kubuno.com/views/x"
+       Layout="Dock" BackColor="#FFFFFF">
+
+  <Stack Dock="Top">
+    <Stack Direction="LeftToRight" CrossAlign="Center" Gap="8" Height="56" Padding="8, 0, 12, 0" BackColor="#FFFFFF">
+      <IconButton Icon="ArrowLeft" Diameter="40" IconSize="22" IconColor="#5F6368"/>
+      <Label Stack.Fill="true" Text="Transferts" Role="Subtitle" FontWeight="SemiBold" ForeColor="#202124"/>
+      <Button Text="Effacer terminés" Variant="Text" Size="Sm"/>
+    </Stack>
+    <Separator/>
+  </Stack>
+
+  <ScrollArea Dock="Fill">
+    <Stack Gap="0" Padding="24, 8, 24, 24">
+      <Stack CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" BackColor="#FFFFFF">
+
+        <!-- Running upload -->
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="12" Padding="8, 12, 8, 12">
+          <Icon Name="Upload" Size="24" ForeColor="#1A73E8"/>
+          <Stack Stack.Fill="true" Gap="6">
+            <Label Text="Vacances 2026.zip" Role="Body" ForeColor="#202124" Overflow="Ellipsis"/>
+            <Label Text="Envoi · 42 Mo / 120 Mo" Role="Meta" ForeColor="#80868B"/>
+            <ProgressBar Value="35" Variant="Primary"/>
+          </Stack>
+        </Stack>
+        <Separator/>
+
+        <!-- Queued download -->
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="12" Padding="8, 12, 8, 12">
+          <Icon Name="Download" Size="24" ForeColor="#1A73E8"/>
+          <Stack Stack.Fill="true" Gap="6">
+            <Label Text="Présentation.pptx" Role="Body" ForeColor="#202124" Overflow="Ellipsis"/>
+            <Label Text="En file · 0 Mo / 8 Mo" Role="Meta" ForeColor="#80868B"/>
+            <ProgressBar Value="0" Variant="Primary"/>
+          </Stack>
+        </Stack>
+        <Separator/>
+
+        <!-- Done -->
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="12" Padding="8, 12, 8, 12">
+          <Icon Name="Download" Size="24" ForeColor="#1E8E3E"/>
+          <Stack Stack.Fill="true" Gap="2">
+            <Label Text="Contrat.pdf" Role="Body" ForeColor="#202124" Overflow="Ellipsis"/>
+            <Label Text="Terminé · 1,2 Mo" Role="Meta" ForeColor="#80868B"/>
+          </Stack>
+        </Stack>
+        <Separator/>
+
+        <!-- Failed (retry) -->
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="12" Padding="8, 12, 8, 12">
+          <Icon Name="Upload" Size="24" ForeColor="#D93025"/>
+          <Stack Stack.Fill="true" Gap="2">
+            <Label Text="Film anniversaire.mov" Role="Body" ForeColor="#202124" Overflow="Ellipsis"/>
+            <Label Text="Échec · 0 Mo / 540 Mo" Role="Meta" ForeColor="#80868B"/>
+          </Stack>
+          <IconButton Icon="RefreshCw" Diameter="36" IconSize="20" IconColor="#1A73E8"/>
+        </Stack>
+
+      </Stack>
+    </Stack>
+  </ScrollArea>
+
+</Panel>

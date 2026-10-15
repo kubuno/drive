@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Drive · Onboarding · TOTP — the TotpScreen of OnboardingScreens.kt: enter the two-factor code. Centered
+  form, a single numeric field, a full-width primary action. Drive LIGHT theme, logical px.
+-->
+<Panel xmlns="https://kubuno.com/views" xmlns:x="https://kubuno.com/views/x"
+       Layout="Dock" BackColor="#FFFFFF">
+  <Stack Dock="Fill" Justify="Center" CrossAlign="Stretch" Gap="0" Padding="24, 32, 24, 32">
+    <Label Text="Vérification en deux étapes" Role="Display" FontWeight="SemiBold" ForeColor="#202124"/>
+    <Label Text="Entrez le code à 6 chiffres de votre application d'authentification." Role="Body" ForeColor="#5F6368" Padding="0, 8, 0, 0"/>
+    <Stack CrossAlign="Stretch" Padding="0, 24, 0, 0">
+      <TextField Label="Code" Placeholder="123456" InputType="Number" Text="482913"/>
+    </Stack>
+    <Stack CrossAlign="Stretch" Padding="0, 16, 0, 0">
+      <Button Text="Vérifier" Variant="Primary" Size="Lg"/>
+    </Stack>
+  </Stack>
+</Panel>

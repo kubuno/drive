@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Drive · Settings screen — converted from settings/SettingsScreen.kt. Install-level settings: photo
+  auto-upload, offline copies, about. Grouped SettingsRow entries (Label + trailing Switch or value) inside
+  bordered cards, with section titles. Drive LIGHT theme, logical px (~390 wide). Screen root is a Panel.
+-->
+<Panel xmlns="https://kubuno.com/views" xmlns:x="https://kubuno.com/views/x"
+       Layout="Dock" BackColor="#FFFFFF">
+
+  <!-- Top bar : back + title -->
+  <Stack Dock="Top">
+    <Stack Direction="LeftToRight" CrossAlign="Center" Gap="8" Height="56" Padding="8, 0, 12, 0" BackColor="#FFFFFF">
+      <IconButton Icon="ArrowLeft" Diameter="40" IconSize="22" IconColor="#5F6368"/>
+      <Label Stack.Fill="true" Text="Paramètres" Role="Subtitle" FontWeight="SemiBold" ForeColor="#202124"/>
+    </Stack>
+    <Separator/>
+  </Stack>
+
+  <ScrollArea Dock="Fill">
+    <Stack Gap="12" Padding="24, 16, 24, 24">
+
+      <Label Text="ENVOI AUTOMATIQUE" Role="Meta" FontWeight="SemiBold" ForeColor="#80868B"/>
+      <Stack CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" BackColor="#FFFFFF" Padding="4, 4, 4, 4">
+        <SettingsRow Label="Envoi automatique des photos" Description="Sauvegarder la pellicule de l'appareil">
+          <Switch On="true"/>
+        </SettingsRow>
+        <SettingsRow Label="Wi-Fi uniquement">
+          <Switch On="true"/>
+        </SettingsRow>
+        <SettingsRow Label="Pendant la charge">
+          <Switch On="false"/>
+        </SettingsRow>
+        <SettingsRow Label="Inclure les vidéos">
+          <Switch On="false"/>
+        </SettingsRow>
+        <SettingsRow Label="Fichiers envoyés" ShowDivider="false">
+          <Label Text="1 284" Role="Meta" ForeColor="#80868B"/>
+        </SettingsRow>
+      </Stack>
+
+      <Label Text="HORS-LIGNE" Role="Meta" FontWeight="SemiBold" ForeColor="#80868B"/>
+      <Stack CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" BackColor="#FFFFFF" Padding="4, 4, 4, 4">
+        <SettingsRow Label="Taille des copies hors-ligne">
+          <Label Text="128 Mo" Role="Meta" ForeColor="#80868B"/>
+        </SettingsRow>
+        <SettingsRow Label="Purger les copies hors-ligne" ShowDivider="false">
+          <Icon Name="ChevronRight" Size="18" ForeColor="#5F6368"/>
+        </SettingsRow>
+      </Stack>
+
+      <Label Text="À PROPOS" Role="Meta" FontWeight="SemiBold" ForeColor="#80868B"/>
+      <Stack CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" BackColor="#FFFFFF" Padding="4, 4, 4, 4">
+        <SettingsRow Label="Kubuno Drive">
+          <Label Text="1.4.0" Role="Meta" ForeColor="#80868B"/>
+        </SettingsRow>
+        <SettingsRow Label="Licence" Description="AGPL-3.0-or-later" ShowDivider="false">
+          <Icon Name="ChevronRight" Size="18" ForeColor="#5F6368"/>
+        </SettingsRow>
+      </Stack>
+
+    </Stack>
+  </ScrollArea>
+
+</Panel>

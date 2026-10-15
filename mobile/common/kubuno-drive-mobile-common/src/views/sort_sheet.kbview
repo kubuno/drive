@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Drive · Sort sheet — converted from sheet/Sheets.kt (SortSheet). A bottom sheet: the sort field rows (the
+  current one checked) then a separator and the two direction rows. Drive LIGHT theme.
+-->
+<Panel xmlns="https://kubuno.com/views" xmlns:x="https://kubuno.com/views/x"
+       Layout="Dock" BackColor="#73202124">
+  <Stack Dock="Bottom" BackColor="#FFFFFF" CornerRadius="16" Padding="0, 8, 0, 12">
+
+    <Stack CrossAlign="Center" Padding="0, 0, 0, 2">
+      <Panel BackColor="#BDC1C6" CornerRadius="2" Width="40" Height="4"/>
+    </Stack>
+    <Label Text="Trier par" Role="Body" FontWeight="SemiBold" ForeColor="#202124" Padding="16, 4, 16, 8"/>
+
+    <Stack Direction="LeftToRight" CrossAlign="Center" Gap="0" Height="52" Padding="16, 0, 16, 0" BackColor="#D3E3FD">
+      <Label Stack.Fill="true" Text="Nom" Role="Body" ForeColor="#202124"/>
+      <Icon Name="Check" Size="18" ForeColor="#1A73E8"/>
+    </Stack>
+    <Stack Direction="LeftToRight" CrossAlign="Center" Height="52" Padding="16, 0, 16, 0">
+      <Label Stack.Fill="true" Text="Date de modification" Role="Body" ForeColor="#202124"/>
+    </Stack>
+    <Stack Direction="LeftToRight" CrossAlign="Center" Height="52" Padding="16, 0, 16, 0">
+      <Label Stack.Fill="true" Text="Taille" Role="Body" ForeColor="#202124"/>
+    </Stack>
+    <Stack Direction="LeftToRight" CrossAlign="Center" Height="52" Padding="16, 0, 16, 0">
+      <Label Stack.Fill="true" Text="Type" Role="Body" ForeColor="#202124"/>
+    </Stack>
+
+    <Separator/>
+
+    <Stack Direction="LeftToRight" CrossAlign="Center" Height="52" Padding="16, 0, 16, 0" BackColor="#D3E3FD">
+      <Label Stack.Fill="true" Text="A → Z" Role="Body" ForeColor="#202124"/>
+      <Icon Name="Check" Size="18" ForeColor="#1A73E8"/>
+    </Stack>
+    <Stack Direction="LeftToRight" CrossAlign="Center" Height="52" Padding="16, 0, 16, 0">
+      <Label Stack.Fill="true" Text="Z → A" Role="Body" ForeColor="#202124"/>
+    </Stack>
+
+  </Stack>
+</Panel>

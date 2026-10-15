@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Drive · Move sheet — converted from sheet/ItemActions.kt (MoveSheet). A bottom sheet: the item name, then the
+  destination folders (the root and each visible folder), each with the move icon. Drive LIGHT theme.
+-->
+<Panel xmlns="https://kubuno.com/views" xmlns:x="https://kubuno.com/views/x"
+       Layout="Dock" BackColor="#73202124">
+  <Stack Dock="Bottom" BackColor="#FFFFFF" CornerRadius="16" Padding="0, 8, 0, 12">
+
+    <Stack CrossAlign="Center" Padding="0, 0, 0, 2">
+      <Panel BackColor="#BDC1C6" CornerRadius="2" Width="40" Height="4"/>
+    </Stack>
+    <Label Text="Déplacer" Role="Body" FontWeight="SemiBold" ForeColor="#202124" Padding="16, 4, 16, 2"/>
+    <Label Text="Rapport annuel.pdf" Role="Meta" ForeColor="#80868B" Overflow="Ellipsis" Padding="16, 0, 16, 8"/>
+
+    <Stack Direction="LeftToRight" CrossAlign="Center" Gap="14" Height="52" Padding="16, 0, 16, 0">
+      <Icon Name="HardDrive" Size="20" ForeColor="#5F6368"/>
+      <Label Stack.Fill="true" Text="Mon Drive" Role="Body" ForeColor="#202124"/>
+    </Stack>
+    <Stack Direction="LeftToRight" CrossAlign="Center" Gap="14" Height="52" Padding="16, 0, 16, 0">
+      <Icon Name="Folder" Size="20" ForeColor="#5F6368"/>
+      <Label Stack.Fill="true" Text="Documents" Role="Body" ForeColor="#202124"/>
+    </Stack>
+    <Stack Direction="LeftToRight" CrossAlign="Center" Gap="14" Height="52" Padding="16, 0, 16, 0">
+      <Icon Name="Folder" Size="20" ForeColor="#5F6368"/>
+      <Label Stack.Fill="true" Text="Comptabilité" Role="Body" ForeColor="#202124"/>
+    </Stack>
+    <Stack Direction="LeftToRight" CrossAlign="Center" Gap="14" Height="52" Padding="16, 0, 16, 0">
+      <Icon Name="Folder" Size="20" ForeColor="#5F6368"/>
+      <Label Stack.Fill="true" Text="Archives" Role="Body" ForeColor="#202124"/>
+    </Stack>
+
+  </Stack>
+</Panel>

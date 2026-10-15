@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Drive · Trash — converted from browse/BrowseScreens.kt (TrashScreen). The trashed folders and files, grouped
+  (DOSSIERS then FICHIERS); tap or kebab opens the action sheet (Restore / Delete). Back + title. Rows inlined.
+  Drive LIGHT theme.
+-->
+<Panel xmlns="https://kubuno.com/views" xmlns:x="https://kubuno.com/views/x"
+       Layout="Dock" BackColor="#FFFFFF">
+
+  <Stack Dock="Top">
+    <Stack Direction="LeftToRight" CrossAlign="Center" Gap="8" Height="56" Padding="8, 0, 12, 0" BackColor="#FFFFFF">
+      <IconButton Icon="ArrowLeft" Diameter="40" IconSize="22" IconColor="#5F6368"/>
+      <Label Stack.Fill="true" Text="Corbeille" Role="Subtitle" FontWeight="SemiBold" ForeColor="#202124"/>
+    </Stack>
+    <Separator/>
+  </Stack>
+
+  <ScrollArea Dock="Fill">
+    <Stack Gap="12" Padding="24, 16, 24, 24">
+
+      <Label Text="DOSSIERS" Role="Meta" FontWeight="SemiBold" ForeColor="#80868B"/>
+      <Stack CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" BackColor="#FFFFFF">
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="12" Padding="8, 12, 8, 12">
+          <Icon Name="Folder" Size="26" ForeColor="#9AA0A6"/>
+          <Label Stack.Fill="true" Text="Ancien projet" Role="Body" ForeColor="#5F6368" Overflow="Ellipsis"/>
+          <Icon Name="MoreVertical" Size="16" ForeColor="#5F6368"/>
+        </Stack>
+      </Stack>
+
+      <Label Text="FICHIERS" Role="Meta" FontWeight="SemiBold" ForeColor="#80868B"/>
+      <Stack CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" BackColor="#FFFFFF">
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="12" Padding="8, 12, 8, 12">
+          <Stack CrossAlign="Center" Justify="Center" BackColor="#F1F3F4" CornerRadius="4" Width="40" Height="40">
+            <Icon Name="FileText" Size="24" ForeColor="#9AA0A6"/>
+          </Stack>
+          <Stack Stack.Fill="true" Gap="2">
+            <Label Text="Brouillon.pdf" Role="Body" ForeColor="#5F6368" Overflow="Ellipsis"/>
+            <Label Text="Supprimé il y a 5 j · 72 Ko" Role="Meta" ForeColor="#80868B" Overflow="Ellipsis"/>
+          </Stack>
+          <Icon Name="MoreVertical" Size="16" ForeColor="#5F6368"/>
+        </Stack>
+        <Separator/>
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="12" Padding="8, 12, 8, 12" BackColor="#FDFDFC">
+          <Stack CrossAlign="Center" Justify="Center" BackColor="#F1F3F4" CornerRadius="4" Width="40" Height="40">
+            <Icon Name="Image" Size="24" ForeColor="#9AA0A6"/>
+          </Stack>
+          <Stack Stack.Fill="true" Gap="2">
+            <Label Text="Photo floue.jpg" Role="Body" ForeColor="#5F6368" Overflow="Ellipsis"/>
+            <Label Text="Supprimé il y a 1 sem. · 2,1 Mo" Role="Meta" ForeColor="#80868B" Overflow="Ellipsis"/>
+          </Stack>
+          <Icon Name="MoreVertical" Size="16" ForeColor="#5F6368"/>
+        </Stack>
+      </Stack>
+
+    </Stack>
+  </ScrollArea>
+
+</Panel>

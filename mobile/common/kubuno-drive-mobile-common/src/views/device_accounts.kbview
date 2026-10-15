@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Drive · Onboarding · Device accounts — the DeviceAccountsScreen of OnboardingScreens.kt: pick an account
+  already present on the device, or add another server. Avatar + two-line rows + chevron, inside a card.
+  Drive LIGHT theme, logical px. Centered content.
+-->
+<Panel xmlns="https://kubuno.com/views" xmlns:x="https://kubuno.com/views/x"
+       Layout="Dock" BackColor="#FFFFFF">
+  <Stack Dock="Fill" Justify="Center" CrossAlign="Stretch" Gap="0" Padding="24, 32, 24, 32">
+
+    <Label Text="Choisir un compte" Role="Display" FontWeight="SemiBold" ForeColor="#202124"/>
+    <Label Text="Ces comptes sont déjà présents sur cet appareil." Role="Body" ForeColor="#5F6368" Padding="0, 8, 0, 0"/>
+
+    <Stack CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" BackColor="#FFFFFF" Padding="4, 4, 4, 4" Margin="0, 24, 0, 0">
+      <Stack Direction="LeftToRight" CrossAlign="Center" Gap="12" Padding="12, 10, 8, 10">
+        <Avatar DisplayName="Camille Martin" AvatarSize="40" Tint="Accent"/>
+        <Stack Stack.Fill="true" Gap="2">
+          <Label Text="Camille Martin" Role="Body" ForeColor="#202124" Overflow="Ellipsis"/>
+          <Label Text="camille@kubuno.com · drive.kubuno.com" Role="Meta" ForeColor="#80868B" Overflow="Ellipsis"/>
+        </Stack>
+        <Icon Name="ChevronRight" Size="20" ForeColor="#5F6368"/>
+      </Stack>
+      <Separator/>
+      <Stack Direction="LeftToRight" CrossAlign="Center" Gap="12" Padding="12, 10, 8, 10">
+        <Avatar DisplayName="Alex Dubois" AvatarSize="40"/>
+        <Stack Stack.Fill="true" Gap="2">
+          <Label Text="Alex Dubois" Role="Body" ForeColor="#202124" Overflow="Ellipsis"/>
+          <Label Text="alex@toiledev.com · cloud.toiledev.com" Role="Meta" ForeColor="#80868B" Overflow="Ellipsis"/>
+        </Stack>
+        <Icon Name="ChevronRight" Size="20" ForeColor="#5F6368"/>
+      </Stack>
+    </Stack>
+
+    <Stack CrossAlign="Center" Padding="0, 16, 0, 0">
+      <Button Text="Utiliser un autre serveur" Variant="Text" Size="Md"/>
+    </Stack>
+
+  </Stack>
+</Panel>

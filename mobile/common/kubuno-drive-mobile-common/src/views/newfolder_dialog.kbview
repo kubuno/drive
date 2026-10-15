@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Drive · New folder dialog — converted from AppNav.kt (NewFolderDialog, an AlertDialog). A centered modal card
+  over a dimmed backdrop: title, an empty name field, and Cancel / Create actions. Drive LIGHT theme.
+-->
+<Panel xmlns="https://kubuno.com/views" xmlns:x="https://kubuno.com/views/x"
+       Layout="Dock" BackColor="#73202124">
+  <Stack Dock="Fill" Justify="Center" CrossAlign="Center" Padding="24, 0, 24, 0">
+    <Stack BackColor="#FFFFFF" CornerRadius="12" Elevation="Lg" Width="320" Padding="20, 20, 20, 16" Gap="16">
+      <Label Text="Nouveau dossier" Role="Subtitle" FontWeight="SemiBold" ForeColor="#202124"/>
+      <TextField Placeholder="Nom du dossier"/>
+      <Stack Direction="LeftToRight" Justify="End" CrossAlign="Center" Gap="8">
+        <Button Text="Annuler" Variant="Ghost" Size="Sm"/>
+        <Button Text="Créer" Variant="Primary" Size="Sm"/>
+      </Stack>
+    </Stack>
+  </Stack>
+</Panel>

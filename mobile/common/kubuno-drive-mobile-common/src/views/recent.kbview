@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Drive · Recent — converted from browse/BrowseScreens.kt (RecentScreen). A flat list of recently-touched
+  files (offline, from Room), newest first. Back + title, no sections. Rows inlined. Drive LIGHT theme.
+-->
+<Panel xmlns="https://kubuno.com/views" xmlns:x="https://kubuno.com/views/x"
+       Layout="Dock" BackColor="#FFFFFF">
+
+  <Stack Dock="Top">
+    <Stack Direction="LeftToRight" CrossAlign="Center" Gap="8" Height="56" Padding="8, 0, 12, 0" BackColor="#FFFFFF">
+      <IconButton Icon="ArrowLeft" Diameter="40" IconSize="22" IconColor="#5F6368"/>
+      <Label Stack.Fill="true" Text="Récents" Role="Subtitle" FontWeight="SemiBold" ForeColor="#202124"/>
+    </Stack>
+    <Separator/>
+  </Stack>
+
+  <ScrollArea Dock="Fill">
+    <Stack Gap="0" Padding="24, 12, 24, 24">
+      <Stack CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" BackColor="#FFFFFF">
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="12" Padding="8, 12, 8, 12">
+          <Stack CrossAlign="Center" Justify="Center" BackColor="#F1F3F4" CornerRadius="4" Width="40" Height="40">
+            <Icon Name="FileText" Size="24" ForeColor="#5F6368"/>
+          </Stack>
+          <Stack Stack.Fill="true" Gap="2">
+            <Label Text="Compte-rendu réunion.pdf" Role="Body" ForeColor="#202124" Overflow="Ellipsis"/>
+            <Label Text="Ouvert il y a 2 h · 180 Ko" Role="Meta" ForeColor="#80868B" Overflow="Ellipsis"/>
+          </Stack>
+          <Icon Name="MoreVertical" Size="16" ForeColor="#5F6368"/>
+        </Stack>
+        <Separator/>
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="12" Padding="8, 12, 8, 12" BackColor="#FDFDFC">
+          <Stack CrossAlign="Center" Justify="Center" BackColor="#F1F3F4" CornerRadius="4" Width="40" Height="40">
+            <Icon Name="Image" Size="24" ForeColor="#1A73E8"/>
+          </Stack>
+          <Stack Stack.Fill="true" Gap="2">
+            <Label Text="Capture écran.png" Role="Body" ForeColor="#202124" Overflow="Ellipsis"/>
+            <Label Text="Ouvert hier · 540 Ko" Role="Meta" ForeColor="#80868B" Overflow="Ellipsis"/>
+          </Stack>
+          <Icon Name="MoreVertical" Size="16" ForeColor="#5F6368"/>
+        </Stack>
+        <Separator/>
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="12" Padding="8, 12, 8, 12">
+          <Stack CrossAlign="Center" Justify="Center" BackColor="#F1F3F4" CornerRadius="4" Width="40" Height="40">
+            <Icon Name="Sheet" Size="24" ForeColor="#1E8E3E"/>
+          </Stack>
+          <Stack Stack.Fill="true" Gap="2">
+            <Label Text="Suivi budget.xlsx" Role="Body" ForeColor="#202124" Overflow="Ellipsis"/>
+            <Label Text="Ouvert il y a 3 j · 96 Ko" Role="Meta" ForeColor="#80868B" Overflow="Ellipsis"/>
+          </Stack>
+          <Icon Name="MoreVertical" Size="16" ForeColor="#5F6368"/>
+        </Stack>
+      </Stack>
+    </Stack>
+  </ScrollArea>
+
+</Panel>

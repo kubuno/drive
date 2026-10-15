@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Drive · Account screen — converted from account/AccountScreen.kt. The signed-in account: identity card
+  (avatar + name/email), profile fields, active sessions (with "this device" badge and revoke), security, and
+  sign-out. Avatar + SettingsRow + Badge host controls; session rows inlined. Drive LIGHT theme, logical px.
+-->
+<Panel xmlns="https://kubuno.com/views" xmlns:x="https://kubuno.com/views/x"
+       Layout="Dock" BackColor="#FFFFFF">
+
+  <Stack Dock="Top">
+    <Stack Direction="LeftToRight" CrossAlign="Center" Gap="8" Height="56" Padding="8, 0, 12, 0" BackColor="#FFFFFF">
+      <IconButton Icon="ArrowLeft" Diameter="40" IconSize="22" IconColor="#5F6368"/>
+      <Label Stack.Fill="true" Text="Compte" Role="Subtitle" FontWeight="SemiBold" ForeColor="#202124"/>
+    </Stack>
+    <Separator/>
+  </Stack>
+
+  <ScrollArea Dock="Fill">
+    <Stack Gap="12" Padding="24, 16, 24, 24">
+
+      <Label Text="PROFIL" Role="Meta" FontWeight="SemiBold" ForeColor="#80868B"/>
+      <Stack CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" BackColor="#FFFFFF" Padding="4, 4, 4, 4">
+        <!-- Identity card -->
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="16" Padding="12, 12, 12, 12">
+          <Avatar DisplayName="Camille Martin" AvatarSize="64" Tint="Accent"/>
+          <Stack Stack.Fill="true" Gap="2">
+            <Label Text="Camille Martin" Role="Subtitle" FontWeight="SemiBold" ForeColor="#202124" Overflow="Ellipsis"/>
+            <Label Text="@camille" Role="Meta" ForeColor="#80868B"/>
+            <Label Text="camille@kubuno.com" Role="Meta" ForeColor="#80868B" Overflow="Ellipsis"/>
+          </Stack>
+          <IconButton Icon="Camera" Diameter="36" IconSize="18" IconColor="#5F6368"/>
+        </Stack>
+        <Separator/>
+        <SettingsRow Label="Nom d'utilisateur"><Label Text="camille" Role="Meta" ForeColor="#80868B"/></SettingsRow>
+        <SettingsRow Label="E-mail"><Label Text="camille@kubuno.com" Role="Meta" ForeColor="#80868B"/></SettingsRow>
+        <SettingsRow Label="Rôle" ShowDivider="false"><Label Text="Administrateur" Role="Meta" ForeColor="#80868B"/></SettingsRow>
+      </Stack>
+
+      <Label Text="SESSIONS" Role="Meta" FontWeight="SemiBold" ForeColor="#80868B"/>
+      <Stack CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" BackColor="#FFFFFF">
+        <!-- This device -->
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="12" Padding="16, 10, 8, 10">
+          <Stack Stack.Fill="true" Gap="2">
+            <Stack Direction="LeftToRight" CrossAlign="Center" Gap="6">
+              <Label Text="Pixel 9 Pro" Role="Body" ForeColor="#202124" Overflow="Ellipsis"/>
+              <Badge Text="Cet appareil" Size="Sm"/>
+            </Stack>
+            <Label Text="Dernière utilisation 14 oct. 2026 · France" Role="Meta" ForeColor="#80868B"/>
+          </Stack>
+          <IconButton Icon="LogOut" Diameter="36" IconSize="18" IconColor="#5F6368"/>
+        </Stack>
+        <Separator/>
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="12" Padding="16, 10, 8, 10">
+          <Stack Stack.Fill="true" Gap="2">
+            <Label Text="Firefox · Windows" Role="Body" ForeColor="#202124" Overflow="Ellipsis"/>
+            <Label Text="Dernière utilisation 12 oct. 2026 · 92.0.1.23" Role="Meta" ForeColor="#80868B"/>
+          </Stack>
+          <IconButton Icon="LogOut" Diameter="36" IconSize="18" IconColor="#5F6368"/>
+        </Stack>
+        <Separator/>
+        <SettingsRow Label="Révoquer toutes les sessions" ShowDivider="false">
+          <Icon Name="ChevronRight" Size="18" ForeColor="#D93025"/>
+        </SettingsRow>
+      </Stack>
+
+      <Label Text="SÉCURITÉ" Role="Meta" FontWeight="SemiBold" ForeColor="#80868B"/>
+      <Stack CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" BackColor="#FFFFFF" Padding="4, 4, 4, 4">
+        <SettingsRow Label="Double authentification (2FA)"><Label Text="Activée" Role="Meta" ForeColor="#1E8E3E"/></SettingsRow>
+        <SettingsRow Label="Gérer sur le web" ShowDivider="false"><Label Text="drive.kubuno.com" Role="Meta" ForeColor="#80868B"/></SettingsRow>
+      </Stack>
+
+      <Stack CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" BackColor="#FFFFFF" Padding="4, 4, 4, 4">
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="12" Padding="12, 12, 12, 12">
+          <Icon Name="LogOut" Size="20" ForeColor="#D93025"/>
+          <Label Stack.Fill="true" Text="Déconnexion" Role="Body" ForeColor="#D93025"/>
+        </Stack>
+      </Stack>
+
+    </Stack>
+  </ScrollArea>
+
+</Panel>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Drive · Search — converted from browse/BrowseScreens.kt (SearchScreen). A SearchField in the top bar and a
+  local (offline) results list; a folder result navigates, a file result opens the action sheet. Rows inlined.
+  Drive LIGHT theme, logical px.
+-->
+<Panel xmlns="https://kubuno.com/views" xmlns:x="https://kubuno.com/views/x"
+       Layout="Dock" BackColor="#FFFFFF">
+
+  <Stack Dock="Top">
+    <Stack Direction="LeftToRight" CrossAlign="Center" Gap="8" Height="56" Padding="8, 0, 12, 0" BackColor="#FFFFFF">
+      <IconButton Icon="ArrowLeft" Diameter="40" IconSize="22" IconColor="#5F6368"/>
+      <SearchField Stack.Fill="true" Placeholder="Rechercher dans Drive" Text="rapport"/>
+    </Stack>
+    <Separator/>
+  </Stack>
+
+  <ScrollArea Dock="Fill">
+    <Stack Gap="0" Padding="24, 12, 24, 24">
+      <Stack CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" BackColor="#FFFFFF">
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="12" Padding="8, 12, 8, 12">
+          <Icon Name="Folder" Size="26" ForeColor="#1A73E8"/>
+          <Stack Stack.Fill="true" Gap="2">
+            <Label Text="Rapports" Role="Body" ForeColor="#202124" Overflow="Ellipsis"/>
+            <Label Text="Mon Drive · Comptabilité" Role="Meta" ForeColor="#80868B" Overflow="Ellipsis"/>
+          </Stack>
+          <Icon Name="MoreVertical" Size="16" ForeColor="#5F6368"/>
+        </Stack>
+        <Separator/>
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="12" Padding="8, 12, 8, 12" BackColor="#FDFDFC">
+          <Stack CrossAlign="Center" Justify="Center" BackColor="#F1F3F4" CornerRadius="4" Width="40" Height="40">
+            <Icon Name="FileText" Size="24" ForeColor="#5F6368"/>
+          </Stack>
+          <Stack Stack.Fill="true" Gap="2">
+            <Label Text="Rapport annuel.pdf" Role="Body" ForeColor="#202124" Overflow="Ellipsis"/>
+            <Label Text="Mon Drive · Comptabilité" Role="Meta" ForeColor="#80868B" Overflow="Ellipsis"/>
+          </Stack>
+          <Icon Name="MoreVertical" Size="16" ForeColor="#5F6368"/>
+        </Stack>
+        <Separator/>
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="12" Padding="8, 12, 8, 12">
+          <Stack CrossAlign="Center" Justify="Center" BackColor="#F1F3F4" CornerRadius="4" Width="40" Height="40">
+            <Icon Name="Sheet" Size="24" ForeColor="#1E8E3E"/>
+          </Stack>
+          <Stack Stack.Fill="true" Gap="2">
+            <Label Text="Rapport trimestriel.xlsx" Role="Body" ForeColor="#202124" Overflow="Ellipsis"/>
+            <Label Text="Mon Drive · Finance 2026" Role="Meta" ForeColor="#80868B" Overflow="Ellipsis"/>
+          </Stack>
+          <Icon Name="MoreVertical" Size="16" ForeColor="#5F6368"/>
+        </Stack>
+      </Stack>
+    </Stack>
+  </ScrollArea>
+
+</Panel>

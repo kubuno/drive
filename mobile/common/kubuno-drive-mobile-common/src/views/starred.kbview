@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Drive · Starred tab — converted from starred/StarredScreen.kt. The favourite files (files only), available
+  offline. A bottom-nav tab (Favoris active), a single file list, no sections. Rows inlined. Drive LIGHT theme.
+-->
+<Panel xmlns="https://kubuno.com/views" xmlns:x="https://kubuno.com/views/x"
+       Layout="Dock" BackColor="#FFFFFF">
+
+  <Stack Dock="Top">
+    <Stack Direction="LeftToRight" CrossAlign="Center" Gap="4" Height="56" Padding="8, 0, 12, 0" BackColor="#FFFFFF">
+      <IconButton Icon="Menu" Diameter="40" IconSize="22" IconColor="#5F6368"/>
+      <Label Stack.Fill="true" Text="Favoris" Role="Subtitle" FontWeight="SemiBold" ForeColor="#202124" Padding="8, 0, 0, 0"/>
+      <IconButton Icon="Search" Diameter="40" IconSize="20" IconColor="#5F6368"/>
+      <Avatar DisplayName="Camille Martin" AvatarSize="30" Tint="Accent"/>
+    </Stack>
+    <Separator/>
+  </Stack>
+
+  <Stack Dock="Bottom">
+    <Separator/>
+    <Stack Direction="LeftToRight" CrossAlign="Center" Height="64" BackColor="#FFFFFF">
+      <Stack Stack.Fill="true" CrossAlign="Center" Gap="2" Padding="12, 6, 12, 6">
+        <Icon Name="House" Size="21" ForeColor="#5F6368"/><Label Text="Accueil" Role="Caption" ForeColor="#5F6368"/>
+      </Stack>
+      <Stack Stack.Fill="true" CrossAlign="Center" Gap="2" Padding="12, 6, 12, 6">
+        <Stack CrossAlign="Center" Justify="Center" BackColor="#D3E3FD" CornerRadius="8" Width="64" Height="28">
+          <Icon Name="Star" Size="21" ForeColor="#1A73E8"/>
+        </Stack>
+        <Label Text="Favoris" Role="Caption" FontWeight="SemiBold" ForeColor="#1A73E8"/>
+      </Stack>
+      <Stack Stack.Fill="true" CrossAlign="Center" Gap="2" Padding="12, 6, 12, 6">
+        <Icon Name="Users" Size="21" ForeColor="#5F6368"/><Label Text="Partagés" Role="Caption" ForeColor="#5F6368"/>
+      </Stack>
+      <Stack Stack.Fill="true" CrossAlign="Center" Gap="2" Padding="12, 6, 12, 6">
+        <Icon Name="Folder" Size="21" ForeColor="#5F6368"/><Label Text="Fichiers" Role="Caption" ForeColor="#5F6368"/>
+      </Stack>
+    </Stack>
+  </Stack>
+
+  <ScrollArea Dock="Fill">
+    <Stack Gap="0" Padding="24, 12, 24, 24">
+      <Stack CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" BackColor="#FFFFFF">
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="12" Padding="8, 12, 8, 12">
+          <Stack CrossAlign="Center" Justify="Center" BackColor="#F1F3F4" CornerRadius="4" Width="40" Height="40">
+            <Icon Name="FileText" Size="24" ForeColor="#5F6368"/>
+          </Stack>
+          <Stack Stack.Fill="true" Gap="2">
+            <Label Text="Rapport annuel.pdf" Role="Body" ForeColor="#202124" Overflow="Ellipsis"/>
+            <Label Text="Modifié 30 juin 2026 · 2,4 Mo" Role="Meta" ForeColor="#80868B" Overflow="Ellipsis"/>
+          </Stack>
+          <Icon Name="CloudCheck" Size="13" ForeColor="#1E8E3E"/>
+          <Icon Name="Star" Size="14" ForeColor="#FACC15"/>
+          <Icon Name="MoreVertical" Size="16" ForeColor="#5F6368"/>
+        </Stack>
+        <Separator/>
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="12" Padding="8, 12, 8, 12" BackColor="#FDFDFC">
+          <Stack CrossAlign="Center" Justify="Center" BackColor="#F1F3F4" CornerRadius="4" Width="40" Height="40">
+            <Icon Name="Image" Size="24" ForeColor="#1A73E8"/>
+          </Stack>
+          <Stack Stack.Fill="true" Gap="2">
+            <Label Text="Logo Kubuno.png" Role="Body" ForeColor="#202124" Overflow="Ellipsis"/>
+            <Label Text="Modifié 18 juin 2026 · 320 Ko" Role="Meta" ForeColor="#80868B" Overflow="Ellipsis"/>
+          </Stack>
+          <Icon Name="Star" Size="14" ForeColor="#FACC15"/>
+          <Icon Name="MoreVertical" Size="16" ForeColor="#5F6368"/>
+        </Stack>
+        <Separator/>
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="12" Padding="8, 12, 8, 12">
+          <Stack CrossAlign="Center" Justify="Center" BackColor="#F1F3F4" CornerRadius="4" Width="40" Height="40">
+            <Icon Name="Sheet" Size="24" ForeColor="#1E8E3E"/>
+          </Stack>
+          <Stack Stack.Fill="true" Gap="2">
+            <Label Text="Budget 2026.xlsx" Role="Body" ForeColor="#202124" Overflow="Ellipsis"/>
+            <Label Text="Modifié 24 juin 2026 · 184 Ko" Role="Meta" ForeColor="#80868B" Overflow="Ellipsis"/>
+          </Stack>
+          <Icon Name="CloudCheck" Size="13" ForeColor="#1E8E3E"/>
+          <Icon Name="Star" Size="14" ForeColor="#FACC15"/>
+          <Icon Name="MoreVertical" Size="16" ForeColor="#5F6368"/>
+        </Stack>
+      </Stack>
+    </Stack>
+  </ScrollArea>
+
+</Panel>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Drive · Onboarding · Login — converted from onboarding/OnboardingScreens.kt (LoginScreen). Centered form:
+  title, server host, identifier + password fields, a full-width primary action, and a text link to change
+  server. No top/bottom bars (the onboarding flow runs before any session). Drive LIGHT theme, logical px.
+  Screen root is a Panel; the form stretches to the frame width (CrossAlign=Stretch).
+-->
+<Panel xmlns="https://kubuno.com/views" xmlns:x="https://kubuno.com/views/x"
+       Layout="Dock" BackColor="#FFFFFF">
+  <Stack Dock="Fill" Justify="Center" CrossAlign="Stretch" Gap="0" Padding="24, 32, 24, 32">
+
+    <Label Text="Connexion" Role="Display" FontWeight="SemiBold" ForeColor="#202124"/>
+    <Label Text="drive.kubuno.com" Role="Body" ForeColor="#5F6368" Padding="0, 8, 0, 0"/>
+
+    <Stack CrossAlign="Stretch" Gap="12" Padding="0, 24, 0, 0">
+      <TextField Label="Identifiant" Placeholder="vous@exemple.com" Text="camille@kubuno.com"/>
+      <TextField Label="Mot de passe" Placeholder="Votre mot de passe" InputType="Password" Text="••••••••"/>
+    </Stack>
+
+    <Stack CrossAlign="Stretch" Gap="4" Padding="0, 16, 0, 0">
+      <Button Text="Se connecter" Variant="Primary" Size="Lg"/>
+      <Button Text="Changer de serveur" Variant="Text" Size="Md"/>
+    </Stack>
+
+  </Stack>
+</Panel>

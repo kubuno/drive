@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Drive · Empty folder — the EmptyFolder / TabEmptyState pattern (BrowserScreen.kt), shared by Recent, Trash,
+  Search, Starred, Shared, Home: a centred icon, a message and a hint, with an optional primary action. Drive
+  LIGHT theme, logical px. Top bar + bottom nav around a centred empty state.
+-->
+<Panel xmlns="https://kubuno.com/views" xmlns:x="https://kubuno.com/views/x"
+       Layout="Dock" BackColor="#FFFFFF">
+
+  <Stack Dock="Top">
+    <Stack Direction="LeftToRight" CrossAlign="Center" Gap="4" Height="56" Padding="8, 0, 12, 0" BackColor="#FFFFFF">
+      <IconButton Icon="Menu" Diameter="40" IconSize="22" IconColor="#5F6368"/>
+      <Label Stack.Fill="true" Text="Mon Drive" Role="Subtitle" FontWeight="SemiBold" ForeColor="#202124" Padding="8, 0, 0, 0"/>
+      <IconButton Icon="Search" Diameter="40" IconSize="20" IconColor="#5F6368"/>
+      <Avatar DisplayName="Camille Martin" AvatarSize="30" Tint="Accent"/>
+    </Stack>
+    <Separator/>
+  </Stack>
+
+  <Stack Dock="Bottom">
+    <Separator/>
+    <Stack Direction="LeftToRight" CrossAlign="Center" Height="64" BackColor="#FFFFFF">
+      <Stack Stack.Fill="true" CrossAlign="Center" Gap="2" Padding="12, 6, 12, 6">
+        <Icon Name="House" Size="21" ForeColor="#5F6368"/><Label Text="Accueil" Role="Caption" ForeColor="#5F6368"/>
+      </Stack>
+      <Stack Stack.Fill="true" CrossAlign="Center" Gap="2" Padding="12, 6, 12, 6">
+        <Icon Name="Star" Size="21" ForeColor="#5F6368"/><Label Text="Favoris" Role="Caption" ForeColor="#5F6368"/>
+      </Stack>
+      <Stack Stack.Fill="true" CrossAlign="Center" Gap="2" Padding="12, 6, 12, 6">
+        <Icon Name="Users" Size="21" ForeColor="#5F6368"/><Label Text="Partagés" Role="Caption" ForeColor="#5F6368"/>
+      </Stack>
+      <Stack Stack.Fill="true" CrossAlign="Center" Gap="2" Padding="12, 6, 12, 6">
+        <Stack CrossAlign="Center" Justify="Center" BackColor="#D3E3FD" CornerRadius="8" Width="64" Height="28">
+          <Icon Name="Folder" Size="21" ForeColor="#1A73E8"/>
+        </Stack>
+        <Label Text="Fichiers" Role="Caption" FontWeight="SemiBold" ForeColor="#1A73E8"/>
+      </Stack>
+    </Stack>
+  </Stack>
+
+  <Stack Dock="Fill" Justify="Center" CrossAlign="Center" Gap="12" Padding="32, 24, 32, 24">
+    <Icon Name="CloudUpload" Size="52" ForeColor="#80868B"/>
+    <Label Text="Ce dossier est vide" Role="Body" ForeColor="#5F6368" TextAlign="TopCenter"/>
+    <Label Text="Importez des fichiers ou créez un dossier pour commencer." Role="Meta" ForeColor="#80868B" TextAlign="TopCenter"/>
+    <Button Text="Importer des fichiers" Variant="Primary" Size="Md"/>
+  </Stack>
+
+</Panel>

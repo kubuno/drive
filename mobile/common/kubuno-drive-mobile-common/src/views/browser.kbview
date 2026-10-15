@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Drive · Browser (file list) screen — the core of the Kubuno Drive mobile app, converted from the
+  Jetpack Compose app (drive/mobile/android/app .../ui/browser/BrowserScreen.kt + ControlBar.kt + Items.kt)
+  into the shared .kbview view language. Authored in LOGICAL px (~390 wide), the Drive LIGHT theme
+  (surface #FFFFFF, accent #1A73E8). Rows are inlined (static sample content) rather than data-bound so the
+  SAME file renders both in the Visual Studio web design surface (full host vocabulary) and, once the vello
+  renderer grows these controls, on the device. Screen root is a Panel (a container), never UserControl.
+-->
+<Panel xmlns="https://kubuno.com/views" xmlns:x="https://kubuno.com/views/x"
+       Layout="Dock" BackColor="#FFFFFF">
+
+  <!-- Top app bar (KubunoShell) : menu · title/breadcrumb · search · transfers · account -->
+  <Stack Dock="Top">
+    <Stack Direction="LeftToRight" CrossAlign="Center" Gap="4" Height="56"
+           Padding="8, 0, 12, 0" BackColor="#FFFFFF">
+      <IconButton Icon="Menu" Diameter="40" IconSize="22" IconColor="#5F6368"/>
+      <Label Stack.Fill="true" Text="Mon Drive" Role="Subtitle" FontWeight="SemiBold" ForeColor="#202124"
+             Overflow="Ellipsis" Padding="8, 0, 0, 0"/>
+      <IconButton Icon="Search" Diameter="40" IconSize="20" IconColor="#5F6368"/>
+      <IconButton Icon="ArrowDownUp" Diameter="40" IconSize="20" IconColor="#5F6368"/>
+      <Avatar DisplayName="Camille Martin" AvatarSize="30" Tint="Accent"/>
+    </Stack>
+    <Separator/>
+  </Stack>
+
+  <!-- Bottom navigation (KubunoBottomNav) : 4 tabs, Files active -->
+  <Stack Dock="Bottom">
+    <Separator/>
+    <Stack Direction="LeftToRight" CrossAlign="Center" Height="64" BackColor="#FFFFFF">
+      <Stack Stack.Fill="true" CrossAlign="Center" Gap="2" Padding="12, 6, 12, 6">
+        <Icon Name="House" Size="21" ForeColor="#5F6368"/>
+        <Label Text="Accueil" Role="Caption" ForeColor="#5F6368"/>
+      </Stack>
+      <Stack Stack.Fill="true" CrossAlign="Center" Gap="2" Padding="12, 6, 12, 6">
+        <Icon Name="Star" Size="21" ForeColor="#5F6368"/>
+        <Label Text="Favoris" Role="Caption" ForeColor="#5F6368"/>
+      </Stack>
+      <Stack Stack.Fill="true" CrossAlign="Center" Gap="2" Padding="12, 6, 12, 6">
+        <Icon Name="Users" Size="21" ForeColor="#5F6368"/>
+        <Label Text="Partagés" Role="Caption" ForeColor="#5F6368"/>
+      </Stack>
+      <Stack Stack.Fill="true" CrossAlign="Center" Gap="2" Padding="12, 6, 12, 6">
+        <Stack CrossAlign="Center" Justify="Center" BackColor="#D3E3FD" CornerRadius="8" Width="64" Height="28">
+          <Icon Name="Folder" Size="21" ForeColor="#1A73E8"/>
+        </Stack>
+        <Label Text="Fichiers" Role="Caption" FontWeight="SemiBold" ForeColor="#1A73E8"/>
+      </Stack>
+    </Stack>
+  </Stack>
+
+  <!-- Scrolling content -->
+  <ScrollArea Dock="Fill">
+    <Stack Gap="12" Padding="24, 16, 24, 24">
+
+      <!-- Control bar : sort chip + direction + view toggles (ControlBar.kt / MobileControlBar) -->
+      <Stack Direction="LeftToRight" CrossAlign="Center" Justify="SpaceBetween">
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="6">
+          <Label Text="Nom" Role="Body" ForeColor="#202124" Padding="4, 0, 8, 0"/>
+          <Stack CrossAlign="Center" Justify="Center" BackColor="#D3E3FD" CornerRadius="9999" Width="32" Height="32">
+            <Icon Name="ArrowUp" Size="17" ForeColor="#1A73E8"/>
+          </Stack>
+        </Stack>
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="6">
+          <Stack CrossAlign="Center" Justify="Center" BackColor="#202124" CornerRadius="9999" Width="56" Height="36">
+            <Icon Name="List" Size="18" ForeColor="#FFFFFF"/>
+          </Stack>
+          <Stack CrossAlign="Center" Justify="Center" BackColor="#D3E3FD" CornerRadius="9999" Width="56" Height="36">
+            <Icon Name="LayoutGrid" Size="18" ForeColor="#5F6368"/>
+          </Stack>
+        </Stack>
+      </Stack>
+
+      <!-- Folders -->
+      <Label Text="DOSSIERS" Role="Meta" FontWeight="SemiBold" ForeColor="#80868B"/>
+      <Stack CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" BackColor="#FFFFFF">
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="12" Padding="8, 12, 8, 12">
+          <Icon Name="Folder" Size="26" ForeColor="#1A73E8"/>
+          <Label Stack.Fill="true" Text="Documents" Role="Body" ForeColor="#202124" Overflow="Ellipsis"/>
+          <Icon Name="MoreVertical" Size="16" ForeColor="#5F6368"/>
+        </Stack>
+        <Separator/>
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="12" Padding="8, 12, 8, 12" BackColor="#FDFDFC">
+          <Icon Name="Folder" Size="26" ForeColor="#1E8E3E"/>
+          <Label Stack.Fill="true" Text="Photos" Role="Body" ForeColor="#202124" Overflow="Ellipsis"/>
+          <Icon Name="Star" Size="14" ForeColor="#FACC15"/>
+          <Icon Name="MoreVertical" Size="16" ForeColor="#5F6368"/>
+        </Stack>
+      </Stack>
+
+      <!-- Files -->
+      <Label Text="FICHIERS" Role="Meta" FontWeight="SemiBold" ForeColor="#80868B"/>
+      <Stack CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" BackColor="#FFFFFF">
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="12" Padding="8, 12, 8, 12">
+          <Stack CrossAlign="Center" Justify="Center" BackColor="#F1F3F4" CornerRadius="4" Width="40" Height="40">
+            <Icon Name="FileText" Size="24" ForeColor="#5F6368"/>
+          </Stack>
+          <Stack Stack.Fill="true" Gap="2">
+            <Label Text="Rapport annuel.pdf" Role="Body" ForeColor="#202124" Overflow="Ellipsis"/>
+            <Label Text="Modifié 30 juin 2026 · 2,4 Mo" Role="Meta" ForeColor="#80868B" Overflow="Ellipsis"/>
+          </Stack>
+          <Icon Name="CloudCheck" Size="13" ForeColor="#1E8E3E"/>
+          <Icon Name="Star" Size="14" ForeColor="#FACC15"/>
+          <Icon Name="MoreVertical" Size="16" ForeColor="#5F6368"/>
+        </Stack>
+        <Separator/>
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="12" Padding="8, 12, 8, 12" BackColor="#FDFDFC">
+          <Stack CrossAlign="Center" Justify="Center" BackColor="#F1F3F4" CornerRadius="4" Width="40" Height="40">
+            <Icon Name="Image" Size="24" ForeColor="#1A73E8"/>
+          </Stack>
+          <Stack Stack.Fill="true" Gap="2">
+            <Label Text="Plage.jpg" Role="Body" ForeColor="#202124" Overflow="Ellipsis"/>
+            <Label Text="Modifié 28 juin 2026 · 5,1 Mo" Role="Meta" ForeColor="#80868B" Overflow="Ellipsis"/>
+          </Stack>
+          <Icon Name="MoreVertical" Size="16" ForeColor="#5F6368"/>
+        </Stack>
+        <Separator/>
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="12" Padding="8, 12, 8, 12">
+          <Stack CrossAlign="Center" Justify="Center" BackColor="#F1F3F4" CornerRadius="4" Width="40" Height="40">
+            <Icon Name="Sheet" Size="24" ForeColor="#1E8E3E"/>
+          </Stack>
+          <Stack Stack.Fill="true" Gap="2">
+            <Label Text="Budget 2026.xlsx" Role="Body" ForeColor="#202124" Overflow="Ellipsis"/>
+            <Label Text="Modifié 24 juin 2026 · 184 Ko" Role="Meta" ForeColor="#80868B" Overflow="Ellipsis"/>
+          </Stack>
+          <Icon Name="MoreVertical" Size="16" ForeColor="#5F6368"/>
+        </Stack>
+      </Stack>
+
+    </Stack>
+  </ScrollArea>
+
+</Panel>

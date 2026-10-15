@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Drive · Rename dialog — converted from sheet/ItemActions.kt (RenameDialog, an AlertDialog). A centered modal
+  card over a dimmed backdrop: title, a text field pre-filled with the current name, and Cancel / Rename
+  actions. Drive LIGHT theme.
+-->
+<Panel xmlns="https://kubuno.com/views" xmlns:x="https://kubuno.com/views/x"
+       Layout="Dock" BackColor="#73202124">
+  <Stack Dock="Fill" Justify="Center" CrossAlign="Center" Padding="24, 0, 24, 0">
+    <Stack BackColor="#FFFFFF" CornerRadius="12" Elevation="Lg" Width="320" Padding="20, 20, 20, 16" Gap="16">
+      <Label Text="Renommer" Role="Subtitle" FontWeight="SemiBold" ForeColor="#202124"/>
+      <TextField Text="Rapport annuel.pdf"/>
+      <Stack Direction="LeftToRight" Justify="End" CrossAlign="Center" Gap="8">
+        <Button Text="Annuler" Variant="Ghost" Size="Sm"/>
+        <Button Text="Renommer" Variant="Primary" Size="Sm"/>
+      </Stack>
+    </Stack>
+  </Stack>
+</Panel>

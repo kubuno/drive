@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Drive · Navigation drawer — converted from shell/DriveDrawer.kt. The modal navigation drawer: account header,
+  a "New" action, the destinations (My Drive active, Recent, Starred, Shared, Trash), the root folders, and
+  Settings. Slides from the left over a dimmed backdrop. Drive LIGHT theme.
+-->
+<Panel xmlns="https://kubuno.com/views" xmlns:x="https://kubuno.com/views/x"
+       Layout="Dock" BackColor="#73202124">
+  <ScrollArea Dock="Left" Width="300" BackColor="#FFFFFF">
+    <Stack Gap="0" Padding="0, 0, 0, 16">
+
+      <!-- Account header -->
+      <Stack Direction="LeftToRight" CrossAlign="Center" Gap="12" Padding="16, 20, 12, 16">
+        <Avatar DisplayName="Camille Martin" AvatarSize="44" Tint="Accent"/>
+        <Stack Stack.Fill="true" Gap="2">
+          <Label Text="Camille Martin" Role="Body" FontWeight="SemiBold" ForeColor="#202124" Overflow="Ellipsis"/>
+          <Label Text="camille@kubuno.com" Role="Meta" ForeColor="#80868B" Overflow="Ellipsis"/>
+        </Stack>
+        <Icon Name="ChevronDown" Size="20" ForeColor="#5F6368"/>
+      </Stack>
+
+      <!-- New -->
+      <Stack Padding="12, 0, 12, 8">
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="10" BackColor="#D3E3FD" CornerRadius="9999"
+               Height="44" Padding="16, 0, 16, 0">
+          <Icon Name="Plus" Size="20" ForeColor="#1A73E8"/>
+          <Label Text="Nouveau" Role="Body" FontWeight="SemiBold" ForeColor="#1A73E8"/>
+        </Stack>
+      </Stack>
+
+      <Separator/>
+
+      <!-- Destinations -->
+      <Stack Padding="8, 8, 8, 8" Gap="2">
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="16" Height="44" Padding="16, 0, 16, 0"
+               BackColor="#D3E3FD" CornerRadius="9999">
+          <Icon Name="HardDrive" Size="20" ForeColor="#1A73E8"/>
+          <Label Stack.Fill="true" Text="Mon Drive" Role="Body" FontWeight="SemiBold" ForeColor="#1A73E8"/>
+        </Stack>
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="16" Height="44" Padding="16, 0, 16, 0">
+          <Icon Name="Clock" Size="20" ForeColor="#5F6368"/>
+          <Label Stack.Fill="true" Text="Récents" Role="Body" ForeColor="#202124"/>
+        </Stack>
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="16" Height="44" Padding="16, 0, 16, 0">
+          <Icon Name="Star" Size="20" ForeColor="#5F6368"/>
+          <Label Stack.Fill="true" Text="Favoris" Role="Body" ForeColor="#202124"/>
+        </Stack>
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="16" Height="44" Padding="16, 0, 16, 0">
+          <Icon Name="Users" Size="20" ForeColor="#5F6368"/>
+          <Label Stack.Fill="true" Text="Partagés" Role="Body" ForeColor="#202124"/>
+        </Stack>
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="16" Height="44" Padding="16, 0, 16, 0">
+          <Icon Name="Trash2" Size="20" ForeColor="#5F6368"/>
+          <Label Stack.Fill="true" Text="Corbeille" Role="Body" ForeColor="#202124"/>
+        </Stack>
+      </Stack>
+
+      <Separator/>
+
+      <!-- Root folders -->
+      <Label Text="DOSSIERS" Role="Meta" FontWeight="SemiBold" ForeColor="#80868B" Padding="24, 12, 16, 4"/>
+      <Stack Padding="8, 0, 8, 8" Gap="2">
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="16" Height="44" Padding="16, 0, 16, 0">
+          <Icon Name="Folder" Size="20" ForeColor="#1A73E8"/>
+          <Label Stack.Fill="true" Text="Documents" Role="Body" ForeColor="#202124" Overflow="Ellipsis"/>
+        </Stack>
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="16" Height="44" Padding="16, 0, 16, 0">
+          <Icon Name="Folder" Size="20" ForeColor="#1E8E3E"/>
+          <Label Stack.Fill="true" Text="Photos" Role="Body" ForeColor="#202124" Overflow="Ellipsis"/>
+        </Stack>
+      </Stack>
+
+      <Separator/>
+
+      <Stack Padding="8, 8, 8, 0">
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="16" Height="44" Padding="16, 0, 16, 0">
+          <Icon Name="Settings" Size="20" ForeColor="#5F6368"/>
+          <Label Stack.Fill="true" Text="Paramètres" Role="Body" ForeColor="#202124"/>
+        </Stack>
+      </Stack>
+
+    </Stack>
+  </ScrollArea>
+</Panel>

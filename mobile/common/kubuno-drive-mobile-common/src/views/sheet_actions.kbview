@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Drive · Item action sheet — converted from sheet/Sheets.kt + sheet/ItemActions.kt (ActionSheet +
+  ItemActionSheet). A modal bottom sheet over a dimmed backdrop: drag handle, the item name as title, and the
+  action rows (download, rename, move, star, pin, info) plus the danger "trash" row. Drive LIGHT theme.
+  Rendered as a complete overlay screen (the backdrop dims; the sheet docks to the bottom).
+-->
+<Panel xmlns="https://kubuno.com/views" xmlns:x="https://kubuno.com/views/x"
+       Layout="Dock" BackColor="#73202124">
+
+  <Stack Dock="Bottom" BackColor="#FFFFFF" CornerRadius="16" Padding="0, 8, 0, 12">
+
+    <!-- Drag handle -->
+    <Stack CrossAlign="Center" Padding="0, 0, 0, 2">
+      <Panel BackColor="#BDC1C6" CornerRadius="2" Width="40" Height="4"/>
+    </Stack>
+
+    <!-- Title (item name) -->
+    <Label Text="Rapport annuel.pdf" Role="Body" FontWeight="SemiBold" ForeColor="#202124"
+           Overflow="Ellipsis" Padding="16, 4, 16, 8"/>
+
+    <Stack Direction="LeftToRight" CrossAlign="Center" Gap="14" Height="52" Padding="16, 0, 16, 0">
+      <Icon Name="Download" Size="20" ForeColor="#5F6368"/>
+      <Label Stack.Fill="true" Text="Télécharger" Role="Body" ForeColor="#202124"/>
+    </Stack>
+    <Stack Direction="LeftToRight" CrossAlign="Center" Gap="14" Height="52" Padding="16, 0, 16, 0">
+      <Icon Name="Pencil" Size="20" ForeColor="#5F6368"/>
+      <Label Stack.Fill="true" Text="Renommer" Role="Body" ForeColor="#202124"/>
+    </Stack>
+    <Stack Direction="LeftToRight" CrossAlign="Center" Gap="14" Height="52" Padding="16, 0, 16, 0">
+      <Icon Name="FolderInput" Size="20" ForeColor="#5F6368"/>
+      <Label Stack.Fill="true" Text="Déplacer" Role="Body" ForeColor="#202124"/>
+    </Stack>
+    <Stack Direction="LeftToRight" CrossAlign="Center" Gap="14" Height="52" Padding="16, 0, 16, 0">
+      <Icon Name="Star" Size="20" ForeColor="#5F6368"/>
+      <Label Stack.Fill="true" Text="Ajouter aux favoris" Role="Body" ForeColor="#202124"/>
+    </Stack>
+    <Stack Direction="LeftToRight" CrossAlign="Center" Gap="14" Height="52" Padding="16, 0, 16, 0">
+      <Icon Name="CloudDownload" Size="20" ForeColor="#5F6368"/>
+      <Label Stack.Fill="true" Text="Rendre disponible hors-ligne" Role="Body" ForeColor="#202124"/>
+    </Stack>
+    <Stack Direction="LeftToRight" CrossAlign="Center" Gap="14" Height="52" Padding="16, 0, 16, 0">
+      <Icon Name="Info" Size="20" ForeColor="#5F6368"/>
+      <Label Stack.Fill="true" Text="Informations" Role="Body" ForeColor="#202124"/>
+    </Stack>
+
+    <Separator/>
+
+    <Stack Direction="LeftToRight" CrossAlign="Center" Gap="14" Height="52" Padding="16, 0, 16, 0">
+      <Icon Name="Trash2" Size="20" ForeColor="#D93025"/>
+      <Label Stack.Fill="true" Text="Mettre à la corbeille" Role="Body" ForeColor="#D93025"/>
+    </Stack>
+
+  </Stack>
+
+</Panel>

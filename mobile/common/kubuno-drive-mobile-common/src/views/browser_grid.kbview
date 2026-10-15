@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Drive · Browser in GRID mode — the other view of BrowserScreen.kt (ViewMode.GRID): full-width FolderCards,
+  then FileCards in a 2-column grid (header with type icon + name + kebab, then a 128-high preview area with a
+  big glyph and an extension badge). Cards inlined. Drive LIGHT theme, logical px (~390 wide).
+-->
+<Panel xmlns="https://kubuno.com/views" xmlns:x="https://kubuno.com/views/x"
+       Layout="Dock" BackColor="#FFFFFF">
+
+  <Stack Dock="Top">
+    <Stack Direction="LeftToRight" CrossAlign="Center" Gap="4" Height="56" Padding="8, 0, 12, 0" BackColor="#FFFFFF">
+      <IconButton Icon="Menu" Diameter="40" IconSize="22" IconColor="#5F6368"/>
+      <Label Stack.Fill="true" Text="Mon Drive" Role="Subtitle" FontWeight="SemiBold" ForeColor="#202124" Padding="8, 0, 0, 0"/>
+      <IconButton Icon="Search" Diameter="40" IconSize="20" IconColor="#5F6368"/>
+      <Avatar DisplayName="Camille Martin" AvatarSize="30" Tint="Accent"/>
+    </Stack>
+    <Separator/>
+  </Stack>
+
+  <ScrollArea Dock="Fill">
+    <Stack Gap="12" Padding="24, 16, 24, 24">
+
+      <!-- Control bar : grid active -->
+      <Stack Direction="LeftToRight" CrossAlign="Center" Justify="SpaceBetween">
+        <Label Text="Nom" Role="Body" ForeColor="#202124"/>
+        <Stack Direction="LeftToRight" CrossAlign="Center" Gap="6">
+          <Stack CrossAlign="Center" Justify="Center" BackColor="#D3E3FD" CornerRadius="9999" Width="56" Height="36">
+            <Icon Name="List" Size="18" ForeColor="#5F6368"/>
+          </Stack>
+          <Stack CrossAlign="Center" Justify="Center" BackColor="#202124" CornerRadius="9999" Width="56" Height="36">
+            <Icon Name="LayoutGrid" Size="18" ForeColor="#FFFFFF"/>
+          </Stack>
+        </Stack>
+      </Stack>
+
+      <Label Text="DOSSIERS" Role="Meta" FontWeight="SemiBold" ForeColor="#80868B"/>
+      <Stack Direction="LeftToRight" CrossAlign="Center" Gap="12" BackColor="#F3F4F5" CornerRadius="8"
+             BorderBrush="#E8EAED" BorderThickness="1" Padding="12, 12, 12, 12">
+        <Icon Name="Folder" Size="24" ForeColor="#1A73E8"/>
+        <Label Stack.Fill="true" Text="Documents" Role="Body" ForeColor="#202124" Overflow="Ellipsis"/>
+        <Icon Name="MoreVertical" Size="16" ForeColor="#5F6368"/>
+      </Stack>
+      <Stack Direction="LeftToRight" CrossAlign="Center" Gap="12" BackColor="#F3F4F5" CornerRadius="8"
+             BorderBrush="#E8EAED" BorderThickness="1" Padding="12, 12, 12, 12">
+        <Icon Name="Folder" Size="24" ForeColor="#1E8E3E"/>
+        <Label Stack.Fill="true" Text="Photos" Role="Body" ForeColor="#202124" Overflow="Ellipsis"/>
+        <Icon Name="Star" Size="14" ForeColor="#FACC15"/>
+        <Icon Name="MoreVertical" Size="16" ForeColor="#5F6368"/>
+      </Stack>
+
+      <Label Text="FICHIERS" Role="Meta" FontWeight="SemiBold" ForeColor="#80868B"/>
+      <!-- Row 1 of file cards -->
+      <Stack Direction="LeftToRight" Gap="12">
+        <Stack Stack.Fill="true" BackColor="#F8F9FA" CornerRadius="8" BorderBrush="#E8EAED" BorderThickness="1">
+          <Stack Direction="LeftToRight" CrossAlign="Center" Gap="6" Padding="8, 6, 8, 6">
+            <Icon Name="FileText" Size="18" ForeColor="#5F6368"/>
+            <Label Stack.Fill="true" Text="Rapport annuel.pdf" Role="Meta" ForeColor="#202124" Overflow="Ellipsis"/>
+            <Icon Name="MoreVertical" Size="14" ForeColor="#5F6368"/>
+          </Stack>
+          <Stack CrossAlign="Center" Justify="Center" Height="112" BackColor="#FFFFFF" CornerRadius="6"
+                 Margin="8, 0, 8, 8">
+            <Icon Name="FileText" Size="40" ForeColor="#5F6368"/>
+          </Stack>
+        </Stack>
+        <Stack Stack.Fill="true" BackColor="#F8F9FA" CornerRadius="8" BorderBrush="#E8EAED" BorderThickness="1">
+          <Stack Direction="LeftToRight" CrossAlign="Center" Gap="6" Padding="8, 6, 8, 6">
+            <Icon Name="Image" Size="18" ForeColor="#1A73E8"/>
+            <Label Stack.Fill="true" Text="Plage.jpg" Role="Meta" ForeColor="#202124" Overflow="Ellipsis"/>
+            <Icon Name="MoreVertical" Size="14" ForeColor="#5F6368"/>
+          </Stack>
+          <Stack CrossAlign="Center" Justify="Center" Height="112" BackColor="#F1F3F4" CornerRadius="6"
+                 Margin="8, 0, 8, 8">
+            <Icon Name="Image" Size="40" ForeColor="#1A73E8"/>
+          </Stack>
+        </Stack>
+      </Stack>
+      <!-- Row 2 of file cards -->
+      <Stack Direction="LeftToRight" Gap="12">
+        <Stack Stack.Fill="true" BackColor="#F8F9FA" CornerRadius="8" BorderBrush="#E8EAED" BorderThickness="1">
+          <Stack Direction="LeftToRight" CrossAlign="Center" Gap="6" Padding="8, 6, 8, 6">
+            <Icon Name="Sheet" Size="18" ForeColor="#1E8E3E"/>
+            <Label Stack.Fill="true" Text="Budget 2026.xlsx" Role="Meta" ForeColor="#202124" Overflow="Ellipsis"/>
+            <Icon Name="MoreVertical" Size="14" ForeColor="#5F6368"/>
+          </Stack>
+          <Stack CrossAlign="Center" Justify="Center" Height="112" BackColor="#FFFFFF" CornerRadius="6"
+                 Margin="8, 0, 8, 8">
+            <Icon Name="Sheet" Size="40" ForeColor="#1E8E3E"/>
+          </Stack>
+        </Stack>
+        <Stack Stack.Fill="true" BackColor="#F8F9FA" CornerRadius="8" BorderBrush="#E8EAED" BorderThickness="1">
+          <Stack Direction="LeftToRight" CrossAlign="Center" Gap="6" Padding="8, 6, 8, 6">
+            <Icon Name="FileVideo" Size="18" ForeColor="#D93025"/>
+            <Label Stack.Fill="true" Text="Anniversaire.mov" Role="Meta" ForeColor="#202124" Overflow="Ellipsis"/>
+            <Icon Name="MoreVertical" Size="14" ForeColor="#5F6368"/>
+          </Stack>
+          <Stack CrossAlign="Center" Justify="Center" Height="112" BackColor="#FFFFFF" CornerRadius="6"
+                 Margin="8, 0, 8, 8">
+            <Icon Name="FileVideo" Size="40" ForeColor="#D93025"/>
+          </Stack>
+        </Stack>
+      </Stack>
+
+    </Stack>
+  </ScrollArea>
+
+</Panel>
