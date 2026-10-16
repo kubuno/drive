@@ -1,7 +1,7 @@
 //! Port of `Files.App/Actions/Content/Install/` (`InstallFontAction`,
 //! `InstallCertificateAction`, `InstallInfDriverAction`).
 //!
-//! (`Files.App/Actions/Start/` — Pin/Unpin from the Start menu — now lives
+//! (`Files.App/Actions/Start/` - Pin/Unpin from the Start menu - now lives
 //! in its own mirror `crate::actions::start`.)
 
 // NOT WIRED YET. Ported install actions (font, certificate, INF driver); wait for their registration in the action registry and the context menu.

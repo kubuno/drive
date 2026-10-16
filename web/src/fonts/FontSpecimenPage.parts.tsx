@@ -27,7 +27,7 @@ interface FontSpecimenData {
   license?: string
   licenseUrl?: string
   embeddable?: string
-  /** Platform font shipped with the module — undeletable, flagged in the UI. */
+  /** Platform font shipped with the module - undeletable, flagged in the UI. */
   isProtected?: boolean
   variants: SpecimenVariant[]
 }
@@ -56,7 +56,7 @@ const GLYPH_GROUPS: { label: string; chars: string[] }[] = [
   { label: 'Minuscules latines', chars: [...'abcdefghijklmnopqrstuvwxyzàáâãäåāăąæçćĉčċďđèéêëēĕėęěìíîïĩīĭįıĵ'] },
   { label: 'Majuscules latines', chars: [...'ABCDEFGHIJKLMNOPQRSTUVWXYZÀÁÂÃÄÅĀĂĄÆÇĆĈČĊĎĐÈÉÊËĒĔĖĘĚÌÍÎÏĨĪĬĮİ'] },
   { label: 'Chiffres', chars: [...'0123456789'] },
-  { label: 'Ponctuation & symboles', chars: [...'.,;:!?¡¿…·—–-()[]{}«»“”‘’\'"@#&*/\\|<>+=~%°$€£¥©®™'] },
+  { label: 'Ponctuation & symboles', chars: [...'.,;:!?¡¿…·\u2014–-()[]{}«»“”‘’\'"@#&*/\\|<>+=~%°$€£¥©®™'] },
 ]
 
 const withProto = (u: string) => (/^https?:\/\//i.test(u) ? u : `https://${u}`)
@@ -147,7 +147,7 @@ function AboutTab({ data }: { data: FontSpecimenData }) {
   const facts: [string, string][] = [
     ['Styles', String(data.variants.length)],
     ['Catégorie', data.category],
-    ['Écritures', data.scripts.join(', ') || '—'],
+    ['Écritures', data.scripts.join(', ') || '-'],
     ...(data.version ? [['Version', data.version.replace(/^Version\s*/i, '')] as [string, string]] : []),
     ...(data.embeddable ? [['Incorporation', data.embeddable] as [string, string]] : []),
   ]
@@ -200,7 +200,7 @@ function LicenseTab({ data }: { data: FontSpecimenData }) {
       <div>
         <p className="text-xs text-text-secondary leading-relaxed">
           {hasText
-            ? 'Licence telle que déclarée dans les métadonnées de la police. Ceci n’est pas un conseil juridique — vérifiez la licence complète avant tout usage.'
+            ? 'Licence telle que déclarée dans les métadonnées de la police. Ceci n’est pas un conseil juridique - vérifiez la licence complète avant tout usage.'
             : 'Aucune information de licence n’est déclarée dans ce fichier de police.'}
         </p>
       </div>

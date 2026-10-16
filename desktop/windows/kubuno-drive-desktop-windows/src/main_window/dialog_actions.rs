@@ -1,5 +1,5 @@
 #![allow(unused_imports)]
-//! Submodule of `MainWindow` — see `main_window/mod.rs`.
+//! Submodule of `MainWindow` - see `main_window/mod.rs`.
 use windows::core::{w, Result};
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, RECT, WPARAM};
 use windows::Win32::Graphics::Dwm::{
@@ -25,7 +25,7 @@ impl MainWindow {
     /// The primary button of the `ContentDialog` (`DefaultButton="Primary"`).
     /// `GetFor_CreateItemDialog`: "Create a new {folder|file}", name
     /// field (pre-filled with "New folder" selected, like the original's
-    /// TextBox — #17845).
+    /// TextBox - #17845).
     pub(crate) fn open_create_item_dialog(&mut self, folder: bool) {
         let tr = kubuno_drive_desktop_localization::tr;
         let kind = tr(if folder { "Folder" } else { "File" }).to_lowercase();

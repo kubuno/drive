@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Drive · Sort sheet — converted from sheet/Sheets.kt (SortSheet). A bottom sheet: the sort field rows (the
+  Drive · Sort sheet - converted from sheet/Sheets.kt (SortSheet). A bottom sheet: the sort field rows (the
   current one checked) then a separator and the two direction rows. Drive LIGHT theme.
 -->
 <Panel xmlns="https://kubuno.com/views" xmlns:x="https://kubuno.com/views/x"

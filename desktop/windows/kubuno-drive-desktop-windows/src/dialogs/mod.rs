@@ -7,7 +7,7 @@
 use crate::ui::{Painter, Rect};
 use kubuno_drive_desktop_app_controls::themes::shape;
 
-/// What "OK" triggers — the ViewModel's `PrimaryButtonAction`.
+/// What "OK" triggers - the ViewModel's `PrimaryButtonAction`.
 #[derive(Clone, PartialEq)]
 pub enum DialogAction {
     /// `DeleteItemsDialog`: delete the selection (paths frozen at open time).
@@ -18,7 +18,7 @@ pub enum DialogAction {
     /// `DecompressArchiveDialog`: extract `archive` to the field's path;
     /// the "Ouvrir le dossier de destination une fois terminé" checkbox.
     DecompressTo(String),
-    /// `AddItemDialog`: the "Créer un nouvel élément" list — clicking an
+    /// `AddItemDialog`: the "Créer un nouvel élément" list - clicking an
     /// item chains into the corresponding naming dialog.
     AddItem,
     /// `GetFor_CreateItemDialog`: create a folder (`true`) or an empty file
@@ -98,7 +98,7 @@ impl DialogState {
         }
     }
 
-    /// `true` when confirming DESTROYS something — the web renders such a
+    /// `true` when confirming DESTROYS something - the web renders such a
     /// confirm button as a `danger` text button rather than an accent one.
     pub fn is_destructive(&self) -> bool {
         matches!(
@@ -162,7 +162,7 @@ pub struct ConflictDialog {
     pub title: String,
     pub description: String,
     pub items: Vec<ConflictItem>,
-    /// Move (`true`) or copy — the operation to relaunch once resolved.
+    /// Move (`true`) or copy - the operation to relaunch once resolved.
     pub is_move: bool,
     /// Destination folder.
     pub dest_dir: String,
@@ -172,7 +172,7 @@ pub struct ConflictDialog {
 
 impl ConflictDialog {
     /// Recomputes `aggregated`: `Some` if all conflicts share the option,
-    /// `None` (Personnalisé) otherwise — mirrors `Receive(...OptionChanged)`.
+    /// `None` (Personnalisé) otherwise - mirrors `Receive(...OptionChanged)`.
     pub fn sync_aggregated(&mut self) {
         let mut it = self.items.iter().filter(|i| i.is_conflict).map(|i| i.resolve);
         self.aggregated = match it.next() {
@@ -253,7 +253,7 @@ fn titlebar_close_rect(card: &Rect) -> Rect {
 /// A dialog's computed rects.
 pub struct DialogRects {
     pub card: Rect,
-    /// The ✕ of the accent title bar — same action as `close`.
+    /// The ✕ of the accent title bar - same action as `close`.
     pub titlebar_close: Rect,
     pub primary: Rect,
     pub close: Rect,
@@ -270,7 +270,7 @@ pub struct DialogRects {
 /// A list row's height (the template's `Grid Height="50"`).
 const LIST_ROW_H: f32 = 50.0;
 
-/// The dialog's geometry — dynamic based on the content. The title is NOT in
+/// The dialog's geometry - dynamic based on the content. The title is NOT in
 /// the body any more: it lives in the accent title bar, so the body starts
 /// under it.
 pub fn dialog_rects(dialog: &DialogState, width: f32, height: f32) -> DialogRects {
@@ -366,7 +366,7 @@ const OPTION_PILL_W: f32 = 190.0;
 /// A conflict dialog's computed rects.
 pub struct ConflictRects {
     pub card: Rect,
-    /// The ✕ of the accent title bar — same action as `close`.
+    /// The ✕ of the accent title bar - same action as `close`.
     pub titlebar_close: Rect,
     /// The "Appliquer à tous" pill.
     pub apply_all: Rect,
@@ -506,7 +506,7 @@ impl Painter<'_> {
         );
     }
 
-    /// A footer button — `Button variant="text"` in the web: NEVER filled at
+    /// A footer button - `Button variant="text"` in the web: NEVER filled at
     /// rest, a tinted wash on hover, label in the button's own colour.
     fn draw_text_button(
         &self,
@@ -539,7 +539,7 @@ impl Painter<'_> {
         let tr = kubuno_drive_desktop_localization::tr;
 
         let r = conflict_rects(dialog, width, height, scroll);
-        // Scrim, card, accent title bar, footer rule — the shared chassis.
+        // Scrim, card, accent title bar, footer rule - the shared chassis.
         self.draw_window_chrome(
             &r.card,
             &r.titlebar_close,
@@ -576,7 +576,7 @@ impl Painter<'_> {
             if row.bottom < r.list.top || row.top > r.list.bottom {
                 continue;
             }
-            // Icon: folder or file (glyph — the dialog has no IconCache).
+            // Icon: folder or file (glyph - the dialog has no IconCache).
             let icon = Rect::new(row.left, row.top + 12.0, row.left + 32.0, row.bottom - 12.0);
             let is_dir = std::path::Path::new(&item.source).is_dir();
             let glyph = if is_dir { "\u{E8B7}" } else { "\u{E8A5}" };

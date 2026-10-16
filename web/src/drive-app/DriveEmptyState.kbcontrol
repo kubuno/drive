@@ -1,4 +1,4 @@
-<!-- EmptyState — converted from EmptyState.tsx by @kubuno/views-migrate. -->
+<!-- EmptyState - converted from EmptyState.tsx by @kubuno/views-migrate. -->
 <UserControl x:Props="EmptyStateProps">
   <Panel Class="contents">
     <Stack Gap="12" CrossAlign="Center" Justify="Center" Visible="{Binding show_case_1}" Class="py-24 text-center">

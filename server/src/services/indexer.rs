@@ -129,7 +129,7 @@ async fn upsert(
     embedding_dim: Option<i32>,
     phash: Option<i64>,
 ) -> Result<(), sqlx::Error> {
-    // Stems computed in Rust — the portable replacement for the tsvector trigger.
+    // Stems computed in Rust - the portable replacement for the tsvector trigger.
     let name_norm = kubuno_db::normalize(&file.name);
     let content_norm = kubuno_db::normalize(content_text.unwrap_or(""));
     // The embedding is a JSON array of floats (no REAL[] on MySQL/SQLite).

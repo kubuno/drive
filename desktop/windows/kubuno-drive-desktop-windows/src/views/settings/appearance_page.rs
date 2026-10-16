@@ -389,7 +389,7 @@ impl Painter<'_> {
                 // (`@ui/ColorSwatchPicker`), ONE accent ring, not two
                 // concentric lines. Hover raises the border like a checkbox
                 // does (`checkboxCanvas`: `--color-border-strong`), for which
-                // the desktop `Theme` has no token yet — `text_tertiary`
+                // the desktop `Theme` has no token yet - `text_tertiary`
                 // (#80868b) is the closest it carries.
                 if selected {
                     self.stroke_rounded_w(item, radius::XL, &t.accent, 2.0);
@@ -403,7 +403,7 @@ impl Painter<'_> {
     }
 
     /// ComboBox at the right edge of a settings row. Geometry and paint are
-    /// the generic page's — ONE `@ui/Dropdown` for the whole settings section
+    /// the generic page's - ONE `@ui/Dropdown` for the whole settings section
     /// (this page used to carry its own fixed-200-wide copy). Returns the rect
     /// so the caller can clip its label before it.
     fn combo(&self, row: &Rect, value: &str) -> Rect {
@@ -412,7 +412,7 @@ impl Painter<'_> {
         combo
     }
 
-    /// ToggleSwitch at the right edge of a settings row — the `kubuno-desktop-ui`
+    /// ToggleSwitch at the right edge of a settings row - the `kubuno-desktop-ui`
     /// `Switch`, through the settings pages' one switch painter.
     pub(crate) fn toggle_switch(&self, row: &Rect, on: bool) {
         let cy = (row.top + row.bottom) / 2.0;
@@ -426,7 +426,7 @@ impl Painter<'_> {
         self.toggle_state_text(&track, zone, on, false);
     }
 
-    /// Expander chevron (up when open) at the very right of a header row —
+    /// Expander chevron (up when open) at the very right of a header row -
     /// the generic pages' painter, so both settings sections show the same one.
     fn expander_chevron(&self, row: &Rect, expanded: bool) {
         self.settings_expander_chevron(row, expanded);

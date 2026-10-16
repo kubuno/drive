@@ -20,7 +20,7 @@ pub async fn generate_thumbnail(
     thumbnail_size: u32,
 ) -> Result<bool> {
     // SVG : pas de rastérisation (la crate `image` ne décode pas le vectoriel). Le
-    // fichier SVG sert directement de miniature — rendu par le navigateur via le
+    // fichier SVG sert directement de miniature - rendu par le navigateur via le
     // handler `thumbnail`. On marque juste has_thumbnail pour que l'UI l'affiche.
     if mime_type == "image/svg+xml" {
         // has_thumbnail is delivered in the full delta feed, so bump change_seq.

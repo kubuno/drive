@@ -1,4 +1,4 @@
-<!-- TagDialog — converted from TagDialog.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<!-- TagDialog - converted from TagDialog.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
 <Stack x:Props="TagDialogProps" Direction="LeftToRight" Gap="0" CrossAlign="Center" Justify="Center" Class="fixed inset-0 z-[60]">
   <Panel Class="absolute inset-0 bg-black/40" OnClick="panel_click"/>
   <Panel Class="relative bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 max-h-[85vh] overflow-auto">

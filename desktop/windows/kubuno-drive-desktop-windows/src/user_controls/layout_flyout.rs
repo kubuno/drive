@@ -13,7 +13,7 @@
 //! 6. the "Éléments masqués" and "Extensions de fichiers" `ToggleSwitch`es.
 //!
 //! Each layout has its own slider (`Maximum` 5, 4 or 12) and its own
-//! saved size — see `ViewMode::size_max`.
+//! saved size - see `ViewMode::size_max`.
 
 use crate::view_models::shell_view_model::ViewMode;
 use crate::ui::{Painter, Rect};
@@ -228,7 +228,7 @@ impl Painter<'_> {
                 &t.text_secondary,
             );
         }
-        // The thumb is an ACCENT disc ringed by 2 DIP of white — that ring is
+        // The thumb is an ACCENT disc ringed by 2 DIP of white - that ring is
         // what detaches it from the filled part of the rail
         // (`box-shadow: 0 0 0 2px #fff`). It grows slightly while grabbed.
         let hot_slider = panel.hot == Some(LayoutHit::Slider) || panel.dragging;

@@ -102,7 +102,7 @@
     },
     "folderpicker": {
       "title": "Select a folder",
-      "empty": "No subfolder — the project will be created here",
+      "empty": "No subfolder - the project will be created here",
       "create_in": "Create in:",
       "select_here": "Select here"
     },
@@ -113,7 +113,7 @@
     },
     "savedialog": {
       "title": "Compress and save",
-      "empty": "Empty folder — the file will be saved here",
+      "empty": "Empty folder - the file will be saved here",
       "name_label": "Name:"
     },
     "version": {
@@ -183,7 +183,7 @@
     "settings_page": {
       "tab_storage": "Storage & Quotas",
       "tab_about": "About",
-      "title": "Settings — Kubuno Files",
+      "title": "Settings - Kubuno Files",
       "subtitle": "Storage, quotas and configuration",
       "quota_label": "Default quota for new users",
       "quota_desc": "Storage allocated to each account on creation. Currently: {{current}}",
@@ -191,7 +191,7 @@
       "info_2": "(default: 5 GB).",
       "about_official": "Official module",
       "about_desc_label": "Description",
-      "about_desc": "Complete file manager — upload, download, folder organization, file and folder sharing, trash, WebDAV, version history.",
+      "about_desc": "Complete file manager - upload, download, folder organization, file and folder sharing, trash, WebDAV, version history.",
       "about_author_label": "Author",
       "about_license_label": "License",
       "about_tech_label": "Technologies",
@@ -278,7 +278,7 @@
       "edit_title_short": "Edit",
       "edit_hint": "Stored credentials are never displayed. Re-enter them in full to reconnect this mount.",
       "save_btn": "Save",
-      "edit_hint_kept": "Fill in what you want to change. Secrets are never displayed — leave them blank to keep the current ones.",
+      "edit_hint_kept": "Fill in what you want to change. Secrets are never displayed - leave them blank to keep the current ones.",
       "field_unchanged": "•••••••• (unchanged)",
       "list_shares": "List the server's shares",
       "shares_none": "This server offers no share",
@@ -350,8 +350,8 @@
       "sort_label": "Sort:",
       "type_label": "Type:",
       "sort_date": "Date",
-      "sort_asc": "Ascending — click for descending",
-      "sort_desc": "Descending — click for ascending",
+      "sort_asc": "Ascending - click for descending",
+      "sort_desc": "Descending - click for ascending",
       "ft_all": "All types",
       "ft_images": "Images",
       "items_selected": "{{count}} items selected",
@@ -555,7 +555,7 @@
       "copy": "Copy",
       "copied": "Copied",
       "lines": "lines",
-      "truncated": "Large file — preview truncated.",
+      "truncated": "Large file - preview truncated.",
       "cannot_load": "Preview unavailable (binary or unreadable file).",
       "empty": "Empty file."
     },
@@ -786,7 +786,7 @@
     },
     "folderpicker": {
       "title": "Sélectionner un dossier",
-      "empty": "Aucun sous-dossier — le projet sera créé ici",
+      "empty": "Aucun sous-dossier - le projet sera créé ici",
       "create_in": "Créer dans :",
       "select_here": "Sélectionner ici"
     },
@@ -797,7 +797,7 @@
     },
     "savedialog": {
       "title": "Compresser et enregistrer",
-      "empty": "Dossier vide — le fichier sera enregistré ici",
+      "empty": "Dossier vide - le fichier sera enregistré ici",
       "name_label": "Nom :"
     },
     "version": {
@@ -867,7 +867,7 @@
     "settings_page": {
       "tab_storage": "Stockage & Quotas",
       "tab_about": "À propos",
-      "title": "Paramètres — Kubuno Files",
+      "title": "Paramètres - Kubuno Files",
       "subtitle": "Stockage, quotas et configuration",
       "quota_label": "Quota par défaut pour les nouveaux utilisateurs",
       "quota_desc": "Espace de stockage alloué à chaque compte à sa création. Actuellement : {{current}}",
@@ -875,7 +875,7 @@
       "info_2": "(par défaut : 5 Go).",
       "about_official": "Module officiel",
       "about_desc_label": "Description",
-      "about_desc": "Gestionnaire de fichiers complet — upload, téléchargement, organisation en dossiers, partage de fichiers et dossiers, corbeille, WebDAV, historique de versions.",
+      "about_desc": "Gestionnaire de fichiers complet - upload, téléchargement, organisation en dossiers, partage de fichiers et dossiers, corbeille, WebDAV, historique de versions.",
       "about_author_label": "Auteur",
       "about_license_label": "Licence",
       "about_tech_label": "Technologies",
@@ -1034,8 +1034,8 @@
       "sort_label": "Trier :",
       "type_label": "Type :",
       "sort_date": "Date",
-      "sort_asc": "Croissant — cliquer pour décroissant",
-      "sort_desc": "Décroissant — cliquer pour croissant",
+      "sort_asc": "Croissant - cliquer pour décroissant",
+      "sort_desc": "Décroissant - cliquer pour croissant",
       "ft_all": "Tous les types",
       "ft_images": "Images",
       "items_selected": "{{count}} éléments sélectionnés",
@@ -1236,7 +1236,7 @@
       "copy": "Copier",
       "copied": "Copié",
       "lines": "lignes",
-      "truncated": "Fichier volumineux — aperçu tronqué.",
+      "truncated": "Fichier volumineux - aperçu tronqué.",
       "cannot_load": "Aperçu indisponible (fichier binaire ou illisible).",
       "empty": "Fichier vide."
     },
@@ -1547,7 +1547,7 @@
     "settings_page": {
       "tab_storage": "Almacenamiento y cuotas",
       "tab_about": "Acerca de",
-      "title": "Ajustes — Kubuno Files",
+      "title": "Ajustes - Kubuno Files",
       "subtitle": "Almacenamiento, cuotas y configuración",
       "quota_label": "Cuota predeterminada para nuevos usuarios",
       "quota_desc": "Almacenamiento asignado a cada cuenta al crearse. Actualmente: {{current}}",
@@ -1714,8 +1714,8 @@
       "sort_label": "Ordenar:",
       "type_label": "Tipo:",
       "sort_date": "Fecha",
-      "sort_asc": "Ascendente — clic para descendente",
-      "sort_desc": "Descendente — clic para ascendente",
+      "sort_asc": "Ascendente - clic para descendente",
+      "sort_desc": "Descendente - clic para ascendente",
       "ft_all": "Todos los tipos",
       "ft_images": "Imágenes",
       "items_selected": "{{count}} elementos seleccionados",
@@ -2146,7 +2146,7 @@
     },
     "folderpicker": {
       "title": "Selecionar uma pasta",
-      "empty": "Sem subpastas — o projeto será criado aqui",
+      "empty": "Sem subpastas - o projeto será criado aqui",
       "create_in": "Criar em:",
       "select_here": "Selecionar aqui"
     },
@@ -2157,7 +2157,7 @@
     },
     "savedialog": {
       "title": "Comprimir e salvar",
-      "empty": "Pasta vazia — o arquivo será salvo aqui",
+      "empty": "Pasta vazia - o arquivo será salvo aqui",
       "name_label": "Nome:"
     },
     "version": {
@@ -2227,7 +2227,7 @@
     "settings_page": {
       "tab_storage": "Armazenamento e cotas",
       "tab_about": "Sobre",
-      "title": "Configurações — Kubuno Files",
+      "title": "Configurações - Kubuno Files",
       "subtitle": "Armazenamento, cotas e configuração",
       "quota_label": "Cota padrão para novos usuários",
       "quota_desc": "Armazenamento alocado a cada conta na criação. Atualmente: {{current}}",
@@ -2235,7 +2235,7 @@
       "info_2": "(padrão: 5 GB).",
       "about_official": "Módulo oficial",
       "about_desc_label": "Descrição",
-      "about_desc": "Gerenciador de arquivos completo — upload, download, organização em pastas, compartilhamento de arquivos e pastas, lixeira, WebDAV, histórico de versões.",
+      "about_desc": "Gerenciador de arquivos completo - upload, download, organização em pastas, compartilhamento de arquivos e pastas, lixeira, WebDAV, histórico de versões.",
       "about_author_label": "Autor",
       "about_license_label": "Licença",
       "about_tech_label": "Tecnologias",
@@ -2394,8 +2394,8 @@
       "sort_label": "Ordenar:",
       "type_label": "Tipo:",
       "sort_date": "Data",
-      "sort_asc": "Crescente — clique para decrescente",
-      "sort_desc": "Decrescente — clique para crescente",
+      "sort_asc": "Crescente - clique para decrescente",
+      "sort_desc": "Decrescente - clique para crescente",
       "ft_all": "Todos os tipos",
       "ft_images": "Imagens",
       "items_selected": "{{count}} itens selecionados",
@@ -2596,7 +2596,7 @@
       "copy": "Copiar",
       "copied": "Copiado",
       "lines": "linhas",
-      "truncated": "Arquivo grande — pré-visualização truncada.",
+      "truncated": "Arquivo grande - pré-visualização truncada.",
       "cannot_load": "Pré-visualização indisponível (arquivo binário ou ilegível).",
       "empty": "Arquivo vazio."
     },
@@ -2826,7 +2826,7 @@
     },
     "folderpicker": {
       "title": "Seleziona una cartella",
-      "empty": "Nessuna sottocartella — il progetto verrà creato qui",
+      "empty": "Nessuna sottocartella - il progetto verrà creato qui",
       "create_in": "Crea in:",
       "select_here": "Seleziona qui"
     },
@@ -2837,7 +2837,7 @@
     },
     "savedialog": {
       "title": "Comprimi e salva",
-      "empty": "Cartella vuota — il file verrà salvato qui",
+      "empty": "Cartella vuota - il file verrà salvato qui",
       "name_label": "Nome:"
     },
     "version": {
@@ -2907,7 +2907,7 @@
     "settings_page": {
       "tab_storage": "Archiviazione e quote",
       "tab_about": "Informazioni",
-      "title": "Impostazioni — Kubuno Files",
+      "title": "Impostazioni - Kubuno Files",
       "subtitle": "Archiviazione, quote e configurazione",
       "quota_label": "Quota predefinita per i nuovi utenti",
       "quota_desc": "Spazio assegnato a ogni account alla creazione. Attualmente: {{current}}",
@@ -2915,7 +2915,7 @@
       "info_2": "(predefinito: 5 GB).",
       "about_official": "Modulo ufficiale",
       "about_desc_label": "Descrizione",
-      "about_desc": "Gestore di file completo — caricamento, download, organizzazione in cartelle, condivisione di file e cartelle, cestino, WebDAV, cronologia versioni.",
+      "about_desc": "Gestore di file completo - caricamento, download, organizzazione in cartelle, condivisione di file e cartelle, cestino, WebDAV, cronologia versioni.",
       "about_author_label": "Autore",
       "about_license_label": "Licenza",
       "about_tech_label": "Tecnologie",
@@ -3074,8 +3074,8 @@
       "sort_label": "Ordina:",
       "type_label": "Tipo:",
       "sort_date": "Data",
-      "sort_asc": "Crescente — clicca per decrescente",
-      "sort_desc": "Decrescente — clicca per crescente",
+      "sort_asc": "Crescente - clicca per decrescente",
+      "sort_desc": "Decrescente - clicca per crescente",
       "ft_all": "Tutti i tipi",
       "ft_images": "Immagini",
       "items_selected": "{{count}} elementi selezionati",
@@ -3276,7 +3276,7 @@
       "copy": "Copia",
       "copied": "Copiato",
       "lines": "righe",
-      "truncated": "File grande — anteprima troncata.",
+      "truncated": "File grande - anteprima troncata.",
       "cannot_load": "Anteprima non disponibile (file binario o illeggibile).",
       "empty": "File vuoto."
     },
@@ -3587,7 +3587,7 @@
     "settings_page": {
       "tab_storage": "Speicher & Kontingente",
       "tab_about": "Über",
-      "title": "Einstellungen — Kubuno Files",
+      "title": "Einstellungen - Kubuno Files",
       "subtitle": "Speicher, Kontingente und Konfiguration",
       "quota_label": "Standardkontingent für neue Benutzer",
       "quota_desc": "Jedem Konto bei der Erstellung zugewiesener Speicher. Aktuell: {{current}}",
@@ -3754,8 +3754,8 @@
       "sort_label": "Sortieren:",
       "type_label": "Typ:",
       "sort_date": "Datum",
-      "sort_asc": "Aufsteigend — für absteigend klicken",
-      "sort_desc": "Absteigend — für aufsteigend klicken",
+      "sort_asc": "Aufsteigend - für absteigend klicken",
+      "sort_desc": "Absteigend - für aufsteigend klicken",
       "ft_all": "Alle Typen",
       "ft_images": "Bilder",
       "items_selected": "{{count}} Elemente ausgewählt",
@@ -4186,7 +4186,7 @@
     },
     "folderpicker": {
       "title": "Επιλογή φακέλου",
-      "empty": "Κανένας υποφάκελος — το έργο θα δημιουργηθεί εδώ",
+      "empty": "Κανένας υποφάκελος - το έργο θα δημιουργηθεί εδώ",
       "create_in": "Δημιουργία σε:",
       "select_here": "Επιλογή εδώ"
     },
@@ -4197,7 +4197,7 @@
     },
     "savedialog": {
       "title": "Συμπίεση και αποθήκευση",
-      "empty": "Άδειος φάκελος — το αρχείο θα αποθηκευτεί εδώ",
+      "empty": "Άδειος φάκελος - το αρχείο θα αποθηκευτεί εδώ",
       "name_label": "Όνομα:"
     },
     "version": {
@@ -4267,7 +4267,7 @@
     "settings_page": {
       "tab_storage": "Αποθήκευση & όρια",
       "tab_about": "Σχετικά",
-      "title": "Ρυθμίσεις — Kubuno Files",
+      "title": "Ρυθμίσεις - Kubuno Files",
       "subtitle": "Αποθήκευση, όρια και ρυθμίσεις",
       "quota_label": "Προεπιλεγμένο όριο για νέους χρήστες",
       "quota_desc": "Αποθηκευτικός χώρος που εκχωρείται σε κάθε λογαριασμό κατά τη δημιουργία. Τρέχον: {{current}}",
@@ -4275,7 +4275,7 @@
       "info_2": "(προεπιλογή: 5 GB).",
       "about_official": "Επίσημο module",
       "about_desc_label": "Περιγραφή",
-      "about_desc": "Πλήρης διαχειριστής αρχείων — μεταφόρτωση, λήψη, οργάνωση σε φακέλους, κοινή χρήση αρχείων και φακέλων, κάδος, WebDAV, ιστορικό εκδόσεων.",
+      "about_desc": "Πλήρης διαχειριστής αρχείων - μεταφόρτωση, λήψη, οργάνωση σε φακέλους, κοινή χρήση αρχείων και φακέλων, κάδος, WebDAV, ιστορικό εκδόσεων.",
       "about_author_label": "Συντάκτης",
       "about_license_label": "Άδεια",
       "about_tech_label": "Τεχνολογίες",
@@ -4434,8 +4434,8 @@
       "sort_label": "Ταξινόμηση:",
       "type_label": "Τύπος:",
       "sort_date": "Ημερομηνία",
-      "sort_asc": "Αύξουσα — κλικ για φθίνουσα",
-      "sort_desc": "Φθίνουσα — κλικ για αύξουσα",
+      "sort_asc": "Αύξουσα - κλικ για φθίνουσα",
+      "sort_desc": "Φθίνουσα - κλικ για αύξουσα",
       "ft_all": "Όλοι οι τύποι",
       "ft_images": "Εικόνες",
       "items_selected": "{{count}} στοιχεία επιλεγμένα",
@@ -4636,7 +4636,7 @@
       "copy": "Αντιγραφή",
       "copied": "Αντιγράφηκε",
       "lines": "γραμμές",
-      "truncated": "Μεγάλο αρχείο — η προεπισκόπηση περικόπηκε.",
+      "truncated": "Μεγάλο αρχείο - η προεπισκόπηση περικόπηκε.",
       "cannot_load": "Η προεπισκόπηση δεν είναι διαθέσιμη (δυαδικό ή μη αναγνώσιμο αρχείο).",
       "empty": "Κενό αρχείο."
     },
@@ -4866,7 +4866,7 @@
     },
     "folderpicker": {
       "title": "Выбрать папку",
-      "empty": "Нет подпапок — проект будет создан здесь",
+      "empty": "Нет подпапок - проект будет создан здесь",
       "create_in": "Создать в:",
       "select_here": "Выбрать здесь"
     },
@@ -4877,7 +4877,7 @@
     },
     "savedialog": {
       "title": "Сжать и сохранить",
-      "empty": "Пустая папка — файл будет сохранён здесь",
+      "empty": "Пустая папка - файл будет сохранён здесь",
       "name_label": "Имя:"
     },
     "version": {
@@ -4947,7 +4947,7 @@
     "settings_page": {
       "tab_storage": "Хранилище и квоты",
       "tab_about": "О модуле",
-      "title": "Настройки — Kubuno Files",
+      "title": "Настройки - Kubuno Files",
       "subtitle": "Хранилище, квоты и настройки",
       "quota_label": "Квота по умолчанию для новых пользователей",
       "quota_desc": "Хранилище, выделяемое каждому аккаунту при создании. Сейчас: {{current}}",
@@ -4955,7 +4955,7 @@
       "info_2": "(по умолчанию: 5 ГБ).",
       "about_official": "Официальный модуль",
       "about_desc_label": "Описание",
-      "about_desc": "Полноценный файловый менеджер — загрузка, скачивание, организация по папкам, общий доступ к файлам и папкам, корзина, WebDAV, история версий.",
+      "about_desc": "Полноценный файловый менеджер - загрузка, скачивание, организация по папкам, общий доступ к файлам и папкам, корзина, WebDAV, история версий.",
       "about_author_label": "Автор",
       "about_license_label": "Лицензия",
       "about_tech_label": "Технологии",
@@ -5114,8 +5114,8 @@
       "sort_label": "Сортировка:",
       "type_label": "Тип:",
       "sort_date": "Дата",
-      "sort_asc": "По возрастанию — нажмите для убывания",
-      "sort_desc": "По убыванию — нажмите для возрастания",
+      "sort_asc": "По возрастанию - нажмите для убывания",
+      "sort_desc": "По убыванию - нажмите для возрастания",
       "ft_all": "Все типы",
       "ft_images": "Изображения",
       "items_selected": "Выбрано: {{count}}",
@@ -5316,7 +5316,7 @@
       "copy": "Копировать",
       "copied": "Скопировано",
       "lines": "строк",
-      "truncated": "Большой файл — предпросмотр обрезан.",
+      "truncated": "Большой файл - предпросмотр обрезан.",
       "cannot_load": "Предпросмотр недоступен (двоичный или нечитаемый файл).",
       "empty": "Пустой файл."
     },
@@ -5546,7 +5546,7 @@
     },
     "folderpicker": {
       "title": "اختر مجلدًا",
-      "empty": "لا مجلدات فرعية — سيُنشأ المشروع هنا",
+      "empty": "لا مجلدات فرعية - سيُنشأ المشروع هنا",
       "create_in": "إنشاء في:",
       "select_here": "اختر هنا"
     },
@@ -5557,7 +5557,7 @@
     },
     "savedialog": {
       "title": "ضغط وحفظ",
-      "empty": "مجلد فارغ — سيُحفظ الملف هنا",
+      "empty": "مجلد فارغ - سيُحفظ الملف هنا",
       "name_label": "الاسم:"
     },
     "version": {
@@ -5627,7 +5627,7 @@
     "settings_page": {
       "tab_storage": "التخزين والحصص",
       "tab_about": "حول",
-      "title": "الإعدادات — Kubuno Files",
+      "title": "الإعدادات - Kubuno Files",
       "subtitle": "التخزين والحصص والإعدادات",
       "quota_label": "الحصة الافتراضية للمستخدمين الجدد",
       "quota_desc": "مساحة التخزين المخصصة لكل حساب عند الإنشاء. حاليًا: {{current}}",
@@ -5635,7 +5635,7 @@
       "info_2": "(الافتراضي: 5 غ.ب).",
       "about_official": "وحدة رسمية",
       "about_desc_label": "الوصف",
-      "about_desc": "مدير ملفات كامل — رفع، تنزيل، تنظيم في مجلدات، مشاركة الملفات والمجلدات، سلة المهملات، WebDAV، سجل الإصدارات.",
+      "about_desc": "مدير ملفات كامل - رفع، تنزيل، تنظيم في مجلدات، مشاركة الملفات والمجلدات، سلة المهملات، WebDAV، سجل الإصدارات.",
       "about_author_label": "المؤلف",
       "about_license_label": "الترخيص",
       "about_tech_label": "التقنيات",
@@ -5794,8 +5794,8 @@
       "sort_label": "ترتيب:",
       "type_label": "النوع:",
       "sort_date": "التاريخ",
-      "sort_asc": "تصاعدي — انقر للتنازلي",
-      "sort_desc": "تنازلي — انقر للتصاعدي",
+      "sort_asc": "تصاعدي - انقر للتنازلي",
+      "sort_desc": "تنازلي - انقر للتصاعدي",
       "ft_all": "كل الأنواع",
       "ft_images": "صور",
       "items_selected": "{{count}} عناصر محددة",
@@ -5996,7 +5996,7 @@
       "copy": "نسخ",
       "copied": "تم النسخ",
       "lines": "أسطر",
-      "truncated": "ملف كبير — تم اقتطاع المعاينة.",
+      "truncated": "ملف كبير - تم اقتطاع المعاينة.",
       "cannot_load": "المعاينة غير متاحة (ملف ثنائي أو غير قابل للقراءة).",
       "empty": "ملف فارغ."
     },
@@ -6226,7 +6226,7 @@
     },
     "folderpicker": {
       "title": "בחר תיקייה",
-      "empty": "אין תת-תיקייה — הפרויקט ייווצר כאן",
+      "empty": "אין תת-תיקייה - הפרויקט ייווצר כאן",
       "create_in": "צור ב:",
       "select_here": "בחר כאן"
     },
@@ -6237,7 +6237,7 @@
     },
     "savedialog": {
       "title": "כווץ ושמור",
-      "empty": "תיקייה ריקה — הקובץ יישמר כאן",
+      "empty": "תיקייה ריקה - הקובץ יישמר כאן",
       "name_label": "שם:"
     },
     "version": {
@@ -6307,7 +6307,7 @@
     "settings_page": {
       "tab_storage": "אחסון ומכסות",
       "tab_about": "אודות",
-      "title": "הגדרות — Kubuno Files",
+      "title": "הגדרות - Kubuno Files",
       "subtitle": "אחסון, מכסות והגדרות",
       "quota_label": "מכסת ברירת מחדל למשתמשים חדשים",
       "quota_desc": "אחסון שמוקצה לכל חשבון בעת היצירה. כעת: {{current}}",
@@ -6315,7 +6315,7 @@
       "info_2": "(ברירת מחדל: 5 ג״ב).",
       "about_official": "מודול רשמי",
       "about_desc_label": "תיאור",
-      "about_desc": "מנהל קבצים מלא — העלאה, הורדה, ארגון בתיקיות, שיתוף קבצים ותיקיות, סל מיחזור, WebDAV, היסטוריית גרסאות.",
+      "about_desc": "מנהל קבצים מלא - העלאה, הורדה, ארגון בתיקיות, שיתוף קבצים ותיקיות, סל מיחזור, WebDAV, היסטוריית גרסאות.",
       "about_author_label": "מחבר",
       "about_license_label": "רישיון",
       "about_tech_label": "טכנולוגיות",
@@ -6474,8 +6474,8 @@
       "sort_label": "מיון:",
       "type_label": "סוג:",
       "sort_date": "תאריך",
-      "sort_asc": "עולה — לחץ ליורד",
-      "sort_desc": "יורד — לחץ לעולה",
+      "sort_asc": "עולה - לחץ ליורד",
+      "sort_desc": "יורד - לחץ לעולה",
       "ft_all": "כל הסוגים",
       "ft_images": "תמונות",
       "items_selected": "{{count}} פריטים נבחרו",
@@ -6676,7 +6676,7 @@
       "copy": "העתק",
       "copied": "הועתק",
       "lines": "שורות",
-      "truncated": "קובץ גדול — התצוגה המקדימה קוצרה.",
+      "truncated": "קובץ גדול - התצוגה המקדימה קוצרה.",
       "cannot_load": "התצוגה המקדימה אינה זמינה (קובץ בינארי או לא קריא).",
       "empty": "קובץ ריק."
     },
@@ -6906,7 +6906,7 @@
     },
     "folderpicker": {
       "title": "फ़ोल्डर चुनें",
-      "empty": "कोई सबफ़ोल्डर नहीं — प्रोजेक्ट यहाँ बनेगा",
+      "empty": "कोई सबफ़ोल्डर नहीं - प्रोजेक्ट यहाँ बनेगा",
       "create_in": "यहाँ बनाएँ:",
       "select_here": "यहाँ चुनें"
     },
@@ -6917,7 +6917,7 @@
     },
     "savedialog": {
       "title": "संपीड़ित करें और सहेजें",
-      "empty": "खाली फ़ोल्डर — फ़ाइल यहाँ सहेजी जाएगी",
+      "empty": "खाली फ़ोल्डर - फ़ाइल यहाँ सहेजी जाएगी",
       "name_label": "नाम:"
     },
     "version": {
@@ -6987,7 +6987,7 @@
     "settings_page": {
       "tab_storage": "भंडारण और कोटा",
       "tab_about": "परिचय",
-      "title": "सेटिंग्स — Kubuno Files",
+      "title": "सेटिंग्स - Kubuno Files",
       "subtitle": "भंडारण, कोटा और कॉन्फ़िगरेशन",
       "quota_label": "नए उपयोगकर्ताओं के लिए डिफ़ॉल्ट कोटा",
       "quota_desc": "निर्माण के समय प्रत्येक खाते को आवंटित भंडारण. वर्तमान में: {{current}}",
@@ -6995,7 +6995,7 @@
       "info_2": "(डिफ़ॉल्ट: 5 GB)।",
       "about_official": "आधिकारिक मॉड्यूल",
       "about_desc_label": "विवरण",
-      "about_desc": "संपूर्ण फ़ाइल प्रबंधक — अपलोड, डाउनलोड, फ़ोल्डर संगठन, फ़ाइल और फ़ोल्डर साझाकरण, ट्रैश, WebDAV, संस्करण इतिहास।",
+      "about_desc": "संपूर्ण फ़ाइल प्रबंधक - अपलोड, डाउनलोड, फ़ोल्डर संगठन, फ़ाइल और फ़ोल्डर साझाकरण, ट्रैश, WebDAV, संस्करण इतिहास।",
       "about_author_label": "लेखक",
       "about_license_label": "लाइसेंस",
       "about_tech_label": "प्रौद्योगिकियाँ",
@@ -7082,7 +7082,7 @@
       "edit_title_short": "संपादित करें",
       "edit_hint": "सहेजी गई लॉगिन जानकारी कभी नहीं दिखाई जाती। इस माउंट को फिर से जोड़ने के लिए उसे पूरा दोबारा दर्ज करें।",
       "save_btn": "सहेजें",
-      "edit_hint_kept": "जो बदलना हो बदलें। गोपनीय जानकारी कभी नहीं दिखाई जाती — मौजूदा रखने के लिए उन्हें खाली छोड़ें।",
+      "edit_hint_kept": "जो बदलना हो बदलें। गोपनीय जानकारी कभी नहीं दिखाई जाती - मौजूदा रखने के लिए उन्हें खाली छोड़ें।",
       "field_unchanged": "•••••••• (अपरिवर्तित)",
       "list_shares": "सर्वर के शेयर सूचीबद्ध करें",
       "shares_none": "यह सर्वर कोई शेयर नहीं देता",
@@ -7154,8 +7154,8 @@
       "sort_label": "क्रमबद्ध करें:",
       "type_label": "प्रकार:",
       "sort_date": "तिथि",
-      "sort_asc": "आरोही — अवरोही के लिए क्लिक करें",
-      "sort_desc": "अवरोही — आरोही के लिए क्लिक करें",
+      "sort_asc": "आरोही - अवरोही के लिए क्लिक करें",
+      "sort_desc": "अवरोही - आरोही के लिए क्लिक करें",
       "ft_all": "सभी प्रकार",
       "ft_images": "छवियाँ",
       "items_selected": "{{count}} आइटम चयनित",
@@ -7356,7 +7356,7 @@
       "copy": "कॉपी",
       "copied": "कॉपी किया गया",
       "lines": "पंक्तियाँ",
-      "truncated": "बड़ी फ़ाइल — पूर्वावलोकन छोटा किया गया.",
+      "truncated": "बड़ी फ़ाइल - पूर्वावलोकन छोटा किया गया.",
       "cannot_load": "पूर्वावलोकन उपलब्ध नहीं (बाइनरी या अपठनीय फ़ाइल).",
       "empty": "खाली फ़ाइल."
     },
@@ -7582,7 +7582,7 @@
     },
     "folderpicker": {
       "title": "选择文件夹",
-      "empty": "无子文件夹 — 项目将在此创建",
+      "empty": "无子文件夹 - 项目将在此创建",
       "create_in": "创建于：",
       "select_here": "选择此处"
     },
@@ -7593,7 +7593,7 @@
     },
     "savedialog": {
       "title": "压缩并保存",
-      "empty": "空文件夹 — 文件将保存在此",
+      "empty": "空文件夹 - 文件将保存在此",
       "name_label": "名称："
     },
     "version": {
@@ -7663,7 +7663,7 @@
     "settings_page": {
       "tab_storage": "存储与配额",
       "tab_about": "关于",
-      "title": "设置 — Kubuno Files",
+      "title": "设置 - Kubuno Files",
       "subtitle": "存储、配额与配置",
       "quota_label": "新用户的默认配额",
       "quota_desc": "每个账户创建时分配的存储空间。当前：{{current}}",
@@ -7671,7 +7671,7 @@
       "info_2": "（默认：5 GB）。",
       "about_official": "官方模块",
       "about_desc_label": "描述",
-      "about_desc": "完整的文件管理器 — 上传、下载、文件夹组织、文件和文件夹共享、回收站、WebDAV、版本历史。",
+      "about_desc": "完整的文件管理器 - 上传、下载、文件夹组织、文件和文件夹共享、回收站、WebDAV、版本历史。",
       "about_author_label": "作者",
       "about_license_label": "许可证",
       "about_tech_label": "技术",
@@ -7830,8 +7830,8 @@
       "sort_label": "排序：",
       "type_label": "类型：",
       "sort_date": "日期",
-      "sort_asc": "升序 — 点击切换为降序",
-      "sort_desc": "降序 — 点击切换为升序",
+      "sort_asc": "升序 - 点击切换为降序",
+      "sort_desc": "降序 - 点击切换为升序",
       "ft_all": "所有类型",
       "ft_images": "图片",
       "items_selected": "已选择 {{count}} 项",
@@ -8032,7 +8032,7 @@
       "copy": "复制",
       "copied": "已复制",
       "lines": "行",
-      "truncated": "文件较大 — 预览已截断。",
+      "truncated": "文件较大 - 预览已截断。",
       "cannot_load": "预览不可用（二进制或无法读取的文件）。",
       "empty": "空文件。"
     },
@@ -8258,7 +8258,7 @@
     },
     "folderpicker": {
       "title": "フォルダを選択",
-      "empty": "サブフォルダなし — プロジェクトはここに作成されます",
+      "empty": "サブフォルダなし - プロジェクトはここに作成されます",
       "create_in": "作成先：",
       "select_here": "ここを選択"
     },
@@ -8269,7 +8269,7 @@
     },
     "savedialog": {
       "title": "圧縮して保存",
-      "empty": "空のフォルダ — ファイルはここに保存されます",
+      "empty": "空のフォルダ - ファイルはここに保存されます",
       "name_label": "名前："
     },
     "version": {
@@ -8339,7 +8339,7 @@
     "settings_page": {
       "tab_storage": "ストレージとクォータ",
       "tab_about": "情報",
-      "title": "設定 — Kubuno Files",
+      "title": "設定 - Kubuno Files",
       "subtitle": "ストレージ・クォータ・設定",
       "quota_label": "新規ユーザーの既定クォータ",
       "quota_desc": "作成時に各アカウントへ割り当てる容量。現在：{{current}}",
@@ -8347,7 +8347,7 @@
       "info_2": "（既定：5 GB）。",
       "about_official": "公式モジュール",
       "about_desc_label": "説明",
-      "about_desc": "完全なファイルマネージャー — アップロード、ダウンロード、フォルダ整理、ファイル・フォルダ共有、ゴミ箱、WebDAV、バージョン履歴。",
+      "about_desc": "完全なファイルマネージャー - アップロード、ダウンロード、フォルダ整理、ファイル・フォルダ共有、ゴミ箱、WebDAV、バージョン履歴。",
       "about_author_label": "作者",
       "about_license_label": "ライセンス",
       "about_tech_label": "技術",
@@ -8506,8 +8506,8 @@
       "sort_label": "並べ替え：",
       "type_label": "種類：",
       "sort_date": "日付",
-      "sort_asc": "昇順 — クリックで降順",
-      "sort_desc": "降順 — クリックで昇順",
+      "sort_asc": "昇順 - クリックで降順",
+      "sort_desc": "降順 - クリックで昇順",
       "ft_all": "すべての種類",
       "ft_images": "画像",
       "items_selected": "{{count}} 件選択中",
@@ -8708,7 +8708,7 @@
       "copy": "コピー",
       "copied": "コピー済み",
       "lines": "行",
-      "truncated": "大きなファイル — プレビューは省略されています。",
+      "truncated": "大きなファイル - プレビューは省略されています。",
       "cannot_load": "プレビューを利用できません（バイナリまたは読み取り不能なファイル）。",
       "empty": "空のファイル。"
     },

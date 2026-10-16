@@ -1,4 +1,4 @@
-<!-- ImageSearchResultsView — converted from ImageSearchResultsView.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<!-- ImageSearchResultsView - converted from ImageSearchResultsView.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
 <UserControl x:Props="ImageSearchResultsViewProps">
   <Panel>
     <Stack Direction="LeftToRight" Gap="0" CrossAlign="Center" Justify="SpaceBetween" Class="mb-5">

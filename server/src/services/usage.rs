@@ -5,19 +5,19 @@
 //! **Whoever physically holds the byte declares it, and nobody else.** drive
 //! holds more than what its own UI wrote: office, notes, flow and the rest push
 //! their documents through `/ipc/*`, and those bytes land in `drive.files` on
-//! drive's disk. They are therefore drive's to declare — as `content`, exactly
-//! like a file dropped in the browser — and the writing modules declare nothing
+//! drive's disk. They are therefore drive's to declare - as `content`, exactly
+//! like a file dropped in the browser - and the writing modules declare nothing
 //! for them. Any other arrangement double counts the same physical byte, which
 //! is precisely what the categorised channel exists to prevent.
 //!
 //! ## What is billed, and what is merely held
 //!
 //! The criterion is **what the account can free by itself**. Drive bills
-//! `content`, `trash` and `versions`: each has a control in the interface — a
+//! `content`, `trash` and `versions`: each has a control in the interface - a
 //! file can be deleted, the bin emptied, and versioning switched off, listed and
 //! purged one revision at a time (`PATCH /:id/versioning`,
-//! `DELETE /:id/versions/:vid`). Everything else — `thumbnails`, `index`,
-//! `cache`, `staging`, `system` — exists because the module needs it: derived,
+//! `DELETE /:id/versions/:vid`). Everything else - `thumbnails`, `index`,
+//! `cache`, `staging`, `system` - exists because the module needs it: derived,
 //! regenerable, or installed by the platform, and with no control the account
 //! could use to reclaim it. It is declared, so an operator sizes the disk on the
 //! whole, and not charged.
@@ -31,7 +31,7 @@
 //! module physically holds). Drive declares neither: nothing it keeps is beyond
 //! the user's reach, and it holds everything it declares.
 //!
-//! ## Deduplication by `storage_path` — the correction this file exists for
+//! ## Deduplication by `storage_path` - the correction this file exists for
 //!
 //! `drive.files` is *not* one row per physical object. Overwrites, IPC
 //! re-registrations and the disk scanner all leave several rows pointing at the
@@ -40,7 +40,7 @@
 //! statement about bytes on a disk, so every category derived from `drive.files`
 //! collapses rows by `storage_path` first and takes ONE size per path. The
 //! collapsing rule also decides the category: a path is `trash` only when
-//! *every* row pointing at it is trashed — one live row makes the object live,
+//! *every* row pointing at it is trashed - one live row makes the object live,
 //! and an object is never in two categories at once.
 //!
 //! Note that `core.users.used_bytes`, maintained incrementally by
@@ -60,7 +60,7 @@
 //!
 //! * **Incremental.** Every write path in this module funnels through
 //!   [`super::files::update_used_bytes`], which marks the owner dirty. A
-//!   background task coalesces the marks and declares a few seconds later — so a
+//!   background task coalesces the marks and declares a few seconds later - so a
 //!   hundred-file upload produces one declaration, not a hundred, and the upload
 //!   itself never waits on the core. Because a *partial* declaration retires
 //!   nothing, a category that fell to zero has to be declared as an explicit
@@ -69,7 +69,7 @@
 //!   declared as a complete state. This is the repair path: it corrects anything
 //!   the incremental path missed while the core was unreachable, and it is the
 //!   only declaration that can retire a `(account, category)` drive no longer
-//!   holds anything for — there, omission *is* the retirement, so zeros are left
+//!   holds anything for - there, omission *is* the retirement, so zeros are left
 //!   out rather than sent.
 
 use std::collections::{HashMap, HashSet};
@@ -106,14 +106,14 @@ const FULL_RETRY_MIN: Duration = Duration::from_secs(15);
 /// Matches the core's own per-request ceiling (`storage::usage::MAX_ENTRIES`).
 ///
 /// It counts **entries**, not accounts, and one account now produces up to eight
-/// of them — so a page holds ~625 accounts, not 5 000. Getting this wrong would
+/// of them - so a page holds ~625 accounts, not 5 000. Getting this wrong would
 /// not be a soft failure: the core answers 422 and the whole page is lost.
 const MAX_ENTRIES: usize = 5_000;
 
 /// Marks left by the write paths, drained by the reporter task.
 ///
 /// A global rather than a field on `AppState` because `update_used_bytes` is a
-/// free function reached from a dozen call sites with nothing but a `DbPool` —
+/// free function reached from a dozen call sites with nothing but a `DbPool` -
 /// threading a channel through all of them would touch every write path in the
 /// module to deliver one notification.
 static DIRTY: OnceLock<mpsc::UnboundedSender<Uuid>> = OnceLock::new();
@@ -135,14 +135,14 @@ pub fn mark_dirty(owner_id: Uuid) {
 /// What a declared quantity of bytes *is*, in drive's own machinery.
 ///
 /// Mirrors the core's closed vocabulary (`core::storage::categories::Category`).
-/// A value outside it is refused with 422, so this enum — not a string literal
-/// at the call site — is what keeps a typo from silently erasing a slice of the
+/// A value outside it is refused with 422, so this enum - not a string literal
+/// at the call site - is what keeps a typo from silently erasing a slice of the
 /// breakdown.
 ///
 /// Two of the core's ten categories are deliberately absent: `Delegated` names
 /// bytes another module physically holds, and `Retention` names copies the
 /// account cannot delete. Drive holds everything it declares, and keeps nothing
-/// the account has no control over — so declaring either would be a lie the
+/// the account has no control over - so declaring either would be a lie the
 /// compiler cannot catch.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 enum Category {
@@ -151,15 +151,15 @@ enum Category {
     /// Deleted but restorable. Billed: the bytes are still on the disk and the
     /// account can free them itself by emptying the bin.
     Trash,
-    /// `drive.file_versions` — earlier revisions of a file. Billed: the account
+    /// `drive.file_versions` - earlier revisions of a file. Billed: the account
     /// turns versioning on, and lists, restores and deletes revisions one by
     /// one. They are kept at its request and it can free them at will.
     Versions,
     /// Rendered previews under `{owner}/thumbnails/`.
     Thumbnails,
-    /// `drive.search_index` — extracted text, tsvectors, embeddings.
+    /// `drive.search_index` - extracted text, tsvectors, embeddings.
     Index,
-    /// `drive.remote_cache` — metadata memoised from remote mounts.
+    /// `drive.remote_cache` - metadata memoised from remote mounts.
     Cache,
     /// Chunks of uploads still in flight.
     Staging,
@@ -183,7 +183,7 @@ impl Category {
         }
     }
 
-    /// Whether the core charges this against the account's quota — i.e. whether
+    /// Whether the core charges this against the account's quota - i.e. whether
     /// the account has a control that frees it.
     ///
     /// Duplicated from the core on purpose: it is what this module's own logs
@@ -245,7 +245,7 @@ struct StoredPath {
 ///
 /// Order matters: `/System` wins over everything (a trashed dictionary is still
 /// not the account's doing), and `trash` only applies when nothing live points at
-/// the object — an object is never in two categories, so the shares add up.
+/// the object - an object is never in two categories, so the shares add up.
 fn classify(path: &StoredPath) -> Category {
     if path.in_system {
         Category::System
@@ -316,13 +316,13 @@ fn billable_bytes(entries: &[Entry]) -> i64 {
 /// accounts a flush marked dirty.
 ///
 /// The `/System` test is a `LEFT JOIN` on the folder tree because the marker
-/// lives on the folder, not the file — and it is a `LEFT` join because a file at
+/// lives on the folder, not the file - and it is a `LEFT` join because a file at
 /// the account's root has no folder at all, which must not drop it from the
 /// count. `BOOL_OR` over that nullable expression yields NULL when every row is
 /// rootless, hence the `COALESCE`.
 /// A cast to BIGINT in the local spelling, for expressions this module builds at
 /// run time (the dialect helpers only take `&'static str`). `expr` is always
-/// developer-authored SQL — never request data.
+/// developer-authored SQL - never request data.
 fn bigint(b: Backend, expr: &str) -> String {
     match b {
         Backend::Postgres => format!("({expr})::bigint"),
@@ -393,7 +393,7 @@ async fn stored_paths(db: &DbPool, owners: Option<&[Uuid]>) -> Result<Vec<Stored
 /// something that exists for minutes and is nobody's quota.
 /// The per-row byte cost of an `index`/`cache` row: PostgreSQL's `pg_column_size`
 /// where it exists, and a `LENGTH`-of-text estimate on the other engines (which
-/// have no equivalent — the figure is informational, never billed).
+/// have no equivalent - the figure is informational, never billed).
 fn index_row_size(b: Backend) -> String {
     match b {
         Backend::Postgres => "pg_column_size(si.*)".to_string(),
@@ -505,8 +505,8 @@ async fn aggregate(
 
 /// Measures `{owner}/thumbnails/` on the storage backend.
 ///
-/// Thumbnail sizes exist **nowhere in the database** — `drive.files` only carries
-/// a `has_thumbnail` flag — so the only honest measure is to ask the backend.
+/// Thumbnail sizes exist **nowhere in the database** - `drive.files` only carries
+/// a `has_thumbnail` flag - so the only honest measure is to ask the backend.
 /// `StorageBackend::list` returns each object's size, and the thumbnail tree is
 /// flat (`{owner}/thumbnails/{file_id}.jpg`), so one non-recursive listing per
 /// account is exact.
@@ -545,7 +545,7 @@ async fn refresh_thumbnails(
                 tracing::warn!(
                     owner = %owner,
                     error = %e,
-                    "Mesure des miniatures impossible — dernière valeur connue conservée"
+                    "Mesure des miniatures impossible - dernière valeur connue conservée"
                 );
             }
         }
@@ -557,7 +557,7 @@ async fn refresh_thumbnails(
 /// `owners = None` is the full sync: every account is recounted, thumbnails are
 /// re-measured, and empty `(account, category)` pairs are dropped so the core
 /// retires them. `Some(list)` is the incremental path: only those accounts, and
-/// every category stated explicitly — including at zero, because a partial
+/// every category stated explicitly - including at zero, because a partial
 /// declaration retires nothing.
 async fn collect(
     state: &AppState,
@@ -586,7 +586,7 @@ async fn collect(
     match owners {
         None => {
             // Accounts are discovered from what they hold. One that holds
-            // nothing but thumbnails is therefore not measured — which is
+            // nothing but thumbnails is therefore not measured - which is
             // harmless, since a thumbnail cannot exist without the file it was
             // rendered from having existed too.
             let all: Vec<Uuid> = entries
@@ -643,7 +643,7 @@ async fn collect(
 // ── Sending ──────────────────────────────────────────────────────────────────
 
 /// Identifier this module declares under. Only consulted by the core when the
-/// caller could not be identified from its secret — see below.
+/// caller could not be identified from its secret - see below.
 const MODULE_ID: &str = "drive";
 
 /// Sends one declaration to the core.
@@ -654,12 +654,12 @@ const MODULE_ID: &str = "drive";
 /// identity over anything the body says: when the two disagree the request is
 /// refused with 403, so a module holding its own secret can never write under
 /// another's name. The body value is only consulted when the caller is *not*
-/// identified — which is the case whenever a module is handed the master secret
+/// identified - which is the case whenever a module is handed the master secret
 /// (development, and currently also the supervised path, since the core's module
 /// spawner does not derive per-module secrets yet).
 ///
 /// Sending it is therefore what makes the declaration work today, and it becomes
-/// dead weight — not a bypass — the day the spawner starts deriving. This is
+/// dead weight - not a bypass - the day the spawner starts deriving. This is
 /// exactly the arrangement `/internal/modules/register` already uses.
 async fn send(
     http: &reqwest::Client,
@@ -696,7 +696,7 @@ async fn send(
     }
 
     // The status alone does not say which of several validations refused the
-    // declaration, and this runs unattended — a log line that reads "HTTP 422"
+    // declaration, and this runs unattended - a log line that reads "HTTP 422"
     // costs an afternoon the next time the contract shifts.
     let status = resp.status();
     let detail = resp.text().await.unwrap_or_default();
@@ -710,10 +710,10 @@ async fn send(
 /// `full` is only claimed when the whole state fits in one call: a chunked
 /// declaration marked full would retire everything outside the chunk that
 /// happened to be sent last. Chunked declarations are therefore partial, which
-/// is correct but cannot retire a row — a limitation that only matters beyond
+/// is correct but cannot retire a row - a limitation that only matters beyond
 /// [`MAX_ENTRIES`] entries, and one the incremental path already covers (a
 /// category dropping to zero marks the owner dirty, and zero is declared
-/// explicitly). Returns `true` when every call landed — the caller uses that to
+/// explicitly). Returns `true` when every call landed - the caller uses that to
 /// decide whether a full sync needs retrying sooner than its normal period.
 async fn declare(http: &reqwest::Client, state: &AppState, entries: Vec<Entry>, full: bool) -> bool {
     let single_call = entries.len() <= MAX_ENTRIES;
@@ -758,7 +758,7 @@ async fn declare(http: &reqwest::Client, state: &AppState, entries: Vec<Entry>, 
                 // Incremental declarations are never retried here: the next
                 // flush declares the current state again, and retrying a stale
                 // total would be work done to publish an out-of-date number. A
-                // *full* declaration is different — it is the repair path, and
+                // *full* declaration is different - it is the repair path, and
                 // its caller reschedules it on this return value.
                 all_ok = false;
                 tracing::warn!(error = %e, entrées = chunk.len(), "Déclaration de consommation échouée");
@@ -788,7 +788,7 @@ async fn declare(http: &reqwest::Client, state: &AppState, entries: Vec<Entry>, 
 pub async fn run_reporter(state: AppState) {
     let (tx, mut rx) = mpsc::unbounded_channel::<Uuid>();
     if DIRTY.set(tx).is_err() {
-        tracing::error!("Rapporteur de consommation déjà démarré — second démarrage ignoré");
+        tracing::error!("Rapporteur de consommation déjà démarré - second démarrage ignoré");
         return;
     }
 
@@ -835,7 +835,7 @@ pub async fn run_reporter(state: AppState) {
                 }
             }
 
-            // Fires immediately at startup — the first thing the module does
+            // Fires immediately at startup - the first thing the module does
             // once it is up is state its complete position. Retried with a
             // growing backoff until it lands, because the core is often not
             // ready to accept it on the first attempt.
@@ -938,7 +938,7 @@ mod tests {
     }
 
     /// Fonts and dictionaries sit in the account's tree but the platform put them
-    /// there — billing them would charge people for the module working.
+    /// there - billing them would charge people for the module working.
     #[test]
     fn a_system_file_is_declared_as_system_and_is_not_billed() {
         let entries = fold_paths(&[
@@ -1001,7 +1001,7 @@ mod tests {
     }
 
     /// One account produces up to eight entries, so the page size is a count of
-    /// entries — a page built on accounts would overshoot the core's ceiling by
+    /// entries - a page built on accounts would overshoot the core's ceiling by
     /// eight and be refused whole.
     #[test]
     fn pages_are_cut_on_entries_not_on_accounts() {

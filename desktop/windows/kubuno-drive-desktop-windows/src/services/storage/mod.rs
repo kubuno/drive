@@ -1,4 +1,4 @@
-//! Port of `Files.App/Services/Storage/` — storage access services
+//! Port of `Files.App/Services/Storage/` - storage access services
 //! (icon cache, Recycle Bin).
 
 pub mod icon_cache_service;

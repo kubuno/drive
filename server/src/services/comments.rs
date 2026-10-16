@@ -8,7 +8,7 @@ use crate::{
 };
 
 /// Lists comments on a document, newest first. The caller must be able to read
-/// the file (owned or internally shared) — enforced before calling.
+/// the file (owned or internally shared) - enforced before calling.
 pub async fn list_comments(db: &DbPool, file_id: Uuid) -> Result<Vec<PdfComment>> {
     let rows = db
         .fetch_all_as::<PdfComment>(

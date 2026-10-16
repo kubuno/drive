@@ -23,7 +23,7 @@ export function Part2({ imports }: { imports: NonNullable<DriveApp['imports']> }
             type="file"
             multiple
             hidden
-            // @ts-expect-error — non-standard attribute but widely supported
+            // @ts-expect-error - non-standard attribute but widely supported
             webkitdirectory="true"
             onChange={imports.handleFolderInput}
           />
@@ -40,7 +40,7 @@ export function Part3({ selection, imageSearch, clearImageSearch, viewers, isSea
             onPointerUp={selection.onMarqueeUp}
             onPointerCancel={selection.onMarqueeCancel}
           >
-            {/* Similar-image search (camera) — takes precedence */}
+            {/* Similar-image search (camera) - takes precedence */}
             {imageSearch && (
               <ImageSearchResultsView state={imageSearch} onClear={clearImageSearch} onOpen={viewers.openFile} />
             )}

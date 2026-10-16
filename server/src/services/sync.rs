@@ -8,7 +8,7 @@
 //!
 //! Each source is fetched bounded by `limit + 1` rows; the merge keeps the
 //! `limit` lowest sequences and reports `has_more` so the client paginates by
-//! advancing its cursor. All queries are scoped to `owner_id` — a client never
+//! advancing its cursor. All queries are scoped to `owner_id` - a client never
 //! sees another user's data.
 
 use std::sync::Arc;
@@ -215,7 +215,7 @@ pub async fn delta(db: &DbPool, owner_id: Uuid, cursor: i64, limit: i64, full: b
 /// Replaces a file's content (any mime type) with conflict detection.
 ///
 /// If `if_match` is given and differs from the current content hash (etag), the
-/// server refuses with `PreconditionFailed` (HTTP 412) — the file changed since
+/// server refuses with `PreconditionFailed` (HTTP 412) - the file changed since
 /// the client last saw it. Otherwise the content is stored, the hash/size are
 /// recomputed and the updated record (with the new etag) is returned.
 pub async fn replace_content(

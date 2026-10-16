@@ -2,7 +2,7 @@
 id           = "drive"
 display_name = "Drive"
 version      = "0.1.12"
-description  = "Gestionnaire de fichiers — upload, téléchargement, partage, arborescence."
+description  = "Gestionnaire de fichiers - upload, téléchargement, partage, arborescence."
 author       = "Kubuno Contributors"
 license      = "AGPL-3.0"
 homepage_url = "https://github.com/kubuno/kubuno"
@@ -91,7 +91,7 @@ publishes = [
 ]
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  Drive — admin panel pages
+#  Drive - admin panel pages
 # ══════════════════════════════════════════════════════════════════════════════
 # Each becomes an entry of the admin menu (Modules → Drive), at its own address
 # (/admin/modules/drive/<id>). A setting's `category` becomes a tab inside its
@@ -123,10 +123,10 @@ id          = "features"
 label       = "Fonctionnalités"
 icon        = "ToggleLeft"
 position    = 4
-description  = "Les surfaces d'accès annexes — client de bureau (WebDAV), import depuis une URL, stockages tiers — que l'on peut fermer sans toucher au module."
+description  = "Les surfaces d'accès annexes - client de bureau (WebDAV), import depuis une URL, stockages tiers - que l'on peut fermer sans toucher au module."
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  Drive — instance settings
+#  Drive - instance settings
 # ══════════════════════════════════════════════════════════════════════════════
 # Edited in the admin console, stored in core.settings, read back through
 # /internal/modules/settings and mapped onto InstanceConfig in
@@ -177,7 +177,7 @@ scope       = "global"
 type        = "int"
 default     = 0
 label       = "Expiration maximale d'un lien public"
-description = "Durée de vie maximale, en jours, d'un lien de partage public. 0 = pas de limite. Au-dessus de 0, un lien créé sans date d'expiration — ou avec une date plus lointaine — est ramené à cette durée."
+description = "Durée de vie maximale, en jours, d'un lien de partage public. 0 = pas de limite. Au-dessus de 0, un lien créé sans date d'expiration - ou avec une date plus lointaine - est ramené à cette durée."
 category    = "Liens publics"
 group       = "sharing"
 min         = 0
@@ -229,7 +229,7 @@ scope       = "global"
 type        = "int"
 default     = 0
 label       = "Nombre maximal de téléchargements par lien"
-description = "Plafond du compteur de téléchargements d'un lien public. 0 = illimité. Au-dessus de 0, un lien créé sans plafond — ou avec un plafond plus haut — est ramené à cette valeur ; le lien cesse de répondre une fois le compte atteint."
+description = "Plafond du compteur de téléchargements d'un lien public. 0 = illimité. Au-dessus de 0, un lien créé sans plafond - ou avec un plafond plus haut - est ramené à cette valeur ; le lien cesse de répondre une fois le compte atteint."
 category    = "Liens publics"
 group       = "sharing"
 min         = 0
@@ -273,7 +273,7 @@ scope       = "global"
 type        = "bool"
 default     = true
 label       = "Accès par client de bureau (WebDAV)"
-description = "Désactivé, la surface WebDAV ne répond plus et aucun nouveau jeton n'est délivré — les clients de bureau et les montages réseau perdent l'accès. L'interface web n'est pas affectée."
+description = "Désactivé, la surface WebDAV ne répond plus et aucun nouveau jeton n'est délivré - les clients de bureau et les montages réseau perdent l'accès. L'interface web n'est pas affectée."
 category    = "Accès"
 group       = "features"
 risk        = "warning"

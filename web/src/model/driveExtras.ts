@@ -89,7 +89,7 @@ interface DriveExtrasState {
 
 // ── Core-backed tags ──────────────────────────────────────────────────────────
 // Tags ARE the core's cross-module labels (`/api/v1/labels`): the drive keeps
-// its dots/dialog UX, but reads and writes the central store — so a tag put on
+// its dots/dialog UX, but reads and writes the central store - so a tag put on
 // a file here is the same label the user can filter on at /labels, and the
 // same one other modules attach through « Étiquettes Kubuno… ».
 

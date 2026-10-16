@@ -70,7 +70,7 @@ impl Default for SharePolicy {
 }
 
 /// The columns shared by the two enriched-listing queries, plus the raw
-/// `password_hash` (so `password_protected` is derived in Rust — a boolean-valued
+/// `password_hash` (so `password_protected` is derived in Rust - a boolean-valued
 /// SQL expression decodes as bool on PostgreSQL/SQLite but not on MySQL). The
 /// owner name is only joined in "shared with me"; elsewhere the column is absent
 /// and `#[sqlx(default)]` leaves it `None`.
@@ -304,7 +304,7 @@ pub async fn search_recipients(
     let b = db.backend();
     let email = b.cast("email", SqlType::Text);
     // Case-insensitive match on the email cast (a run-time expression, so the
-    // `ilike` helper — which takes a `&'static str` column — cannot be used on
+    // `ilike` helper - which takes a `&'static str` column - cannot be used on
     // it). Each pattern is bound to its own placeholder (no reuse); `NULLS LAST`
     // is dropped (MySQL rejects it).
     let email_ilike = match b {

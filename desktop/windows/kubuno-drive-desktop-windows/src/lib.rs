@@ -7,7 +7,7 @@
 //! (`desktop/windows/kubuno-drive-desktop`) registers them and runs [`WindowsUi`].
 
 // The module tree mirrors the folders of Files (`Files.App/<Folder>/<Folder>.cs`)
-// one to one, as the port requires — which puts `foo/foo.rs` under `foo`.
+// one to one, as the port requires - which puts `foo/foo.rs` under `foo`.
 #![allow(clippy::module_inception)]
 
 // The module tree mirrors `Files.App` (C#), so each Rust file maps to its

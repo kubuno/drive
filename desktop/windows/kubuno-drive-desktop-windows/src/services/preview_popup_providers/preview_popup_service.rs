@@ -10,7 +10,7 @@ use super::quick_look_provider::{quicklook_available, quicklook_send, MSG_SWITCH
 use super::seer_pro_provider::{seer_available, seer_switch, seer_toggle};
 
 /// `true` if an external preview provider is available (QuickLook or Seer).
-/// Equivalent to `GetProviderAsync() is not null` — used to gray out/enable
+/// Equivalent to `GetProviderAsync() is not null` - used to gray out/enable
 /// the preview command and decide whether to relay the keyboard.
 pub fn is_available() -> bool {
     quicklook_available() || seer_available()

@@ -1,4 +1,4 @@
-//! Network credential entry — port of Files' credential prompt when
+//! Network credential entry - port of Files' credential prompt when
 //! connecting to a protected `\\server` share.
 //!
 //! ## What the original C# does
@@ -96,7 +96,7 @@ fn from_wide_nul(buf: &[u16]) -> String {
 }
 
 /// Shows the system "Enter network credentials" box for the `target` share
-/// (server/share name, e.g. `server\share` — the path without the `\\`
+/// (server/share name, e.g. `server\share` - the path without the `\\`
 /// prefix, like the C# message).
 ///
 /// - `parent` : owner window (can be `HWND(0)` if none).

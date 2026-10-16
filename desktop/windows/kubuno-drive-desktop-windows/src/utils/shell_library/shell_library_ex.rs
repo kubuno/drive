@@ -11,7 +11,7 @@
 //!
 //! Any COM error results in the library being ignored: never a panic.
 //! Everything runs on the current STA thread (no new thread, no
-//! `CoInitialize` — the model follows `utils/recycle_bin.rs`).
+//! `CoInitialize` - the model follows `utils/recycle_bin.rs`).
 
 use windows::core::{PCWSTR, PWSTR};
 use windows::Win32::System::Com::{

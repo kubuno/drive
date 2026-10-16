@@ -1,4 +1,4 @@
-//! Port of `Files.App/Data/Items/`: the Home page's data — quick access,
+//! Port of `Files.App/Data/Items/`: the Home page's data - quick access,
 //! drives, recent files (`DirEntryItem` ≈ `ListedItem`, `DriveItem`,
 //! `WidgetsListedItem`).
 

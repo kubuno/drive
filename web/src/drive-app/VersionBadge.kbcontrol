@@ -1,4 +1,4 @@
-<!-- VersionBadge — converted from VersionBadge.tsx by @kubuno/views-migrate. -->
+<!-- VersionBadge - converted from VersionBadge.tsx by @kubuno/views-migrate. -->
 <UserControl x:Props="VersionBadgeProps">
   <Panel HtmlTag="Span"
          ToolTip="{Binding title}"

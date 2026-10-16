@@ -5,7 +5,7 @@
 //!
 //! Deviation from C#: `FtpStorable.Id` upstream only keeps the FTP *path*
 //! (e.g. `/pub/file.txt`), yet is later fed back into `GetFtpClient`, which
-//! expects a full URL — host resolution is effectively broken upstream. The
+//! expects a full URL - host resolution is effectively broken upstream. The
 //! Rust port keeps `id` as the FTP path for parity but additionally stores
 //! the `authority` (`host[:port]`) captured at construction and uses it to
 //! connect.
@@ -43,7 +43,7 @@ impl NetworkCredential {
     }
 }
 
-/// Port of the static `FtpManager` — per-host credentials.
+/// Port of the static `FtpManager` - per-host credentials.
 pub struct FtpManager;
 
 impl FtpManager {
@@ -153,7 +153,7 @@ pub async fn connect_client(authority: &str) -> StorageResult<AsyncFtpStream> {
     Ok(client)
 }
 
-/// Port of `FluentFTP.GetObjectInfo` — `MLST`, with a parent `LIST` fallback
+/// Port of `FluentFTP.GetObjectInfo` - `MLST`, with a parent `LIST` fallback
 /// for servers without MLST support.
 async fn get_object_info(client: &mut AsyncFtpStream, path: &str) -> StorageResult<FtpObject> {
     if let Ok(line) = client.mlst(Some(path)).await {
@@ -433,7 +433,7 @@ impl ModifiableFolder for FtpStorageFolder {
 
 #[async_trait]
 impl DirectCopy for FtpStorageFolder {
-    /// Port of `CreateCopyOfAsync` — download the source contents, upload to
+    /// Port of `CreateCopyOfAsync` - download the source contents, upload to
     /// the new path (folders are not supported, same as C#).
     async fn create_copy_of(&self, item_to_copy: &StorableItem, _overwrite: bool) -> StorageResult<StorableItem> {
         let StorableItem::File(source_file) = item_to_copy else {
@@ -462,7 +462,7 @@ impl DirectCopy for FtpStorageFolder {
 
 #[async_trait]
 impl DirectMove for FtpStorageFolder {
-    /// Port of `MoveFromAsync` — copy then delete from the source.
+    /// Port of `MoveFromAsync` - copy then delete from the source.
     async fn move_from(
         &self,
         item_to_move: &StorableItem,

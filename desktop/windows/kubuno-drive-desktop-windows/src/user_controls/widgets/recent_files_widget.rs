@@ -1,4 +1,4 @@
-//! RecentFilesWidget (mirrors RecentFilesWidget.xaml.cs) — the Home page
+//! RecentFilesWidget (mirrors RecentFilesWidget.xaml.cs) - the Home page
 //! recent files rows.
 
 use crate::services::storage::IconCache;
@@ -26,7 +26,7 @@ impl Painter<'_> {
             // A recent row is a LIST row, not a card: `--radius-md` = 4
             // (`FilesRecentWidget.tsx:55` uses `hover:bg-surface-1`, but those
             // rows sit inside a white card, whereas these sit straight on the
-            // page background where surface-1 would be invisible — the desktop
+            // page background where surface-1 would be invisible - the desktop
             // keeps its own surface-3 row tint here).
             if state.hot == Some(Hot::RecentRow(i)) {
                 self.fill_rounded(

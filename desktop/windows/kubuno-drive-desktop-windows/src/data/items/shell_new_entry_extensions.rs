@@ -6,7 +6,7 @@
 //! place it in `extensions/shell_new_entry_extensions.rs`, a new top-level
 //! module that would require declaring `mod extensions;` in `main.rs`. To
 //! avoid touching `main.rs`, the type is temporarily housed under
-//! `data/items/` (next to its `ShellNewEntry`) — to move to `extensions/`
+//! `data/items/` (next to its `ShellNewEntry`) - to move to `extensions/`
 //! at Time B.
 
 use std::path::{Path, PathBuf};

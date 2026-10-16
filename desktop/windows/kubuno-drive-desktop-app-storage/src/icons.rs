@@ -20,7 +20,7 @@ use windows::Win32::UI::WindowsAndMessaging::{DestroyIcon, GetIconInfo, HICON, I
 use crate::windows_storage::WindowsStorable;
 
 /// `E_PENDING` ("the data necessary to complete this operation is not yet
-/// available") — not exposed by the `windows` crate.
+/// available") - not exposed by the `windows` crate.
 const E_PENDING: windows::core::HRESULT = windows::core::HRESULT(0x8000000A_u32 as i32);
 
 /// Raw 32-bpp BGRA bitmap (top-down row order) with **premultiplied** alpha,
@@ -184,7 +184,7 @@ unsafe fn hicon_to_bgra(hicon: HICON) -> windows::core::Result<ShellBitmap> {
 }
 
 impl WindowsStorable {
-    /// Port of `TryGetThumbnail` — `IShellItemImageFactory::GetImage`.
+    /// Port of `TryGetThumbnail` - `IShellItemImageFactory::GetImage`.
     ///
     /// Prefer running this on an STA thread (see [`crate::sta_thread`]); some
     /// thumbnail providers require it.
@@ -216,7 +216,7 @@ impl WindowsStorable {
     }
 }
 
-/// Port of `GetThumbnailAsync` — resolves `path`, then extracts the thumbnail
+/// Port of `GetThumbnailAsync` - resolves `path`, then extracts the thumbnail
 /// on a dedicated STA thread.
 pub async fn get_thumbnail_async(path: String, size: i32, options: SIIGBF) -> Option<ShellBitmap> {
     crate::sta_thread::run(move || {
@@ -227,7 +227,7 @@ pub async fn get_thumbnail_async(path: String, size: i32, options: SIIGBF) -> Op
     .flatten()
 }
 
-/// Port of `TryExtractImageFromDll` — `SHDefExtractIconW`, with the same
+/// Port of `TryExtractImageFromDll` - `SHDefExtractIconW`, with the same
 /// `(path, index, size)` cache as the C# version.
 pub fn try_extract_image_from_dll(
     path: &str,

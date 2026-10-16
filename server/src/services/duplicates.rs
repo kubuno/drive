@@ -5,7 +5,7 @@
 //! a save racing the disk watcher's scan). Migration `live_name_unique` keeps
 //! the most recently updated row of each group, records every other one in
 //! `drive.duplicate_files` and moves it to the trash so that the unique index
-//! can exist — nothing is deleted there. This module finishes the job, at
+//! can exist - nothing is deleted there. This module finishes the job, at
 //! start-up and from `drive:fsck --merge-duplicates`:
 //!
 //! * the duplicate's versions are renumbered after the keeper's and move to it;
@@ -14,7 +14,7 @@
 //!   referenced and its charge simply moves from "file" to "version";
 //! * its shares, PDF comments, activity, tags, "recent" entries and star move to
 //!   the keeper (a tag or recent entry the keeper already has is left behind);
-//! * then — in the same transaction — the duplicate row goes, with a tombstone
+//! * then - in the same transaction - the duplicate row goes, with a tombstone
 //!   for sync clients, and its record is cleared.
 //!
 //! No blob is ever deleted here: bytes either stay with the keeper (shared or

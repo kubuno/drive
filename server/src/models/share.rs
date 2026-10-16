@@ -22,8 +22,8 @@ pub struct Share {
     pub revoked_at:     Option<DateTime<Utc>>,
 }
 
-/// Un partage enrichi du nom de l'élément cible, de son type et — pour les
-/// partages reçus — du nom du propriétaire. Le hash de mot de passe n'est jamais
+/// Un partage enrichi du nom de l'élément cible, de son type et - pour les
+/// partages reçus - du nom du propriétaire. Le hash de mot de passe n'est jamais
 /// exposé : seul le booléen `password_protected` l'est.
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 pub struct ShareWithTarget {

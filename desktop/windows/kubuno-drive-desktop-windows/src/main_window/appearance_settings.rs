@@ -1,5 +1,5 @@
 #![allow(unused_imports)]
-//! Clicks for the Appearance settings page (mirror of `Views/Settings/AppearanceViewModel`) — `impl MainWindow` block, see `main_window/mod.rs`.
+//! Clicks for the Appearance settings page (mirror of `Views/Settings/AppearanceViewModel`) - `impl MainWindow` block, see `main_window/mod.rs`.
 use windows::core::{w, Result};
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, RECT, WPARAM};
 use windows::Win32::Graphics::Dwm::{

@@ -131,7 +131,7 @@ export default function FilesPaintEditor() {
   const [textInput, setTextInput] = useState('')
   const [textPos,   setTextPos]   = useState<{x:number;y:number}|null>(null)
   const textRef = useRef<HTMLInputElement>(null)
-  // ColorPicker @ui — popover propre (z-index AU-DESSUS de la FloatingWindow, qui est
+  // ColorPicker @ui - popover propre (z-index AU-DESSUS de la FloatingWindow, qui est
   // à ~1000+, alors que ColorField se limite à z-200 → invisible derrière la fenêtre).
   const pickerTheme = useAppPickerTheme()
   const wheelRef = useRef<HTMLButtonElement>(null)
@@ -429,9 +429,9 @@ export default function FilesPaintEditor() {
 
   return (
     <FloatingWindow
-      title={`Paint — ${file.name}`}
+      title={`Paint - ${file.name}`}
       onClose={closeEditor}
-      popout={{ route: `/drive/paint?file=${file.id}`, label: `Paint — ${file.name}`, width: 1140, height: 820 }}
+      popout={{ route: `/drive/paint?file=${file.id}`, label: `Paint - ${file.name}`, width: 1140, height: 820 }}
       defaultWidth={1080}
       defaultHeight={720}
       minWidth={640}
@@ -512,7 +512,7 @@ export default function FilesPaintEditor() {
             </div>
           </RibbonGroup>
 
-          {/* Couleurs — palette ronde façon Paint Windows 11 */}
+          {/* Couleurs - palette ronde façon Paint Windows 11 */}
           <RibbonGroup label={t('paint.colors')}>
             {(() => {
               const activeCol = which === 1 ? color1 : color2
@@ -611,7 +611,7 @@ export default function FilesPaintEditor() {
             })()}
           </RibbonGroup>
 
-          {/* Assistant (AI) — only when the assistant module is active */}
+          {/* Assistant (AI) - only when the assistant module is active */}
           {assistantActive && (
             <RibbonGroup label={t('paint.assistant', { defaultValue: 'Assistant' })}>
               <DropdownMenu.Root>

@@ -1,5 +1,5 @@
 #![allow(unused_imports)]
-//! Sous-module de `MainWindow` — voir `main_window/mod.rs`.
+//! Sous-module de `MainWindow` - voir `main_window/mod.rs`.
 use windows::core::{w, Result};
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, RECT, WPARAM};
 use windows::Win32::Graphics::Dwm::{
@@ -483,7 +483,7 @@ impl MainWindow {
                 self.mark_sidebar_scrolled();
                 self.invalidate();
             }
-            // A click in the track scrolls one page, on the clicked side —
+            // A click in the track scrolls one page, on the clicked side -
             // this is what a `ScrollBar`'s `RepeatButton`s do.
             Some(Hot::ScrollTrack) => {
                 let layout = self.layout();
@@ -711,7 +711,7 @@ impl MainWindow {
                 self.invalidate();
             }
             // « Modifier les étiquettes » (pane): flyout of the defined
-            // tags, checked according to the item — the hit area is recorded
+            // tags, checked according to the item - the hit area is recorded
             // by the drawing pass (its position depends on measured text
             // heights and scrolling; the click must also land INSIDE the pane).
             _ if layout.info_pane.is_some_and(|p| {
@@ -751,7 +751,7 @@ impl MainWindow {
                     self.invalidate();
                 }
             }
-            // Recycle bin — the three buttons of the command bar's
+            // Recycle bin - the three buttons of the command bar's
             // « RecycleBin » context (`ToolbarSections.cs:51-56`). Same
             // delegation as `run_menu_command`, but a greyed-out button
             // (`IsExecutable` false) stays inert, like the disabled AppBarButton.

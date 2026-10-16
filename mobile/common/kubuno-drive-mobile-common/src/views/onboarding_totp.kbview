@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Drive · Onboarding · TOTP — the TotpScreen of OnboardingScreens.kt: enter the two-factor code. Centered
+  Drive · Onboarding · TOTP - the TotpScreen of OnboardingScreens.kt: enter the two-factor code. Centered
   form, a single numeric field, a full-width primary action. Drive LIGHT theme, logical px.
 -->
 <Panel xmlns="https://kubuno.com/views" xmlns:x="https://kubuno.com/views/x"

@@ -1,5 +1,5 @@
 /**
- * RemoteExplorer — route `/drive/remote/:id`. Rend la MÊME zone d'exploration que
+ * RemoteExplorer - route `/drive/remote/:id`. Rend la MÊME zone d'exploration que
  * « Mon Drive » (`StorageExplorer`), branchée sur la source distante du montage.
  * Toute la personnalisation (fonctions masquées) vient des capacités de la source.
  */

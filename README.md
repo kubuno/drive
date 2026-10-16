@@ -7,7 +7,7 @@
 
 <img src=".github/logo.png" alt="Kubuno Drive logo" width="120">
 
-# Kubuno — Drive
+# Kubuno - Drive
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
 ![Rust](https://img.shields.io/badge/Rust-edition_2021-orange.svg)
@@ -15,7 +15,7 @@
 ![Module](https://img.shields.io/badge/Kubuno-module-4D38DB.svg)
 ![Status](https://img.shields.io/badge/status-alpha-yellow.svg)
 
-**File storage, sharing and remote mounts for [Kubuno](https://github.com/kubuno/core) — the self-hosted, libre (AGPLv3) cloud platform, a sovereign alternative to Google Workspace and Microsoft 365.**
+**File storage, sharing and remote mounts for [Kubuno](https://github.com/kubuno/core) - the self-hosted, libre (AGPLv3) cloud platform, a sovereign alternative to Google Workspace and Microsoft 365.**
 
 Drive is where every other Kubuno app keeps its files. It gives users a full file
 manager and gives modules the open/save dialogs, folder pickers and file browser
@@ -27,23 +27,23 @@ they build on.
 
 ## Screenshots
 
-![My Drive — files, folders and previews](.github/screenshots/drive-my-drive.png)
+![My Drive - files, folders and previews](.github/screenshots/drive-my-drive.png)
 
-<sub>My Drive — files, folders and previews</sub>
+<sub>My Drive - files, folders and previews</sub>
 
 ## Features
 
-- **Full-featured file explorer** — grid, details-table and list views, a dual-pane mode, drag & drop, and Home / Recent / Starred / Shared / Trash views. Opening Drive lands on a curated **Home** hub that blends files you recently modified, starred and were shared, rendered through the same explorer as every other view.
-- **Search that lives in the URL** — full-text search over file names and extracted document text, with saved searches that each get a real, shareable link. Names and contents are reduced to accent-folded word stems when a file is indexed, so a plural finds its singular and results rank the same whichever database backs the instance. The advanced-search panel and the header search bar stay in sync both ways, so the fields and the query text can never disagree.
-- **Sharing, locks & activity** — share files and folders, lock files against concurrent edits, and follow what happened through a per-item activity log plus an account-wide **activity feed** (who did what to which item, newest first).
-- **Cross-module labels** — a tag put on a file here is the very same label other modules attach to their items and that the platform-wide labels page filters on.
-- **File infrastructure for other modules** — open/save dialogs, folder pickers and the file browser ship in `@kubuno/drive` for every module to reuse; Drive also contributes a "Drive" tab to the core image picker, so any module can pick images straight from the user's files.
-- **External & module storage** — WebDAV access, remote storage browsing (with editable mounts and SMB share discovery), an admin System browser, and generic storage mounts published by other active modules rendered directly in the sidebar tree.
-- **Self-hosted fonts** — the module ships an openly-licensed font library into `System/Fonts` and serves it through its own `css2`/font endpoints, so documents never fetch fonts from a third-party CDN.
-- **Desktop pop-outs** — the floating audio player and the built-in Paint editor can pop out into their own OS window in the Kubuno desktop client, via standalone `/drive/player` and `/drive/paint` routes.
-- **Mobile experience** — a dedicated bottom navigation, a mobile Home screen with *Suggestions* and *Activity* tabs, a touch-friendly navigation drawer with a storage gauge, and responsive settings pages.
-- **Storage insight** — a quota gauge in the header and a storage page whose single bar shows both how full the quota is and its per-category composition.
-- **Your choice of database** — runs on PostgreSQL, MySQL/MariaDB or SQLite, picked by the administrator in configuration; SQLite needs no database server, which makes a single-machine or evaluation install a one-liner.
+- **Full-featured file explorer** - grid, details-table and list views, a dual-pane mode, drag & drop, and Home / Recent / Starred / Shared / Trash views. Opening Drive lands on a curated **Home** hub that blends files you recently modified, starred and were shared, rendered through the same explorer as every other view.
+- **Search that lives in the URL** - full-text search over file names and extracted document text, with saved searches that each get a real, shareable link. Names and contents are reduced to accent-folded word stems when a file is indexed, so a plural finds its singular and results rank the same whichever database backs the instance. The advanced-search panel and the header search bar stay in sync both ways, so the fields and the query text can never disagree.
+- **Sharing, locks & activity** - share files and folders, lock files against concurrent edits, and follow what happened through a per-item activity log plus an account-wide **activity feed** (who did what to which item, newest first).
+- **Cross-module labels** - a tag put on a file here is the very same label other modules attach to their items and that the platform-wide labels page filters on.
+- **File infrastructure for other modules** - open/save dialogs, folder pickers and the file browser ship in `@kubuno/drive` for every module to reuse; Drive also contributes a "Drive" tab to the core image picker, so any module can pick images straight from the user's files.
+- **External & module storage** - WebDAV access, remote storage browsing (with editable mounts and SMB share discovery), an admin System browser, and generic storage mounts published by other active modules rendered directly in the sidebar tree.
+- **Self-hosted fonts** - the module ships an openly-licensed font library into `System/Fonts` and serves it through its own `css2`/font endpoints, so documents never fetch fonts from a third-party CDN.
+- **Desktop pop-outs** - the floating audio player and the built-in Paint editor can pop out into their own OS window in the Kubuno desktop client, via standalone `/drive/player` and `/drive/paint` routes.
+- **Mobile experience** - a dedicated bottom navigation, a mobile Home screen with *Suggestions* and *Activity* tabs, a touch-friendly navigation drawer with a storage gauge, and responsive settings pages.
+- **Storage insight** - a quota gauge in the header and a storage page whose single bar shows both how full the quota is and its per-category composition.
+- **Your choice of database** - runs on PostgreSQL, MySQL/MariaDB or SQLite, picked by the administrator in configuration; SQLite needs no database server, which makes a single-machine or evaluation install a one-liner.
 
 ## Architecture
 
@@ -55,14 +55,14 @@ core (kubuno/core)  ──proxy──►  kubuno-drive (this repo, :3101)
        └─ serves /modules/drive/entry.js (React frontend, loaded at runtime)
 ```
 
-- **Server** — `server/`: Axum + SQLx through the shared `kubuno-db` layer — PostgreSQL (schema `drive`), MySQL/MariaDB or SQLite; migrations in `server/migrations/`.
-- **Web** — `web/`: a React bundle built to `entry.js`, consuming `@kubuno/sdk`, `@kubuno/ui` and `@kubuno/drive` from npm (provided by the host at runtime via the import map).
-- **Shared rules** — `common/core` (`kubuno-drive-core`): the file and folder name rules of every client (server, desktop, and later mobile), sans-IO, held together by the conformance vectors of `common/vectors`.
-- **Desktop** — `desktop/`: the native file manager; `desktop/common` is the complete portable app, `desktop/windows` only the Windows overrides (see [Desktop app](#desktop-app)).
+- **Server** - `server/`: Axum + SQLx through the shared `kubuno-db` layer - PostgreSQL (schema `drive`), MySQL/MariaDB or SQLite; migrations in `server/migrations/`.
+- **Web** - `web/`: a React bundle built to `entry.js`, consuming `@kubuno/sdk`, `@kubuno/ui` and `@kubuno/drive` from npm (provided by the host at runtime via the import map).
+- **Shared rules** - `common/core` (`kubuno-drive-core`): the file and folder name rules of every client (server, desktop, and later mobile), sans-IO, held together by the conformance vectors of `common/vectors`.
+- **Desktop** - `desktop/`: the native file manager; `desktop/common` is the complete portable app, `desktop/windows` only the Windows overrides (see [Desktop app](#desktop-app)).
 
 ## Install
 
-Modules install as a **Kubuno package (`.kbpkg`)** — a single, self-contained archive the Kubuno server unpacks itself (in pure Rust, identically on Linux, Windows and macOS). There are no native system packages for a module; only the core ships those.
+Modules install as a **Kubuno package (`.kbpkg`)** - a single, self-contained archive the Kubuno server unpacks itself (in pure Rust, identically on Linux, Windows and macOS). There are no native system packages for a module; only the core ships those.
 
 The easiest way to self-host a full Kubuno instance (core + every module) is the **all-in-one [Docker image](https://github.com/kubuno/docker)** (`ghcr.io/kubuno/kubuno`), which already bundles Drive.
 
@@ -91,17 +91,17 @@ cd web && npm ci && npm run build           # → web/dist/{entry.js, entry.css}
 bash build_kbpkg.sh                         # → dist/drive-<version>-<os>-<arch>.kbpkg
 ```
 
-> Shared dependencies come from Kubuno — no `kubuno/core` checkout required:
-> - **Rust** — shared crates via tagged git dependencies on `kubuno/core`.
-> - **Frontend** — `@kubuno/sdk`, `@kubuno/ui`, `@kubuno/drive` from the `@kubuno` npm scope. They are `external` at runtime (the host provides the singletons via its import map); the npm packages supply the build-time type surface.
+> Shared dependencies come from Kubuno - no `kubuno/core` checkout required:
+> - **Rust** - shared crates via tagged git dependencies on `kubuno/core`.
+> - **Frontend** - `@kubuno/sdk`, `@kubuno/ui`, `@kubuno/drive` from the `@kubuno` npm scope. They are `external` at runtime (the host provides the singletons via its import map); the npm packages supply the build-time type surface.
 
 ### Desktop app
 
-The native file manager, **Kubuno Drive** (a Rust port of [Files](https://github.com/files-community/Files), MIT —
+The native file manager, **Kubuno Drive** (a Rust port of [Files](https://github.com/files-community/Files), MIT -
 see `desktop/LICENSE-MIT`), is one Cargo workspace in [`desktop/`](desktop/README.md): `desktop/common` holds the
 complete portable app (model, settings, view models, localisation, start-up) and its platform extension points (traits
-with portable defaults); `desktop/windows` holds only the Windows overrides — the Win32 window painted with Direct2D
-through the Kubuno desktop framework (`kubuno/desktop`, by git tag, linked statically), the shell integration — and
+with portable defaults); `desktop/windows` holds only the Windows overrides - the Win32 window painted with Direct2D
+through the Kubuno desktop framework (`kubuno/desktop`, by git tag, linked statically), the shell integration - and
 `drive.exe`, the entry point that registers them; `desktop/linux` and `desktop/macos` are thin entry points running
 the portable app. In Visual Studio, `Kubuno.Drive.slnx` lists it under **Desktop** (Common, Windows, Linux, macOS).
 
@@ -112,11 +112,11 @@ cargo run -p kubuno-drive-desktop-linux -- --sample          # the portable app 
 
 ## Configuration
 
-Copy `server/config.toml.example` → `config.toml`, or use environment variables (`KUBUNO_CORE_URL`, `KUBUNO_INTERNAL_SECRET`, `KUBUNO_DB_*`). The database engine is the administrator's choice, set in `[database] engine` — `postgres` (default), `mysql`/`mariadb` or `sqlite` — and read at start-up: the same binary connects to whichever is named, and SQLite needs no server at all. Under the Kubuno supervisor the connection settings are injected by the core. See `module.toml` for the manifest (id, port, routes, sidebar entry, settings).
+Copy `server/config.toml.example` → `config.toml`, or use environment variables (`KUBUNO_CORE_URL`, `KUBUNO_INTERNAL_SECRET`, `KUBUNO_DB_*`). The database engine is the administrator's choice, set in `[database] engine` - `postgres` (default), `mysql`/`mariadb` or `sqlite` - and read at start-up: the same binary connects to whichever is named, and SQLite needs no server at all. Under the Kubuno supervisor the connection settings are injected by the core. See `module.toml` for the manifest (id, port, routes, sidebar entry, settings).
 
 ## Tech stack
 
-Rust 2021 · Axum 0.7 · Tokio · SQLx 0.9 via `kubuno-db` (PostgreSQL, MySQL/MariaDB or SQLite; schema `drive`) — React 19 · TypeScript · Vite · Tailwind CSS v4 · Zustand · React Query.
+Rust 2021 · Axum 0.7 · Tokio · SQLx 0.9 via `kubuno-db` (PostgreSQL, MySQL/MariaDB or SQLite; schema `drive`) - React 19 · TypeScript · Vite · Tailwind CSS v4 · Zustand · React Query.
 
 ## Contributing
 

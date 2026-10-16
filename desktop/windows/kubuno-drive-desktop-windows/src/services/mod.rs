@@ -1,4 +1,4 @@
-//! Port of `Files.App/Services/` — the application services.
+//! Port of `Files.App/Services/` - the application services.
 
 pub mod app;
 pub use kubuno_drive_desktop_common::services::date_time_formatter;

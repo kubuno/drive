@@ -50,7 +50,7 @@ pub async fn delete(
     Ok(Json(json!({ "ok": true })))
 }
 
-/// `DELETE /:id/versions` — drops the whole history, keeps the current file.
+/// `DELETE /:id/versions` - drops the whole history, keeps the current file.
 pub async fn purge(
     State(state): State<AppState>,
     Extension(user): Extension<FilesUser>,
@@ -64,7 +64,7 @@ pub async fn purge(
     })))
 }
 
-/// `GET /versions/summary` — what the account's histories weigh in total.
+/// `GET /versions/summary` - what the account's histories weigh in total.
 pub async fn summary(
     State(state): State<AppState>,
     Extension(user): Extension<FilesUser>,

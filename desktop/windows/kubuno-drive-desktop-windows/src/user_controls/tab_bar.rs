@@ -15,7 +15,7 @@ impl Painter<'_> {
     /// Adds the WinUI `TabViewTemplateSettings.TabGeometry` figure to an
     /// open sink: rounded top corners (OverlayCornerRadius = 8), concave
     /// outward flares (r = 4) at the feet, plus a small skirt below the
-    /// band so the figure overlaps the toolbar-strip figure — the WINDING
+    /// band so the figure overlaps the toolbar-strip figure - the WINDING
     /// union renders both as ONE surface with a single antialiased edge.
     /// The two 4×4 boxes hosting `Left/RightRadiusRenderArc` (Margin -4,0,0,0
     /// and 0,0,-4,0, VerticalAlignment=Bottom). Built from the SAME snapped
@@ -102,7 +102,7 @@ impl Painter<'_> {
 
         // BottomBorderLine, the foot crescents and the selected-tab surface are
         // all painted by draw_toolbar (which runs BEFORE this), in the
-        // template's own z-order — see there.
+        // template's own z-order - see there.
 
         // Clip the rest of the tab band (hover fills, titles, separators).
         unsafe {
@@ -125,7 +125,7 @@ impl Painter<'_> {
             let hovered = !dragging
                 && (state.hot == Some(Hot::Tab(i)) || state.hot == Some(Hot::TabClose(i)));
 
-            // The hover fill is TabContainer's Background — so it stops 4 DIP
+            // The hover fill is TabContainer's Background - so it stops 4 DIP
             // short of the item's walls, which is exactly what leaves a visible
             // margin between the ACTIVE tab (whose TabGeometry does run to the
             // wall) and a hovered neighbor. Top corners only, radius 8
@@ -176,7 +176,7 @@ impl Painter<'_> {
             // TabSeparator: 1px at the item's right edge, SeparatorMargin
             // 0,8,0,8. TabView hides it on the selected tab, on the one just
             // LEFT of it (HideLeftAdjacentTabSeparator), and around the hovered
-            // tab — so no separator ever brushes against a highlighted tab.
+            // tab - so no separator ever brushes against a highlighted tab.
             let next_active = i + 1 == state.active_tab;
             let next_hovered = state.hot == Some(Hot::Tab(i + 1))
                 || state.hot == Some(Hot::TabClose(i + 1));

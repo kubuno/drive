@@ -14,7 +14,7 @@
 //! `instance.Items.Remove/Insert` does. The list is therefore REBUILT in full on
 //! every call, from two static caches (recent + pinned).
 //!
-//! Robustness: any COM error is a silent no-op — never a panic.
+//! Robustness: any COM error is a silent no-op - never a panic.
 
 use std::sync::Mutex;
 
@@ -103,7 +103,7 @@ fn is_excluded(path: &str) -> bool {
 /// Fully rebuilds the jumplist from the two caches.
 ///
 /// `ICustomDestinationList` requires the full transaction; the order of the
-/// `AppendCategory` calls sets the display order (first category = on top) —
+/// `AppendCategory` calls sets the display order (first category = on top) -
 /// so "Recent" is placed above "Pinned items", like the
 /// original's `Insert(0, …)`.
 fn rebuild() {

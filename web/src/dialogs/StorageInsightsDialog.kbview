@@ -1,4 +1,4 @@
-<!-- StorageInsightsDialog — converted from StorageInsightsDialog.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<!-- StorageInsightsDialog - converted from StorageInsightsDialog.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
 <Stack x:Props="Props" Direction="LeftToRight" Gap="0" CrossAlign="Center" Justify="Center" Class="fixed inset-0 z-50">
   <Panel Class="absolute inset-0 bg-black/40" OnClick="panel_click"/>
   <Panel Class="relative bg-white rounded-xl shadow-2xl w-full max-w-xl mx-4 p-6 max-h-[85vh] overflow-auto">

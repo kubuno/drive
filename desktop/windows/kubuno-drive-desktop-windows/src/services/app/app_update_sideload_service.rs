@@ -5,7 +5,7 @@
 //! Files distinguishes TWO update channels, selected at runtime based on
 //! the package origin (see `AppLifecycleHelper.cs`):
 //!
-//! * **Store** — `StoreUpdateService.cs`. Relies on the WinRT
+//! * **Store** - `StoreUpdateService.cs`. Relies on the WinRT
 //!   `Windows.Services.Store`: `StoreContext.GetDefault()` then
 //!   `GetAppAndOptionalStorePackageUpdatesAsync()` to list packages with updates,
 //!   and `RequestDownloadAndInstallStorePackageUpdatesAsync(...)` to install.
@@ -13,7 +13,7 @@
 //!   no URL or file, everything goes through the Store API. **Not applicable here**: the
 //!   Rust port is not an MSIX package and has no `StoreContext`.
 //!
-//! * **Sideload** — `SideloadUpdateService.cs`. This is the channel reproduced here.
+//! * **Sideload** - `SideloadUpdateService.cs`. This is the channel reproduced here.
 //!   The service downloads an `.appinstaller` file (XML) hosted on Files' CDN
 //!   (and NOT on GitHub Releases, contrary to what one might
 //!   think):
@@ -23,14 +23,14 @@
 //!   The stable/preview choice depends on `Package.Current.Id.Name` ("Files" vs
 //!   "FilesPreview"). The XML is deserialized (`XmlSerializer`) into an
 //!   `AppInstaller` object:
-//!     - `Version` attribute on the `<AppInstaller>` root — the remote version;
-//!     - `<MainBundle Name=… Version=… Uri=… />` child element — the actual package.
+//!     - `Version` attribute on the `<AppInstaller>` root - the remote version;
+//!     - `<MainBundle Name=… Version=… Uri=… />` child element - the actual package.
 //!
 //!   The update is reported as available if, and only if:
 //!   `MainBundle.Name == PackageName` AND `remoteVersion > PackageVersion`.
 //!   Installation (`ApplyPackageUpdateAsync`) then hands the `.appinstaller` URI
 //!   to `PackageManager.AddPackageByAppInstallerFileAsync(...)`,
-//!   after `RegisterApplicationRestart` — so Windows reloads the bundle pointed to
+//!   after `RegisterApplicationRestart` - so Windows reloads the bundle pointed to
 //!   by the `.appinstaller` and restarts the app.
 //!
 //! # Port adaptation
@@ -56,7 +56,7 @@ use windows::Win32::Networking::WinHttp::{
     WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY, WINHTTP_FLAG_SECURE,
 };
 
-/// Stable channel URL — exact mirror of `SideloadUpdateService.SIDELOAD_STABLE`.
+/// Stable channel URL - exact mirror of `SideloadUpdateService.SIDELOAD_STABLE`.
 const SIDELOAD_STABLE_HOST: &str = "cdn.files.community";
 const SIDELOAD_STABLE_PATH: &str = "/files/stable/Files.Package.appinstaller";
 /// Full URL (for documentation): reconstructed in [`download_and_launch_update`].
@@ -87,7 +87,7 @@ pub struct UpdateInfo {
 /// Reproduces `SideloadUpdateService.CheckForUpdatesAsync`: GET of the `.appinstaller`,
 /// extraction of the remote version and bundle, comparison against [`CURRENT_VERSION`].
 /// Any error (network, DNS, parsing) returns `UpdateInfo { available: false, .. }`
-/// — exactly like the C#'s `catch (HttpRequestException)` which leaves
+/// - exactly like the C#'s `catch (HttpRequestException)` which leaves
 /// `IsUpdateAvailable = false`.
 pub fn check_for_updates() -> UpdateInfo {
     // 1) Fetch the .appinstaller XML (stable channel, like the "Files" package).
@@ -118,7 +118,7 @@ pub fn check_for_updates() -> UpdateInfo {
 
 /// Downloads and launches the update installer.
 ///
-/// **TODO** — not implemented. In the C# (`ApplyPackageUpdateAsync`), this step
+/// **TODO** - not implemented. In the C# (`ApplyPackageUpdateAsync`), this step
 /// hands the `.appinstaller` URI to
 /// `PackageManager.AddPackageByAppInstallerFileAsync(uri,
 /// AddPackageByAppInstallerOptions.ForceTargetAppShutdown, volume)` after
@@ -219,7 +219,7 @@ fn http_get(host: &str, path: &str) -> Option<String> {
     let verb_w = to_wide("GET");
 
     unsafe {
-        // WinHttpOpen — session. Returned handles are *mut c_void (NULL on failure).
+        // WinHttpOpen - session. Returned handles are *mut c_void (NULL on failure).
         let session = WinHttpOpen(
             PCWSTR(agent_w.as_ptr()),
             WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY,
@@ -234,14 +234,14 @@ fn http_get(host: &str, path: &str) -> Option<String> {
         // Short timeouts: resolution, connection, send, receive.
         let _ = WinHttpSetTimeouts(session, TIMEOUT_MS, TIMEOUT_MS, TIMEOUT_MS, TIMEOUT_MS);
 
-        // WinHttpConnect — to the host, port 443 (HTTPS).
+        // WinHttpConnect - to the host, port 443 (HTTPS).
         let connect = WinHttpConnect(session, PCWSTR(host_w.as_ptr()), 443, 0);
         if connect.is_null() {
             let _ = WinHttpCloseHandle(session);
             return None;
         }
 
-        // WinHttpOpenRequest — GET <path>, HTTP/1.1 by default, secure channel.
+        // WinHttpOpenRequest - GET <path>, HTTP/1.1 by default, secure channel.
         let request = WinHttpOpenRequest(
             connect,
             PCWSTR(verb_w.as_ptr()),

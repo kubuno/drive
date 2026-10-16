@@ -1,4 +1,4 @@
-<!-- DialogBreadcrumb — converted from DialogBreadcrumb.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<!-- DialogBreadcrumb - converted from DialogBreadcrumb.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
 <UserControl x:Props="Props">
   <Panel HtmlTag="Nav" AccessibleName="breadcrumb" Class="flex items-center gap-0.5 flex-1 min-w-0 overflow-x-auto">
     <Panel AccessibleRole="PushButton"

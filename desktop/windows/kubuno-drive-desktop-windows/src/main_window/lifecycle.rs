@@ -1,5 +1,5 @@
 #![allow(unused_imports)]
-//! Submodule of `MainWindow` — see `main_window/mod.rs`.
+//! Submodule of `MainWindow` - see `main_window/mod.rs`.
 use windows::core::{w, Result};
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, RECT, WPARAM};
 use windows::Win32::Graphics::Dwm::{
@@ -44,7 +44,7 @@ impl MainWindow {
 
             // Open the directory passed on the command line (the protocol
             // contract used by Files.App.Launcher) or the sample folder
-            // (`--sample`), else Home. `--pos x y`: window opening position —
+            // (`--sample`), else Home. `--pos x y`: window opening position -
             // tab tear-out opens the new window at the drop point, like
             // `OpenTabInNewWindowAsync(…, droppedPoint.X, droppedPoint.Y)`. The
             // arguments are parsed by the common start-up (`app::Launch`).
@@ -143,7 +143,7 @@ impl MainWindow {
             )
             .is_ok();
             // Prevent DWM from tinting the caption band with the user's
-            // accent color — the backdrop must show through instead.
+            // accent color - the backdrop must show through instead.
             const DWMWA_COLOR_NONE: u32 = 0xFFFFFFFE;
             let _ = DwmSetWindowAttribute(
                 hwnd,
@@ -168,7 +168,7 @@ impl MainWindow {
             }
             // We NO LONGER extend the frame above the client area: otherwise DWM
             // composited the standard title bar (with ITS OWN min/max/close
-            // buttons) behind the glass, at a larger size — we now draw them
+            // buttons) behind the glass, at a larger size - we now draw them
             // ourselves (draw_caption_buttons) at WinUI's dimensions. The
             // Mica backdrop is still applied via `DWMWA_SYSTEMBACKDROP_TYPE`
             // (independent of frame extension on Windows 11).
@@ -263,7 +263,7 @@ impl MainWindow {
         self.compact_overlay.is_some()
     }
 
-    /// Port of `ToggleFullScreenAction` (F11) — `AppWindow.SetPresenter
+    /// Port of `ToggleFullScreenAction` (F11) - `AppWindow.SetPresenter
     /// (FullScreen)`: borderless fullscreen style on the current monitor,
     /// placement restored on exit.
     pub(crate) fn toggle_fullscreen(&mut self) {

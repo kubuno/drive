@@ -5,7 +5,7 @@
 // a genuine <a href>, so that the URL can be shared, and so that the browser's
 // Back button restores the previous view.
 //
-// The convention is `/drive/#<kind>/<id>` — the hash keeps the underlying route
+// The convention is `/drive/#<kind>/<id>` - the hash keeps the underlying route
 // untouched while making the selected view part of the history stack.
 
 /** Base path all hash views hang off (the module's root route). */

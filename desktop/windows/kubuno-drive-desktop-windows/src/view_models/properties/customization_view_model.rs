@@ -20,8 +20,8 @@ use crate::views::properties::PropertiesTarget;
 pub struct CustomizationModel {
     /// Whether the item accepts a custom icon (folder/shortcut).
     pub loaded: bool,
-    /// Whether the target is a shortcut (`IsShortcut`) — drives the write mode
-    /// (`SetCustomFileIcon` vs `SetCustomDirectoryIcon`) — TODO: read once the
+    /// Whether the target is a shortcut (`IsShortcut`) - drives the write mode
+    /// (`SetCustomFileIcon` vs `SetCustomDirectoryIcon`) - TODO: read once the
     /// icon write is ported.
     #[allow(dead_code)]
     pub is_shortcut: bool,

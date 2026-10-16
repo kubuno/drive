@@ -3,7 +3,7 @@
 use crate::actions::{Action, HotKey};
 use crate::main_window::MainWindow;
 
-/// `CloseAllTabsAction.cs` (Ctrl+Shift+W): closes all tabs — the last one
+/// `CloseAllTabsAction.cs` (Ctrl+Shift+W): closes all tabs - the last one
 /// closes the window, like the original TabView.
 pub struct CloseAllTabs;
 impl Action for CloseAllTabs {

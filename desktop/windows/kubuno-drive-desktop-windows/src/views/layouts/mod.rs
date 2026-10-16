@@ -1,4 +1,4 @@
-//! Port of `Files.App/Views/Layouts/` — the layout pages.
+//! Port of `Files.App/Views/Layouts/` - the layout pages.
 //!
 //! Same split as the original:
 //!
@@ -7,7 +7,7 @@
 //! * [`details_layout_page`] ↔ `DetailsLayoutPage.xaml` (rows + sortable
 //!   headers);
 //! * [`grid_layout_page`] ↔ `GridLayoutPage.xaml` (which hosts all THREE
-//!   layouts List, Cards and Grid — see its `DataTemplate`s);
+//!   layouts List, Cards and Grid - see its `DataTemplate`s);
 //! * [`columns_layout_page`] ↔ `ColumnsLayoutPage.xaml` (the blade `BladeView`);
 //! * [`column_layout_page`] ↔ `ColumnLayoutPage.xaml` (the list of one blade).
 

@@ -1,15 +1,15 @@
 /**
- * Drive home — the landing screen (desktop), reachable from the sidebar's
+ * Drive home - the landing screen (desktop), reachable from the sidebar's
  * "Accueil" entry and the mobile "Home" tab.
  *
  * It is a thin banner (a welcome line + quick filter chips) sitting above the
  * SHARED explorer fed a "suggestions" source: recently-modified, starred and
- * recently-shared files, plus the folders you last worked in — deliberately
+ * recently-shared files, plus the folders you last worked in - deliberately
  * distinct from « Récents » (the opened-file journal). Rendering the content
  * through `DriveApp suggestions` means the folder/file cards, view modes,
  * context menu and open behaviour are byte-for-byte the same as everywhere else
  * in Drive. The chips narrow the whole drive through the same store the header
- * search uses (no second search box — the header already has one).
+ * search uses (no second search box - the header already has one).
  *
  * On phones it defers to the existing `MobileHome` (bottom-nav tabs).
  */
@@ -106,7 +106,7 @@ function DesktopHome() {
 
   return (
     <div className="flex flex-col h-full min-h-0 bg-surface">
-      {/* Welcome banner + quick filter chips (no search box — the header owns search). */}
+      {/* Welcome banner + quick filter chips (no search box - the header owns search). */}
       <div className="shrink-0 px-6 pt-5 pb-3">
         <h1 className="text-[22px] text-text-primary">
           {t('home.welcome', { defaultValue: 'Bienvenue dans Drive' })}

@@ -10,7 +10,7 @@ import DialogBreadcrumb, { type StorageOpt } from '../controls/DialogBreadcrumb'
 import DialogTree from '../controls/DialogTree'
 
 interface RemoteLoc { id: string; name: string; path: string }
-// Internal crumb — carries navigation state; only { name } is passed to DialogBreadcrumb
+// Internal crumb - carries navigation state; only { name } is passed to DialogBreadcrumb
 interface InternalCrumb {
   name:        string
   folderId?:   string | null
@@ -209,7 +209,7 @@ function SaveDialogInner({ defaultName, defaultFolderId, onClose }: Props) {
         <div className="flex flex-col gap-1 px-5 py-3 border-t border-border bg-surface-1 flex-shrink-0">
           {remote && (
             <span className="text-xs text-warning">
-              {t('savedialog.remote_readonly', { defaultValue: 'Enregistrement vers un stockage externe non disponible — choisissez un dossier local.' })}
+              {t('savedialog.remote_readonly', { defaultValue: 'Enregistrement vers un stockage externe non disponible - choisissez un dossier local.' })}
             </span>
           )}
           <div className="flex items-center gap-3">

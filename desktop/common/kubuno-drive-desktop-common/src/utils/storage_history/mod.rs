@@ -1,4 +1,4 @@
-//! Port of `Files.App/Utils/Storage/History/` — the undo/redo stack for
+//! Port of `Files.App/Utils/Storage/History/` - the undo/redo stack for
 //! file operations.
 
 pub mod storage_history;

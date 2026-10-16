@@ -130,10 +130,10 @@ export function buildItemMenuItems(
     items.push({ type: 'action', label: tr('ctx.download_zip'), icon: <Download size={14} />, onClick: h.onCompress, disabled: isMultiSelection })
   }
 
-  // Rename — in multi-selection, opens the batch rename (PowerRename).
+  // Rename - in multi-selection, opens the batch rename (PowerRename).
   items.push({ type: 'action', label: tr('common.rename'), shortcut: 'F2', icon: <Pencil size={14} />, onClick: h.onRename, disabled: isProtected })
 
-  // Open with (files) — native submenu.
+  // Open with (files) - native submenu.
   if (isFile && !isMultiSelection) {
     items.push({
       type: 'submenu',
@@ -172,7 +172,7 @@ export function buildItemMenuItems(
       : { type: 'action', label: 'Verrouiller', icon: <Lock size={14} />, onClick: h.onLock })
   }
 
-  // Organize (native submenu): Move, Star, and — for folders — colour.
+  // Organize (native submenu): Move, Star, and - for folders - colour.
   {
     const organiserItems: MenuItem[] = [
       { type: 'action', label: tr('ctx.move'), icon: <Move size={14} />, onClick: h.onMove, disabled: isProtected },
@@ -208,7 +208,7 @@ export function buildItemMenuItems(
   if (isFolder && clipboard && !isMultiSelection) {
     items.push({ type: 'action', label: tr('ctx.paste'), icon: <ClipboardPaste size={14} />, onClick: h.onPaste })
   }
-  // Compress — works in multi-selection.
+  // Compress - works in multi-selection.
   items.push({ type: 'action', label: tr('ctx.compress'), icon: <Archive size={14} />, onClick: h.onCompressSave })
   if (isZip && !isMultiSelection) {
     items.push({ type: 'action', label: tr('ctx.decompress'), icon: <PackageOpen size={14} />, onClick: h.onDecompress })
@@ -221,7 +221,7 @@ export function buildItemMenuItems(
   if (isFile && !isMultiSelection) {
     items.push({ type: 'action', label: tr('version.title'), icon: <History size={14} />, onClick: h.onVersionHistory })
     // Kept revisions are billed to the quota. The entry only shows up when there
-    // is actually something to reclaim — no history, no destructive noise.
+    // is actually something to reclaim - no history, no destructive noise.
     if (hasReclaimableHistory(menu.item as FileItem & FileVersionStats)) {
       items.push({ type: 'action', label: tr('version.purge'), icon: <Eraser size={14} />, danger: true, onClick: h.onPurgeVersions })
     }
@@ -229,7 +229,7 @@ export function buildItemMenuItems(
 
   items.push({ type: 'separator' })
 
-  // Trash / permanent delete — works in multi-selection.
+  // Trash / permanent delete - works in multi-selection.
   // `custom` item to preserve the Shift shortcut (permanent delete): the click
   // event is not exposed by `action` items.
   items.push({

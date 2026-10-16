@@ -1,4 +1,4 @@
-<!-- FilesFilterPanel — converted from FilesFilterPanel.tsx by @kubuno/views-migrate. -->
+<!-- FilesFilterPanel - converted from FilesFilterPanel.tsx by @kubuno/views-migrate. -->
 <UserControl x:Props="FilesFilterPanelProps">
   <Panel Class="py-5 px-6 space-y-4 [min-width:580px]">
     <Panel Class="{Binding div_class}">

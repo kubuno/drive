@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Drive · Browser (file list) screen — the core of the Kubuno Drive mobile app, converted from the
+  Drive · Browser (file list) screen - the core of the Kubuno Drive mobile app, converted from the
   Jetpack Compose app (drive/mobile/android/app .../ui/browser/BrowserScreen.kt + ControlBar.kt + Items.kt)
   into the shared .kbview view language. Authored in LOGICAL px (~390 wide), the Drive LIGHT theme
   (surface #FFFFFF, accent #1A73E8). Rows are inlined (static sample content) rather than data-bound so the

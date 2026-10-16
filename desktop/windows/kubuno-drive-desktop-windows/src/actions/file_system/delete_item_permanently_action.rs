@@ -5,7 +5,7 @@ use crate::actions::{Action, HotKey};
 use crate::main_window::MainWindow;
 
 /// `DeleteItemPermanentlyAction.cs` (Shift+Delete): PERMANENT deletion of
-/// the selection — the `FilesystemOperationDialog` with "Permanently
+/// the selection - the `FilesystemOperationDialog` with "Permanently
 /// delete" pre-checked, unless the policy is `Never`.
 pub struct DeleteItemPermanently;
 impl Action for DeleteItemPermanently {

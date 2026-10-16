@@ -39,9 +39,9 @@ pub struct Ace {
     pub full_name: String,
     /// Glyph for the principal type (user/group/unknown).
     pub glyph: &'static str,
-    /// Allowed mask (Allow-type ACE) — 0 for a Deny ACE.
+    /// Allowed mask (Allow-type ACE) - 0 for a Deny ACE.
     pub allow_mask: u32,
-    /// Denied mask (Deny-type ACE) — 0 for an Allow ACE. Gathered, but the tab
+    /// Denied mask (Deny-type ACE) - 0 for an Allow ACE. Gathered, but the tab
     /// does not show deny entries' rights yet.
     #[allow(dead_code)]
     pub deny_mask: u32,

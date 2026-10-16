@@ -168,7 +168,7 @@ pub fn build_index() -> Vec<SettingsSearchEntry> {
 /// card / expander header becomes an entry; a expander's lines carry its
 /// header as parent. Section headers (plain `TextBlock`), `InfoBar`s and
 /// custom panels are not `SettingsCard`/`SettingsExpander`: they aren't
-/// indexed — same as tag rows (a `ListView`, not cards).
+/// indexed - same as tag rows (a `ListView`, not cards).
 fn append_rows(
     page: SettingsPage,
     page_name: &str,

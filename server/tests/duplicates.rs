@@ -121,7 +121,7 @@ struct VersionRow {
 /// Existing duplicates (written before the index existed): the migration keeps
 /// the newest row, records and trashes the others; the merge moves their
 /// versions, star, activity and distinct contents to the keeper and only then
-/// removes them — no byte is deleted, the quota stays exact.
+/// removes them - no byte is deleted, the quota stays exact.
 #[tokio::test]
 async fn existing_duplicates_are_recorded_then_merged_without_losing_bytes() {
     let e = env().await;

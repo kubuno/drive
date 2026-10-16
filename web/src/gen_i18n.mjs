@@ -21,7 +21,7 @@ function nsOrderFor(obj) {
   return [...known, ...extra]
 }
 
-let out = '// Traductions du module Files — GÉNÉRÉ depuis i18n.data.json (node src/modules/files/gen_i18n.mjs). 13 langues.\n'
+let out = '// Traductions du module Files - GÉNÉRÉ depuis i18n.data.json (node src/modules/files/gen_i18n.mjs). 13 langues.\n'
 out += "// Ne pas éditer à la main : modifier i18n.data.json puis régénérer.\n"
 out += "import { registerModuleTranslations } from '@kubuno/sdk'\n\n"
 
@@ -37,4 +37,4 @@ for (const lang of LANGS) {
 out += `\nregisterModuleTranslations('drive', { ${LANGS.join(', ')} })\n`
 
 writeFileSync(join(here, 'i18n.ts'), out)
-console.log('i18n.ts régénéré —', LANGS.length, 'langues,', nsOrderFor(data.en).length, 'namespaces')
+console.log('i18n.ts régénéré -', LANGS.length, 'langues,', nsOrderFor(data.en).length, 'namespaces')

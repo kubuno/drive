@@ -1,4 +1,4 @@
-//! Kubuno Drive for mobile — the app, portable (no OS, no window system).
+//! Kubuno Drive for mobile - the app, portable (no OS, no window system).
 //!
 //! The app is a set of `.kbview` screens (`views/`, edited in Visual Studio like every Kubuno view) rendered by the
 //! shared Kubuno mobile renderer (`kubuno-mobile-render`, core repository). The Android and iOS entry points
@@ -55,7 +55,7 @@ pub const TRASH: &str = include_str!("views/trash.kbview");
 /// Every screen, in a tap-to-advance order (the home screen first).
 pub const VIEWS: &[&str] = &[BROWSER, ACCOUNT, BROWSER_GRID, DEVICE_ACCOUNTS, DRAWER, EMPTY_FOLDER, INFO_SHEET, LOGIN, MOVE_SHEET, NEWFOLDER_DIALOG, ONBOARDING_SERVER, ONBOARDING_TOTP, RECENT, RENAME_DIALOG, SEARCH, SETTINGS, SHEET_ACTIONS, SORT_SHEET, STARRED, TRANSFERS, TRASH];
 
-/// Register what the app's screens need from the renderer (its host controls and images) — nothing yet. The shell
+/// Register what the app's screens need from the renderer (its host controls and images) - nothing yet. The shell
 /// calls it once, on its UI thread, before the first frame (through [`APP`]).
 pub fn setup() {}
 

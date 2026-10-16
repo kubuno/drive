@@ -88,7 +88,7 @@ impl TextUi {
         let settings = crate::services::settings::get();
         let grouping = SortGrouping::of(settings.default_sort_files_first, settings.default_sort_directories_alongside_files);
         sort_entries(&mut entries, SortColumn::Name, true, grouping);
-        let mut lines = vec![format!("Kubuno Drive — {}", folder.display())];
+        let mut lines = vec![format!("Kubuno Drive - {}", folder.display())];
         for e in &entries {
             lines.push(format!("{:<40} {:<24} {:>12}  {}", e.name, e.type_text(), e.size_text(), e.modified_text()));
         }

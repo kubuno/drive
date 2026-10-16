@@ -21,7 +21,7 @@ import { type TagDialogTarget } from '../model/TagUI'
 import TagDialog from '../dialogs/TagDialog'
 
 /**
- * `drive.openPreview` — the viewer other modules call (mail attachments, chat
+ * `drive.openPreview` - the viewer other modules call (mail attachments, chat
  * files…). It opens the SAME viewers as Drive itself: each source is wrapped in
  * a synthetic FileItem (see `externalPreview`) and handed to the real overlays.
  *
@@ -32,7 +32,7 @@ import TagDialog from '../dialogs/TagDialog'
  *
  * The overlay is mounted in a React root of its own, appended to <body>, so a
  * caller can open it without Drive being on screen. That root carries the
- * providers the viewers expect — react-query (the shell and the PDF viewer use
+ * providers the viewers expect - react-query (the shell and the PDF viewer use
  * it), i18n, and a minimal router whose navigations are forwarded to the host.
  */
 
@@ -176,7 +176,7 @@ function ExternalPreviewHost({ initialFiles, initialIndex, onClose }: HostProps)
     if (at >= 0 && at !== index) { setIndex(at); setSaveState('idle') }
   }, [files, index])
 
-  // « Ouvrir avec » — empty for an external source (nothing to open by id), the
+  // « Ouvrir avec » - empty for an external source (nothing to open by id), the
   // regular Drive entries once the file has been imported.
   const openWithItems = useCallback((f: FileItem): MenuItem[] => {
     if (isExternalFile(f)) return []
@@ -195,7 +195,7 @@ function ExternalPreviewHost({ initialFiles, initialIndex, onClose }: HostProps)
   }, [activeIds])
 
   // ── « Enregistrer dans Drive » ─────────────────────────────────────────────
-  // Downloads the bytes, asks for a destination folder, uploads — then SWAPS
+  // Downloads the bytes, asks for a destination folder, uploads - then SWAPS
   // the synthetic file for the real one: `isExternalFile` turns false and the
   // whole Drive chrome (open with, share, rename, details…) comes back on its
   // own, with no special case anywhere in the viewers.
@@ -214,7 +214,7 @@ function ExternalPreviewHost({ initialFiles, initialIndex, onClose }: HostProps)
           // Explicit cancel aborts; a picker that never answers (Drive dialogs
           // not mounted) falls back to the root folder.
           if (picked === null) { setSaveState('idle'); return }
-          // Remote mounts carry no folder id — `uploadFile` only writes to the
+          // Remote mounts carry no folder id - `uploadFile` only writes to the
           // user's own Drive, so such a pick lands at the root.
           folderId = picked.id
         } catch { folderId = null }
@@ -250,7 +250,7 @@ function ExternalPreviewHost({ initialFiles, initialIndex, onClose }: HostProps)
         onEditTags={(f) => setTagTarget({ kind: 'file', id: f.id, name: f.name })}
         openWithItems={openWithItems}
       />
-      {/* Drive dialogs — only ever reachable for an imported (real) file. */}
+      {/* Drive dialogs - only ever reachable for an imported (real) file. */}
       <RenameModal target={renameTarget ? { type: 'file', item: renameTarget } : null} onClose={() => setRenameTarget(null)} />
       <MoveModal   target={moveTarget   ? { type: 'file', item: moveTarget   } : null} onClose={() => setMoveTarget(null)} />
       <ShareModal  target={shareTarget  ? { type: 'file', item: shareTarget  } : null} onClose={() => setShareTarget(null)} />
@@ -272,7 +272,7 @@ type PreviewRequest = ExternalSource | ExternalSourceList
 
 /**
  * Opens the previewer on one source, or on a list with a starting index.
- * Returns false — leaving the caller free to fall back to a download — when
+ * Returns false - leaving the caller free to fall back to a download - when
  * the requested source is not one Drive can render.
  */
 export function openPreview(request: PreviewRequest): boolean {
@@ -282,7 +282,7 @@ export function openPreview(request: PreviewRequest): boolean {
   if (items.length === 0) return false
   const wanted = Math.min(Math.max(list.index ?? 0, 0), items.length - 1)
 
-  // Only renderable sources make it into the navigation list — same rule as
+  // Only renderable sources make it into the navigation list - same rule as
   // Drive, whose ←/→ walks the previewable files of the current view.
   const files: FileItem[] = []
   let start = -1

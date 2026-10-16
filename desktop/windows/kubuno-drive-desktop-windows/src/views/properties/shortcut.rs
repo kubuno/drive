@@ -1,4 +1,4 @@
-//! "Shortcut" tab of the properties sheet — mirror of
+//! "Shortcut" tab of the properties sheet - mirror of
 //! `Views/Properties/ShortcutPage.xaml(.cs)` driven by the "shortcut" part
 //! of `ViewModels/Properties/Items/FileProperties.GetBaseProperties`.
 //!
@@ -122,7 +122,7 @@ impl ShortcutModel {
     }
 }
 
-/// Reads (target, arguments, working folder) from a `.lnk` via IShellLinkW —
+/// Reads (target, arguments, working folder) from a `.lnk` via IShellLinkW -
 /// same mechanics as `utils::storage::resolve_shortcut`, in a single load.
 fn read_lnk_fields(path: &str) -> (String, String, String) {
     use windows::core::{Interface, HSTRING};

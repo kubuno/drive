@@ -9,7 +9,7 @@
 //!
 //! Algorithms enabled by default (`HashesViewModel`: `ShowHashes`): CRC32,
 //! MD5, SHA1, SHA256. SHA384/SHA512 are in the original's table but disabled
-//! by default — not computed here (the algorithm picker,
+//! by default - not computed here (the algorithm picker,
 //! `SelectAlgorithmsButton`, is a TODO).
 //!
 //! Output formats faithful to `ChecksumHelpers`: CRC32 in UPPERCASE HEX

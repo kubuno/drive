@@ -1,10 +1,10 @@
-//! SHELL properties of the info pane — port of
+//! SHELL properties of the info pane - port of
 //! `FileProperty.RetrieveAndInitializePropertiesAsync` driven by
 //! `PreviewPanePropertiesInformation.json` (copied as-is from the
 //! original). Each entry names a system property
 //! (`System.Image.Dimensions`, `System.Media.Duration`,
 //! `System.Music.Artist`…); only those with a value are shown. Values go
-//! through `PSFormatForDisplayAlloc` (Explorer's rendering — durations,
+//! through `PSFormatForDisplayAlloc` (Explorer's rendering - durations,
 //! exposure fractions…), except DATES which go back through the app's
 //! formatter (`ToLongLabel`).
 
@@ -42,7 +42,7 @@ fn entries() -> &'static [PropertyEntry] {
     })
 }
 
-/// The pane's rows (localized label, value) for a FILE, in JSON order —
+/// The pane's rows (localized label, value) for a FILE, in JSON order -
 /// empty ones excluded, like `Where(i => i.ValueText != null)`. Memoized
 /// on the last path: the pane redraws often, opening the property store
 /// on every frame would be ruinous.
@@ -75,7 +75,7 @@ fn read_properties(path: &str) -> Vec<(String, String)> {
     let mut rows = Vec::new();
     for entry in entries() {
         // `address` (online geocoding) and `filetag` (dedicated badges)
-        // have their own handling — only system properties here.
+        // have their own handling - only system properties here.
         let Some(prop) = &entry.property else { continue };
         if entry.id.is_some() {
             continue;

@@ -1,7 +1,7 @@
 //! Port of `Files.App/Views/Layouts/ColumnsLayoutPage.xaml`: the 200 DIP
 //! blade `BladeView` (`BladeItem`, 1 px right border), each a
 //! `ColumnLayoutPage` listing its folder. Selecting a folder opens the
-//! next blade — see `Tab::select_column_row` (`DismissOtherBlades`).
+//! next blade - see `Tab::select_column_row` (`DismissOtherBlades`).
 //!
 //! The rendering of ONE blade lives in [`super::column_layout_page`]
 //! (`ColumnLayoutPage.xaml.cs`); here we only hold the container: the loop

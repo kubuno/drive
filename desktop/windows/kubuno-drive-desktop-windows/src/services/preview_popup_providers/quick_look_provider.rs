@@ -17,7 +17,7 @@ use windows::Win32::Storage::FileSystem::{
     CreateFileW, WriteFile, FILE_FLAGS_AND_ATTRIBUTES, FILE_SHARE_MODE, OPEN_EXISTING,
 };
 
-/// `private const int TIMEOUT = 500;` (QuickLookProvider.cs) — maximum
+/// `private const int TIMEOUT = 500;` (QuickLookProvider.cs) - maximum
 /// wait for a free pipe server instance.
 const TIMEOUT: u32 = 500;
 
@@ -25,9 +25,9 @@ const TIMEOUT: u32 = 500;
 // `PipeDirection.Out` of `NamedPipeClientStream`.
 const GENERIC_WRITE: u32 = 0x4000_0000;
 
-/// `pipeMessageSwitch` — switches the content of the already-open popup.
+/// `pipeMessageSwitch` - switches the content of the already-open popup.
 pub(super) const MSG_SWITCH: &str = "QuickLook.App.PipeMessages.Switch";
-/// `pipeMessageToggle` — opens/closes the popup.
+/// `pipeMessageToggle` - opens/closes the popup.
 pub(super) const MSG_TOGGLE: &str = "QuickLook.App.PipeMessages.Toggle";
 
 // ---------------------------------------------------------------------------

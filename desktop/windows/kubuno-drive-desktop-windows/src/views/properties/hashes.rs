@@ -1,4 +1,4 @@
-//! "Hashes" tab of the properties sheet — mirror of
+//! "Hashes" tab of the properties sheet - mirror of
 //! `Views/Properties/HashesPage.xaml` (the DRAW). The view-model
 //! (`HashRow`/`HashesState`/`compute`/`post`, `HashesViewModel` +
 //! `Files.Shared.Helpers.ChecksumHelpers`) now lives in
@@ -108,7 +108,7 @@ pub fn draw(
     (y - top0 + pad, copy_hits)
 }
 
-/// Indeterminate progress bar (`ProgressBar IsIndeterminate=True`) — same
+/// Indeterminate progress bar (`ProgressBar IsIndeterminate=True`) - same
 /// visual as `general::draw_indeterminate_bar`.
 fn draw_indeterminate_bar(p: &Painter, theme: &Theme, track: &Rect, anim: std::time::Duration) {
     p.fill_rounded(track, 2.0, &theme.drive_bar_track);

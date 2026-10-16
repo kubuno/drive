@@ -14,7 +14,7 @@ pub enum ShellNewKind {
     FileName(String),
     /// `Data` value: write these bytes (binary, or a string converted to UTF-8).
     Data(Vec<u8>),
-    /// `Command` value: shell command to run with substitution — not
+    /// `Command` value: shell command to run with substitution - not
     /// ported (requires expanding `%1`-style placeholders).
     Command(String),
 }
@@ -22,7 +22,7 @@ pub enum ShellNewKind {
 /// Port of `Data/Items/ShellNewEntry.cs`. The original keeps `Extension`,
 /// `Name`, `Command`, `IconBase64`, `Data` and `Template`; here the form is
 /// unified into `kind` and the icon is the ProgID's `DefaultIcon` reference
-/// (the original made a base64 thumbnail via WinRT — out of scope for this
+/// (the original made a base64 thumbnail via WinRT - out of scope for this
 /// module).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ShellNewEntry {

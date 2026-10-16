@@ -96,9 +96,9 @@ impl WindowsStorableItem {
 /// Port of the abstract `WindowsStorable` base class.
 pub struct WindowsStorable {
     item: IShellItem,
-    /// `Id` — `GetDisplayName(SIGDN_FILESYSPATH)`, empty for virtual items.
+    /// `Id` - `GetDisplayName(SIGDN_FILESYSPATH)`, empty for virtual items.
     id: String,
-    /// `Name` — `GetDisplayName(SIGDN_PARENTRELATIVEFORUI)`.
+    /// `Name` - `GetDisplayName(SIGDN_PARENTRELATIVEFORUI)`.
     name: String,
     /// Cached `IContextMenu` (the C# `ContextMenu` property).
     context_menu: Mutex<Option<IContextMenu>>,
@@ -176,7 +176,7 @@ impl WindowsStorable {
 }
 
 impl PartialEq for WindowsStorable {
-    /// Port of `Equals(IWindowsStorable)` — `IShellItem::Compare` with
+    /// Port of `Equals(IWindowsStorable)` - `IShellItem::Compare` with
     /// `SICHINT_DISPLAY`.
     fn eq(&self, other: &Self) -> bool {
         // SAFETY: both items are live shell items.

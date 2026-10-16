@@ -14,7 +14,7 @@ use kubuno_drive::services::{files, folders};
 use kubuno_storage::path as storage_path;
 
 /// The reported bug: the files of a deleted folder were re-parented to the root
-/// in the database while the folder's directory — their bytes — was removed.
+/// in the database while the folder's directory - their bytes - was removed.
 #[tokio::test]
 async fn deleting_a_folder_leaves_no_row_pointing_at_removed_bytes() {
     let e = env().await;

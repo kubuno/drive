@@ -1,4 +1,4 @@
-// Previewing content Drive does NOT own — mail attachments, chat files… The
+// Previewing content Drive does NOT own - mail attachments, chat files… The
 // caller (another module, through `drive.openPreview`) hands over a plain URL;
 // we wrap it into a synthetic `FileItem` so that EVERY Drive viewer (PDF,
 // image, video, audio, text, 3D model, font) can render it unchanged.
@@ -140,7 +140,7 @@ export async function fetchFileBuffer(file: FileItem): Promise<ArrayBuffer> {
   return (await fetchFileResponse(file)).arrayBuffer()
 }
 
-/** Bytes of any file (Drive or external) as a Blob — feeds FilesTextViewer. */
+/** Bytes of any file (Drive or external) as a Blob - feeds FilesTextViewer. */
 export async function fetchFileBlob(file: FileItem): Promise<Blob> {
   if (!isExternalFile(file)) return filesApi.downloadBlob(file.id)
   return (await fetchFileResponse(file)).blob()
@@ -148,7 +148,7 @@ export async function fetchFileBlob(file: FileItem): Promise<Blob> {
 
 // ── Viewer routing ───────────────────────────────────────────────────────────
 // NB: the predicates below are intentionally self-contained rather than reusing
-// `is3dFile` / `isFontFile`, which live next to the viewers themselves — those
+// `is3dFile` / `isFontFile`, which live next to the viewers themselves - those
 // modules pull three.js in, and this file is imported by the module entry.
 
 const MODEL_EXT  = ['glb', 'gltf', 'obj', 'stl', 'ply']
@@ -157,7 +157,7 @@ const FONT_EXT   = ['ttf', 'otf', 'woff', 'woff2', 'eot']
 
 export type PreviewKind = 'pdf' | 'image' | 'video' | 'audio' | 'font' | 'model3d' | 'text'
 
-/** Which Drive viewer renders this (name, mime) pair — null when none does. */
+/** Which Drive viewer renders this (name, mime) pair - null when none does. */
 export function previewKind(name: string, mime?: string): PreviewKind | null {
   const m   = guessMime(name, mime)
   const ext = extensionOf(name)

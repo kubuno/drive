@@ -5,7 +5,7 @@
 //! acrylic/Mica `SystemBackdrop`, non-maximizable, positioned at the cursor),
 //! hosting `MainPropertiesPage` (tab sidebar + `Frame`). The port reproduces
 //! this 2nd top-level window ([`window::FilesPropertiesWindow`]) on the shared
-//! UI thread — the same `GetMessage` loop pumps it, like the
+//! UI thread - the same `GetMessage` loop pumps it, like the
 //! `flyout_window`/`tab_ghost` popups.
 //!
 //! This slice delivers the shell + the **General** tab (`general`). The other
@@ -87,9 +87,9 @@ impl PropTab {
     }
 
     /// The Segoe Fluent Icons glyph of the tab (approximation of the
-    /// factory's `App.ThemedIcons.Properties.*` — not ported as geometry).
+    /// factory's `App.ThemedIcons.Properties.*` - not ported as geometry).
     /// Name of the vector ThemedIcon (`App.ThemedIcons.Properties.*`) ported in
-    /// `themed-icons.txt` — the tab's real artwork, not an approximate Segoe
+    /// `themed-icons.txt` - the tab's real artwork, not an approximate Segoe
     /// glyph.
     pub fn vector_name(self) -> &'static str {
         match self {
@@ -183,13 +183,13 @@ fn navigation_items(target: &PropertiesTarget) -> Vec<PropTab> {
 }
 
 /// Opens the properties sheet for `item`, anchored to `parent` (the main
-/// window). Public entry point — the equivalent of
+/// window). Public entry point - the equivalent of
 /// `FilePropertiesHelpers.OpenPropertiesWindow(item, associatedInstance)`.
 ///
 /// TO WIRE UP from:
 /// * `actions::open::OpenProperties::execute` (context menu "Properties") ;
 /// * `MainWindow` on `Hot::CmdProperties` / `MenuCommand::OpenProperties`
-///   (command bar) — see the report for `parent`'s signature.
+///   (command bar) - see the report for `parent`'s signature.
 pub fn open_properties_window(parent: HWND, item: PropertiesTarget) {
     if let Err(e) = window::FilesPropertiesWindow::open(parent, item) {
         tracing::error!("échec ouverture fenêtre Propriétés: {e}");

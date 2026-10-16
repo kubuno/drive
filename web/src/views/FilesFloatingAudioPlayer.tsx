@@ -14,7 +14,7 @@ import { fileSourceUrl, isExternalFile } from '../services/externalPreview'
 // ── Playback controller ───────────────────────────────────────────────────────
 // The UI below is driven through this shape. Drive passes the shared zustand
 // store (so playback survives navigation and other modules can observe it);
-// an external source passes a LOCAL controller instead — see ExternalAudioPlayer.
+// an external source passes a LOCAL controller instead - see ExternalAudioPlayer.
 
 interface PlayerController {
   file:            FileItem | null
@@ -133,7 +133,7 @@ function AudioPlayerCore({ ctl }: { ctl: PlayerController }) {
     return () => { cancelled = true }
   }, [file?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Drag ref for the mini widget (no shared drag state — each mousedown captures its own closure)
+  // Drag ref for the mini widget (no shared drag state - each mousedown captures its own closure)
   const pillRef = useRef<HTMLDivElement>(null)
 
   const onPillMouseDown = useCallback((e: React.MouseEvent) => {
@@ -184,7 +184,7 @@ function AudioPlayerCore({ ctl }: { ctl: PlayerController }) {
     _setPosition(secs)
   }
 
-  // Hidden audio element — always in the DOM while file is open
+  // Hidden audio element - always in the DOM while file is open
   const audioEl = (
     <audio
       ref={audioRef}
@@ -258,7 +258,7 @@ function AudioPlayerCore({ ctl }: { ctl: PlayerController }) {
       title={file.name}
       icon={<Music size={15} className="text-green-500" />}
       onClose={close}
-      // Popping out replays the file from its Drive id — impossible for an
+      // Popping out replays the file from its Drive id - impossible for an
       // external source (a mail attachment…), so the button is dropped.
       popout={isExternalFile(file)
         ? undefined
@@ -334,7 +334,7 @@ export default function FilesFloatingAudioPlayer() {
 
 /**
  * Same player, for a source Drive does not own (a mail attachment…). It keeps
- * its state LOCAL on purpose: the shared store is watched by other modules —
+ * its state LOCAL on purpose: the shared store is watched by other modules -
  * the media module redirects anything opened through it to its own player,
  * rebuilding the stream URL from the Drive file id, which an external source
  * has not. Playback therefore lives and dies with this component.

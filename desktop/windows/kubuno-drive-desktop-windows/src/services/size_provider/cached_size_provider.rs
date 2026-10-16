@@ -41,7 +41,7 @@ impl SizeProvider {
         results
     }
 
-    /// `ClearAsync` — when the setting is toggled.
+    /// `ClearAsync` - when the setting is toggled.
     pub fn clear(&mut self) {
         self.cache.clear();
         self.pending.clear();

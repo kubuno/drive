@@ -53,7 +53,7 @@ pub async fn import_from_url(
 
     match parsed.scheme() {
         "http" | "https" => {}
-        s => return Err(FilesError::Validation(format!("Schéma '{s}' non autorisé — http/https uniquement"))),
+        s => return Err(FilesError::Validation(format!("Schéma '{s}' non autorisé - http/https uniquement"))),
     }
 
     // Protection SSRF basique : bloquer les IPs privées
@@ -183,7 +183,7 @@ pub async fn import_from_url(
     ).await?;
 
     // No `update_used_bytes` here: `insert_or_update_record` already adjusted the
-    // quota — by the full size on an insert, by the difference on an overwrite.
+    // quota - by the full size on an insert, by the difference on an overwrite.
     // Adding the size again billed every imported file twice.
 
     tracing::info!(

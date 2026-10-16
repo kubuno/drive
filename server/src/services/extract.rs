@@ -4,7 +4,7 @@
 
 use std::io::{Cursor, Read};
 
-/// Plafond du texte extrait conservé pour l'index (~1 Mo) — borne la tsvector et la mémoire.
+/// Plafond du texte extrait conservé pour l'index (~1 Mo) - borne la tsvector et la mémoire.
 pub const MAX_EXTRACT_BYTES: usize = 1_048_576;
 
 /// Extensions « texte » indexées directement en UTF-8.
@@ -47,7 +47,7 @@ pub fn extract_text(mime: &str, name: &str, bytes: &[u8]) -> Option<String> {
         return if trimmed.is_empty() { None } else { Some(cap(text)) };
     }
 
-    // 2. PDF — pdf-extract peut paniquer sur des PDF malformés → catch_unwind
+    // 2. PDF - pdf-extract peut paniquer sur des PDF malformés → catch_unwind
     if mime == "application/pdf" || ext == "pdf" {
         let owned = bytes.to_vec();
         let res = std::panic::catch_unwind(move || {
@@ -212,7 +212,7 @@ fn xml_text_nodes(xml: &str, out: &mut String) {
                 // `xml10_content` decodes the bytes and normalises line endings,
                 // `escape::unescape` turns entities back into characters.
                 // Indexing text needs both, and a malformed entity must not lose
-                // the rest of the node — hence the fallback to the decoded form.
+                // the rest of the node - hence the fallback to the decoded form.
                 if let Ok(decoded) = e.xml10_content() {
                     let unescaped = quick_xml::escape::unescape(&decoded);
                     let t = match &unescaped {

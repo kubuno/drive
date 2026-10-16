@@ -18,10 +18,10 @@
 //! `ShellNew` carries one of the four forms read by
 //! `ParseShellNewRegistryEntry`: `NullFile` (empty file), `FileName`
 //! (copy of a template), `Data` (raw bytes) or `Command` (command to
-//! execute — not handled here, cf. `create_from_template`).
+//! execute - not handled here, cf. `create_from_template`).
 //!
 //! NOTE: `Key` (RAII registry helper) has no C# analog (the original
-//! uses `Registry.ClassesRoot`) — it stays private to this module.
+//! uses `Registry.ClassesRoot`) - it stays private to this module.
 
 use windows::core::{PCWSTR, PWSTR};
 use windows::Win32::System::Registry::{

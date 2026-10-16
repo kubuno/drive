@@ -55,7 +55,7 @@ export default function DriveViewersLayer({ viewers, dialogs, previewNavFiles, o
         />
       )}
 
-      {/* Video player — replaced by the media module when active */}
+      {/* Video player - replaced by the media module when active */}
       {videoFile && (
         VideoPlayer
           ? <VideoPlayer

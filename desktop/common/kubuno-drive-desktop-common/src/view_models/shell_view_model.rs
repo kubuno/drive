@@ -19,7 +19,7 @@ pub enum Location {
     SearchResults { query: String, root: String },
 }
 
-/// Layout of the file area — port of `FolderLayoutModes` (minus `Adaptive`,
+/// Layout of the file area - port of `FolderLayoutModes` (minus `Adaptive`,
 /// which the bar only shows when `LayoutAdaptive.IsExecutable`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum ViewMode {
@@ -45,7 +45,7 @@ impl ViewMode {
     }
 
     /// The ticks marked with an icon under the slider, and their icon. The
-    /// grid only has four, placed on ticks 1, 2, 8 and 12 — these are the
+    /// grid only has four, placed on ticks 1, 2, 8 and 12 - these are the
     /// named values of `GridViewSizeKind` (Small, Medium, Large, ExtraLarge).
     pub fn size_ticks(self) -> &'static [(u8, &'static str)] {
         match self {
@@ -163,7 +163,7 @@ impl SortGrouping {
 }
 
 /// The comparator from `ShellViewModel.OrderFiles`: folders/files grouping
-/// first, then the requested column — and the direction only reverses
+/// first, then the requested column - and the direction only reverses
 /// WITHIN each group.
 pub fn sort_entries(
     entries: &mut [DirEntryItem],

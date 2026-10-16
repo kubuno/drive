@@ -13,7 +13,7 @@ export default function DriveContextMenu({ menu, handlers, onClose }: {
   const { t } = useTranslation('drive')
   return (
     /* Provider required: the "Open with" contributors (files-open-with slot)
-       read the target file through useFilesOpenWith() — without it they render null. */
+       read the target file through useFilesOpenWith() - without it they render null. */
     <FilesOpenWithContext.Provider value={menu.type === 'file' ? (menu.item as FileItem) : null}>
       <MenuDropdown
         pos={{ top: menu.y, left: menu.x }}

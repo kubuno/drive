@@ -2,7 +2,7 @@
 //! PREVIEW, in the style of QuickLook (Explorer's Space key).
 //!
 //! The original draws NO internal preview at all: it merely controls an
-//! already-installed third-party utility — QuickLook (`QuickLookProvider.cs`), or
+//! already-installed third-party utility - QuickLook (`QuickLookProvider.cs`), or
 //! failing that Seer/Seer Pro (`SeerProProvider.cs`), or failing that PowerToys Peek. The
 //! `PreviewPopupService.GetProviderAsync()` service keeps the FIRST available one; if
 //! there is none, the action is a no-op. We faithfully reproduce this
@@ -10,7 +10,7 @@
 //! nothing else.
 //!
 //! Keyboard triggering (VK_SPACE on a single selection outside renaming) and
-//! selection tracking (arrow keys → `switch`) still need to be wired into the hub — see
+//! selection tracking (arrow keys → `switch`) still need to be wired into the hub - see
 //! the porting report. This module only exposes the service building blocks.
 //!
 //! (`PowerToysPeekProvider.cs` is intentionally not ported: no dedicated

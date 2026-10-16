@@ -14,7 +14,7 @@ export function isCoarsePointer(): boolean {
   )
 }
 
-/** True below the `lg` breakpoint — the width at which the shell swaps to its
+/** True below the `lg` breakpoint - the width at which the shell swaps to its
  *  mobile chrome (bottom nav, off-canvas drawer, FAB). Local copy of `@ui`'s
  *  `useIsMobile` until @kubuno/ui is republished (npm 0.1.2 predates it). */
 export function useIsMobile(): boolean {

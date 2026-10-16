@@ -1,4 +1,4 @@
-//! Storable hierarchy — port of the `OwlCore.Storage` model plus the
+//! Storable hierarchy - port of the `OwlCore.Storage` model plus the
 //! `Files.Core.Storage.Storables` additions (`IDirectCopy`, `IDirectMove`).
 //!
 //! C# interface → Rust trait mapping:
@@ -86,7 +86,7 @@ impl StorableItem {
 
 /// Root of the storable hierarchy (port of `IStorable`).
 pub trait Storable: Send + Sync {
-    /// Stable identifier — for the Windows implementation this is the
+    /// Stable identifier - for the Windows implementation this is the
     /// file-system path.
     fn id(&self) -> &str;
 
@@ -114,7 +114,7 @@ pub trait File: Storable {
 /// A folder (port of `IFolder`).
 #[async_trait]
 pub trait Folder: Storable {
-    /// Port of `GetItemsAsync` — streams items incrementally, which matters
+    /// Port of `GetItemsAsync` - streams items incrementally, which matters
     /// for large directories in the UI.
     fn get_items(&self, kind: StorableKind) -> BoxStream<'_, StorageResult<StorableItem>>;
 

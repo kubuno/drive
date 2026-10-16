@@ -14,7 +14,7 @@ use super::{not_recycle_bin, selected};
 ///
 /// - `Label`: `Strings.InstallDriver` → "Install driver".
 /// - `Description`: `Strings.InstallInfDriverDescription`.
-/// - `Glyph`: `new("")` (Segoe MDL2 glyph — no ThemedIcon).
+/// - `Glyph`: `new("")` (Segoe MDL2 glyph - no ThemedIcon).
 /// - `IsExecutable`: `SelectedItems.Count == 1 && IsInfFile(...) &&
 ///   !RecycleBin && !ZipFolder` (a SINGLE .inf file).
 ///

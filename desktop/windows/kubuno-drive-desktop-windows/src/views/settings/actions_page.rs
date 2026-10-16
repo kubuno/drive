@@ -11,7 +11,7 @@ use kubuno_drive_desktop_app_controls::themes::shape::{height, radius, space};
 use crate::ui::{Painter, Rect};
 use crate::views::settings::controls::{button_width, ButtonVariant, Control, SettingId, SettingsRow};
 
-/// (Description resource key, key token, KeyModifiers token) — one entry per
+/// (Description resource key, key token, KeyModifiers token) - one entry per
 /// visible default key binding, in `CommandManager` enumeration order.
 pub const DEFAULT_KEY_BINDINGS: [(&str, &str, &str); 72] = [
     ("AddItemDescription", "I", "CtrlShift"),

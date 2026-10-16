@@ -1,4 +1,4 @@
-<!-- FontsSearchBar — converted from FontsSearchBar.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<!-- FontsSearchBar - converted from FontsSearchBar.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
 <UserControl>
   <Stack Direction="LeftToRight" CrossAlign="Center" Class="w-full">
     <!-- TODO(views-migrate): <div> with a computed style -->

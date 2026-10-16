@@ -1,5 +1,5 @@
 #![allow(unused_imports)]
-//! Submodule of `MainWindow` — see `main_window/mod.rs`.
+//! Submodule of `MainWindow` - see `main_window/mod.rs`.
 use windows::core::{w, Result};
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, RECT, WPARAM};
 use windows::Win32::Graphics::Dwm::{
@@ -88,7 +88,7 @@ impl MainWindow {
         }
 
         if !inside_band && self.state.tabs.len() > 1 {
-            // DETACHMENT (the sole remaining tab does not detach — like the
+            // DETACHMENT (the sole remaining tab does not detach - like the
             // TabView, which ignores TabDroppedOutside for the last tab).
             let index = drag.index;
             let Some(slot) = layout.tabs.get(index).copied() else { return };
@@ -204,7 +204,7 @@ impl MainWindow {
     }
 
     /// Shows the tab ghost (popup) under the cursor during
-    /// detachment — the equivalent of the TabView's OLE drag visual. With
+    /// detachment - the equivalent of the TabView's OLE drag visual. With
     /// `over_strip`, it carries the "Move tab here" caption.
     pub(crate) fn present_tab_ghost(&mut self, drag: &TabDrag, over_strip: bool) {
         let Some((group, _)) = &drag.detached else { return };

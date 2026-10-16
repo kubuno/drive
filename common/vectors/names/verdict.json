@@ -9,7 +9,7 @@
     { "id": "plain/all-profiles-server", "input": { "name": "Rapport 2026.pdf", "profile": "server" }, "expected": { "verdict": "valid" } },
     { "id": "plain/windows", "input": { "name": "Rapport 2026.pdf", "profile": "windows" }, "expected": { "verdict": "valid" } },
     { "id": "plain/portable", "input": { "name": "notes.tar.gz", "profile": "portable" }, "expected": { "verdict": "valid" } },
-    { "id": "unicode/accents", "input": { "name": "Été — résumé.txt", "profile": "portable" }, "expected": { "verdict": "valid" } },
+    { "id": "unicode/accents", "input": { "name": "Été - résumé.txt", "profile": "portable" }, "expected": { "verdict": "valid" } },
     { "id": "dotfile", "input": { "name": ".gitignore", "profile": "portable" }, "expected": { "verdict": "valid" } },
 
     { "id": "empty/server", "input": { "name": "", "profile": "server" }, "expected": { "verdict": "invalid", "reason": "empty" } },

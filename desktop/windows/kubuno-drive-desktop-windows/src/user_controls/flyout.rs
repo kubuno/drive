@@ -112,7 +112,7 @@ pub enum MenuCommand {
 impl MenuCommand {
     /// Commands that destroy data. The web `MenuDropdown` marks such rows
     /// `danger: true`; here the menu FACTORIES live in other modules, so the
-    /// flag is derived from the command id — a factory can still force it with
+    /// flag is derived from the command id - a factory can still force it with
     /// `FlyoutItem::danger()`.
     pub fn is_destructive(self) -> bool {
         matches!(
@@ -128,7 +128,7 @@ pub struct FlyoutItem {
     /// A Segoe Fluent Icons codepoint (`RichGlyph.Glyph`).
     pub glyph: &'static str,
     /// A ThemedIcon style name (`RichGlyph.ThemedIconStyle`), preferred over
-    /// `glyph` when both are set — that is the original's own precedence.
+    /// `glyph` when both are set - that is the original's own precedence.
     pub icon: Option<&'static str>,
     /// `ContextMenuFlyoutItemViewModel.BitmapIcon`: a ready-made image, which
     /// is how the shell hands over the icons of its own menu entries.
@@ -155,7 +155,7 @@ pub struct FlyoutItem {
     pub command: MenuCommand,
 }
 
-// NOTE — the web `MenuItem` also carries an explicit `danger: boolean`. It is
+// NOTE - the web `MenuItem` also carries an explicit `danger: boolean`. It is
 // NOT mirrored as a field here: `FlyoutItem` is still built with EXHAUSTIVE
 // struct literals in `main_window/{pointer_input,toolbar_clicks}.rs`, which a
 // new field would break. `Default` is provided below so those five literals can
@@ -232,7 +232,7 @@ impl FlyoutItem {
         self
     }
 
-    /// Whether this row must be painted in the danger colour — the web's
+    /// Whether this row must be painted in the danger colour - the web's
     /// `danger: true`. Derived from the command it runs (see the note on the
     /// struct as to why it is not a field).
     fn is_danger(&self) -> bool {
@@ -241,7 +241,7 @@ impl FlyoutItem {
 }
 
 /// Lets a factory build a row from a few fields and `..FlyoutItem::default()`
-/// instead of spelling out all fourteen — the pattern new fields need in order
+/// instead of spelling out all fourteen - the pattern new fields need in order
 /// to be additive.
 impl Default for FlyoutItem {
     fn default() -> Self {
@@ -278,7 +278,7 @@ pub const FLYOUT_ITEM_HEIGHT: f32 = shape::height::MENU_ITEM;
 pub const FLYOUT_SEPARATOR_HEIGHT: f32 = SEPARATOR_MARGIN * 2.0 + 1.0;
 /// `--kb-float-radius`: the radius every floating surface shares.
 pub const FLYOUT_CORNER_RADIUS: f32 = shape::radius::FLOAT;
-/// The panel's own `padding: 5` — also the gutter the highlight pill is inset
+/// The panel's own `padding: 5` - also the gutter the highlight pill is inset
 /// by, which is why it doubles as the pill's side margin.
 const FLYOUT_PADDING: f32 = 5.0;
 /// A row's highlight pill radius (`borderRadius: 6`).
@@ -294,9 +294,9 @@ const HOVER_SHORTCUT_OPACITY: f32 = 0.85;
 /// 175% DPI, a 674 px popup): the bar is its own 48 DIP panel sitting flush on
 /// top of the menu, with a 1 px divider between them; inside it the
 /// AppBarButtons are 40×40, laid out LEFT to right (they do not stretch to the
-/// panel width — a menu wider than the buttons leaves empty space on the right).
+/// panel width - a menu wider than the buttons leaves empty space on the right).
 const PRIMARY_BUTTON: f32 = 40.0;
-/// `CommandBarFlyoutCommandBarPadding` — 4 DIP above and below the buttons.
+/// `CommandBarFlyoutCommandBarPadding` - 4 DIP above and below the buttons.
 const PRIMARY_PADDING: f32 = 4.0;
 const PRIMARY_BAND: f32 = PRIMARY_PADDING + PRIMARY_BUTTON + PRIMARY_PADDING;
 /// Panel padding (5) + the row's own `padding-left` (10): the icon column.
@@ -335,7 +335,7 @@ pub enum FlyoutKind {
     ColorPicker,
     /// TabFlyout of TabBar.xaml, opened by right-clicking tab `i`.
     TabContext(usize),
-    /// `BreadcrumbBar`: the ellipsis (…) flyout — the collapsed head
+    /// `BreadcrumbBar`: the ellipsis (…) flyout - the collapsed head
     /// segments, dispatched by index in `breadcrumb_overflow`.
     BreadcrumbOverflow,
     /// `GetItemContextCommandsWithoutShellItems`: right-click on a file row,
@@ -388,7 +388,7 @@ pub struct Flyout {
     /// The "Disposition" flyout is not a menu but a panel: when it
     /// is present, it's THAT which gets drawn, and `items` stays empty.
     pub layout: Option<super::layout_flyout::LayoutPanel>,
-    /// The `ColorPicker` of the "Couleurs du fond" button — same principle.
+    /// The `ColorPicker` of the "Couleurs du fond" button - same principle.
     pub picker: Option<super::color_picker::ColorPickerPanel>,
 }
 
@@ -464,7 +464,7 @@ impl Flyout {
     }
 
     /// Height the PrimaryCommands band adds above the menu items (0 when the
-    /// menu has none — a plain MenuFlyout rather than a CommandBarFlyout).
+    /// menu has none - a plain MenuFlyout rather than a CommandBarFlyout).
     pub fn primary_height(&self) -> f32 {
         if self.primary.is_empty() {
             0.0
@@ -536,7 +536,7 @@ impl Flyout {
         // `sub_pos` is the ACTUAL position, the one `sync_flyout` obtained
         // after clamping to the screen; without it hover would target the
         // panel's theoretical spot, not the one where it's visible.
-        // `MenuDropdown`: `left = r.right - 2`, measured on the ROW BUTTON —
+        // `MenuDropdown`: `left = r.right - 2`, measured on the ROW BUTTON -
         // which here is the row minus the panel's padding. The top offset keeps
         // the submenu's first row level with its parent row.
         let (left, top) = self
@@ -679,7 +679,7 @@ impl Painter<'_> {
         let t = self.theme;
         let f = &self.renderer.formats;
 
-        // Separator: a 1 px rule with `margin: '5px 6px'` — it stops SHORT of
+        // Separator: a 1 px rule with `margin: '5px 6px'` - it stops SHORT of
         // the panel edge instead of bleeding to it, so it lines up with the
         // highlight pills above and below.
         if item.separator {
@@ -695,7 +695,7 @@ impl Painter<'_> {
         }
 
         // THE Kubuno hover: a FULL accent pill (`background: c.hover`), not the
-        // subtle grey fill of the Fluent template — which is why the label, the
+        // subtle grey fill of the Fluent template - which is why the label, the
         // icon and the shortcut all flip to `accent_foreground` below.
         let hot = hot && item.enabled;
         let pill = pill_rect(rect);
@@ -733,8 +733,8 @@ impl Painter<'_> {
         let indicator = Rect::new(pill.left + 2.0, cy - 8.0, pill.left + 5.0, cy + 8.0);
         let indicator_color = if hot { &t.accent_foreground } else { &t.accent };
         if item.pill {
-            // `ComboBoxItem`: the selected item has a subtle background — skipped
-            // under the accent pill, which already fills the row — plus the bar.
+            // `ComboBoxItem`: the selected item has a subtle background - skipped
+            // under the accent pill, which already fills the row - plus the bar.
             if item.checked {
                 if !hot {
                     self.fill_rounded(&pill, PILL_RADIUS, &t.control_fill_hover);
@@ -743,7 +743,7 @@ impl Painter<'_> {
             }
         } else if item.is_toggle {
             if let Some(name) = item.icon {
-                // Toggle WITH icon (layouts, sizes — the original's
+                // Toggle WITH icon (layouts, sizes - the original's
                 // `RadioMenuFlyoutItem`): the icon stays in its column, the selection is
                 // marked by the indicator + background (instead of HIDING the icon).
                 if item.checked {
@@ -754,7 +754,7 @@ impl Painter<'_> {
                 }
                 self.vector_icon_layered(name, &icon, 16.0, &icon_fg, &icon_fg);
             } else if item.checked {
-                // Without an icon: the icon column carries the checkmark (E73E) —
+                // Without an icon: the icon column carries the checkmark (E73E) -
                 // the web's `{item.checked ? '✓' : icon}` cell.
                 self.text("\u{E73E}", &icon, &f.icon_small, &icon_fg, true);
             }
@@ -770,7 +770,7 @@ impl Painter<'_> {
         }
 
         // The label only yields room to the accelerator column when this item
-        // actually has one — otherwise a long label would be clipped for
+        // actually has one - otherwise a long label would be clipped for
         // nothing (the flyout is already sized to fit both). The column is
         // MEASURED: "Alt+Ctrl+Entrée" overflows a fixed width.
         let accel_w = item.accel.as_deref().map(|a| self.measure(a, &f.caption) + CONTENT_RIGHT);

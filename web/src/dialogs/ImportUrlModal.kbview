@@ -1,4 +1,4 @@
-<!-- ImportUrlModal — converted from ImportUrlModal.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<!-- ImportUrlModal - converted from ImportUrlModal.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
 <Stack Direction="LeftToRight" Gap="0" CrossAlign="Center" Justify="Center" Visible="{Binding show_main}" Class="fixed inset-0 z-50">
   <Panel Class="absolute inset-0 bg-black/40" OnClick="handleClose"/>
   <Panel Class="relative bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">

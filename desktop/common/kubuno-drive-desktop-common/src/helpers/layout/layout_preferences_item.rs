@@ -1,7 +1,7 @@
 //! LayoutPreferences (mirrors LayoutPreferencesItem.cs)
 //!
-//! `LayoutPreferencesItem` — what a folder remembers about its display.
-//! The original keeps display preferences **per folder** — layout, sort,
+//! `LayoutPreferencesItem` - what a folder remembers about its display.
+//! The original keeps display preferences **per folder** - layout, sort,
 //! sort direction. The `new LayoutPreferencesItem()` constructor copies the
 //! global values from `LayoutSettingsService`.
 
@@ -9,14 +9,14 @@ use serde::{Deserialize, Serialize};
 
 use crate::view_models::shell_view_model::{SortColumn, ViewMode};
 
-/// `LayoutPreferencesItem` — what a folder remembers about its display.
+/// `LayoutPreferencesItem` - what a folder remembers about its display.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct LayoutPreferences {
     pub layout_mode: ViewMode,
     pub sort_column: SortColumn,
     pub sort_ascending: bool,
     /// `LayoutPreferencesItem.SortFilesFirst` / `SortDirectoriesAlongsideFiles`
-    /// — the "folders first / files first / mixed" radio trio.
+    /// - the "folders first / files first / mixed" radio trio.
     /// (`serde(default)`: preferences saved before these fields existed.)
     #[serde(default)]
     pub sort_files_first: bool,
@@ -55,7 +55,7 @@ impl Default for LayoutPreferences {
 
 /// `FolderLayoutModes` → our `ViewMode`. `Adaptive` (the original's default)
 /// picks the layout based on the folder's contents; not having ported it,
-/// it falls back to Details — which is also what the original does when
+/// it falls back to Details - which is also what the original does when
 /// adaptive is disabled (`IsAdaptiveLayoutEnabled`).
 fn view_mode_of(mode: crate::services::settings::FolderLayoutMode) -> ViewMode {
     use crate::services::settings::FolderLayoutMode as F;

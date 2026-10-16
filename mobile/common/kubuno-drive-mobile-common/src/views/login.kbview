@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Drive · Onboarding · Login — converted from onboarding/OnboardingScreens.kt (LoginScreen). Centered form:
+  Drive · Onboarding · Login - converted from onboarding/OnboardingScreens.kt (LoginScreen). Centered form:
   title, server host, identifier + password fields, a full-width primary action, and a text link to change
   server. No top/bottom bars (the onboarding flow runs before any session). Drive LIGHT theme, logical px.
   Screen root is a Panel; the form stretches to the frame width (CrossAlign=Stretch).

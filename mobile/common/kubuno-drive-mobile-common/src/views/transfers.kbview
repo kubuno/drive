@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Drive · Transfers screen — converted from transfers/TransfersScreen.kt. The upload/download queue with
+  Drive · Transfers screen - converted from transfers/TransfersScreen.kt. The upload/download queue with
   progress, retry and "clear completed". Rows inlined (TransferRow): direction icon + name + state/bytes +
   a ProgressBar while running. Drive LIGHT theme, logical px (~390 wide). Screen root is a Panel.
 -->

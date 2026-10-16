@@ -12,23 +12,23 @@ number at release time, and CI publishes that section as the GitHub Release note
 ### Changed
 - **The mobile app moves to Kubuno views (Rust), laid out like the desktop app.** `mobile/` is now a Cargo
   workspace: `common/kubuno-drive-mobile-common` (the app's `.kbview` screens, edited in Visual Studio),
-  `android/kubuno-drive-mobile-android` (the APK — package `com.kubuno.drive`, launcher icon = the module's web logo)
+  `android/kubuno-drive-mobile-android` (the APK - package `com.kubuno.drive`, launcher icon = the module's web logo)
   and `ios/kubuno-drive-mobile-ios`, shown in the Visual Studio solution under `Mobile/Common`, `Mobile/Android` and
   `Mobile/iOS`. The screens used to live inside the core's mobile renderer; they are now the module's own, rendered
   and run by the shared Kubuno mobile renderer and Android / iOS shells of the core. The previous Drive
-  Kotlin/Jetpack Compose app is retired from `mobile/` — it stays in the git history as the functional reference for
+  Kotlin/Jetpack Compose app is retired from `mobile/` - it stays in the git history as the functional reference for
   migrating the app's behaviour (data, server calls), which is still to come. The `mobile` workflow builds the new
   APK with cargo-apk.
 - **Desktop framework updated to `desktop-v0.1.5-alpha`: the Drive desktop app uses less memory.** On top of the
   app's own bounded icon/thumbnail cache below, the framework now bounds its own Direct2D image and icon caches and
   shares one HTTP client across all accounts instead of building a new TLS stack per sign-in.
 - **The desktop app bounds its icon and thumbnail cache (RAM).** The Direct2D cache of shell icons and content
-  thumbnails (image/PDF previews) grew without limit — browsing thousands of images could retain hundreds of
+  thumbnails (image/PDF previews) grew without limit - browsing thousands of images could retain hundreds of
   megabytes of preview bitmaps for the whole window lifetime. It now has a resident-byte budget (128 MB) with
   least-recently-used eviction (the entries you are still looking at are kept; the ones scrolled far away are
   dropped), so memory stays bounded however long and however far you browse.
 - **Drive views compose their own controls natively.** Where a `.kbview` view previously hosted one of its own
-  user controls through a React bridge, it now uses it directly as a typed element — the search results list and
+  user controls through a React bridge, it now uses it directly as a typed element - the search results list and
   the image-search results use `<SearchResultRow File="…" OnOpen="…"/>`, the details panel uses `<TagDots>`, the
   toolbar uses `<DriveBreadcrumb>`, and the content grid uses `<DriveEmptyState>`, `<TrashStatsBanner>` and
   `<SortFilterBar>`. Behaviour is unchanged; properties and events are now type-checked at build time. (Requires
@@ -51,8 +51,8 @@ number at release time, and CI publishes that section as the GitHub Release note
   and its engine crates (`kubuno-drive-desktop`, `-app-storage`, `-core-storage`, `-localization`) moved here from
   `kubuno/desktop` with their history, under `desktop/` (see below for its split into `desktop/common` and the OS folders),
   keeping their MIT licence (`desktop/LICENSE-MIT` credits the Files Community). The app
-  builds on its own from this repository — the Kubuno desktop framework, including the painting surface ported from
-  Files, comes from `kubuno/desktop` by the git tag `desktop-v0.1.0-alpha` and is linked statically — has its own CI
+  builds on its own from this repository - the Kubuno desktop framework, including the painting surface ported from
+  Files, comes from `kubuno/desktop` by the git tag `desktop-v0.1.0-alpha` and is linked statically - has its own CI
   workflow (`desktop.yml`, Windows) and appears in `Kubuno.Drive.slnx` under **Desktop** (`Kubuno.Drive.Desktop` and its
   engine crates). The app itself is unchanged for users.
 
@@ -90,8 +90,8 @@ number at release time, and CI publishes that section as the GitHub Release note
 - **Renaming a file accepts names up to 255 bytes** (was 1000), like an uploaded file's name and every file system's.
 - **The Drive screens are sorted into views and user controls, like the desktop apps.** A page the router shows
   (my files, settings, storage), a viewer window or a dialog is a view (`.kbview`); a piece placed inside another
-  screen — the toolbar, the file grid, search results and their rows, the badges, the sidebar tree, the filter and
-  mini panels, the tag dots — is a user control (`.kbcontrol`) with its properties and events. The frontend source is
+  screen - the toolbar, the file grid, search results and their rows, the badges, the sidebar tree, the filter and
+  mini panels, the tag dots - is a user control (`.kbcontrol`) with its properties and events. The frontend source is
   grouped by role: `views/`, `dialogs/`, `pages/` (the pieces one screen places), `controls/` (the pieces several
   place), `model/` (stores), `services/` (API clients, preview and menu services), the fonts browser in `fonts/` and
   the Drive page's parts in `drive-app/`. The breadcrumb and the empty state became `DriveBreadcrumb` and
@@ -135,7 +135,7 @@ number at release time, and CI publishes that section as the GitHub Release note
   that (MySQL 8 with error 1215, MariaDB with error 1901), so the module stopped
   at start-up. Each server now runs a variant of that migration
   (`migrations/mysql-oracle/`, `migrations/mysql-mariadb/`) that declares the
-  column `VIRTUAL` — same key, same unique index, same rule. The variants are
+  column `VIRTUAL` - same key, same unique index, same rule. The variants are
   recorded under the original checksum, so nothing changes for a database that
   already applied the migration. If an earlier start failed on it, delete the
   failed row once (`DELETE FROM drive._sqlx_migrations WHERE version = 2 AND
@@ -171,7 +171,7 @@ number at release time, and CI publishes that section as the GitHub Release note
   numbered name, and the disk scan skips names already in use. Existing
   duplicates are merged on upgrade: the most recently saved copy is kept, the
   others' version history, shares, comments, tags, activity and star move to it,
-  and a duplicate with different contents becomes a version of the kept file —
+  and a duplicate with different contents becomes a version of the kept file -
   nothing is deleted. `drive:fsck` lists any that remain (`--merge-duplicates`).
 - **Module file registration with "overwrite" no longer deletes the contents it
   registers.** Re-registering a file at the location just written deleted the
@@ -238,8 +238,8 @@ number at release time, and CI publishes that section as the GitHub Release note
   files to the root of the drive while wiping the folder's directory on disk, so
   those files showed up at the root with their contents gone, and any other file
   whose bytes happened to live in that directory lost them too. The whole folder
-  is now deleted consistently — subfolders, files (trashed ones included),
-  version history and thumbnails — and the bytes are only removed after the
+  is now deleted consistently - subfolders, files (trashed ones included),
+  version history and thumbnails - and the bytes are only removed after the
   database change is committed and only when no remaining file still uses them.
 - **Emptying the trash, or deleting a trashed file for good, no longer erases a
   live file with the same name.** A file uploaded under the name of a trashed
@@ -273,7 +273,7 @@ number at release time, and CI publishes that section as the GitHub Release note
   (RUSTSEC-2026-0221) is closed at the same time.
 - **Input validation library updated.** The version in use carried
   RUSTSEC-2024-0421 through its domain-name parser, which accepted Punycode
-  labels that decode to plain ASCII — a mismatch an attacker can use to make two
+  labels that decode to plain ASCII - a mismatch an attacker can use to make two
   different names look like one.
 
 ## [0.1.11] - 2026-09-18
@@ -296,7 +296,7 @@ number at release time, and CI publishes that section as the GitHub Release note
 - **This module now installs as a Kubuno package (`.kbpkg`) only.** Its system
   packages (Debian/RPM and the Windows and macOS installers) are no longer
   built: the module is distributed as one `.kbpkg` per platform (Linux, Windows,
-  macOS) that the Kubuno server installs itself — from the admin console, or
+  macOS) that the Kubuno server installs itself - from the admin console, or
   offline with `kubuno modules:install <file>.kbpkg`.
 - **The storage client now reaches the files service through the core, not
   directly.** Editor modules (documents, notes, and the like) talk to file
@@ -312,7 +312,7 @@ number at release time, and CI publishes that section as the GitHub Release note
 - **Dates are formatted by the platform now, not by a library.** `date-fns` is
   gone from this module: the shared SDK exposes helpers built on `Intl`, which is
   localised for every language we ship and needs no locale bundle loaded. Call
-  sites say what a date is FOR — `formatDate(d, 'date')` — and the platform
+  sites say what a date is FOR - `formatDate(d, 'date')` - and the platform
   decides how to write it, so a reader in Japanese no longer gets a French
   layout. Machine formats (keys, `<input type="date">` values) go through
   `toISODate` and friends, built from local calendar fields so the day cannot
@@ -334,12 +334,12 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 - **The README now opens with the module's logo.** The public README on
   GitHub now shows the module's designer logo (the same PNG shown as the
-  browser tab icon and in the applications menu) at the top of the page — the
+  browser tab icon and in the applications menu) at the top of the page - the
   repository landing now matches the icon a signed-in user sees inside the
   platform. The image ships in-repo, under `.github/logo.png`, so it renders
   even when the repo is browsed offline.
 
-- **New Drive logo** — a blue isometric stack of platters with a white top
+- **New Drive logo** - a blue isometric stack of platters with a white top
   face and gold tabs, used as the browser-tab icon and in the applications
   menu. It is now raster (PNG) designer artwork.
 
@@ -351,7 +351,7 @@ number at release time, and CI publishes that section as the GitHub Release note
   Opening the panel pre-fills the "Contains the words" field with the bar's
   current text, and editing that field rewrites the bar's text live (running
   the search as you type, exactly like typing in the bar). Drive's search is
-  plain free text — the other panel fields (type, owner, location, dates…) are
+  plain free text - the other panel fields (type, owner, location, dates…) are
   structured filters with no text representation, so they intentionally stay
   panel-only. "Reset" now also clears the search bar's text.
 
@@ -359,7 +359,7 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 - **Folders whose stored path drifted from their name are repaired on start.**
   A folder's path is stored, not recomputed on read, and the rename that keeps
-  it current refuses protected folders — so a protected folder renamed by a raw
+  it current refuses protected folders - so a protected folder renamed by a raw
   database write (as happened to an application's own protected folder during an
   earlier rename) kept a path from its old name. Two folders could then claim the
   same local path, and desktop sync clients would materialise neither, leaving
@@ -383,7 +383,7 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 - **The interface builds against the published type surface again.** Drive reads
   `is_protected` on the files the platform ships, a field the published
-  `@kubuno/drive` did not declare — so a clean install failed to typecheck while a
+  `@kubuno/drive` did not declare - so a clean install failed to typecheck while a
   developer's machine, holding an older copy, did not. The package now declares
   it, and the lockfile takes that version.
 - **A withdrawn dependency is no longer used.** A crate deep in the tree
@@ -404,7 +404,7 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 - **The package could not be built where `zip` is absent.** The Windows job of
   the continuous integration has no `zip`, so the Windows package was simply lost
-  the first time it was attempted — a script failure, not a build failure. The
+  the first time it was attempted - a script failure, not a build failure. The
   builder now falls back to 7-Zip, then to PowerShell.
 ## [0.1.7] - 2026-08-26
 
@@ -412,7 +412,7 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 ### Added
 
-- **Drive now also ships a `.kbpkg`** — the single package format a Kubuno
+- **Drive now also ships a `.kbpkg`** - the single package format a Kubuno
   server installs by itself, identical on every system. It carries the same
   binary, interface and manifest as the `.deb`, arranged the way the server
   expects to find a module on disk, plus a `SHA256SUMS` so an offline copy can
@@ -424,7 +424,7 @@ number at release time, and CI publishes that section as the GitHub Release note
 
 - **A built package could be thrown away instead of published.** The job that
   attaches a package to the release waited ten minutes for another workflow to
-  create that release, then gave up with "release never appeared — build.yml
+  create that release, then gave up with "release never appeared - build.yml
   likely failed". The diagnosis was wrong: on a repository whose `.deb` takes
   longer than ten minutes to build, the release simply did not exist yet, and a
   package that had built perfectly was discarded. Four modules reached v0.1.6
@@ -442,14 +442,14 @@ number at release time, and CI publishes that section as the GitHub Release note
 - **Drive now authenticates proxied requests from a signed token instead of
   trusting plain headers.** User routes require a valid `X-Kubuno-Auth` token
   minted by the core with this module's internal secret (see `kubuno-modauth`),
-  rather than reading `X-Kubuno-User-*` headers at face value — which any process
+  rather than reading `X-Kubuno-User-*` headers at face value - which any process
   reaching Drive's loopback port could otherwise forge to act as any user.
 
 ### Changed
 
 - **Pill-shaped buttons are gone from the interface.** Filter chips, view
   segments, tab selectors and action buttons that were drawn as pills now use the
-  same 4 px corner radius as every other button — the shape set them apart for no
+  same 4 px corner radius as every other button - the shape set them apart for no
   reason other than habit. Round buttons that hold a lone icon, avatars, status
   dots and non-clickable badges keep their shape: a circle around a single glyph
   is not a pill.
@@ -462,11 +462,11 @@ number at release time, and CI publishes that section as the GitHub Release note
   module embedded nine Google font files (~26 MB of the 30 MB it carried) and
   seeded them into `System/Fonts`. They are gone: the embedded set is now Outfit
   (SIL Open Font License, one variable file) plus the openly licensed families
-  already there — Roboto, Roboto Flex, Inter, DM Mono. The module's font assets
+  already there - Roboto, Roboto Flex, Inter, DM Mono. The module's font assets
   drop from 30 MB to 4.9 MB.
 - **Fonts the module no longer ships are actively removed at startup.** Seeding
   never deleted anything, and what it installed is `is_protected`, which the API
-  refuses to remove — so a retired face would have kept being served for ever.
+  refuses to remove - so a retired face would have kept being served for ever.
   The seed now un-protects and deletes the faces it has dropped, then installs
   the current set.
 
@@ -474,8 +474,8 @@ number at release time, and CI publishes that section as the GitHub Release note
   target is its Home hub (`/drive/home`); My Drive stays at `/drive`, reachable
   from the sidebar and by every existing folder link.
 - **Home screen reworked to stop echoing "Recent".** Its file section no longer
-  replays the opened-file journal; it now surfaces a curated blend — files you
-  recently **modified**, starred files, and files recently shared with you —
+  replays the opened-file journal; it now surfaces a curated blend - files you
+  recently **modified**, starred files, and files recently shared with you -
   distinct from Recent. Folders and files render through the shared explorer, so
   their cards, view modes, sort bar and context menu are identical to every other
   Drive view, and the page now uses the full width. The in-page search box was
@@ -496,13 +496,13 @@ number at release time, and CI publishes that section as the GitHub Release note
   keeps the existing tabbed home.
 - **Remote mounts can be edited.** A pencil on each mount opens its settings:
   everything but the secrets comes back filled in, and a password left blank
-  keeps the stored one — correcting a host no longer means retyping credentials.
+  keeps the stored one - correcting a host no longer means retyping credentials.
 - **"List the server's shares"** in the SMB form. It asks the server and shows
   each share's real name beside its description, which is the distinction that
   makes a mount work: a share called `backups` may be described as
   "Nightly Backups", and entering the description fails with "share not found".
 - **Platform fonts shipped with the module**: 20 open-licensed font files (Google Sans
-  Text, Google Sans, Roboto, Google Sans Flex, Roboto Flex, Inter, DM Mono — variable
+  Text, Google Sans, Roboto, Google Sans Flex, Roboto Flex, Inter, DM Mono - variable
   where a variable release exists) are embedded in the binary and seeded into
   `System/Fonts` at startup, marked protected: they cannot be deleted, administrators
   included. The seed is idempotent and refreshes a seeded file **in place** when the
@@ -512,7 +512,7 @@ number at release time, and CI publishes that section as the GitHub Release note
   generates `@font-face` rules from the actual binaries in `System/Fonts` (family,
   weight and stretch ranges read from their `name`/`fvar`/`OS-2` tables, cached), and
   `GET /fonts/files/:id` serves the bytes with ETag/304 and day-long caching. Both are
-  unauthenticated on purpose — stylesheet fetches carry no credentials and the surface
+  unauthenticated on purpose - stylesheet fetches carry no credentials and the surface
   only exposes the shared fonts directory. Any font an administrator drops into
   `System/Fonts` becomes servable the same way.
 - Fonts explorer: protected fonts show a **"Police système" chip** and never offer
@@ -526,7 +526,7 @@ number at release time, and CI publishes that section as the GitHub Release note
 - **New Drive logo.**
 - **Remote storage panel**: a floating window instead of a full-height drawer,
   so the files being worked on stay visible behind it. It also opens from every
-  Drive screen now — from a remote mount it used to set nothing on screen until
+  Drive screen now - from a remote mount it used to set nothing on screen until
   you navigated back to My Drive.
 - **Provider icons** are the official brand marks (Nextcloud, ownCloud, Google
   Drive, Dropbox, Windows) in their own colours, instead of emoji that showed

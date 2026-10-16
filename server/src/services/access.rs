@@ -28,7 +28,7 @@ pub async fn record_open(db: &DbPool, owner_id: Uuid, file_id: Uuid, module_id: 
 
     // Keep only the 30 most recent rows per user. `ctid` is PostgreSQL-only, so
     // the cutoff is the 30th-newest `opened_at` and anything strictly older goes
-    // (owner_id is bound twice — a placeholder may not be reused).
+    // (owner_id is bound twice - a placeholder may not be reused).
     db.execute(
         "DELETE FROM drive.recent_opens
          WHERE owner_id = $1 AND opened_at < (

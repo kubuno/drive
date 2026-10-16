@@ -72,8 +72,8 @@ See [`../README.md`](../README.md), "What stays in windows/".
 
 ## `actions/` ↔ `Actions/`
 
-The `Action` trait (`actions/mod.rs`, windows) carries `IAction` — `Label`, `Description`, `Glyph`, `HotKey`,
-`IsExecutable`, `ExecuteAsync` — and `ToggleAction` carries `IToggleAction.IsOn`. `actions::commands()` plays the
+The `Action` trait (`actions/mod.rs`, windows) carries `IAction` - `Label`, `Description`, `Glyph`, `HotKey`,
+`IsExecutable`, `ExecuteAsync` - and `ToggleAction` carries `IToggleAction.IsOn`. `actions::commands()` plays the
 `CommandManager`: the palette reads the descriptions there, the keyboard resolves shortcuts (`by_hotkey`), the menus
 the labels. One Rust file per C# file. The porting journal (`PORTING.md`, French) lists what is ported; `Actions/Git/`
 is excluded (user decision, July 2026).

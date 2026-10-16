@@ -1,5 +1,5 @@
 /**
- * Update of a remote mount — kept here rather than in `filesApi` because the
+ * Update of a remote mount - kept here rather than in `filesApi` because the
  * published `@kubuno/drive` surface does not carry `updateRemote` yet, and the
  * module builds against the published package (dependencies on `@kubuno/*`
  * follow the npm releases). Move it to `filesApi` at the next publish of `@kubuno/drive`.
@@ -23,7 +23,7 @@ export async function updateRemote(id: string, dto: UpdateRemoteDto): Promise<vo
 
 export interface RemoteConfigView {
   provider: string
-  /** Every non-secret field, as stored — what the edit form prefills. */
+  /** Every non-secret field, as stored - what the edit form prefills. */
   config: Record<string, unknown>
   /** Names of the secrets that are set. Their VALUES never leave the server. */
   secrets_set: string[]
@@ -35,7 +35,7 @@ export async function getRemoteConfig(id: string): Promise<RemoteConfigView> {
   return data
 }
 
-/** A share as the server advertises it — its NAME is what a mount needs. */
+/** A share as the server advertises it - its NAME is what a mount needs. */
 export interface SmbShare { name: string; comment: string }
 
 /**

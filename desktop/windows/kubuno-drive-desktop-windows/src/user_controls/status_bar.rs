@@ -3,7 +3,7 @@
 //!
 //! The strip itself is [`kubuno_desktop_ui::navigation::StatusBar`], the design
 //! system's own: its cells are `ToolStripStatusLabel`s / `ToolStripButton`s,
-//! and the leading cell is the one that `Spring`s — the `StatusStrip` flag
+//! and the leading cell is the one that `Spring`s - the `StatusStrip` flag
 //! that hands the leftover width to a cell, which is exactly what the count +
 //! selection line does between the left edge and the git widgets. Neither the
 //! sharing nor the cell paint is written here any more; what stays is what the
@@ -16,7 +16,7 @@ use kubuno_desktop_ui::navigation::{icon_label_item, status_item, StatusBar};
 use crate::ui::{Hot, Layout, Painter, Rect, UiState, STATUSBAR_HEIGHT};
 use crate::view_models::shell_view_model::{Location, Tab};
 
-/// `StatusBar.xaml`'s right `Padding` — the gap the strip keeps between its
+/// `StatusBar.xaml`'s right `Padding` - the gap the strip keeps between its
 /// last cell and the window edge.
 const EDGE_PADDING: f32 = 8.0;
 
@@ -25,8 +25,8 @@ thread_local! {
     /// [`StatusBar::item_widths`].
     ///
     /// The primitive measures its captions through DirectWrite, and
-    /// `Layout::compute` — which needs the git widgets' rectangles to hit-test
-    /// them — is static and has no drawing surface. So the widths are taken
+    /// `Layout::compute` - which needs the git widgets' rectangles to hit-test
+    /// them - is static and has no drawing surface. So the widths are taken
     /// once per frame in [`premeasure`], while a `Canvas` exists, and the
     /// layout pass reuses them: one measurement, one arrangement, shared by
     /// the hit test and the paint.
@@ -34,7 +34,7 @@ thread_local! {
         const { std::cell::RefCell::new(Vec::new()) };
 }
 
-/// Evaluates an ICU plural (`{0, plural, one {…} other {…}}`) — the format of the
+/// Evaluates an ICU plural (`{0, plural, one {…} other {…}}`) - the format of the
 /// `SelectedItems`/`DeleteItemsDialogTitle` resources. The text AROUND the
 /// block is preserved ("Supprimer {0, plural, …}" keeps its "Supprimer").
 pub(crate) fn icu_plural(pattern: &str, count: usize) -> String {
@@ -72,7 +72,7 @@ pub(crate) fn icu_plural(pattern: &str, count: usize) -> String {
     )
 }
 
-/// Whether the bar shows at all — a folder view, with the setting on.
+/// Whether the bar shows at all - a folder view, with the setting on.
 pub(crate) fn is_visible(tab: &Tab) -> bool {
     matches!(tab.location, Location::Dir(_)) && crate::services::settings::get().show_status_bar
 }
@@ -83,7 +83,7 @@ pub(crate) fn is_visible(tab: &Tab) -> bool {
 /// `directoryItemCountLocalization` in `BaseShellPage`; then, if there is a
 /// selection, "N éléments sélectionnés" (the `SelectedItems` resource, also an
 /// ICU plural, like in `StatusBarViewModel`); then `ItemSize`
-/// (`StatusBar.xaml` via `UpdateSelectionSize`) — the cumulative size of the
+/// (`StatusBar.xaml` via `UpdateSelectionSize`) - the cumulative size of the
 /// selection, or of ALL items if nothing is selected, shown only if every size
 /// is known (`isSizeKnown`): an uncomputed folder hides the block.
 fn summary(tab: &Tab) -> String {
@@ -108,7 +108,7 @@ fn summary(tab: &Tab) -> String {
     text
 }
 
-/// The bar's cells: the summary, then — inside a repo only — the two git
+/// The bar's cells: the summary, then - inside a repo only - the two git
 /// widgets of `StatusBar.xaml`'s columns 1 and 2, packed against the trailing
 /// edge by the `Alignment` the replica already carries.
 ///
@@ -152,7 +152,7 @@ pub(crate) fn premeasure(c: &dyn kubuno_desktop_ui::Canvas, state: &UiState) {
 }
 
 /// The git widgets' rectangles (network actions, branch selector), for the
-/// layout pass to hit-test — arranged by the primitive itself, so the box the
+/// layout pass to hit-test - arranged by the primitive itself, so the box the
 /// pointer hits is the box that was drawn.
 pub(crate) fn git_rects(tab: &Tab, bounds: Rect) -> (Option<Rect>, Option<Rect>) {
     if tab.git_branch.is_none() {

@@ -73,7 +73,7 @@ pub struct Layout {
     pub drive_cards: Vec<Rect>,
     pub recent_rows: Vec<Rect>,
     pub file_header: Rect,
-    /// The Recycle Bin columns (widened original path) are active —
+    /// The Recycle Bin columns (widened original path) are active -
     /// `file_columns_for` must receive the SAME flag for drawing and
     /// hit-testing.
     pub recycle_columns: bool,
@@ -130,7 +130,7 @@ impl Layout {
         let scroll = tab.scroll;
 
         // Caption buttons: 32 DIP tall (Windows 11 metric), flush with the
-        // top edge — not the whole title bar, otherwise they overflow into
+        // top edge - not the whole title bar, otherwise they overflow into
         // the content and look too big.
         let caption_close = Rect::new(width - CAPTION_BUTTON_WIDTH, 0.0, width, CAPTION_BUTTON_HEIGHT);
         let caption_max = Rect::new(width - CAPTION_BUTTON_WIDTH * 2.0, 0.0, caption_close.left, CAPTION_BUTTON_HEIGHT);
@@ -141,11 +141,11 @@ impl Layout {
         // 32 high, below the TabView's 10 DIP top margin), shrinking to spare
         // the caption buttons. The first item starts at 39, not 32: the
         // TabView's scroll host adds a 7 DIP inset that TabBarStyles.xaml does
-        // not express — measured on the compiled original (its selected tab's
+        // not express - measured on the compiled original (its selected tab's
         // wall and its first tab's icon both land on 39).
         let tabs_left = 39.0;
         let available = caption_min.left - tabs_left - 44.0;
-        // Insertion preview: a tab arrives from another window — the strip
+        // Insertion preview: a tab arrives from another window - the strip
         // sizes n+1 slots and leaves the one at `tab_preview_insert` EMPTY
         // (the gap the TabView opens during a TabStripDragOver).
         let preview = state.tab_preview_insert;
@@ -267,15 +267,15 @@ impl Layout {
         if sidebar_build {
         // The `SidebarViewModel`'s sections: visibility (`ShowXxxSection`)
         // and expanded state (`IsXxxSectionExpanded`) come from settings,
-        // like the original — the header's chevron toggles the state.
+        // like the original - the header's chevron toggles the state.
         let s = crate::services::settings::get();
         // COMPACT mode: the rail only lists top-level entries (icons
-        // only) — no children or trees, and no horizontal scrolling
+        // only) - no children or trees, and no horizontal scrolling
         // (`HorizontalScrollMode=Disabled`). The Minimal pane, on the other
         // hand, shows the labels (300 DIP).
         let compact = sidebar_disp_mode == SidebarMode::Compact;
         let active_location = &state.active().location;
-        // Kubuno nav row height (36) — `shape::height::SIDEBAR_ROW`.
+        // Kubuno nav row height (36) - `shape::height::SIDEBAR_ROW`.
         let item_h = kubuno_drive_desktop_app_controls::sidebar::SIDEBAR_ROW_HEIGHT;
         // Scrollable rows stop above the pinned Settings row (+ 8 of breathing room).
         let sidebar_limit = height - 12.0 - item_h - 8.0;
@@ -283,7 +283,7 @@ impl Layout {
             // The row's natural width for horizontal scrolling (the
             // Compact rail only shows icons: no measurement).
             if !compact {
-                // Only the WIDTH matters here — selection doesn't change it.
+                // Only the WIDTH matters here - selection doesn't change it.
                 let v = sidebar_visual(&entry, model, active_location, false);
                 sidebar_max_w = sidebar_max_w.max(sidebar_row_width(&v));
             }
@@ -417,7 +417,7 @@ impl Layout {
         // their Appearance toggles (ShowToolbar / ShowStatusBar).
         let appearance_settings = crate::services::settings::get();
         let is_dir = matches!(tab.location, Location::Dir(_));
-        // Recycle Bin: the command bar ALSO shows — `ToolbarSections.cs:51-56`
+        // Recycle Bin: the command bar ALSO shows - `ToolbarSections.cs:51-56`
         // defines a « RecycleBin » context with its own buttons.
         let is_recycle_bin = tab.location == Location::RecycleBin;
         let show_cmdbar = (is_dir || is_recycle_bin) && appearance_settings.show_toolbar;
@@ -428,7 +428,7 @@ impl Layout {
         let content_bottom = height - if show_statusbar { STATUSBAR_HEIGHT } else { 0.0 };
 
         // The SidebarView's content region: `ContentPresenter`
-        // Margin="2,0,8,0" — the command card, the file card and the
+        // Margin="2,0,8,0" - the command card, the file card and the
         // status bar share this same left edge (sidebar + 2).
         let content_left = sidebar_w + 2.0;
 
@@ -765,7 +765,7 @@ impl Layout {
                 // Tiles: icon and name side by side (`CardsViewOrientation`).
                 let size = crate::view_models::shell_view_model::layout_size(tab.view_mode);
                 let (card_w, card_h) = crate::view_models::shell_view_model::card_size_for(size);
-                // Same `gap-3` as the grid — cards are framed too.
+                // Same `gap-3` as the grid - cards are framed too.
                 let gap = kubuno_drive_desktop_app_controls::themes::shape::space::MD;
                 let inner = (content.right - content.left) - pad * 2.0;
                 let per_row = ((inner + gap) / (card_w + gap)).floor().max(1.0) as usize;
@@ -1002,7 +1002,7 @@ impl Layout {
             cmdbar,
             info_pane,
             info_properties,
-            // The sidebar's resize rail. The web gives it `w-3` (12) — a
+            // The sidebar's resize rail. The web gives it `w-3` (12) - a
             // comfortable grab zone, and wide enough to contain the grip pill
             // it reveals on hover. Collapsed in Minimal (floating pane).
             sidebar_resizer: (state.sidebar_visible
@@ -1075,7 +1075,7 @@ impl Layout {
 
     pub fn hit_test(&self, x: f32, y: f32) -> Option<Hot> {
         // The suggestion panel floats OVER the toolbar and the listing, so it
-        // is tested before them — and it swallows whatever it covers, rows or
+        // is tested before them - and it swallows whatever it covers, rows or
         // not (only a dialog, being modal, outranks it).
         if self.dialog_rects.is_none() && self.conflict_rects.is_none() {
             if let Some((panel, rows)) = &self.suggestions {
@@ -1138,7 +1138,7 @@ impl Layout {
             return None;
         }
         // The handles have `Canvas.ZIndex="100"`: they take priority over
-        // whatever they overlap — including the sidebar's `ScrollBar`, which
+        // whatever they overlap - including the sidebar's `ScrollBar`, which
         // runs along the same edge (its thumb would otherwise cover the
         // handle's 4 DIP, and the Expanded ⇄ Compact double-click would
         // never fire).
@@ -1253,7 +1253,7 @@ impl Layout {
         }
         // The Minimal pane floats ON the content: a click in its band (but
         // off a row) is absorbed, a click in the light-dismiss layer (to
-        // its right) closes it — before any content hit-testing.
+        // its right) closes it - before any content hit-testing.
         if let Some(overlay) = self.sidebar_overlay {
             if overlay.contains(x, y) {
                 return None;
@@ -1305,7 +1305,7 @@ impl Layout {
             for (i, rect) in self.file_rows.iter().enumerate() {
                 if rect.contains(x, y) {
                     // The Grid/Cards selection checkbox: its zone (top-left
-                    // corner, 6 margin, 18 box — `@ui/Checkbox`'s size) is
+                    // corner, 6 margin, 18 box - `@ui/Checkbox`'s size) is
                     // clicked separately and toggles the selection.
                     if self.grid_checkboxes {
                         let bx = Rect::new(rect.left + 6.0, rect.top + 6.0, rect.left + 24.0, rect.top + 24.0);
@@ -1378,8 +1378,8 @@ impl Layout {
 
 /// The TabContainer box: the tab item minus its two 4-DIP side columns
 /// (LeftColumn/RightColumn of the template, which host the RadiusRenderArc
-/// paths). Everything the tab paints and lays out lives in here — background,
-/// icon, title, close button — so it is inset 4 DIP from the item's walls.
+/// paths). Everything the tab paints and lays out lives in here - background,
+/// icon, title, close button - so it is inset 4 DIP from the item's walls.
 ///
 /// This inset is what makes the ACTIVE tab visibly detached from a hovered
 /// neighbor: the active tab's TabGeometry runs to the item's wall, while the

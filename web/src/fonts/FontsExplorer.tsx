@@ -1,5 +1,5 @@
 import { cn } from '@ui'
-// FontsExplorer — Windows-Fonts-like view for System/Fonts. Font files are stored
+// FontsExplorer - Windows-Fonts-like view for System/Fonts. Font files are stored
 // flat (e.g. CALIBRI.TTF, CALIBRIB.TTF…); we parse each font's `name`/`OS/2`
 // tables to group them by family, render an "Abg" preview in the real font, drill
 // into a family to see its styles, and surface a Windows-style details bar.
@@ -30,7 +30,7 @@ interface DisplayItem { key: string; cssFamily: string; label: string; fileIds: 
 const FONT_RE = /\.(ttf|otf|ttc|woff2?|eot)$/i
 const ACCEPT = '.ttf,.otf,.ttc,.woff,.woff2,.eot,font/*'
 // Default specimen line (Kubuno's "your cloud, your rules" tagline) and size
-// shown on the fonts home — same length as Google Fonts' classic specimen line.
+// shown on the fonts home - same length as Google Fonts' classic specimen line.
 const SAMPLE_TEXT = 'Your cloud, your rules, your data, your way'
 const SPECIMEN_SIZE = 40
 
@@ -179,7 +179,7 @@ export default function FontsExplorer({ folderId, onExit }: { folderId: string; 
   // just drop the keyboard focus anchor.
   useEffect(() => { setFocusKey(null) }, [activeFamily])
 
-  // The selection IS the download "cart" — mirror the selected family names to the
+  // The selection IS the download "cart" - mirror the selected family names to the
   // shared store so the header bag can badge the count (only valid families).
   useEffect(() => {
     useFontsUiStore.getState().setCart(families.filter(f => selected.has(f.name)).map(f => f.name))
@@ -396,7 +396,7 @@ export default function FontsExplorer({ folderId, onExit }: { folderId: string; 
         {!activeFamily && !cartOpen && <FontViewToggle mode={viewMode} onMode={setViewMode} />}
       </div>
 
-      {/* Heading — home only (the specimen and selection pages bring their own). */}
+      {/* Heading - home only (the specimen and selection pages bring their own). */}
       {!activeFamily && !cartOpen && (
         <div className="px-4 sm:px-6 pb-3 shrink-0">
           <h1 className="text-primary text-lg font-medium">Aperçu et gestion des polices</h1>
@@ -435,24 +435,24 @@ export default function FontsExplorer({ folderId, onExit }: { folderId: string; 
             <p className="text-xs">Aucune police ne correspond à « {query.trim()} ».</p>
           </div>
         ) : current ? (
-          // Family detail view — Google-Fonts-like specimen page.
+          // Family detail view - Google-Fonts-like specimen page.
           <FontSpecimenPage
             data={specimenData(current)}
             onDelete={current.variants.some(v => !v.file.is_protected) ? () => deleteFamily(current) : undefined}
             onDownload={() => downloadFamily(current)}
           />
         ) : viewMode === 'row' ? (
-          // Fonts home — Row view: full-width rows, one big clipped specimen each.
+          // Fonts home - Row view: full-width rows, one big clipped specimen each.
           <div className="divide-y divide-border">
             {items.map((it, i) => <FontRow key={it.key} {...homeItemProps(it)} sampleText={SAMPLE_TEXT} mergeTop={i > 0 && selected.has(items[i - 1].key)} mergeBottom={i < items.length - 1 && selected.has(items[i + 1].key)} />)}
           </div>
         ) : viewMode === 'sample' ? (
-          // Fonts home — Sample view: colourful per-family specimen posters.
+          // Fonts home - Sample view: colourful per-family specimen posters.
           <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-5">
             {items.map(it => <FontSampleCard key={it.key} {...homeItemProps(it)} />)}
           </div>
         ) : (
-          // Fonts home — Grid view: Google-Fonts-like specimen cards, one per family.
+          // Fonts home - Grid view: Google-Fonts-like specimen cards, one per family.
           <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-5">
             {items.map(it => <FontSpecimenCard key={it.key} {...homeItemProps(it)} sampleText={SAMPLE_TEXT} fontSize={SPECIMEN_SIZE} />)}
           </div>
@@ -525,7 +525,7 @@ function famMeta(it: DisplayItem) {
   }
 }
 
-// Grid view — specimen card: header (name + designer + styles) over a wrapped
+// Grid view - specimen card: header (name + designer + styles) over a wrapped
 // sample line rendered in the real font, clipped to keep cards uniform.
 function FontSpecimenCard({ it, sampleText, fontSize, selected, preSelected, selecting, onClick, onToggle, onDouble, onContextMenu }: SpecimenProps & { sampleText: string; fontSize: number }) {
   const { designer, styleCount } = famMeta(it)
@@ -559,7 +559,7 @@ function FontSpecimenCard({ it, sampleText, fontSize, selected, preSelected, sel
   )
 }
 
-// Row view — full-width row: metadata line + one big single-line specimen,
+// Row view - full-width row: metadata line + one big single-line specimen,
 // clipped with a soft right fade (like Google Fonts' list view).
 function FontRow({ it, sampleText, selected, preSelected, selecting, mergeTop, mergeBottom, onClick, onToggle, onDouble, onContextMenu }: SpecimenProps & { sampleText: string }) {
   const { designer, styleCount } = famMeta(it)
@@ -586,7 +586,7 @@ function FontRow({ it, sampleText, selected, preSelected, selecting, mergeTop, m
   )
 }
 
-// Sample view — white header over a colourful, per-family generated poster.
+// Sample view - white header over a colourful, per-family generated poster.
 function FontSampleCard({ it, selected, preSelected, selecting, onClick, onToggle, onDouble, onContextMenu }: SpecimenProps) {
   const { designer, category, styleCount } = famMeta(it)
   const [hover, setHover] = useState(false)
@@ -651,7 +651,7 @@ function FontCard({ id, cssFamily, label, stacked, selected, preSelected, select
           {/* folded corner */}
           <div className="absolute top-0 right-0 w-4 h-4 bg-[#f1f3f4] border-l border-b border-[#e0e3e7]" style={{ clipPath: 'polygon(100% 0, 0 0, 100% 100%)' }} />
           <span className="text-[#202124] leading-none" style={{ fontFamily: cssFamily ? `'${cssFamily}', system-ui` : undefined, fontSize: 44 }}>Abg</span>
-          {/* Selection checkbox — visible on hover or when a selection is active. */}
+          {/* Selection checkbox - visible on hover or when a selection is active. */}
           <div onClick={e => { e.stopPropagation(); onToggle() }}
             className={cn('absolute top-1 left-1 transition-opacity', selected || selecting || preSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100')}>
             <FloatCheckbox selected={selected || !!preSelected} onToggle={onToggle} />

@@ -1,4 +1,4 @@
-<!-- DialogTree — converted from DialogTree.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<!-- DialogTree - converted from DialogTree.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
 <UserControl x:Props="Props">
   <Panel BackColor="Surface1" Class="w-52 flex-shrink-0 border-r border-border overflow-y-auto p-2">
     <!-- TODO(views-migrate): <LocalTree> is no .kbview element (a local or dynamic component) -->

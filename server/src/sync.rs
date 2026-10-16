@@ -13,7 +13,7 @@
 //! counter domain (`"drive"`), exactly as the old global `SEQUENCE` did. The
 //! client merges the three sources and paginates by a single `change_seq`
 //! cursor, so the sequence must be globally unique and ordered across all three
-//! — a per-table counter would let a file and a folder share a number and the
+//! - a per-table counter would let a file and a folder share a number and the
 //! `change_seq > cursor` filter would drop one.
 //!
 //! # Tombstones carry a kind and a display path
@@ -38,7 +38,7 @@ pub async fn next_seq(tx: &mut kubuno_db::DbTx) -> Result<i64, sqlx::Error> {
     kubuno_db::journal::next_seq(tx, CHANGE_COUNTER, DRIVE_DOMAIN).await
 }
 
-/// The next monotonic sequence, wrapping its own transaction — for a lone write
+/// The next monotonic sequence, wrapping its own transaction - for a lone write
 /// that does not already run inside one. Prefer sharing a transaction with the
 /// row write via [`next_seq`] when the write is itself transactional.
 pub async fn next_seq_on_pool(pool: &kubuno_db::DbPool) -> Result<i64, sqlx::Error> {
@@ -81,7 +81,7 @@ async fn record_tombstone(
     seq: i64,
 ) -> Result<(), sqlx::Error> {
     // Only `Incoming` assignments, so the `upsert` table argument is never
-    // interpolated — an empty `&'static str` is correct here.
+    // interpolated - an empty `&'static str` is correct here.
     let clause = tx.backend().upsert(
         "",
         &["id"],

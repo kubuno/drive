@@ -1,4 +1,4 @@
-//! QuickAccessItem / QuickAccessKind (port-only — no `Data/Items/` counterpart)
+//! QuickAccessItem / QuickAccessKind (port-only - no `Data/Items/` counterpart)
 
 use windows::Win32::UI::Shell::{
     FOLDERID_Desktop, FOLDERID_Documents, FOLDERID_Downloads, FOLDERID_Music,

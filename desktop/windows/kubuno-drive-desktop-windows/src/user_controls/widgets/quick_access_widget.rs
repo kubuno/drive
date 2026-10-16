@@ -1,4 +1,4 @@
-//! QuickAccessWidget (mirrors QuickAccessWidget.xaml.cs) — the Home page
+//! QuickAccessWidget (mirrors QuickAccessWidget.xaml.cs) - the Home page
 //! "Quick access" cards.
 
 use kubuno_drive_desktop_app_controls::themes::shape;
@@ -19,7 +19,7 @@ impl Painter<'_> {
 
         // The first widget hugs the top of the content area, as in
         // the original: `ListView` with no margin, `ListViewItem Margin="0,4"` and an
-        // `Expander` header of ~32 DIP (cf. MainPage.xaml — the command
+        // `Expander` header of ~32 DIP (cf. MainPage.xaml - the command
         // `Toolbar` only has `Margin="0,0,0,4"` before `PageContent`).
         // The "Quick access" header is only drawn if the widget is visible
         // (the Drives / Recent headers are already conditioned on the presence
@@ -41,12 +41,12 @@ impl Painter<'_> {
             let item = &model.quick_access[i];
             let hot = state.hot == Some(Hot::QuickCard(i));
             // `@ui/Card.tsx:55`: `rounded-xl border border-border bg-surface-0`
-            // — `--radius-xl` is 8, not the 6 this used, and the surface is
+            // - `--radius-xl` is 8, not the 6 this used, and the surface is
             // WHITE, not surface-1 (which is all but the page background, so
             // the cards read as outlines only). Confirmed by the drive home's
             // own cards: `MobileHome.tsx:89`,
             // `rounded-xl border border-border bg-white`. Card.tsx declares no
-            // hover, so the hover borrows `hover:bg-surface-2` — the tint the
+            // hover, so the hover borrows `hover:bg-surface-2` - the tint the
             // system uses for a hovered surface (Tabs.tsx:121, Button ghost).
             let fill = if hot { &t.card_preview_background } else { &t.layer_background };
             self.fill_rounded(rect, shape::radius::XL, fill);

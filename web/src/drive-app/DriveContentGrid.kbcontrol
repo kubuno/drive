@@ -1,4 +1,4 @@
-<!-- DriveContentGrid — converted from DriveContentGrid.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<!-- DriveContentGrid - converted from DriveContentGrid.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
 <UserControl x:Props="Props">
   <Panel Class="contents">
     <Stack Direction="LeftToRight"

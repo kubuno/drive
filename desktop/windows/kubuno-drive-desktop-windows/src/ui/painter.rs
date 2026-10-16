@@ -72,7 +72,7 @@ impl<'a> Painter<'a> {
         unsafe { self.ctx.FillRoundedRectangle(&rr, self.set_color(color)) };
     }
 
-    /// Fills a rect whose TOP corners only are rounded — the shape WinUI's
+    /// Fills a rect whose TOP corners only are rounded - the shape WinUI's
     /// `TopCornerRadiusFilterConverter` produces for a tab's TabContainer.
     pub(crate) fn fill_top_rounded(&self, rect: &Rect, radius: f32, color: &D2D1_COLOR_F) {
         use windows::core::Interface;
@@ -118,7 +118,7 @@ impl<'a> Painter<'a> {
     }
 
     /// Fills a rect whose ONLY top-right corner is rounded (the other three
-    /// stay sharp) — the Close button hugs the window's rounded corner at
+    /// stay sharp) - the Close button hugs the window's rounded corner at
     /// top-right this way, without pulling away from the Maximize button to its left.
     pub(crate) fn fill_top_right_rounded(&self, rect: &Rect, radius: f32, color: &D2D1_COLOR_F) {
         use windows::core::Interface;
@@ -177,7 +177,7 @@ impl<'a> Painter<'a> {
         unsafe { self.ctx.DrawRoundedRectangle(&rr, self.set_color(color), 1.0 / s, None) };
     }
 
-    /// Rounded border at a given DIP thickness, drawn inward — the
+    /// Rounded border at a given DIP thickness, drawn inward - the
     /// `ListViewItemPresenter`'s 2 DIP selection border
     /// (`GridViewItemSelectedBorderThickness`).
     pub(crate) fn stroke_rounded_w(&self, rect: &Rect, radius: f32, color: &D2D1_COLOR_F, width: f32) {
@@ -287,7 +287,7 @@ impl<'a> Painter<'a> {
     }
 
     /// Like `text`, but trimmed with an ELLIPSIS (« … ») at the right edge
-    /// instead of cutting glyphs — the original's `TextTrimming.CharacterEllipsis`
+    /// instead of cutting glyphs - the original's `TextTrimming.CharacterEllipsis`
     /// TextBlocks (sidebar, file names).
     pub(crate) fn text_ellipsis(
         &self,
@@ -331,7 +331,7 @@ impl<'a> Painter<'a> {
         }
     }
 
-    /// Like `text_ellipsis`, but the text is horizontally CENTERED — the
+    /// Like `text_ellipsis`, but the text is horizontally CENTERED - the
     /// original's centered TextBlocks with `TextAlignment="Center"` +
     /// `TextTrimming="CharacterEllipsis"`. Alignment is set on the LAYOUT,
     /// not the shared format, so it doesn't bleed into other calls.
@@ -404,7 +404,7 @@ impl<'a> Painter<'a> {
             if centered { DWRITE_TEXT_ALIGNMENT_CENTER } else { DWRITE_TEXT_ALIGNMENT_LEADING };
         unsafe {
             // Trial layout: rect width, giant but FINITE height
-            // (65536.0 — NEVER `f32::MAX`, which silently yields null
+            // (65536.0 - NEVER `f32::MAX`, which silently yields null
             // metrics) to count the lines of the full wrap.
             // Alignment lives on the LAYOUT: the shared format stays intact;
             // the text flows from the top, like the wrapped TextBlock.
@@ -479,7 +479,7 @@ impl<'a> Painter<'a> {
     }
 
     /// The sidebar's resize handle, ported from the shell
-    /// (`AppSidebar.tsx:356-382`) — the same element, so the same rules.
+    /// (`AppSidebar.tsx:356-382`) - the same element, so the same rules.
     ///
     /// It MATERIALISES ON APPROACH: at rest the gutter is empty (the line is
     /// `bg-transparent`, the grip `opacity-0`). Pointing at the rail fades in a
@@ -535,7 +535,7 @@ impl<'a> Painter<'a> {
     /// The project's `Toggle`, painted from `@ui/toggleCanvas.ts` (`md`
     /// geometry) so every switch in the app matches the web's to the pixel:
     /// a 36×20 ROUNDED RECT (radius 6, not a pill), a 14×14 thumb with radius
-    /// 4 inset by 3, and — the detail that was wrong here — a thumb that is
+    /// 4 inset by 3, and - the detail that was wrong here - a thumb that is
     /// ALWAYS WHITE over a FILLED track, off included.
     ///
     /// `origin` is the track's top-left corner. Returns the track rect so the
@@ -626,7 +626,7 @@ impl<'a> Painter<'a> {
     /// Draws one of the original ThemedIcon vector geometries, centered.
     /// MONOCHROME ThemedIcon: ALL layers (`@base`, `@alt`, `@accent`,
     /// `@accentcontrast`) painted in the SAME `color`, respecting each
-    /// layer's opacity — this is an AppBarButton's « Outline » rendering
+    /// layer's opacity - this is an AppBarButton's « Outline » rendering
     /// (the icon isn't tinted). Painting only the `@base` layer gave just a
     /// FRAGMENT (the scissor blades for Cut, the rectangle's back for
     /// Copy…): all layers must be composited.
@@ -677,7 +677,7 @@ impl<'a> Painter<'a> {
     }
 
     /// MULTI-LAYER ThemedIcon: each `ThemedIconLayer` is painted with its
-    /// role color — foreground (`Base`/`Alt`), accent (`Accent`, blue) or
+    /// role color - foreground (`Base`/`Alt`), accent (`Accent`, blue) or
     /// contrast (`AccentContrast`, e.g. the white checkmark on the blue
     /// badge). This is the « treatment » that tints part of the icon.
     pub(crate) fn vector_icon_layered(
@@ -747,7 +747,7 @@ impl<'a> Painter<'a> {
     }
 
     /// Height of the text wrapped at `width` DIP (for the Details pane's
-    /// variable-height rows — the original's TextWrapping="Wrap").
+    /// variable-height rows - the original's TextWrapping="Wrap").
     pub fn measure_height(&self, text: &str, format: &IDWriteTextFormat, width: f32) -> f32 {
         let wide: Vec<u16> = text.encode_utf16().collect();
         unsafe {
@@ -807,7 +807,7 @@ impl<'a> Painter<'a> {
         // tab strip / address bar): this is `App.Theme.Sidebar.BackgroundBrush`'s
         // `LayerOnMicaBaseAltFillColorDefault`. In the original, this same
         // tint carries the sidebar, the gutter AND the underside of the
-        // cards — there's no dark band between the sidebar and the
+        // cards - there's no dark band between the sidebar and the
         // content. The cards (commands, files) sit LIGHTER on top
         // (`CardBackgroundFillColor…`), hence the relief.
         {
@@ -873,7 +873,7 @@ impl<'a> Painter<'a> {
         // go ABOVE the content (otherwise the cards would cover it).
         self.draw_sidebar(layout, state, model);
         // The resize rails sit in the gutters BETWEEN panes, so they are drawn
-        // after both sides — nothing may cover the grip.
+        // after both sides - nothing may cover the grip.
         if let Some(rail) = &layout.sidebar_resizer {
             let hot = state.hot == Some(Hot::SidebarResizer);
             self.draw_pane_resizer(rail, hot, state.pane_dragging == Some(Hot::SidebarResizer));
@@ -987,7 +987,7 @@ impl<'a> Painter<'a> {
             let extent = layer.blur * REACH;
             let dy = layer.dy;
             // Outermost first: the inner rings then stack on top, so the alpha
-            // piles up against the panel and thins out quickly — the profile a
+            // piles up against the panel and thins out quickly - the profile a
             // real blur has. The QUADRATIC spacing is what packs the rings near
             // the edge instead of spreading them evenly.
             for i in (1..=RINGS).rev() {
@@ -1100,7 +1100,7 @@ impl<'a> Painter<'a> {
                     RowIcon::Vector { name: "FilledTag", color }
                 }
                 // Nav icons rest in the secondary colour (web: #5f6368) and
-                // take the accent on the active row — `RowIcon::Vector` is
+                // take the accent on the active row - `RowIcon::Vector` is
                 // never re-tinted by the draw pass, so the state is resolved
                 // here. Entries without a Material counterpart keep their
                 // Segoe glyph.
@@ -1140,7 +1140,7 @@ impl<'a> Painter<'a> {
         let t = self.theme;
         let f = &self.renderer.formats;
 
-        // The « Paramètres » title: `Margin="16,12,0,4"`, Subtitle style —
+        // The « Paramètres » title: `Margin="16,12,0,4"`, Subtitle style -
         // SettingsPage.xaml's SidebarView.Header.
         let title = Rect::new(
             layout.content.left + 16.0,
@@ -1168,7 +1168,7 @@ impl<'a> Painter<'a> {
         }
 
         // The page title: `SubtitleTextBlockStyle` + `Padding="0,0,0,12"`
-        // in the 12-padded ScrollViewer — it ALIGNS with « Paramètres »
+        // in the 12-padded ScrollViewer - it ALIGNS with « Paramètres »
         // (GeneralPage.xaml and friends), and scrolls with the content.
         let scroll = state.active().scroll;
         let page_left = layout.content.left + 300.0;

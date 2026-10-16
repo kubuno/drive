@@ -1,5 +1,5 @@
 #![allow(unused_imports)]
-//! Toolbar button clicks (mirror of `UserControls/NavigationToolbar.xaml.cs`) — `impl MainWindow` block, see `main_window/mod.rs`.
+//! Toolbar button clicks (mirror of `UserControls/NavigationToolbar.xaml.cs`) - `impl MainWindow` block, see `main_window/mod.rs`.
 use windows::core::{w, Result};
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, RECT, WPARAM};
 use windows::Win32::Graphics::Dwm::{
@@ -164,7 +164,7 @@ impl MainWindow {
                 };
                 let grouped = group_opt != G::None;
 
-                // Level 2 — "Sort by": columns then separator, direction.
+                // Level 2 - "Sort by": columns then separator, direction.
                 let sort_by = vec![
                     FlyoutItem::new(tr("Name").to_string(), true)
                         .checked(sort_col == S::Name)
@@ -187,7 +187,7 @@ impl MainWindow {
                         .with_command(MenuCommand::SortDescending),
                 ];
 
-                // Level 3 — "Date modified" › Year / Month / Day.
+                // Level 3 - "Date modified" › Year / Month / Day.
                 let date_children = vec![
                     FlyoutItem::new(tr("Year").to_string(), true)
                         .checked(group_opt == G::DateModified && date_unit == U::Year),
@@ -197,7 +197,7 @@ impl MainWindow {
                         .checked(group_opt == G::DateModified && date_unit == U::Day),
                 ];
 
-                // Level 2 — "Group by": radio options (Date
+                // Level 2 - "Group by": radio options (Date
                 // modified expanding into Year/Month/Day), separator, direction.
                 let mut group_by = vec![
                     FlyoutItem::new(tr("None").to_string(), true).checked(group_opt == G::None),
@@ -260,7 +260,7 @@ impl MainWindow {
 
     /// The "Layout" panel for the `CmdLayout` button (the `CmdLayout` branch).
     pub(crate) fn on_click_cmd_layout(&mut self, layout: &Layout) {
-                // LayoutOptionsButton: the "Layout" panel — a real
+                // LayoutOptionsButton: the "Layout" panel - a real
                 // Flyout (cards, size slider, toggles), not a menu.
                 use crate::user_controls::layout_flyout::{LayoutPanel, LAYOUT_PANEL_WIDTH};
                 let anchor = layout

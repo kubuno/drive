@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Drive · Navigation drawer — converted from shell/DriveDrawer.kt. The modal navigation drawer: account header,
+  Drive · Navigation drawer - converted from shell/DriveDrawer.kt. The modal navigation drawer: account header,
   a "New" action, the destinations (My Drive active, Recent, Starred, Shared, Trash), the root folders, and
   Settings. Slides from the left over a dimmed backdrop. Drive LIGHT theme.
 -->

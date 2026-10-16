@@ -1,4 +1,4 @@
-//! Port of `Files.App/ViewModels/ShellViewModel.cs`: the state of a tab —
+//! Port of `Files.App/ViewModels/ShellViewModel.cs`: the state of a tab -
 //! location, history, listing, sort (`OrderFiles`), filter, layout, Columns
 //! panes. Also hosts `FolderLayoutModes` (C#: `Data/Enums`) and the sizes
 //! from `LayoutSizeKindHelper` (C#: `Helpers/Layout`).
@@ -115,7 +115,7 @@ pub fn card_boxes(size: u8) -> ((f32, f32), (f32, f32)) {
 pub struct ColumnPane {
     pub path: std::path::PathBuf,
     pub entries: Vec<DirEntryItem>,
-    /// The selected row — it's the one that opened the next pane.
+    /// The selected row - it's the one that opened the next pane.
     pub selected: Option<usize>,
     pub scroll: f32,
 }
@@ -317,7 +317,7 @@ impl Tab {
     /// `DismissOtherBlades(index)`: everything to the right of the clicked
     /// pane disappears; if the item is a folder, a new pane opens to its
     /// right. The current path follows the selection
-    /// (`SetSelectedPathOrNavigate`), but WITHOUT rebuilding the stack —
+    /// (`SetSelectedPathOrNavigate`), but WITHOUT rebuilding the stack -
     /// otherwise we'd lose the column to the left.
     pub fn select_column_row(&mut self, col: usize, row: usize) {
         let Some(pane) = self.columns.get_mut(col) else { return };
@@ -352,7 +352,7 @@ impl Tab {
         }
     }
 
-    /// The selected item in the rightmost pane that has one — it's the one
+    /// The selected item in the rightmost pane that has one - it's the one
     /// the info pane describes.
     pub fn column_selection(&self) -> Option<&DirEntryItem> {
         self.columns
@@ -376,7 +376,7 @@ impl Tab {
         self.rebuild_columns();
     }
 
-    /// Sets the sort column and direction outright — what the context menu's
+    /// Sets the sort column and direction outright - what the context menu's
     /// SortBy* / SortAscending / SortDescending commands do (they are toggles
     /// bound to a value, not a click on a column header).
     pub fn set_sort(&mut self, column: SortColumn, ascending: bool) {
@@ -406,7 +406,7 @@ impl Tab {
         let grouping = self.sort_grouping();
         sort_entries(&mut self.entries, self.sort_column, self.sort_ascending, grouping);
         // The grouping (`GroupedCollection`): a STABLE sort by group key on
-        // top of the elements' sort — each group keeps its internal order.
+        // top of the elements' sort - each group keeps its internal order.
         if self.group_option != GroupOption::None {
             let option = self.group_option;
             let ascending = self.group_ascending;
@@ -627,7 +627,7 @@ impl Tab {
         self.all_entries.clear();
         self.load_error = None;
         if self.location == Location::RecycleBin {
-            // The Recycle Bin via the Shell — `date_deleted` occupies `modified`
+            // The Recycle Bin via the Shell - `date_deleted` occupies `modified`
             // (the "Date deleted" column and its sort).
             self.all_entries = crate::services::storage::storage_trash_bin_service::list()
                 .into_iter()
@@ -715,7 +715,7 @@ impl TabGroup {
         }
     }
 
-    /// Port of `CloseActivePane` — keeps the other pane.
+    /// Port of `CloseActivePane` - keeps the other pane.
     pub fn close_active_pane(&mut self) {
         if self.panes.len() == 2 {
             self.panes.remove(self.active_pane);
@@ -734,7 +734,7 @@ impl TabGroup {
     }
 }
 
-/// Invokes a shell verb on an item — what the original's commands do through
+/// Invokes a shell verb on an item - what the original's commands do through
 /// `IStorable.TryInvokeContextMenuVerbAsync` (properties, pintohome…).
 pub fn shell_verb(path: &str, verb: &str) {
     if let Some(item) = kubuno_drive_desktop_app_storage::windows_storage::WindowsStorable::try_parse(path) {

@@ -82,7 +82,7 @@ export class FilesStorageGaugeHeader extends ViewBase {
 
   get tooltip() {
     if (!(!(!this.onDrive || !this.user || this.user.quota_bytes === 0))) return undefined as never
-    return `${this.tr('storage.title')} — ${this.label}`
+    return `${this.tr('storage.title')} - ${this.label}`
   }
 
   panel_click(_sender: unknown, _args: MouseEventArgs) {

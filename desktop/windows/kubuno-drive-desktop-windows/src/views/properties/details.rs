@@ -1,4 +1,4 @@
-//! "Details" tab of the properties sheet — mirror of
+//! "Details" tab of the properties sheet - mirror of
 //! `Views/Properties/DetailsPage.xaml` driven by
 //! `FileProperties.GetSystemFilePropertiesAsync`.
 //!
@@ -46,7 +46,7 @@ fn entries() -> &'static [PropertyEntry] {
     static ENTRIES: std::sync::OnceLock<Vec<PropertyEntry>> = std::sync::OnceLock::new();
     ENTRIES.get_or_init(|| {
         // The file (copied as-is from the original) starts with a UTF-8 BOM
-        // that serde_json rejects — strip it, like `file_properties.rs` does.
+        // that serde_json rejects - strip it, like `file_properties.rs` does.
         let json = include_str!("../../../assets/PropertiesInformation.json");
         serde_json::from_str(json.trim_start_matches('\u{feff}')).unwrap_or_else(|e| {
             tracing::error!("PropertiesInformation.json invalide: {e}");
@@ -100,7 +100,7 @@ impl DetailsModel {
         let date_format = crate::services::settings::get().date_time_format;
 
         // Grouping by section, preserving the FIRST-APPEARANCE ORDER of the
-        // keys (LINQ's `GroupBy` preserves this order) — including empty
+        // keys (LINQ's `GroupBy` preserves this order) - including empty
         // sections, to faithfully reproduce `OrderBy`'s order.
         let mut order: Vec<&'static str> = Vec::new();
         let mut rows_by_section: std::collections::HashMap<&'static str, Vec<(String, String)>> =
@@ -112,7 +112,7 @@ impl DetailsModel {
                 order.push(key);
             }
             // `address`/entries with an `ID`: dedicated handling in the
-            // original (geocoding) — out of scope, we only read system properties.
+            // original (geocoding) - out of scope, we only read system properties.
             let Some(prop) = &entry.property else { continue };
             if entry.id.is_some() {
                 continue;

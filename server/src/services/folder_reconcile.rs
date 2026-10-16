@@ -45,13 +45,13 @@ struct FileMoveRow {
 /// its parent's (already corrected) path plus its own `name`, and where it
 /// differs repaths the folder: it moves the folder's files ONE BY ONE to their
 /// new `storage_path` and updates the folder's `path`. Files are moved
-/// individually — never with a directory move — because a stale protected folder
+/// individually - never with a directory move - because a stale protected folder
 /// can share its physical subtree with a sibling that legitimately owns that
 /// path, and a wholesale directory move would carry the sibling's bytes away.
 /// Every UPDATE bumps `change_seq` through the existing trigger, so sync clients
 /// pick the corrected paths up on their next delta.
 ///
-/// Idempotent — a no-op on healthy instances. A folder whose corrected path is
+/// Idempotent - a no-op on healthy instances. A folder whose corrected path is
 /// already taken by a different folder of the same owner is skipped and logged,
 /// so genuine data is never clobbered. Returns the number of folders repathed.
 pub async fn reconcile_folder_paths(
@@ -129,7 +129,7 @@ pub async fn reconcile_folder_paths(
             continue;
         }
 
-        // Relocate the files sitting DIRECTLY in this folder ONE BY ONE — never
+        // Relocate the files sitting DIRECTLY in this folder ONE BY ONE - never
         // a directory move. A stale protected folder can share its physical
         // subtree with a sibling that legitimately owns that path (a module
         // folder left at `/Forge` beside the user's real `Forge` both resolve
@@ -161,8 +161,8 @@ pub async fn reconcile_folder_paths(
                 // rename: two logical trees layered over ONE physical subtree, so a
                 // file here and a sibling there share a single blob (same name,
                 // same storage_path, same content_hash). Moving the blob would yank
-                // it out from under the sibling row and break it. COPY instead —
-                // leave the sibling's bytes untouched — and let de-duplication be
+                // it out from under the sibling row and break it. COPY instead -
+                // leave the sibling's bytes untouched - and let de-duplication be
                 // someone else's concern. When the blob is NOT shared, move it.
                 // `SELECT EXISTS(...)` returns a boolean on PostgreSQL but a
                 // BIGINT 0/1 on MySQL, which does not decode into `bool`; select
@@ -179,7 +179,7 @@ pub async fn reconcile_folder_paths(
                     storage.mv(&f.storage_path, &new_sp).await?;
                 }
             } else if storage.exists(&new_sp).await? {
-                // Bytes already sit at the destination — a prior interrupted run
+                // Bytes already sit at the destination - a prior interrupted run
                 // moved them before it could update the row. Just fix the pointer.
                 tracing::warn!(
                     file = %f.id, to = %new_sp,
@@ -207,7 +207,7 @@ pub async fn reconcile_folder_paths(
         // order would otherwise lose: nothing commits until the whole folder is
         // done, so an interrupted run leaves the folder stale and simply retries.
         // The folder takes a fresh change_seq FIRST (lower value), then each
-        // file — the delta trigger used to do this; now it is explicit. A client
+        // file - the delta trigger used to do this; now it is explicit. A client
         // resolving a file's local path through its folder must learn the
         // folder's new path no later than the files themselves.
         let mut tx = db.begin().await?;
@@ -241,7 +241,7 @@ pub async fn reconcile_folder_paths(
     // folders sharing one local path; a sync client that had materialised that
     // collision resolved both folder_ids to the SAME local path, and when it
     // moved our folder's files to their corrected path it deleted the shared
-    // local copy — dropping the innocent sibling's files with it. Repathing and
+    // local copy - dropping the innocent sibling's files with it. Repathing and
     // re-emitting only the offending folder does not bring those back: the
     // sibling still sitting at the vacated path must be re-emitted too, so
     // clients re-materialise it. A no-op UPDATE bumps change_seq through the
@@ -271,7 +271,7 @@ pub async fn reconcile_folder_paths(
             )
             .await?;
         if folders_touched == 0 {
-            // No sibling occupied the vacated path — nothing to restore.
+            // No sibling occupied the vacated path - nothing to restore.
             continue;
         }
         let xseq = sync::next_seq_on_pool(db).await?;

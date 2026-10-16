@@ -1,5 +1,5 @@
 #![allow(unused_imports)]
-//! Submodule of `MainWindow` — see `main_window/mod.rs`.
+//! Submodule of `MainWindow` - see `main_window/mod.rs`.
 use windows::core::{w, Result};
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, RECT, WPARAM};
 use windows::Win32::Graphics::Dwm::{
@@ -30,7 +30,7 @@ impl MainWindow {
     }
 
     /// Executes a blocking git operation (pull/push/sync/checkout/…) on a
-    /// worker thread — like the original's `DoGitOperationAsync` — then
+    /// worker thread - like the original's `DoGitOperationAsync` - then
     /// signals completion via `WM_APP_GIT_DONE` to refresh the tab.
     pub(crate) fn run_git_op<F>(&self, op: F)
     where

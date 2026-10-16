@@ -1,4 +1,4 @@
-// Handlers IPC — accès inter-modules à la structure fichiers/dossiers.
+// Handlers IPC - accès inter-modules à la structure fichiers/dossiers.
 // Authentifié par X-Internal-Secret uniquement (pas de JWT utilisateur).
 
 use axum::{
@@ -41,7 +41,7 @@ pub async fn create_folder(
     )
     .await?;
 
-    // Chemin physique absolu — utile pour les modules qui écrivent directement sur disque
+    // Chemin physique absolu - utile pour les modules qui écrivent directement sur disque
     let rel = storage_path::user_folder_dir(dto.user_id, &folder.path);
     let disk_path = std::path::PathBuf::from(state.settings.storage.local_path()).join(&rel);
 
@@ -78,7 +78,7 @@ pub struct IpcEnsureFolderPathDto {
     /// (exclus du navigateur). Ex. "Office/.media" → ".media" caché, "Office" visible.
     #[serde(default)]
     pub hidden:  bool,
-    /// Icône (nom Lucide) appliquée au dossier feuille — dossier de module/sous-module.
+    /// Icône (nom Lucide) appliquée au dossier feuille - dossier de module/sous-module.
     #[serde(default)]
     pub icon:    Option<String>,
 }
@@ -125,8 +125,8 @@ pub async fn create_file(
     }
 
     // Overwrite updates the existing live row IN PLACE (its old blob goes only
-    // if nothing else uses it). The previous code deleted that row — and its
-    // blob — first, which destroyed the bytes when the module re-registered the
+    // if nothing else uses it). The previous code deleted that row - and its
+    // blob - first, which destroyed the bytes when the module re-registered the
     // very location it had just written.
     let (safe_name, existing) =
         files::resolve_for_write(&state.db, dto.user_id, dto.folder_id, &dto.name, dto.overwrite, false).await?;
@@ -165,7 +165,7 @@ pub async fn get_file(
     Ok(Json(json!({ "file": file })))
 }
 
-/// GET /ipc/files/:uid/:id/content — retourne le contenu du fichier en base64.
+/// GET /ipc/files/:uid/:id/content - retourne le contenu du fichier en base64.
 /// Permet aux modules d'importer ou de traiter le contenu d'un fichier Files.
 pub async fn get_file_content(
     State(state): State<AppState>,

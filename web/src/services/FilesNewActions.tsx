@@ -1,5 +1,5 @@
 /**
- * Items of the sidebar "New" button for Drive — DATA for the project's menu
+ * Items of the sidebar "New" button for Drive - DATA for the project's menu
  * component (`MenuDropdown` from @ui), contributed through the generic
  * 'shell.new-actions' extension point (see entry.ts). The function is evaluated
  * when the menu opens, so labels and store state are always fresh, without hooks.
@@ -9,7 +9,7 @@ import { FolderPlus, Upload, FolderInput, Link2, Server } from 'lucide-react'
 import { useFilesStore } from '@kubuno/drive'
 import { ExtensionRegistry, i18n, useModulesStore } from '@kubuno/sdk'
 
-/** Extension point where OTHER modules add entries to Drive's "New" menu —
+/** Extension point where OTHER modules add entries to Drive's "New" menu -
  *  the data counterpart of the former 'files-new-actions' component slot.
  *  Contributors register with the same schema as 'shell.new-actions':
  *    ExtensionRegistry.register(DRIVE_NEW_ACTIONS, '<id>',
@@ -18,7 +18,7 @@ import { ExtensionRegistry, i18n, useModulesStore } from '@kubuno/sdk'
 export const DRIVE_NEW_ACTIONS = 'drive.new-actions'
 
 export interface DriveNewActionsProvider {
-  /** Owning module — only contributions of ACTIVE modules are shown. */
+  /** Owning module - only contributions of ACTIVE modules are shown. */
   moduleId: string
   /** Built when the menu opens (fresh labels/state), never at registration time. */
   items: () => MenuItem[]
@@ -30,7 +30,7 @@ export function filesNewActionItems(): MenuItem[] {
   if (!window.location.pathname.startsWith('/drive')) return []
 
   const t = (key: string) => i18n.t(`drive:${key}`)
-  // Read the store at click time, not at build time — actions stay fresh.
+  // Read the store at click time, not at build time - actions stay fresh.
   const files = () => useFilesStore.getState()
 
   const items: MenuItem[] = [
@@ -68,7 +68,7 @@ export function filesNewActionItems(): MenuItem[] {
   ]
 
   // Contributions of other ACTIVE modules (e.g. office's "New document"),
-  // read from the 'drive.new-actions' extension point — same active-module
+  // read from the 'drive.new-actions' extension point - same active-module
   // filtering the former <Slot name="files-new-actions"> applied.
   const activeIds = new Set(
     useModulesStore.getState().activeModules.map((m) => m.module_id),

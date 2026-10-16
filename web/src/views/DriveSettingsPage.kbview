@@ -1,4 +1,4 @@
-<!-- DriveSettingsPage — converted from DriveSettingsPage.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<!-- DriveSettingsPage - converted from DriveSettingsPage.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
 <Stack Gap="0" Class="h-full bg-white overflow-hidden">
   <Panel Visible="{Binding isMobile}" Class="flex items-center gap-2 px-1 py-1 border-b border-[#e8eaed] flex-shrink-0 [background:#f8f9fa]">
     <Panel Href="/drive"

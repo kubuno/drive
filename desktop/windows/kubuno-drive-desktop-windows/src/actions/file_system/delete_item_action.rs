@@ -33,7 +33,7 @@ impl Action for DeleteItem {
         }
         // `DeleteConfirmationPolicy`: Always confirms (the `DeleteItemsDialog`),
         // Never deletes directly. PermanentDeletionOnly only confirms permanent
-        // deletion — ours goes through the recycle bin.
+        // deletion - ours goes through the recycle bin.
         use crate::services::settings::DeleteConfirmationPolicy as P;
         if crate::services::settings::get().delete_confirmation_policy == P::Always {
             let tr = kubuno_drive_desktop_localization::tr;

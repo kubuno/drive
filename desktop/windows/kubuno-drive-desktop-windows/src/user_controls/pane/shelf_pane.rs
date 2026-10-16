@@ -1,4 +1,4 @@
-//! Port of `Files.App/UserControls/Pane/ShelfPane.xaml`: the Shelf pane —
+//! Port of `Files.App/UserControls/Pane/ShelfPane.xaml`: the Shelf pane -
 //! a fixed-width card (240) with three rows:
 //!   1. Header: the "Étagère" title (tertiary, centered) + a separator.
 //!   2. Content: either the empty state (`EmptyShelf` illustration + `EmptyShelfText`),
@@ -6,7 +6,7 @@
 //!   3. Footer (only if populated): separator + "Effacer les éléments" link.
 //!
 //! The `EmptyShelf.48` illustration (a dedicated SVG) is rendered here via the enlarged
-//! "Shelf" ThemedIcon geometry — the port doesn't embed the SVG yet.
+//! "Shelf" ThemedIcon geometry - the port doesn't embed the SVG yet.
 
 use kubuno_drive_desktop_app_controls::themes::shape;
 use windows::Win32::Graphics::DirectWrite::DWRITE_TEXT_ALIGNMENT_CENTER;
@@ -20,7 +20,7 @@ impl Painter<'_> {
         let t = self.theme;
         let f = &self.renderer.formats;
 
-        // The panel — same treatment as the Details pane beside it: a FLAT
+        // The panel - same treatment as the Details pane beside it: a FLAT
         // `surface-0` surface at `--radius-xl` (8), no drop shadow. The web
         // stacks its panels on the page background, it never floats them.
         self.fill_rounded(pane, shape::radius::XL, &t.layer_background);
@@ -87,7 +87,7 @@ impl Painter<'_> {
             }
         }
 
-        // Footer: separator + "Effacer les éléments" — `@ui/Button.tsx` variant
+        // Footer: separator + "Effacer les éléments" - `@ui/Button.tsx` variant
         // "text" (Button.tsx:31): the accent without a fill, and
         // `hover:bg-primary-light` rather than a grey surface, at
         // `rounded-md` = 4.

@@ -6,7 +6,7 @@ use crate::main_window::MainWindow;
 use super::super::target;
 use super::base_decompress_archive_action::is_archive_selected;
 
-/// `DecompressArchive.cs` (Ctrl+E): opens the `DecompressArchiveDialog` —
+/// `DecompressArchive.cs` (Ctrl+E): opens the `DecompressArchiveDialog` -
 /// editable destination path (prefilled with `parent\name-without-extension`,
 /// `DefaultDestinationFolderPath`) and "Open when complete" checkbox.
 pub struct DecompressArchive;

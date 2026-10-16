@@ -1,4 +1,4 @@
-<!-- DriveMiniPanel — converted from DriveMiniPanel.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<!-- DriveMiniPanel - converted from DriveMiniPanel.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
 <UserControl>
   <Panel Class="min-h-0 flex-1 overflow-y-auto px-2 py-2">
     <Stack Direction="LeftToRight" Gap="0" Justify="Center" Visible="{Binding isLoading}" Class="py-6">

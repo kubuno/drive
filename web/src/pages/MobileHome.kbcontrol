@@ -1,4 +1,4 @@
-<!-- MobileHome — converted from MobileHome.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<!-- MobileHome - converted from MobileHome.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
 <UserControl>
   <Stack Gap="0" Class="flex-1 min-h-0 overflow-hidden bg-white">
     <Stack Direction="LeftToRight" Gap="0" Class="shrink-0 border-b border-border">

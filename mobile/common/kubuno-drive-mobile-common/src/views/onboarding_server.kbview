@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Drive · Onboarding · Server — the ServerScreen of OnboardingScreens.kt: enter the Kubuno server address.
+  Drive · Onboarding · Server - the ServerScreen of OnboardingScreens.kt: enter the Kubuno server address.
   Centered form, one field, a full-width primary action. Drive LIGHT theme, logical px. Screen root is a Panel.
 -->
 <Panel xmlns="https://kubuno.com/views" xmlns:x="https://kubuno.com/views/x"

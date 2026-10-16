@@ -23,7 +23,7 @@ export class DriveMiniPanel extends ViewBase {
     })
     const { data: starred = [] } = useQuery({
       queryKey: ['drive-mini-starred'],
-      /* Positional signature — and only 5 parameters in the PUBLISHED @kubuno/drive
+      /* Positional signature - and only 5 parameters in the PUBLISHED @kubuno/drive
        * types, which lag the core source. Slicing here avoids making this panel wait
        * on a republication of the package. */
       queryFn:  () => filesApi.listFiles(null, true).then(r => r.files.slice(0, 8)),

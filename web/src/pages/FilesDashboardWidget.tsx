@@ -27,7 +27,7 @@ export default function FilesDashboardWidget() {
         <HardDrive size={16} style={{ color: '#f9ab00' }} />
       </div>
       <p className="text-2xl font-semibold text-text-primary">
-        {stats ? formatSize(stats.storage_used) : '—'}
+        {stats ? formatSize(stats.storage_used) : '-'}
       </p>
     </div>
   )

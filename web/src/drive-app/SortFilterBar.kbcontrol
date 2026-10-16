@@ -1,4 +1,4 @@
-<!-- SortFilterBar — converted from SortFilterBar.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<!-- SortFilterBar - converted from SortFilterBar.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
 <UserControl x:Props="SortFilterBarProps">
   <Stack Direction="LeftToRight"
          CrossAlign="Center"

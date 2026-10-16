@@ -14,10 +14,10 @@ use windows::Win32::Graphics::Direct2D::Common::D2D1_COLOR_F;
 
 use crate::ui::{Hot, Painter, Rect, UiState};
 
-/// The `@ui/Button` variants the settings pages need — the design system's own
+/// The `@ui/Button` variants the settings pages need - the design system's own
 /// enum now that `kubuno-desktop-ui` ships it, re-exported under the name these pages
 /// already spell. Its two rules travel with it: the radius is FIXED at
-/// `rounded-md` (4) and a button is NEVER bold — colour and fill carry the
+/// `rounded-md` (4) and a button is NEVER bold - colour and fill carry the
 /// hierarchy, weight does not.
 pub(crate) use kubuno_desktop_ui::buttons::Variant as ButtonVariant;
 
@@ -28,19 +28,19 @@ pub const ROW_GAP: f32 = 4.0;
 /// Group header TextBlock: Padding="0,16,0,4" + FontSize=16 line.
 pub const GROUP_HEADER_H: f32 = 42.0;
 /// What keeps the InfoBar's box off the top and bottom edges of the card it
-/// sits in — the card's own inset, not the callout's (`@ui/Callout` is
+/// sits in - the card's own inset, not the callout's (`@ui/Callout` is
 /// `w-full` and carries no outer margin of its own).
 const INFOBAR_INSET_Y: f32 = space::XS;
 
 /// InfoBar (warning) row height, MEASURED by the primitive that draws it: the
 /// `@ui/Callout` height for a one-line message, plus the inset. It used to be a
-/// flat 48, which is 3 DIP shorter than the callout actually is — the box and
+/// flat 48, which is 3 DIP shorter than the callout actually is - the box and
 /// the row it is laid out in can no longer disagree.
 pub fn info_bar_height() -> f32 {
     info_bar_callout("").height_for(1) + INFOBAR_INSET_Y * 2.0
 }
 
-/// The InfoBar of a settings expander, as `@ui/Callout variant="warning"` —
+/// The InfoBar of a settings expander, as `@ui/Callout variant="warning"` -
 /// `Severity="Warning"` is the only severity these pages use (the FoldersPage's
 /// « calculating folder sizes is resource intensive »).
 fn info_bar_callout(message: &str) -> Callout {
@@ -206,7 +206,7 @@ pub enum Control {
     Toggle(bool),
     /// Greyed ToggleSwitch (IsEnabled=False).
     ToggleDisabled(bool),
-    /// SettingsCard.ActionIcon (E8A7) — the whole card is clickable.
+    /// SettingsCard.ActionIcon (E8A7) - the whole card is clickable.
     Action,
     /// Push button with a text content.
     Button(String),
@@ -350,7 +350,7 @@ fn joins_card(kind: RowKind) -> bool {
     matches!(kind, RowKind::ExpanderItem | RowKind::InfoBar | RowKind::Custom)
 }
 
-/// The ToggleSwitch's On/Off pair for the current culture — WinUI provides
+/// The ToggleSwitch's On/Off pair for the current culture - WinUI provides
 /// them at the platform level, they don't appear in Files' resw.
 pub(crate) fn toggle_state_label(on: bool) -> &'static str {
     let lang = kubuno_drive_desktop_localization::culture()
@@ -383,7 +383,7 @@ const COMBO_MAX_W: f32 = 340.0;
 ///
 /// **`@ui/Dropdown` and not `@ui/Combobox`.** The choice is not a toss-up: the
 /// hand-written control this replaces already described a `Dropdown` in its own
-/// doc comment — `padding: '0 4px 0 8px'`, a `gap` of 4 before a 10 DIP caret,
+/// doc comment - `padding: '0 4px 0 8px'`, a `gap` of 4 before a 10 DIP caret,
 /// and a surface that is TRANSPARENT at rest and only fills on hover or while
 /// the list is out. [`kubuno_desktop_ui::lists::ComboBox`] is an `Input` instead: `h-9`
 /// FIXED, `px-3` on both sides, a filled white face at rest, a lucide
@@ -391,12 +391,12 @@ const COMBO_MAX_W: f32 = 340.0;
 /// frosted `MenuDropdown` grid. Every one of those five differs from what these
 /// pages ship, so adopting the `ComboBox` would have been a redesign; adopting
 /// the `Dropdown` is an adoption. Its free trigger height and its `ghost`
-/// variant are held in reserve — the settings rows want neither today.
+/// variant are held in reserve - the settings rows want neither today.
 ///
 /// One option, selected: a settings row paints the CURRENT value and opens the
 /// real list through the shell's own flyout (`MainWindow::dropdown`), so the
 /// primitive is used for its trigger and its popup never paints. A disabled row
-/// keeps its value on screen for the same reason — the primitive's dead path
+/// keeps its value on screen for the same reason - the primitive's dead path
 /// fades the trigger, it does not blank it.
 fn settings_dropdown(value: &str) -> Dropdown {
     let mut d = Dropdown::new();
@@ -455,7 +455,7 @@ pub fn header_toggle_rect(row: &Rect) -> Rect {
     Rect::new(row.right - 100.0, row.top, row.right - 44.0, row.bottom)
 }
 
-/// A settings row's push button — `@ui/Button size="sm"` (h-8, `px-3`, radius
+/// A settings row's push button - `@ui/Button size="sm"` (h-8, `px-3`, radius
 /// 4, never bold). The variant is the caller's: a card shows `Secondary`, the
 /// tags list shows `Text`.
 fn settings_button(label: &str, variant: ButtonVariant) -> Button {
@@ -467,8 +467,8 @@ fn text_button(label: &str) -> Button {
     settings_button(label, ButtonVariant::Text)
 }
 
-/// The floor a settings button's width is held to. The desktop's own — a click
-/// target narrower than that reads as an accident — and deliberately NOT
+/// The floor a settings button's width is held to. The desktop's own - a click
+/// target narrower than that reads as an accident - and deliberately NOT
 /// applied to the small text buttons, which hang inside a list row and have to
 /// hug their label.
 const BUTTON_MIN_W: f32 = 72.0;
@@ -504,13 +504,13 @@ pub fn text_button_rects(c: &dyn Canvas, row: &Rect, labels: &[String]) -> Vec<R
 
 /// A keyboard-shortcut chip, as the `@ui/Badge` primitive (`default`, size
 /// `md`): `rounded-full`, `bg-surface-2`, `text-text-secondary`, `text-xs px-2
-/// py-0.5`. It measures and paints itself — the chip's width and its 20 DIP
+/// py-0.5`. It measures and paints itself - the chip's width and its 20 DIP
 /// pill height are the primitive's, not this file's.
 fn shortcut_badge(token: &str) -> Badge {
     Badge::new(token)
 }
 
-/// Gap between two chips (`Badge` has no gap of its own — this is ours).
+/// Gap between two chips (`Badge` has no gap of its own - this is ours).
 const CHIP_GAP: f32 = 6.0;
 
 impl Painter<'_> {
@@ -539,7 +539,7 @@ impl Painter<'_> {
             self.fill_rounded(&group, radius::XL, &t.layer_background);
             self.stroke_rounded(&group, radius::XL, &t.card_stroke);
             for j in (i + 1)..=last {
-                // An InfoBar is a `@ui/Callout` — a box with its OWN border,
+                // An InfoBar is a `@ui/Callout` - a box with its OWN border,
                 // so it doesn't take the card's row separator on top of it.
                 if matches!(page.rows[j].kind, RowKind::InfoBar) {
                     continue;
@@ -637,7 +637,7 @@ impl Painter<'_> {
                 }
                 Control::Buttons(labels) => {
                     // The tags list's "Modifier"/"Supprimer": accent-coloured
-                    // labels with no fill — `@ui/Button variant="text"`.
+                    // labels with no fill - `@ui/Button variant="text"`.
                     for (btn, label) in text_button_rects(self, rect, labels).iter().zip(labels) {
                         self.draw_button(btn, label, ButtonVariant::Text, true);
                     }
@@ -653,7 +653,7 @@ impl Painter<'_> {
                     );
                 }
                 Control::Shortcut(tokens) => {
-                    // KeyboardShortcut chips, right-aligned — one `@ui/Badge`
+                    // KeyboardShortcut chips, right-aligned - one `@ui/Badge`
                     // per key token, each measured and painted by the
                     // primitive (pill radius included: `rounded-full` is half
                     // the height it is actually given).
@@ -681,8 +681,8 @@ impl Painter<'_> {
         }
     }
 
-    /// The single selector painter of the settings pages — the generic rows and
-    /// the Appearance page both come through here — now the `@ui/Dropdown`
+    /// The single selector painter of the settings pages - the generic rows and
+    /// the Appearance page both come through here - now the `@ui/Dropdown`
     /// primitive (see [`settings_dropdown`] for why it, and not the ComboBox).
     ///
     /// `disabled` keeps the VALUE on screen: a greyed `IsEnabled=False`
@@ -692,7 +692,7 @@ impl Painter<'_> {
         settings_dropdown(value).paint(self, *combo, WidgetState::REST.disabled(disabled));
     }
 
-    /// `@ui/Button`, as the primitive. `rect` is the caller's — the settings
+    /// `@ui/Button`, as the primitive. `rect` is the caller's - the settings
     /// rows lay their buttons out themselves (right-aligned inside a row, or
     /// inside the Actions page's top bar), so the size comes from
     /// [`button_width`] and the paint from here.
@@ -732,7 +732,7 @@ impl Painter<'_> {
         track
     }
 
-    /// The width a switch occupies — asked of the primitive, so the zones that
+    /// The width a switch occupies - asked of the primitive, so the zones that
     /// reserve room for one cannot drift from what it paints.
     pub(crate) fn switch_width(&self) -> f32 {
         Switch::new().measure(self).width
@@ -746,7 +746,7 @@ impl Painter<'_> {
     }
 
     /// The ToggleSwitch's state label ("Activé"/"Désactivé"), to the left
-    /// of the track — the On/Off strings come from WinUI, not Files' resw;
+    /// of the track - the On/Off strings come from WinUI, not Files' resw;
     /// we provide them for the embedded cultures, English otherwise.
     pub(crate) fn toggle_state_text(&self, track: &Rect, zone: &Rect, on: bool, greyed: bool) {
         let t = self.theme;

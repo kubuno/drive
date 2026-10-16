@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Drive · Rename dialog — converted from sheet/ItemActions.kt (RenameDialog, an AlertDialog). A centered modal
+  Drive · Rename dialog - converted from sheet/ItemActions.kt (RenameDialog, an AlertDialog). A centered modal
   card over a dimmed backdrop: title, a text field pre-filled with the current name, and Cancel / Rename
   actions. Drive LIGHT theme.
 -->

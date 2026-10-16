@@ -1,6 +1,6 @@
 //! Port of `Files.App/Views/Layouts/GridLayoutPage.xaml`.
 //!
-//! Like the original, this page hosts all THREE layouts — its three
+//! Like the original, this page hosts all THREE layouts - its three
 //! `DataTemplate`s: `ListViewBrowserTemplate` (List), `CardsBrowserTemplate`
 //! (Cards) and `GridViewBrowserTemplate` (Grid). The sizes come from
 //! `GridLayoutPage.xaml.cs` (`RowHeightListView`, `ItemWidthGridView`,
@@ -40,13 +40,13 @@ impl Painter<'_> {
         let bx = Rect::new(left, top, left + CHECKBOX_SIZE, top + CHECKBOX_SIZE);
         if selected {
             // Checked: the box is FILLED and stroked with the accent, and the
-            // tick is `mark: '#ffffff'` — 11 DIP inside an 18 DIP box, which
+            // tick is `mark: '#ffffff'` - 11 DIP inside an 18 DIP box, which
             // the 12 px glyph format matches.
             self.fill_rounded(&bx, ROW_RADIUS, &t.accent);
             self.stroke_rounded_w(&bx, ROW_RADIUS, &t.accent, CHECKBOX_BORDER);
             self.text("\u{E73E}", &bx, &self.renderer.formats.icon_small, &t.accent_foreground, true);
         } else {
-            // Unchecked: `fill: null` in the web — but here the box sits over a
+            // Unchecked: `fill: null` in the web - but here the box sits over a
             // thumbnail, so it keeps the card surface to stay legible. Border =
             // `--color-border`, 2 DIP.
             self.fill_rounded(&bx, ROW_RADIUS, &t.card_background);
@@ -62,7 +62,7 @@ impl Painter<'_> {
         let size = crate::view_models::shell_view_model::layout_size(mode);
         let icon_dip = crate::view_models::shell_view_model::icon_size_for(mode, size);
 
-        // Group headers (GroupStyle): label + count — for all THREE layouts
+        // Group headers (GroupStyle): label + count - for all THREE layouts
         // of the page, List returning early further below.
         for (rect, label, count) in &layout.group_rows {
             if rect.right < layout.content.left || rect.left > layout.content.right {
@@ -75,7 +75,7 @@ impl Painter<'_> {
             self.text(&format!("({count})"), &count_rect, &f.caption, &t.text_secondary, false);
         }
 
-        // List: `ItemsWrapGrid Orientation="Vertical"` — icon and name on one
+        // List: `ItemsWrapGrid Orientation="Vertical"` - icon and name on one
         // row, items go down then wrap into a new column.
         if mode == ViewMode::List {
             for (i, rect) in layout.file_rows.iter().enumerate() {
@@ -174,7 +174,7 @@ impl Painter<'_> {
                     }
                 }
                 // The template's `SelectionCheckbox`: top-left of the preview
-                // box, margin 6 — visible when selected or on hover.
+                // box, margin 6 - visible when selected or on hover.
                 self.draw_selection_checkbox(&icon_box, selected, hot);
                 // `Padding="12,4,12,4"`: the name (BodyStrong) then the type.
                 let name_rect =

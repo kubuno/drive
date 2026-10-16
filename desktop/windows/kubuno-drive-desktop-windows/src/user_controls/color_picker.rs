@@ -1,9 +1,9 @@
 //! The colour panel of the "Background colours" button (appearance settings).
 //!
 //! This is no longer a control of its own: it is
-//! [`kubuno_desktop_ui::color::ColorPicker`], the design system's colour panel — hue
+//! [`kubuno_desktop_ui::color::ColorPicker`], the design system's colour panel - hue
 //! ring, saturation/value area (square, triangle or circle), harmonies, model
-//! tabs with their channel sliders and the twelve fixed chips — driven by the
+//! tabs with their channel sliders and the twelve fixed chips - driven by the
 //! flyout's own gesture loop.
 //!
 //! What lives here is only the **adaptation layer**:
@@ -35,14 +35,14 @@ use windows::Win32::Graphics::Direct2D::Common::D2D1_COLOR_F;
 
 use crate::ui::{Painter, Rect};
 
-/// The panel's width on the web — the primitive's own metric.
+/// The panel's width on the web - the primitive's own metric.
 pub const PICKER_WIDTH: f32 = kubuno_desktop_ui::color::m::PICKER_W;
 
 /// The picker's state, copied from `app_theme_background_color` on open.
 ///
-/// It carries what the primitive's widget carries — the HSV triple, the
+/// It carries what the primitive's widget carries - the HSV triple, the
 /// carried opacity and the three view choices (model tab, area shape, harmony
-/// scheme) — so a fully desaturated colour keeps the hue it was left on and the
+/// scheme) - so a fully desaturated colour keeps the hue it was left on and the
 /// choices survive the widget being rebuilt for each gesture.
 #[derive(Clone, Copy, PartialEq)]
 pub struct ColorPickerPanel {
@@ -152,7 +152,7 @@ impl ColorPickerPanel {
     /// The colour the panel names, in the design system's model.
     ///
     /// Drive persists that colour as a string and never as a `D2D1_COLOR_F`,
-    /// so the Direct2D form is only ever reached through [`Color::to_d2d`] —
+    /// so the Direct2D form is only ever reached through [`Color::to_d2d`] -
     /// inside the primitive's own paint, and in the tests below.
     fn colour(&self) -> Color {
         self.widget().color()
@@ -161,7 +161,7 @@ impl ColorPickerPanel {
     /// `#AARRGGBB`, the persisted format of `app_theme_background_color`.
     ///
     /// The primitive's own `hex_text()` is the web's six-digit string without
-    /// alpha, so the alpha byte is appended here — through the same
+    /// alpha, so the alpha byte is appended here - through the same
     /// `Math.round` the rest of the family quantises with.
     pub fn hex(&self) -> String {
         let colour = self.colour();
@@ -271,7 +271,7 @@ mod tests {
     }
 
     /// A colour survives the trip through HSV, which is how the panel stores
-    /// it — the primitive's arithmetic, exercised through this adapter.
+    /// it - the primitive's arithmetic, exercised through this adapter.
     #[test]
     fn color_survives_hsv() {
         let source = d2d(0.2, 0.6, 0.9, 0.4);
@@ -288,7 +288,7 @@ mod tests {
         assert_eq!(clear.hex(), "#00000000");
     }
 
-    /// A grey keeps the hue it was given rather than snapping to red — the
+    /// A grey keeps the hue it was given rather than snapping to red - the
     /// web's own behaviour, inherited from the primitive's HSV state.
     #[test]
     fn grey_keeps_its_hue() {
@@ -346,7 +346,7 @@ mod tests {
 
     /// The default tint is fully transparent: picking a colour must make it
     /// visible, while an opacity the user already has is kept. Chip 0 is black,
-    /// the default's own RGB, so the pick leaves the HSV unchanged — the case
+    /// the default's own RGB, so the pick leaves the HSV unchanged - the case
     /// that used to stay invisible.
     #[test]
     fn pick_makes_transparent_default_visible() {
@@ -368,7 +368,7 @@ mod tests {
         assert_eq!(clear.hex(), "#00000000");
     }
 
-    /// Outside the panel there is no zone at all — what tells the flyout to
+    /// Outside the panel there is no zone at all - what tells the flyout to
     /// close.
     #[test]
     fn outside_is_none() {

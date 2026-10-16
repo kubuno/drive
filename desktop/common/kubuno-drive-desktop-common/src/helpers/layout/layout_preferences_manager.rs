@@ -34,7 +34,7 @@ fn sort_option_of(column: SortColumn) -> crate::services::settings::DefaultSortO
         SortColumn::DateModified => D::DateModified,
         SortColumn::Size => D::Size,
         SortColumn::Type => D::Type,
-        // Columns specific to the Recycle Bin — never persisted per folder
+        // Columns specific to the Recycle Bin - never persisted per folder
         // (the Recycle Bin has no path); neutral fallback.
         SortColumn::OriginalPath | SortColumn::DateDeleted => D::Name,
     }

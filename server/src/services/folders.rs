@@ -636,8 +636,8 @@ pub async fn delete_folder(
         return Err(FilesError::Protected(protected_block_msg(&folder.name, &protected)));
     }
 
-    // A permanent delete removes the whole subtree — folders, files (trashed ones
-    // included), their versions, thumbnails and bytes — the way the UI announces
+    // A permanent delete removes the whole subtree - folders, files (trashed ones
+    // included), their versions, thumbnails and bytes - the way the UI announces
     // it. Files used to be re-parented to the root (FK `ON DELETE SET NULL`) while
     // the folder directory, which holds their bytes, was wiped: live rows pointing
     // at deleted bytes. Now the rows go first, in one transaction, and the bytes
@@ -689,7 +689,7 @@ pub async fn delete_folder(
 
     let mut tx = db.begin().await?;
     // Rows first, by the exact id set enumerated above: a file added to the
-    // subtree in the meantime is not deleted blindly — the folder FK re-parents
+    // subtree in the meantime is not deleted blindly - the folder FK re-parents
     // it to the root and the reference check below keeps its bytes.
     for chunk in file_ids.chunks(DELETE_CHUNK) {
         let in_list = tx.backend().in_list(2, chunk.len());
@@ -926,7 +926,7 @@ fn validate_folder_name(name: &str) -> Result<()> {
     }
 }
 
-// ── Corbeille — vidage ────────────────────────────────────────────────────────
+// ── Corbeille - vidage ────────────────────────────────────────────────────────
 
 pub struct PurgeTrashResult {
     pub folders_deleted: u64,
@@ -937,7 +937,7 @@ pub struct PurgeTrashResult {
 ///
 /// Everything that will disappear is enumerated first (its id and display name /
 /// path), because a portable hard delete leaves no trigger to write the
-/// tombstones the delta feed needs — they are written explicitly here.
+/// tombstones the delta feed needs - they are written explicitly here.
 pub async fn purge_trash(
     db: &DbPool,
     storage: &Arc<dyn StorageBackend>,

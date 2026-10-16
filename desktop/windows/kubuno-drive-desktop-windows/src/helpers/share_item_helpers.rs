@@ -2,7 +2,7 @@
 //!
 //! Port of `ShareItemHelpers.ShareItemsAsync`: the Windows share sheet.
 //!
-//! Exactly the original's route — `DataTransferManager` is a WinRT type with no
+//! Exactly the original's route - `DataTransferManager` is a WinRT type with no
 //! window of its own, so a desktop app reaches it through
 //! `IDataTransferManagerInterop`: `GetForWindow` to get the manager bound to our
 //! HWND, a `DataRequested` handler that fills the `DataPackage`, then

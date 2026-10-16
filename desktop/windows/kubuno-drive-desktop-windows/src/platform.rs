@@ -49,7 +49,7 @@ pub struct WindowsCulture;
 impl Culture for WindowsCulture {
     fn system_culture(&self) -> String {
         use windows::Win32::Globalization::GetUserDefaultLocaleName;
-        // LOCALE_NAME_MAX_LENGTH (winnt.h) — not exposed by the windows crate.
+        // LOCALE_NAME_MAX_LENGTH (winnt.h) - not exposed by the windows crate.
         const LOCALE_NAME_MAX_LENGTH: usize = 85;
         let mut buf = [0u16; LOCALE_NAME_MAX_LENGTH];
         // Returns the length **including** the trailing NUL, 0 on failure.

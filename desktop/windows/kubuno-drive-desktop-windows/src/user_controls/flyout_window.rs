@@ -1,7 +1,7 @@
 //! A real top-level popup window for context menus / flyouts.
 //!
 //! WinUI hosts each flyout in its own `Microsoft.UI.Content.PopupWindowSiteBridge`
-//! popup carrying a DesktopAcrylic backdrop — which is exactly why the original's
+//! popup carrying a DesktopAcrylic backdrop - which is exactly why the original's
 //! menus can extend past the app window and are blurred. We reproduce that: a
 //! no-activate `WS_POPUP` with a DirectComposition swap chain, real acrylic blur,
 //! rounded corners and the drop shadow DWM gives every popup. The menu content is
@@ -10,7 +10,7 @@
 //! Two dead ends, both worth remembering:
 //!
 //! * `DWMWA_SYSTEMBACKDROP_TYPE` (`DWMSBT_TRANSIENTWINDOW`) succeeds but only
-//!   blurs while its window is ACTIVE — and a menu never takes focus, so it sat
+//!   blurs while its window is ACTIVE - and a menu never takes focus, so it sat
 //!   there showing the flat fallback colour forever.
 //! * `DwmExtendFrameIntoClientArea(-1)` makes DWM paint the extended frame as an
 //!   OPAQUE sheet *behind* our content, which hides any blur underneath it.
@@ -91,7 +91,7 @@ fn enable_acrylic(hwnd: HWND, dark: bool) -> bool {
     const WCA_ACCENT_POLICY: u32 = 19;
     const ACCENT_ENABLE_ACRYLICBLURBEHIND: u32 = 4;
     // The tint laid over the blur. `AccentPolicy::gradient_color` is packed
-    // ABGR (0xAABBGGRR), NOT ARGB — the previous Fluent values (#2C2C2C /
+    // ABGR (0xAABBGGRR), NOT ARGB - the previous Fluent values (#2C2C2C /
     // #F9F9F9) were grey, so their byte order was never actually exercised.
     //
     // Kubuno's frosted menu surface (`--kb-float-surface` in `theme.css`):
@@ -149,7 +149,7 @@ impl FlyoutWindow {
                 windows::core::w!(""),
                 // A bare popup: NO frame, and no DwmExtendFrameIntoClientArea.
                 // Both were tried for the DWM system-backdrop route and are
-                // actively harmful here — DWM paints the extended frame as an
+                // actively harmful here - DWM paints the extended frame as an
                 // OPAQUE sheet behind our content, which hid the blur entirely.
                 WS_POPUP,
                 0,
@@ -172,7 +172,7 @@ impl FlyoutWindow {
             // The menu acrylic.
             //
             // NOT via DWMWA_SYSTEMBACKDROP_TYPE: a DWM system backdrop only
-            // blurs while its window is ACTIVE, and a menu never takes focus —
+            // blurs while its window is ACTIVE, and a menu never takes focus -
             // it would forever show the flat fallback colour. (That is also why
             // Windows' own menus don't use it.) `SetWindowCompositionAttribute`
             // with ACCENT_ENABLE_ACRYLICBLURBEHIND blurs regardless of

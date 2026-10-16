@@ -41,7 +41,7 @@ sort_by_action!(SortBySize, SortColumn::Size, "Size", "SortBySizeDescription");
 sort_by_action!(SortByType, SortColumn::Type, "Type", "SortByTypeDescription");
 
 /// `SortByOriginalFolderAction` (SortAction.cs:120-133): sort by "Original
-/// folder" — `GetIsExecutable` true only for `ContentPageTypes.RecycleBin`.
+/// folder" - `GetIsExecutable` true only for `ContentPageTypes.RecycleBin`.
 pub struct SortByOriginalFolder;
 
 impl Action for SortByOriginalFolder {
@@ -70,7 +70,7 @@ impl ToggleAction for SortByOriginalFolder {
 }
 
 /// `SortByDateDeletedAction` (SortAction.cs:136-149): sort by "Date
-/// deleted" — `GetIsExecutable` true only for `ContentPageTypes.RecycleBin`.
+/// deleted" - `GetIsExecutable` true only for `ContentPageTypes.RecycleBin`.
 pub struct SortByDateDeleted;
 
 impl Action for SortByDateDeleted {

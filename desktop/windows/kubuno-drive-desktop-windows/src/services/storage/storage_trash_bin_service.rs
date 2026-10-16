@@ -1,7 +1,7 @@
 //! StorageTrashBinService (mirror of StorageTrashBinService.cs)
 //!
 //! Port of `Files.App/Services/Storage/StorageTrashBinService.cs`: the
-//! Recycle Bin via the Shell — enumeration (`SHGetKnownFolderItem` +
+//! Recycle Bin via the Shell - enumeration (`SHGetKnownFolderItem` +
 //! `BHID_EnumItems`), restoration (`IFileOperation::MoveItem` to
 //! `System.Recycle.DeletedFrom`), emptying (`SHEmptyRecycleBin`), permanent
 //! deletion (`IFileOperation::DeleteItem`).
@@ -90,7 +90,7 @@ pub fn list() -> Vec<TrashItem> {
                 .unwrap_or_default()
         };
         // The display name of a Recycle Bin item is its full ORIGINAL
-        // PATH — the view shows only the name (`ShellFileItem
+        // PATH - the view shows only the name (`ShellFileItem
         // .FileName`), the original folder having its own column.
         let display_name = display(SIGDN_NORMALDISPLAY);
         let path = display(SIGDN_FILESYSPATH);
@@ -133,7 +133,7 @@ pub fn list() -> Vec<TrashItem> {
     items
 }
 
-/// `(HasRecycleBin, NumItems, BinSize)` — `SHQueryRecycleBin`.
+/// `(HasRecycleBin, NumItems, BinSize)` - `SHQueryRecycleBin`.
 pub fn query() -> (bool, i64, i64) {
     let mut info = SHQUERYRBINFO {
         cbSize: std::mem::size_of::<SHQUERYRBINFO>() as u32,

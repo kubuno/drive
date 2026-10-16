@@ -1,6 +1,6 @@
 //! Port of `Files.App/Services/Windows/WindowsQuickAccessService.cs`: the
 //! PINNED Quick Access folders, enumerated from the shell folder
-//! "Frequent places" (`::{3936e9e4-d92c-4eee-a85a-bc16d5ea0819}` —
+//! "Frequent places" (`::{3936e9e4-d92c-4eee-a85a-bc16d5ea0819}` -
 //! the Quick Access folder itself would also add recent files here),
 //! filtered on the `System.Home.IsPinned` property.
 

@@ -1,5 +1,5 @@
 //! Port of the recursive Win32 fallback from `Files.App/Utils/Storage/Search/
-//! FolderSearch.cs` — specifically `SearchWithWin32Async` (NOT the AQS
+//! FolderSearch.cs` - specifically `SearchWithWin32Async` (NOT the AQS
 //! indexer branch `ToQueryOptions`, nor tags, nor resolved shortcuts).
 //!
 //! This is the engine that works everywhere: a recursive `FindFirstFileExW` at
@@ -65,7 +65,7 @@ impl SearchQuery {
     }
 }
 
-/// `FolderSearch.QueryWithWildcard` — turns the typed text into a
+/// `FolderSearch.QueryWithWildcard` - turns the typed text into a
 /// `FindFirstFile` pattern. If the text contains a `.`, the extension is
 /// isolated ("name.ext" → "name*.ext*"); otherwise it's simply suffixed ("name*").
 /// The pattern is then prefixed with a `*` by the caller (`{folder}\*{pattern}`),

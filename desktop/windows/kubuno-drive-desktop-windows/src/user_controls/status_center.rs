@@ -5,11 +5,11 @@
 //!
 //! Despite the name this is NOT a status bar: it is a progress/notification
 //! surface, so its design-system counterpart is `feedback`, not `navigation`.
-//! The « no operation » state is [`kubuno_desktop_ui::feedback::EmptyState`] —
+//! The « no operation » state is [`kubuno_desktop_ui::feedback::EmptyState`] -
 //! medallion, title, compact spacing, all of it the primitive's. The operation
 //! rows stay hand-drawn: their web reference is `@ui/Toast.tsx`'s ToastCard,
 //! and [`kubuno_desktop_ui::dialogs::Toast`] paints one WITH `--kb-shadow-float`,
-//! which is right for a toast floating over the page and wrong here — these
+//! which is right for a toast floating over the page and wrong here - these
 //! are stacked inside a flyout that already carries that shadow, and a shadow
 //! on a shadow reads as a smear. They will move to the primitive the day it
 //! can be asked to drop its float. A determinate progress bar
@@ -23,7 +23,7 @@ use kubuno_desktop_ui::{Widget, WidgetState};
 
 use crate::ui::{Layout, Painter, Rect, UiState};
 
-/// A card's height, and the stride between two cards — the web stacks its
+/// A card's height, and the stride between two cards - the web stacks its
 /// toasts `gap-2` (8 DIP) apart (`Toast.tsx:180`).
 const CARD_HEIGHT: f32 = 56.0;
 const CARD_GAP: f32 = 8.0;
@@ -64,7 +64,7 @@ impl Painter<'_> {
             empty.paint(self, Rect::new(panel.left, top, panel.right, top + h), WidgetState::REST);
             return;
         }
-        // Operation cards — these ARE notifications, so they follow
+        // Operation cards - these ARE notifications, so they follow
         // `@ui/Toast.tsx`'s ToastCard (Toast.tsx:206): `rounded-lg` (6),
         // `border border-border`, `bg-surface-0`, `px-3 py-2.5`, a 16 DIP
         // variant glyph tinted `text-primary` (SKIN.info, Toast.tsx:48) and the

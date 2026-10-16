@@ -1,5 +1,5 @@
 /**
- * Background context menu of the Drive view — DATA for the project's menu
+ * Background context menu of the Drive view - DATA for the project's menu
  * component (`MenuDropdown` from @ui), contributed through the shell's
  * 'shell.context-menu-items' extension point (see entry.ts). The function is
  * evaluated on every right-click, so labels and store state are always fresh,
@@ -12,7 +12,7 @@ import { ExtensionRegistry, i18n, useModulesStore } from '@kubuno/sdk'
 import { useDriveExtras } from '../model/driveExtras'
 import { DRIVE_NEW_ACTIONS, type DriveNewActionsProvider } from './FilesNewActions'
 
-// Read the stores at click time, not at build time — actions stay fresh.
+// Read the stores at click time, not at build time - actions stay fresh.
 const files = () => useFilesStore.getState()
 
 /** Paste whatever the Drive clipboard holds into the current folder. */
@@ -20,7 +20,7 @@ function paste(): void {
   const { clipboard, currentFolderId, clearClipboard, refresh } = files()
   if (!clipboard) return
   // `refresh()` bumps the key every folders/files/tree-children query is built
-  // from, so it refetches the very lists the former invalidateQueries targeted —
+  // from, so it refetches the very lists the former invalidateQueries targeted -
   // and needs no React Query client, out of reach from this plain function.
   if (clipboard.action === 'copy' && clipboard.type === 'file') {
     void filesApi.copyFile(clipboard.id, currentFolderId).then(() => refresh())
@@ -46,7 +46,7 @@ async function batchRenameFolder(): Promise<void> {
 
 /** Content of the "New" submenu: Drive's own entry, then the contributions of
  *  other ACTIVE modules read from the shared 'drive.new-actions' point (the very
- *  point the sidebar "New" button uses — no dedicated context-menu channel). */
+ *  point the sidebar "New" button uses - no dedicated context-menu channel). */
 function newSubmenuItems(): MenuItem[] {
   const items: MenuItem[] = [
     {
@@ -76,7 +76,7 @@ export function filesContextMenuItems(): MenuItem[] {
   const { clipboard } = files()
 
   const items: MenuItem[] = [
-    // Native MenuDropdown submenu — it portals and flips on its own, which the
+    // Native MenuDropdown submenu - it portals and flips on its own, which the
     // former hand-rolled panel had to do by hand.
     {
       type: 'submenu',

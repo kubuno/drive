@@ -60,7 +60,7 @@ pub struct ResolveEntry {
 #[derive(Clone)]
 pub struct FilesClient {
     http:     Client,
-    /// URL du CORE (pas du module `files`) — le core relaie vers `drive`.
+    /// URL du CORE (pas du module `files`) - le core relaie vers `drive`.
     core_url: String,
     secret:   String,
 }
@@ -86,7 +86,7 @@ impl FilesClient {
             .send().await?;
         if !resp.status().is_success() {
             let s = resp.status(); let b = resp.text().await.unwrap_or_default();
-            anyhow::bail!("ensure_folder_path failed: {s} — {b}");
+            anyhow::bail!("ensure_folder_path failed: {s} - {b}");
         }
         let body: serde_json::Value = resp.json().await?;
         Ok(serde_json::from_value(body["folder"].clone())?)
@@ -108,7 +108,7 @@ impl FilesClient {
             .send().await?;
         if !resp.status().is_success() {
             let s = resp.status(); let b = resp.text().await.unwrap_or_default();
-            anyhow::bail!("create_file_with_content failed: {s} — {b}");
+            anyhow::bail!("create_file_with_content failed: {s} - {b}");
         }
         let body: serde_json::Value = resp.json().await?;
         Ok(serde_json::from_value(body["file"].clone())?)
@@ -121,7 +121,7 @@ impl FilesClient {
             .send().await?;
         if !resp.status().is_success() {
             let s = resp.status(); let b = resp.text().await.unwrap_or_default();
-            anyhow::bail!("get_file_content failed: {s} — {b}");
+            anyhow::bail!("get_file_content failed: {s} - {b}");
         }
         let body: serde_json::Value = resp.json().await?;
         let file: FileInfo = serde_json::from_value(body["file"].clone())?;
@@ -139,13 +139,13 @@ impl FilesClient {
             .send().await?;
         if !resp.status().is_success() {
             let s = resp.status(); let b = resp.text().await.unwrap_or_default();
-            anyhow::bail!("update_file_content failed: {s} — {b}");
+            anyhow::bail!("update_file_content failed: {s} - {b}");
         }
         let body: serde_json::Value = resp.json().await?;
         Ok(serde_json::from_value(body["file"].clone())?)
     }
 
-    /// Métadonnées seules d'un fichier (sans le contenu) — pour lire son nom.
+    /// Métadonnées seules d'un fichier (sans le contenu) - pour lire son nom.
     pub async fn get_file_meta(&self, user_id: Uuid, file_id: Uuid) -> Result<FileInfo> {
         let resp = self.http
             .get(format!("{}/internal/ipc/drive/files/{user_id}/{file_id}", self.core_url))
@@ -179,7 +179,7 @@ impl FilesClient {
             .send().await?;
         if !resp.status().is_success() {
             let s = resp.status(); let b = resp.text().await.unwrap_or_default();
-            anyhow::bail!("rename_file failed: {s} — {b}");
+            anyhow::bail!("rename_file failed: {s} - {b}");
         }
         let body: serde_json::Value = resp.json().await?;
         Ok(serde_json::from_value(body["file"].clone())?)
@@ -193,7 +193,7 @@ impl FilesClient {
             .send().await?;
         if !resp.status().is_success() {
             let s = resp.status(); let b = resp.text().await.unwrap_or_default();
-            anyhow::bail!("delete_file failed: {s} — {b}");
+            anyhow::bail!("delete_file failed: {s} - {b}");
         }
         Ok(())
     }
@@ -208,13 +208,13 @@ impl FilesClient {
             .send().await?;
         if !resp.status().is_success() {
             let s = resp.status(); let b = resp.text().await.unwrap_or_default();
-            anyhow::bail!("set_file_protected failed: {s} — {b}");
+            anyhow::bail!("set_file_protected failed: {s} - {b}");
         }
         Ok(())
     }
 
     /// Liste un répertoire par chemin canonique `[stockage]/chemin` (Drive local OU
-    /// montage distant — drive route en interne). Les `path` retournés sont canoniques.
+    /// montage distant - drive route en interne). Les `path` retournés sont canoniques.
     pub async fn resolve_browse(&self, user_id: Uuid, path: &str) -> Result<Vec<ResolveEntry>> {
         let resp = self.http
             .get(format!("{}/internal/ipc/drive/resolve/{user_id}/browse", self.core_url))
@@ -223,7 +223,7 @@ impl FilesClient {
             .send().await?;
         if !resp.status().is_success() {
             let s = resp.status(); let b = resp.text().await.unwrap_or_default();
-            anyhow::bail!("resolve_browse failed: {s} — {b}");
+            anyhow::bail!("resolve_browse failed: {s} - {b}");
         }
         let body: serde_json::Value = resp.json().await?;
         Ok(serde_json::from_value(body["items"].clone())?)
@@ -238,7 +238,7 @@ impl FilesClient {
             .send().await?;
         if !resp.status().is_success() {
             let s = resp.status(); let b = resp.text().await.unwrap_or_default();
-            anyhow::bail!("resolve_file failed: {s} — {b}");
+            anyhow::bail!("resolve_file failed: {s} - {b}");
         }
         Ok(resp.bytes().await?)
     }
@@ -252,7 +252,7 @@ impl FilesClient {
             .send().await?;
         if !resp.status().is_success() {
             let s = resp.status(); let b = resp.text().await.unwrap_or_default();
-            anyhow::bail!("set_folder_protected failed: {s} — {b}");
+            anyhow::bail!("set_folder_protected failed: {s} - {b}");
         }
         Ok(())
     }

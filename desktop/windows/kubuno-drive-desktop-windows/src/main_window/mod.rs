@@ -23,7 +23,7 @@ const SCROLLBAR_TIMER: usize = 45;
 const SIDEBAR_ANIM_TIMER: usize = 46;
 /// Opens the tooltip after hovering (`ToolTipService`, ~750 ms delay).
 const TOOLTIP_TIMER: usize = 47;
-/// Tooltip opening delay — the web's `Tooltip` default (`delay = 400`), not
+/// Tooltip opening delay - the web's `Tooltip` default (`delay = 400`), not
 /// WinUI's 750 ms `ToolTipService.InitialShowDelay`.
 const TOOLTIP_DELAY_MS: u32 = 400;
 
@@ -85,7 +85,7 @@ fn key_name(vk: u32) -> String {
 }
 
 /// Like [`hotkey_text`], but from a virtual-key code and modifier
-/// booleans — the form used by `actions::HotKey`.
+/// booleans - the form used by `actions::HotKey`.
 /// True if `path` is a drive root (« X:\ » or « X: »).
 pub(crate) fn is_drive_root(path: &str) -> bool {
     let p = path.trim_end_matches('\\');
@@ -123,7 +123,7 @@ fn same_drive(a: &std::path::Path, b: &std::path::Path) -> bool {
 }
 
 /// The target of an item drop, resolved from the point under the pointer. A
-/// folder (copy/move), the « Épinglé » header (pin) or a tag (assign it) —
+/// folder (copy/move), the « Épinglé » header (pin) or a tag (assign it) -
 /// the counterpart of the original's `HandleItemDroppedAsync`.
 pub(crate) enum DropTarget {
     /// A folder/drive: copy or move the items into it.
@@ -188,7 +188,7 @@ pub struct MainWindow {
     /// the target (list folder, sidebar, breadcrumb, tab, other pane, Shelf)
     /// and the operation (move/copy), cf. `Item_Drop`.
     item_drag: Option<(Vec<std::path::PathBuf>, f32, f32, bool)>,
-    /// Head segments collapsed under the breadcrumb ellipsis, in order —
+    /// Head segments collapsed under the breadcrumb ellipsis, in order -
     /// the navigation target of each item in the `BreadcrumbOverflow` flyout.
     breadcrumb_overflow: Vec<std::path::PathBuf>,
     /// Undo/redo stack for file operations (`StorageHistory`).
@@ -246,7 +246,7 @@ pub struct MainWindow {
 /// Tab drag in progress. As long as the cursor stays within the strip, the
 /// tab reorders live (`index` tracks it). Past the strip, the tab is
 /// DETACHED (`detached` carries it with its original index for Escape) and
-/// a ghost popup follows the cursor — the counterpart of the original
+/// a ghost popup follows the cursor - the counterpart of the original
 /// TabView's OLE drag (`TabView_TabDroppedOutside` / `TabView_TabStripDrop`).
 pub(crate) struct TabDrag {
     /// Current index in `state.tabs` (live insertion), meaningless while
@@ -257,7 +257,7 @@ pub(crate) struct TabDrag {
     grab: f32,
     /// 4-DIP threshold crossed (otherwise release counts as a plain click).
     moved: bool,
-    /// Drag start time — the original's accident guard:
+    /// Drag start time - the original's accident guard:
     /// "dragTime < 1s && dragDistance < 100px" cancels the tear-out.
     start: std::time::Instant,
     origin_screen: (i32, i32),
@@ -316,7 +316,7 @@ fn port_tab_strip_under_point(
 }
 
 /// Sends the tab to `target` (path + screen x, WM_COPYDATA). true if the other
-/// window took it — the counterpart of the original's `TabDropHandledIdentifier`.
+/// window took it - the counterpart of the original's `TabDropHandledIdentifier`.
 fn send_tab_to_window(target: HWND, group: &crate::view_models::shell_view_model::TabGroup, x_screen: i32) -> bool {
     use windows::Win32::System::DataExchange::COPYDATASTRUCT;
     use windows::Win32::UI::WindowsAndMessaging::{
@@ -411,7 +411,7 @@ extern "system" fn wndproc(hwnd: HWND, msg: u32, wparam: WPARAM, lparam: LPARAM)
 }
 
 /// Image picker for the Appearance background image (SelectImageCommand).
-/// Folder picker (FOS_PICKFOLDERS) — GeneralPage "Ajouter une page > Parcourir".
+/// Folder picker (FOS_PICKFOLDERS) - GeneralPage "Ajouter une page > Parcourir".
 fn pick_folder(hwnd: HWND) -> Option<String> {
     use windows::Win32::System::Com::{CoCreateInstance, CLSCTX_INPROC_SERVER};
     use windows::Win32::UI::Shell::{
@@ -431,7 +431,7 @@ fn pick_folder(hwnd: HWND) -> Option<String> {
     }
 }
 
-/// JSON open dialog — AdvancedPage "Importer les paramètres".
+/// JSON open dialog - AdvancedPage "Importer les paramètres".
 fn pick_open_json(hwnd: HWND) -> Option<String> {
     use windows::Win32::System::Com::{CoCreateInstance, CLSCTX_INPROC_SERVER};
     use windows::Win32::UI::Shell::Common::COMDLG_FILTERSPEC;
@@ -450,7 +450,7 @@ fn pick_open_json(hwnd: HWND) -> Option<String> {
     }
 }
 
-/// JSON save dialog — AdvancedPage "Exporter les paramètres".
+/// JSON save dialog - AdvancedPage "Exporter les paramètres".
 fn pick_save_json(hwnd: HWND) -> Option<String> {
     use windows::Win32::System::Com::{CoCreateInstance, CLSCTX_INPROC_SERVER};
     use windows::Win32::UI::Shell::Common::COMDLG_FILTERSPEC;

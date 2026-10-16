@@ -1,4 +1,4 @@
-<!-- FilesWebDavSettings — converted from FilesWebDavSettings.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<!-- FilesWebDavSettings - converted from FilesWebDavSettings.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
 <UserControl>
   <Panel Class="mt-8 border border-border rounded-xl overflow-hidden">
     <Stack Direction="LeftToRight" Gap="12" CrossAlign="Center" BackColor="Surface1" Class="px-5 py-4 border-b border-border">

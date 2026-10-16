@@ -33,7 +33,7 @@ function EntryRow({ entry, fileId, onNavigate }: {
             <span className="text-text-primary">{entry.name}</span>
           </span>
         </td>
-        <td className="px-4 py-2 text-right text-text-tertiary">—</td>
+        <td className="px-4 py-2 text-right text-text-tertiary">-</td>
         <td className="px-2 py-2 text-right">
           <ChevronRight size={14} className="text-text-tertiary" />
         </td>

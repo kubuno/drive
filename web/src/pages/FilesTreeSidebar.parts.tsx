@@ -114,7 +114,7 @@ function MobileDrawerNav({ t, pathname, isInDrive, isRecent, isTrashed, isSystem
           active={pathname === '/drive/settings'} to="/drive/settings" />
       </nav>
 
-      {/* Storage gauge — the header one is desktop-only, so this is the ONLY
+      {/* Storage gauge - the header one is desktop-only, so this is the ONLY
           place a phone user sees their quota. */}
       {pct != null && user && (
         <div className="mt-auto pt-4 px-4 pb-2">
@@ -149,7 +149,7 @@ function TreeNode({
   activeFolderId: string | null
   contextMenuFolderId: string | null
   refreshKey: number
-  /** Builds the real href of a folder — the row navigates through a <Link>. */
+  /** Builds the real href of a folder - the row navigates through a <Link>. */
   linkFor: (id: string | null) => string
   onContextMenu: (folder: Folder, x: number, y: number) => void
 }) {

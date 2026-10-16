@@ -1,6 +1,6 @@
-//! Port of `Files.App/Utils/Shell/` — the native shell context menu.
+//! Port of `Files.App/Utils/Shell/` - the native shell context menu.
 //!
-//! NOTE: `imageres_icon` below does NOT belong to `ContextMenu` — it's
+//! NOTE: `imageres_icon` below does NOT belong to `ContextMenu` - it's
 //! `Helpers/UI/UIHelpers.GetSidebarIconResource`. A strict mirror would
 //! place it in `utils/helpers/ui/ui_helpers.rs`. It stays here to
 //! preserve `crate::utils::shell::imageres_icon` (imported by
@@ -11,7 +11,7 @@ pub mod context_menu_item;
 
 pub use context_menu::*;
 
-/// Extracts an icon from `imageres.dll` by INDEX — the C#'s
+/// Extracts an icon from `imageres.dll` by INDEX - the C#'s
 /// `UIHelpers.GetSidebarIconResource` (sidebar Drives/Network sections:
 /// `Constants.ImageRes.ThisPC`, `Network`…).
 pub fn imageres_icon(index: i32, size_px: i32) -> Option<kubuno_drive_desktop_app_storage::ShellBitmap> {

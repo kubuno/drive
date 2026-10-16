@@ -1,5 +1,5 @@
 #![allow(unused_imports)]
-//! Menu command dispatch and shell overflow (mirror of `Actions/*` / `ShellContextMenu`) — `impl MainWindow` block, see `main_window/mod.rs`.
+//! Menu command dispatch and shell overflow (mirror of `Actions/*` / `ShellContextMenu`) - `impl MainWindow` block, see `main_window/mod.rs`.
 use windows::core::{w, Result};
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, RECT, WPARAM};
 use windows::Win32::Graphics::Dwm::{

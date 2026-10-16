@@ -1,4 +1,4 @@
-<!-- DriveImageSource — converted from DriveImageSource.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<!-- DriveImageSource - converted from DriveImageSource.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
 <UserControl x:Props="ImageSourceProps">
   <Stack Class="h-full">
     <Stack Direction="LeftToRight" Gap="4" CrossAlign="Center" Class="shrink-0 border-b border-border">

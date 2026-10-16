@@ -1,6 +1,6 @@
 // Image previewer, built on the generic FilePreviewShell: the shell owns the
 // chrome (header, menubar, share, open-with, prev/next, details, dialogs) and
-// this file plugs the image-specific features in — the picture itself (with
+// this file plugs the image-specific features in - the picture itself (with
 // the thumbnail-cache busting the explorer already uses), zoom (fit/presets,
 // Ctrl+wheel, +/− keys), printing and the « Ajuster l'image » editor hook.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'

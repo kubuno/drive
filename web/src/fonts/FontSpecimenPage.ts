@@ -26,7 +26,7 @@ export interface FontSpecimenData {
   license?: string
   licenseUrl?: string
   embeddable?: string
-  /** Platform font shipped with the module — undeletable, flagged in the UI. */
+  /** Platform font shipped with the module - undeletable, flagged in the UI. */
   isProtected?: boolean
   variants: SpecimenVariant[]
 }

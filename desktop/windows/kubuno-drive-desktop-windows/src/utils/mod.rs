@@ -1,4 +1,4 @@
-//! Port of `Files.App/Utils/` — shell and file system interop.
+//! Port of `Files.App/Utils/` - shell and file system interop.
 
 pub mod bulk_rename;
 pub mod cloud;

@@ -15,11 +15,11 @@ use super::{not_recycle_bin, selected};
 ///
 /// - `Label`: `Strings.InstallCertificate` → "Install certificate".
 /// - `Description`: `Strings.InstallCertificateDescription`.
-/// - `Glyph`: `new("")` (Segoe MDL2 glyph, not a ThemedIcon — hence no
+/// - `Glyph`: `new("")` (Segoe MDL2 glyph, not a ThemedIcon - hence no
 ///   `glyph()` here, the port renders via ThemedIcon).
 /// - `IsExecutable`: `SelectedItems.Any() && All(IsCertificateFile) &&
 ///   !RecycleBin && !ZipFolder`.
-/// - `ExecuteAsync`: `ContextMenu.InvokeVerb("add", paths)` — the verb is
+/// - `ExecuteAsync`: `ContextMenu.InvokeVerb("add", paths)` - the verb is
 ///   indeed **"add"** (not "install").
 pub struct InstallCertificate;
 impl Action for InstallCertificate {

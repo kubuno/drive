@@ -47,13 +47,13 @@ export interface PreviewShellExtensions {
   toolsMenu?: MenuItem[]
   /** Content of the centered toolbar pill (viewer controls). */
   toolbar?: React.ReactNode
-  /** Extra node inside the (relative) toolbar row — e.g. a find bar. */
+  /** Extra node inside the (relative) toolbar row - e.g. a find bar. */
   toolbarOverlay?: React.ReactNode
   /** Buttons stacked at the top of the left gutter (rail modes). */
   railButtons?: React.ReactNode
   /** Left rail content; omit to collapse the rail. */
   rail?: React.ReactNode
-  /** Effective rail width (0 when hidden) — keeps the toolbar centered. */
+  /** Effective rail width (0 when hidden) - keeps the toolbar centered. */
   railWidth?: number
   /** Bottom-left rail toggle; the button is hidden without it. */
   onToggleRail?: () => void
@@ -62,7 +62,7 @@ export interface PreviewShellExtensions {
   onPrint?: () => void | Promise<void>
   /** Sections appended to the shortcuts dialog. */
   shortcutSections?: ShortcutSection[]
-  /** Viewer key handler — runs FIRST; return true when the key is consumed. */
+  /** Viewer key handler - runs FIRST; return true when the key is consumed. */
   onKey?: (e: KeyboardEvent) => boolean
   /** Called after the shell swallowed a right-click on the overlay. */
   onContextMenu?: (e: React.MouseEvent) => void
@@ -192,7 +192,7 @@ export function FileTypeChip({ mime }: { mime: string }) {
   )
 }
 
-// ── Details panel (dark, integrated — Drive-style) ───────────────────────────
+// ── Details panel (dark, integrated - Drive-style) ───────────────────────────
 
 function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -292,7 +292,7 @@ function PreviewDetailsPanel({ file, onClose, onManageAccess }: {
       {/* "Storage used" has to mean storage used. Revisions are charged to the
           account's quota, so a file that keeps a history occupies more than its
           own size, and showing only `size_bytes` here would understate the very
-          number the account is billed on — and hide the one thing it can free. */}
+          number the account is billed on - and hide the one thing it can free. */}
       <DetailRow label={t('preview.details_storage', { defaultValue: 'Espace de stockage utilisé' })}>
         {formatSize(file.size_bytes + versionBytes(file as FileItem & FileVersionStats))}
       </DetailRow>
@@ -312,7 +312,7 @@ function PreviewDetailsPanel({ file, onClose, onManageAccess }: {
         </span>
       </DetailRow>
       <DetailRow label={t('preview.details_owner', { defaultValue: 'Propriétaire' })}>
-        {isMine ? t('preview.details_me', { defaultValue: 'moi' }) : '—'}
+        {isMine ? t('preview.details_me', { defaultValue: 'moi' }) : '-'}
       </DetailRow>
       <DetailRow label={t('preview.details_modified', { defaultValue: 'Date de modification' })}>{fmtDate(file.updated_at)}</DetailRow>
       {accessData?.last_viewed_at && (
@@ -463,7 +463,7 @@ export default function FilePreviewShell({
 
   const current = file
   // External source (a mail attachment, a chat file…): the bytes are ours to
-  // display, but nothing else is — every Drive-owned action is hidden below.
+  // display, but nothing else is - every Drive-owned action is hidden below.
   const external = isExternalFile(current)
   // Present only when the shell runs inside the external-preview host: it can
   // import the source into Drive, after which `external` turns false and the
@@ -563,7 +563,7 @@ export default function FilePreviewShell({
   ), [openWithItems, current])
 
   // Share extras: « Copier le lien » plus actions contributed by other modules
-  // (slot files-share-actions — e.g. mail's « Envoyer ce fichier par e-mail »,
+  // (slot files-share-actions - e.g. mail's « Envoyer ce fichier par e-mail »,
   // present only while the mail module is active).
   const activeModules = useModulesStore(s => s.activeModules)
   const shareMoreItems = useMemo<MenuItem[]>(() => {
@@ -610,7 +610,7 @@ export default function FilePreviewShell({
     },
     { type: 'separator' },
     // Sharing, renaming, moving, starring and labels only make sense for files
-    // Drive owns — an external source has none of that.
+    // Drive owns - an external source has none of that.
     ...(external ? [] : [
       {
         type: 'submenu', label: t('preview.share', { defaultValue: 'Partager' }), icon: <Share2 size={14} />,
@@ -622,7 +622,7 @@ export default function FilePreviewShell({
     ]),
     { type: 'action', label: t('common.download'), shortcut: 'Ctrl+D',           icon: <Download size={14} />,    onClick: handleDownload },
     // External source: importing it into Drive is the ONLY Drive-side action
-    // that makes sense — everything else needs a file Drive already owns.
+    // that makes sense - everything else needs a file Drive already owns.
     ...(canSave ? [
       {
         type: 'action', icon: <HardDriveDownload size={14} />, disabled: saveState === 'saving',
@@ -822,7 +822,7 @@ export default function FilePreviewShell({
             </button>
           )}
           {external ? (
-            // No Drive sharing for a foreign source — offer the download instead.
+            // No Drive sharing for a foreign source - offer the download instead.
             <button
               onClick={handleDownload}
               className="flex items-center gap-1.5 px-3.5 py-2 text-xs bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors"
@@ -893,7 +893,7 @@ export default function FilePreviewShell({
       {/* ── Body: gutter | rail | viewer | details ── */}
       <div className="flex-1 flex min-h-0">
         {/* Left gutter (56px): rail-mode buttons on top, bottom-left toggle
-            lives in the same column — nothing else ever covers this band. */}
+            lives in the same column - nothing else ever covers this band. */}
         <div className="w-14 shrink-0 flex flex-col items-center pt-1 gap-1">
           {ext.railButtons}
         </div>

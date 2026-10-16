@@ -48,7 +48,7 @@ pub(super) fn seer_toggle(path: &str) {
     let cds = COPYDATASTRUCT {
         // `data.dwData = 5000u;`
         dwData: 5000,
-        // `data.cbData = (uint)(path.Length + 1) * 2;` — trailing NUL included,
+        // `data.cbData = (uint)(path.Length + 1) * 2;` - trailing NUL included,
         // in bytes (2 per UTF-16 unit).
         cbData: (wide.len() * 2) as u32,
         lpData: wide.as_ptr() as *mut core::ffi::c_void,
@@ -66,7 +66,7 @@ pub(super) fn seer_toggle(path: &str) {
     }
 }
 
-/// Seer's `SwitchPreviewAsync` — simplified version (Seer is the fallback):
+/// Seer's `SwitchPreviewAsync` - simplified version (Seer is the fallback):
 /// refreshes the popup if the window is visible and the path has changed.
 ///
 /// NB: the original additionally reads the `tracking_file` setting (Corey\Seer

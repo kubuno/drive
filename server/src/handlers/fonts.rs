@@ -5,7 +5,7 @@
 //! `GET /fonts/files/:id` serves the font binaries. Both are UNAUTHENTICATED
 //! on purpose: stylesheet and font fetches carry no Authorization header (the
 //! login page needs the platform faces too), and the surface only ever exposes
-//! files sitting in the shared `System/Fonts` directory — nothing user-private.
+//! files sitting in the shared `System/Fonts` directory - nothing user-private.
 //!
 //! The `@font-face` descriptors (weight/stretch ranges, family name) are read
 //! from the font binaries themselves (`name`, `fvar`, `OS/2` tables), parsed
@@ -79,7 +79,7 @@ fn find_table(data: &[u8], tag: &[u8; 4]) -> Option<(usize, usize)> {
 fn parse_family(data: &[u8], name_off: usize) -> Option<String> {
     let count = be16(data, name_off + 2)? as usize;
     let strings = name_off + be16(data, name_off + 4)? as usize;
-    let mut best: Option<(u8, String)> = None; // (score, value) — higher wins
+    let mut best: Option<(u8, String)> = None; // (score, value) - higher wins
     for i in 0..count {
         let rec = name_off + 6 + i * 12;
         let platform = be16(data, rec)?;
@@ -94,7 +94,7 @@ fn parse_family(data: &[u8], name_off: usize) -> Option<String> {
             0 | 3 => {
                 // UTF-16BE
                 // `as_chunks` gives fixed-size arrays, so the pair is read without
-                // indexing — and clippy stopped accepting `chunks_exact` here as of
+                // indexing - and clippy stopped accepting `chunks_exact` here as of
                 // Rust 1.98. The trailing odd byte, if any, is not a code unit.
                 let (pairs, _) = raw.as_chunks::<2>();
                 let units: Vec<u16> = pairs.iter().map(|c| u16::from_be_bytes(*c)).collect();
@@ -115,7 +115,7 @@ fn parse_family(data: &[u8], name_off: usize) -> Option<String> {
 }
 
 /// Parse the descriptors out of one font binary. Any structural surprise just
-/// degrades to defaults — the CSS still renders, at worst without ranges.
+/// degrades to defaults - the CSS still renders, at worst without ranges.
 fn parse_font_info(data: &[u8]) -> FontInfo {
     let mut info = FontInfo { weight_class: 400, ..FontInfo::default() };
 
@@ -185,7 +185,7 @@ fn percent_decode(s: &str) -> String {
 }
 
 /// Families out of a css2-style query string. The axis spec after `:`
-/// (`:opsz,wght@…`) is accepted and ignored — the variable files serve their
+/// (`:opsz,wght@…`) is accepted and ignored - the variable files serve their
 /// whole ranges anyway.
 fn parse_query(query: &str) -> (Vec<String>, String) {
     let mut families = Vec::new();
@@ -309,7 +309,7 @@ pub async fn css2(State(s): State<AppState>, RawQuery(query): RawQuery) -> Resul
         .expect("valid response"))
 }
 
-/// `GET /fonts/files/:id` — binary of one System/Fonts file, long-cached with
+/// `GET /fonts/files/:id` - binary of one System/Fonts file, long-cached with
 /// an ETag so a replaced font still refreshes.
 pub async fn file(
     State(s): State<AppState>,

@@ -1,5 +1,5 @@
 #![allow(unused_imports)]
-//! Submodule of `MainWindow` — see `main_window/mod.rs`.
+//! Submodule of `MainWindow` - see `main_window/mod.rs`.
 use windows::core::{w, Result};
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, RECT, WPARAM};
 use windows::Win32::Graphics::Dwm::{
@@ -64,7 +64,7 @@ impl MainWindow {
         // by their captions: the command bar, the path trail and the status
         // bar. `Layout::compute` is static and has no DirectWrite, so each of
         // them asks its own `kubuno_desktop_ui` primitive for the widths here, while a
-        // `Canvas` exists, and the layout pass reuses them — one measurement,
+        // `Canvas` exists, and the layout pass reuses them - one measurement,
         // one arrangement, shared by the hit test and the paint.
         if let Some(renderer) = self.renderer.as_ref() {
             if let Ok(canvas) = crate::ui::Painter::new(renderer, &self.theme) {
@@ -91,7 +91,7 @@ impl MainWindow {
                         };
                         (kubuno_drive_desktop_localization::tr(key).replacen("{0}", &name, 1), Some(rect))
                     }
-                    // "Pin to sidebar" — only if at least one dragged folder is not
+                    // "Pin to sidebar" - only if at least one dragged folder is not
                     // already pinned (`haveFoldersToPin`).
                     Some(DropTarget::Pin { rect }) if !self.folders_to_pin(&paths).is_empty() => {
                         (kubuno_drive_desktop_localization::tr("PinFolderToSidebar").to_string(), Some(rect))
@@ -151,7 +151,7 @@ impl MainWindow {
 
             if let Err(e) = renderer.d2d_context.EndDraw(None, None) {
                 tracing::error!("EndDraw failed: {e}");
-                // Device loss — rebuild everything next frame.
+                // Device loss - rebuild everything next frame.
                 self.renderer = None;
                 self.icons.clear();
                 self.bg_image = None;
@@ -326,14 +326,14 @@ impl MainWindow {
                 }
             }
             Location::Dir(path) => {
-                // The size ACTUALLY drawn by the active layout —
+                // The size ACTUALLY drawn by the active layout -
                 // requesting another frame from the shell leaves the view on the
                 // fallback glyph (the Card view drew at 48+ but we only
                 // preloaded 18).
                 let mode = self.state.active().view_mode;
                 let size = crate::view_models::shell_view_model::layout_size(mode);
                 let icon_dip = crate::view_models::shell_view_model::icon_size_for(mode, size);
-                // The Details view draws at `icon_dip.max(ICON_ROW_DIP)` — the
+                // The Details view draws at `icon_dip.max(ICON_ROW_DIP)` - the
                 // cache key must be the SAME as the one used for drawing.
                 let icon_dip = if mode == crate::view_models::shell_view_model::ViewMode::Details {
                     icon_dip.max(crate::ui::ICON_ROW_DIP)

@@ -2,12 +2,12 @@
 //! ("AutoFitColumns").
 //!
 //! C# source:
-//! - `Files.App/Actions/Display/AutoFitColumnsAction.cs` — the command,
+//! - `Files.App/Actions/Display/AutoFitColumnsAction.cs` - the command,
 //!   which calls `DetailsLayoutPage.AutoFitColumns()`.
 //! - `Files.App/Views/Layouts/DetailsLayoutPage.xaml.cs`
 //!   (`AutoFitColumns`, `ResizeColumnToFit`, `MeasureColumnEstimate`,
 //!   `MeasureTextColumnEstimate`).
-//! - `Files.App/Data/Items/DetailsLayoutColumnItem.cs` — default bounds
+//! - `Files.App/Data/Items/DetailsLayoutColumnItem.cs` - default bounds
 //!   (`NormalMinLength = 50`, `NormalMaxLength = 800`).
 //!
 //! # What the C# does
@@ -63,11 +63,11 @@
 // The allow is scoped to this file and must go once it is wired.
 #![allow(dead_code)]
 
-/// Minimum column length — `DetailsLayoutColumnItem.NormalMinLength`
+/// Minimum column length - `DetailsLayoutColumnItem.NormalMinLength`
 /// (default) on the C# side.
 pub const NORMAL_MIN_LENGTH: f32 = 50.0;
 
-/// Maximum column length — `DetailsLayoutColumnItem.NormalMaxLength`
+/// Maximum column length - `DetailsLayoutColumnItem.NormalMaxLength`
 /// (default) on the C# side.
 pub const NORMAL_MAX_LENGTH: f32 = 800.0;
 
@@ -88,7 +88,7 @@ fn text_width(text: &str, font_px: f32) -> f32 {
 ///
 /// = `max(header width, max cell width)`, floored at
 /// `NORMAL_MIN_LENGTH` then increased by `FIT_PADDING` and capped at
-/// `NORMAL_MAX_LENGTH` — faithful to `ResizeColumnToFit`:
+/// `NORMAL_MAX_LENGTH` - faithful to `ResizeColumnToFit`:
 /// `Math.Min(Math.Max(fit, min) + 36, max)`.
 pub fn autofit_width(header: &str, cell_texts: &[String], font_px: f32) -> f32 {
     // Content width = max(header, widest cell).

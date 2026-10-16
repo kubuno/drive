@@ -24,7 +24,7 @@ pub struct FrequentFile {
     pub last_viewed_at: Option<DateTime<Utc>>,
 }
 
-/// A recently-opened file (centralised log) — the full file row plus which app
+/// A recently-opened file (centralised log) - the full file row plus which app
 /// opened it and when (flattened so the JSON is a `File` with two extra fields).
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 pub struct RecentFile {

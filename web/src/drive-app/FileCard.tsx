@@ -144,7 +144,7 @@ export default function FileCard({
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
     >
-      {/* Checkbox overlay — top-left corner, consistent with FolderCard. */}
+      {/* Checkbox overlay - top-left corner, consistent with FolderCard. */}
 
       {/* Header: type icon + name + star + menu (the checkbox covers the icon on hover) */}
       <div className={`flex items-center gap-2 ${dense ? 'px-2 h-8' : 'px-3 h-10'}`}>
@@ -164,7 +164,7 @@ export default function FileCard({
         onMouseEnter={isVideo && hasBigThumb && !thumbErr ? handleVideoMouseEnter : undefined}
         onMouseLeave={isVideo && hasBigThumb && !thumbErr ? handleVideoMouseLeave : undefined}
       >
-        {/* Kept revisions, top-left — the extension badge holds the opposite
+        {/* Kept revisions, top-left - the extension badge holds the opposite
           * corner, and neither ever overlaps the video play button. */}
         <VersionBadge file={file as FileItem & FileVersionStats} variant="overlay" />
         {hasBigThumb && !thumbErr ? (
@@ -204,7 +204,7 @@ export default function FileCard({
         )}
       </div>
 
-      {/* Extension badge — bottom-right of the preview. The outer span uses
+      {/* Extension badge - bottom-right of the preview. The outer span uses
           `background-color: inherit` so its padding ring matches the card's own
           background in EVERY state (hover/selected/focused) live, carving a
           seamless notch into the white preview area around the white pill.

@@ -4,7 +4,7 @@
 //!
 //! Same recipe as `flyout_window`: a no-activate `WS_POPUP` composed by
 //! DirectComposition (per-pixel alpha), TOPMOST, following the cursor. No
-//! acrylic here — the original visual is a translucent snapshot of
+//! acrylic here - the original visual is a translucent snapshot of
 //! the tab, not a blurred surface.
 
 use windows::core::{Result, PCWSTR};
@@ -22,7 +22,7 @@ use crate::graphics::Renderer;
 use crate::styles::theme::Theme;
 use crate::ui::Rect;
 
-/// Ghost size in DIP — the silhouette of a tab from the band.
+/// Ghost size in DIP - the silhouette of a tab from the band.
 const GHOST_W: f32 = 208.0;
 const GHOST_H: f32 = 34.0;
 /// Banner for the "Move tab here" label (DragUIOverride.Caption),
@@ -68,7 +68,7 @@ pub struct TabGhostWindow {
     renderer: Renderer,
     visible: bool,
     size: (u32, u32),
-    /// Last painted title — avoids repainting on every WM_MOUSEMOVE.
+    /// Last painted title - avoids repainting on every WM_MOUSEMOVE.
     painted: String,
 }
 
@@ -76,7 +76,7 @@ impl TabGhostWindow {
     pub fn new(owner: HWND, dark: bool) -> Result<Self> {
         unsafe {
             let instance = GetModuleHandleW(None)?;
-            // WS_EX_TRANSPARENT: hit-tests pass through it — the ghost
+            // WS_EX_TRANSPARENT: hit-tests pass through it - the ghost
             // follows the cursor, `WindowFromPoint` must see the window underneath
             // (it's the one that receives the drop).
             let hwnd = CreateWindowExW(
@@ -180,7 +180,7 @@ impl TabGhostWindow {
                 let label = Rect::new(12.0, 0.0, GHOST_W - 12.0, GHOST_H);
                 let fg = crate::ui::fade(&theme.text_primary, GHOST_OPACITY);
                 // Title left-aligned, truncated with "…" at the silhouette's
-                // edge — same Painter as the main window, the
+                // edge - same Painter as the main window, the
                 // ghost having its own Renderer of the same type.
                 painter.text_ellipsis(title, &label, &painter.renderer.formats.body, &fg);
                 // The label badge, accent + contrasting text, centered below

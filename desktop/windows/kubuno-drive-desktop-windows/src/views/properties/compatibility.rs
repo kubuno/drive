@@ -1,4 +1,4 @@
-//! "Compatibility" tab of the properties sheet — mirror of
+//! "Compatibility" tab of the properties sheet - mirror of
 //! `Views/Properties/CompatibilityPage.xaml` (the DRAW). The view-model
 //! (`CompatibilityModel`/`gather`, registry read + labels,
 //! `CompatibilityViewModel` + `WindowsCompatibilityService`) now lives in
@@ -8,7 +8,7 @@
 //!
 //! The tab is only offered for an executable (or a shortcut whose target is
 //! one). READ-ONLY: the combos/switches are shown read-only (state read from
-//! the registry) — writing is a TODO.
+//! the registry) - writing is a TODO.
 
 use crate::styles::theme::Theme;
 use crate::ui::{Painter, Rect};
@@ -34,7 +34,7 @@ pub fn draw(p: &Painter, theme: &Theme, content: &Rect, model: &CompatibilityMod
     }
 
     // Clickable "Run compatibility troubleshooter" card (`RunTroubleshooter`
-    // Command) — shown for fidelity, action = TODO.
+    // Command) - shown for fidelity, action = TODO.
     y = draw_action_card(p, theme, left, right, y, kubuno_drive_desktop_localization::tr("CompatibilityRunTroubleshooter")) + 4.0;
 
     // Combos (value shown read-only).

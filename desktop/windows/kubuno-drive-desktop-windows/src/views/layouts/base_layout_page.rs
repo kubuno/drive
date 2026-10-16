@@ -23,7 +23,7 @@ pub(in crate::views) fn file_glyph(name: &str, is_dir: bool) -> (&'static str, O
     use kubuno_drive_desktop_shared::helpers::file_extensions as fe;
     if is_dir {
         // The web's `FolderGlyph` paints folders #5f6368 (no colour of their
-        // own) — that is exactly `text_secondary`, the callers' fallback.
+        // own) - that is exactly `text_secondary`, the callers' fallback.
         return (GLYPH_FOLDER, None);
     }
     let n = Some(name);

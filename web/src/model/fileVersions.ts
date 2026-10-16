@@ -2,7 +2,7 @@
 // the details panel, the item context menu and the storage page.
 //
 // Kept revisions are billed against the user's quota, so they must stay both
-// visible and reclaimable — a history nobody can see is a history nobody can
+// visible and reclaimable - a history nobody can see is a history nobody can
 // free. The published `@kubuno/drive` surface predates that accounting, so the
 // two extra file fields and the two endpoints are declared here rather than
 // imported from the package.
@@ -11,7 +11,7 @@ import { api } from '@kubuno/sdk'
 /**
  * Version statistics carried by a file payload. Only the listing and the file
  * detail compute them; every other endpoint leaves them out, hence optional.
- * `version_count` excludes the current content — it counts the OLD revisions,
+ * `version_count` excludes the current content - it counts the OLD revisions,
  * which is exactly what a purge would reclaim.
  */
 export interface FileVersionStats {
@@ -25,7 +25,7 @@ export interface FileVersionStats {
  * One, and it cannot be anything else: `version_count` excludes the current
  * file, so a file at 1 already holds one revision that is **charged to the
  * account's quota**. The platform bills what a person can free itself, and
- * nobody can free what they are never shown — a threshold of 2 would charge for
+ * nobody can free what they are never shown - a threshold of 2 would charge for
  * a revision and hide it in the same breath.
  *
  * The constant lives here so the details row, the menu entry and the storage

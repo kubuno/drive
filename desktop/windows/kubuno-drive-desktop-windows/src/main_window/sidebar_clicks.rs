@@ -1,5 +1,5 @@
 #![allow(unused_imports)]
-//! Sidebar clicks (mirror of `ViewModels/UserControls/SidebarViewModel.cs`) — `impl MainWindow` block, see `main_window/mod.rs`.
+//! Sidebar clicks (mirror of `ViewModels/UserControls/SidebarViewModel.cs`) - `impl MainWindow` block, see `main_window/mod.rs`.
 use windows::core::{w, Result};
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, RECT, WPARAM};
 use windows::Win32::Graphics::Dwm::{
@@ -26,7 +26,7 @@ impl MainWindow {
     pub(crate) fn on_click_sidebar_item(&mut self, i: usize, layout: &Layout, x_px: f32) {
                 if let Some((rect, entry)) = layout.sidebar_items.get(i) {
                     // In COMPACT mode, clicking a section header re-expands the
-                    // sidebar (the original opens the children in a flyout — re-expanding
+                    // sidebar (the original opens the children in a flyout - re-expanding
                     // stands in for that for now).
                     if crate::services::settings::get().sidebar_compact
                         && matches!(

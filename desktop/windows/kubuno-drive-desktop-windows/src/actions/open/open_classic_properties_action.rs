@@ -6,7 +6,7 @@ use crate::main_window::MainWindow;
 use crate::view_models::shell_view_model::{shell_verb, Location};
 
 /// `OpenClassicPropertiesAction.cs` (Alt+Shift+Enter): the shell's CLASSIC
-/// Properties dialog — selection if any, otherwise the current folder.
+/// Properties dialog - selection if any, otherwise the current folder.
 pub struct OpenClassicProperties;
 impl Action for OpenClassicProperties {
     fn label(&self) -> &'static str {

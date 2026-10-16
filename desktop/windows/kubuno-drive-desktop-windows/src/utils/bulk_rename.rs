@@ -7,7 +7,7 @@
 //! ## What the C# actually does
 //!
 //! The bulk rename dialog is deliberately minimalistic. The user enters ONE
-//! name (`FileName`) — without extension or tokens — and each selected item
+//! name (`FileName`) - without extension or tokens - and each selected item
 //! is renamed to `FileName + original extension`:
 //!
 //! ```csharp
@@ -46,7 +46,7 @@
 //! ```
 //!
 //! ```csharp
-//! // FtpStorageFolder.CreateFileAsync — same format, same 1024 cap
+//! // FtpStorageFolder.CreateFileAsync - same format, same 1024 cap
 //! desiredName = $"{nameWithoutExt} ({attempt}){extension}";
 //! ```
 //!
@@ -71,15 +71,15 @@
 //! The C# does NOT expose a `{}` token language in this dialog: the only
 //! dynamic element is the collision counter described above. To satisfy
 //! the need for an explicit incremental counter (with width/format)
-//! requested by the port, this module adds — as a clearly identified
-//! EXTENSION — an optional `{n}` token. Without a token, the behavior is
+//! requested by the port, this module adds - as a clearly identified
+//! EXTENSION - an optional `{n}` token. Without a token, the behavior is
 //! rigorously that of the C# (literal name + extension + collision suffix).
 //!
 //! Supported tokens:
-//! - literal text — any character outside braces.
-//! - `{n}` — incremental counter, no padding. Reproduces the `attempt`
+//! - literal text - any character outside braces.
+//! - `{n}` - incremental counter, no padding. Reproduces the `attempt`
 //!   value of the C# `({attempt})` suffix.
-//! - `{n:0N}` — incremental counter with fixed width `N`, left-padded with
+//! - `{n:0N}` - incremental counter with fixed width `N`, left-padded with
 //!   zeros (e.g. `{n:000}` → `001`, `002`…). Port extension: the C# never
 //!   pads the collision suffix.
 //!

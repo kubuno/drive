@@ -1,11 +1,11 @@
 //! Runs the drive module's own migrations and its delta/search primitives
-//! against a real server of **each** engine, from a single compiled binary — the
+//! against a real server of **each** engine, from a single compiled binary - the
 //! proof that the engine is a run-time choice, not a build-time one, and that the
 //! two ported primitives (the change journal and the normalized full-text search)
 //! behave identically on PostgreSQL, MySQL/MariaDB and SQLite.
 //!
 //! The file bytes live in the storage backend, not the database, so this binary
-//! exercises the DATABASE layer directly — the very SQL the services issue (id +
+//! exercises the DATABASE layer directly - the very SQL the services issue (id +
 //! change_seq generated in Rust, `name_norm`/`content_norm` from
 //! `search::normalize`, tombstones on hard delete).
 //!

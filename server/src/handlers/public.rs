@@ -1,4 +1,4 @@
-/// Routes publiques — accès à un partage par token (sans authentification).
+/// Routes publiques - accès à un partage par token (sans authentification).
 use axum::{
     body::Body,
     extract::{Path, Query, State},
@@ -22,7 +22,7 @@ pub struct ShareAccessQuery {
 
 /// The two instance switches this surface enforces LIVE, on every request,
 /// rather than only at creation time. Turning public links off, or forbidding
-/// download through them, has to close the links already handed out — a policy
+/// download through them, has to close the links already handed out - a policy
 /// that only applies to tomorrow's links leaves yesterday's exposure intact,
 /// which is the opposite of what an administrator reaches for the switch to do.
 fn public_access_denied(state: &AppState) -> Option<FilesError> {

@@ -17,7 +17,7 @@ pub(super) fn parse_folder(path: &str) -> Option<WindowsFolder> {
 }
 
 /// Deletes items (recycle bin first thanks to FOF_ALLOWUNDO). `permanently`
-/// drops FOF_ALLOWUNDO — the « Supprimer définitivement » checkbox of the
+/// drops FOF_ALLOWUNDO - the « Supprimer définitivement » checkbox of the
 /// delete dialog and `DeleteItemPermanently`.
 pub fn delete_items(paths: &[String], permanently: bool) -> bool {
     use windows::Win32::UI::Shell::{FILEOPERATION_FLAGS, FOF_ALLOWUNDO, FOF_NOCONFIRMMKDIR};

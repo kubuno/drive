@@ -10,7 +10,7 @@ import DialogBreadcrumb, { type StorageOpt } from '../controls/DialogBreadcrumb'
 import DialogTree from '../controls/DialogTree'
 
 interface RemoteLoc { id: string; name: string; path: string }
-// Internal crumb — carries navigation state; only { name } is passed to DialogBreadcrumb
+// Internal crumb - carries navigation state; only { name } is passed to DialogBreadcrumb
 interface InternalCrumb {
   name:        string
   folderId?:   string | null

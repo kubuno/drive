@@ -16,7 +16,7 @@ fn flag(qp: &HashMap<String, String>, k: &str) -> bool {
     matches!(qp.get(k).map(String::as_str), Some("true") | Some("1"))
 }
 
-/// GET /files/search — recherche plein-texte (+ sémantique si activé).
+/// GET /files/search - recherche plein-texte (+ sémantique si activé).
 pub async fn search_files(
     State(state): State<AppState>,
     Extension(user): Extension<FilesUser>,
@@ -55,7 +55,7 @@ pub async fn search_files(
     Ok(Json(json!({ "results": results, "total": total, "semantic": semantic })))
 }
 
-/// POST /files/search/similar — recherche d'images similaires à une image téléversée
+/// POST /files/search/similar - recherche d'images similaires à une image téléversée
 /// (empreinte perceptuelle dHash → distance de Hamming).
 pub async fn search_similar(
     State(state): State<AppState>,
@@ -94,7 +94,7 @@ pub async fn search_similar(
     Ok(Json(json!({ "results": results, "total": total, "semantic": false })))
 }
 
-/// POST /files/search/reindex — purge l'index de l'utilisateur (reconstruit par le worker).
+/// POST /files/search/reindex - purge l'index de l'utilisateur (reconstruit par le worker).
 pub async fn reindex(
     State(state): State<AppState>,
     Extension(user): Extension<FilesUser>,

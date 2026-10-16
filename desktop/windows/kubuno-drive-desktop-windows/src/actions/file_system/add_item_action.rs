@@ -4,7 +4,7 @@ use super::current_dir;
 use crate::actions::{Action, HotKey};
 use crate::main_window::MainWindow;
 
-/// `AddItemAction.cs` (Ctrl+Shift+I): opens the `AddItemDialog` — the
+/// `AddItemAction.cs` (Ctrl+Shift+I): opens the `AddItemDialog` - the
 /// "Create new item" list (Folder, File, Shortcut; the registry's ShellNew
 /// entries are still to be ported).
 pub struct AddItem;

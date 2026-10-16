@@ -27,7 +27,7 @@ pub struct DeltaQuery {
     pub full:   Option<bool>,
 }
 
-/// GET /sync/delta?cursor=&limit= — changes since the cursor (files, folders, deletions).
+/// GET /sync/delta?cursor=&limit= - changes since the cursor (files, folders, deletions).
 pub async fn delta(
     State(state): State<AppState>,
     Extension(user): Extension<FilesUser>,
@@ -46,7 +46,7 @@ pub async fn delta(
     })))
 }
 
-/// PUT /sync/file/:id/content — replace a file's content (raw body).
+/// PUT /sync/file/:id/content - replace a file's content (raw body).
 ///
 /// Send `If-Match: <etag>` to push a local edit safely: if the server's content
 /// changed meanwhile, the request fails with 412 and the client resolves the

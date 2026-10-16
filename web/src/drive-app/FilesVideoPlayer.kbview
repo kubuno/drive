@@ -1,4 +1,4 @@
-<!-- FilesVideoPlayer — converted from FilesVideoPlayer.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<!-- FilesVideoPlayer - converted from FilesVideoPlayer.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
 <Stack x:Props="FilesVideoPlayerProps" Gap="0" Class="fixed inset-0 z-50 bg-black/95" OnClick="stack_click">
   <Stack Direction="LeftToRight"
          Gap="0"

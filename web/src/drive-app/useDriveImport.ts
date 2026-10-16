@@ -42,7 +42,7 @@ export function useDriveImport({ folderId, selectedIds, itemTypeMap, refreshUser
 
   // Register direct callbacks so the sidebar "Nouveau" menu can trigger clicks
   // synchronously within the browser user gesture context (useEffect is fine here
-  // because we're registering, not clicking — the actual click happens later in the
+  // because we're registering, not clicking - the actual click happens later in the
   // same gesture as the user's dropdown selection via onSelect → triggerUpload())
   useEffect(() => {
     registerFileInput(() => fileInputRef.current?.click())

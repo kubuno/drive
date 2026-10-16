@@ -1,6 +1,6 @@
 // Standalone pop-out pages: the desktop client opens these SPA routes in a real
 // OS window (window.kubunoDesktop.openWindow). Each page loads the file named by
-// `?file=<id>` and seeds the matching store — the floating component itself is
+// `?file=<id>` and seeds the matching store - the floating component itself is
 // already mounted app-wide through the `app-dialogs` slot, so the page renders
 // only a neutral backdrop (no double mount).
 import { useEffect, useRef, useState } from 'react'
@@ -34,10 +34,10 @@ function StandaloneBackdrop({ error }: { error: string | null }) {
   )
 }
 
-/** /drive/player?file=<id> — the Drive audio player in its own window.
+/** /drive/player?file=<id> - the Drive audio player in its own window.
  *
  * Seeds ONCE: when the media module is active its bridge immediately transfers
- * the file to the media player and CLEARS the drive store — re-seeding on store
+ * the file to the media player and CLEARS the drive store - re-seeding on store
  * change would loop forever (React #185). No auto window-close either: with the
  * bridge, the drive store is not the player's lifecycle owner. */
 export default function DrivePlayerPage() {
@@ -54,7 +54,7 @@ export default function DrivePlayerPage() {
   return <StandaloneBackdrop error={error} />
 }
 
-/** /drive/paint?file=<id> — the Drive Paint editor in its own window. */
+/** /drive/paint?file=<id> - the Drive Paint editor in its own window. */
 export function DrivePaintPage() {
   const { file, error } = useQueryFile()
   const seeded = useRef(false)

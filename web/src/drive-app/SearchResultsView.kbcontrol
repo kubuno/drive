@@ -1,4 +1,4 @@
-<!-- SearchResultsView — converted from SearchResultsView.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<!-- SearchResultsView - converted from SearchResultsView.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
 <UserControl x:Props="SearchResultsViewProps">
   <Panel>
     <Stack Direction="LeftToRight" Gap="0" CrossAlign="Center" Justify="SpaceBetween" Class="mb-3">

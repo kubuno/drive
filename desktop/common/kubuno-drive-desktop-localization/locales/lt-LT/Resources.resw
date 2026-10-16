@@ -127,10 +127,10 @@
     <value>Kopijuoti daikto kelio adresÄ…</value>
   </data>
   <data name="CopyPathWithQuotes" xml:space="preserve">
-    <value>Kopijuoti kelio adresÄ… su kabutÄ—mis</value>
+    <value>Kopijuoti kelio adresÄ… su kabutÄ-mis</value>
   </data>
   <data name="CopyItemPathWithQuotes" xml:space="preserve">
-    <value>Kopijuoti pasirinkto elemento keliÄ… su kabutÄ—mis</value>
+    <value>Kopijuoti pasirinkto elemento keliÄ… su kabutÄ-mis</value>
   </data>
   <data name="Browse" xml:space="preserve">
     <value>NarÅ¡yti</value>
@@ -166,7 +166,7 @@
     <value>Praleisti</value>
   </data>
   <data name="SelectAll" xml:space="preserve">
-    <value>PaÅ¾ymÄ—ti viskÄ…</value>
+    <value>PaÅ¾ymÄ-ti viskÄ…</value>
   </data>
   <data name="InvertSelection" xml:space="preserve">
     <value>Invertuoti pasirinkimÄ…</value>
@@ -184,7 +184,7 @@
     <value>IÅ¡valyti visus elementus</value>
   </data>
   <data name="NavigationToolbarVisiblePath.PlaceholderText" xml:space="preserve">
-    <value>Ä®veskite keliÄ…, kuriuo norite pereiti, arba Ä¯raÅ¡ykite "&gt;", kad atvertumÄ—te komandÅ³ paletÄ™</value>
+    <value>Ä®veskite keliÄ…, kuriuo norite pereiti, arba Ä¯raÅ¡ykite "&gt;", kad atvertumÄ-te komandÅ³ paletÄ™</value>
   </data>
   <data name="Search" xml:space="preserve">
     <value>IeÅ¡koti</value>
@@ -196,7 +196,7 @@
     <value>No settings match your search.</value>
   </data>
   <data name="RecentItemDescription.Text" xml:space="preserve">
-    <value>ÄŒia bus rodomi failai, kuriuos anksÄiau atidarÄ—te</value>
+    <value>ÄŒia bus rodomi failai, kuriuos anksÄiau atidarÄ-te</value>
   </data>
   <data name="RecentItemRemove.Text" xml:space="preserve">
     <value>PaÅ¡alinti Å¡Ä¯ elementÄ…</value>
@@ -220,10 +220,10 @@
     <value>Font</value>
   </data>
   <data name="SettingsFilesAndFoldersShowFileExtensions" xml:space="preserve">
-    <value>Rodyti Å¾inomÅ³ failÅ³ plÄ—tinius</value>
+    <value>Rodyti Å¾inomÅ³ failÅ³ plÄ-tinius</value>
   </data>
   <data name="SettingsFilesAndFoldersShowHiddenItems" xml:space="preserve">
-    <value>Rodyti paslÄ—ptus failus ir aplankus</value>
+    <value>Rodyti paslÄ-ptus failus ir aplankus</value>
   </data>
   <data name="ShowDotFiles" xml:space="preserve">
     <value>Rodyti taÅ¡kinius failus</value>
@@ -235,7 +235,7 @@
     <value>Fono spalva</value>
   </data>
   <data name="Advanced" xml:space="preserve">
-    <value>IÅ¡plÄ—stinÄ—</value>
+    <value>IÅ¡plÄ-stinÄ-</value>
   </data>
   <data name="CacheThumbnails" xml:space="preserve">
     <value>Cache thumbnails</value>
@@ -256,7 +256,7 @@
     <value>Clear cache</value>
   </data>
   <data name="SettingsOnStartupContinueWhereYouLeftOff.Content" xml:space="preserve">
-    <value>TÄ™sti nuo ten, kur baigÄ—te</value>
+    <value>TÄ™sti nuo ten, kur baigÄ-te</value>
   </data>
   <data name="SettingsOnStartupOpenANewTab.Content" xml:space="preserve">
     <value>Atidaryti naujÄ… skirtukÄ…</value>
@@ -277,7 +277,7 @@
     <value>Pavadinimas/-Ä…</value>
   </data>
   <data name="Ascending" xml:space="preserve">
-    <value>DidÄ—janÄia tvarka</value>
+    <value>DidÄ-janÄia tvarka</value>
   </data>
   <data name="Paste" xml:space="preserve">
     <value>Ä®klijuoti</value>
@@ -289,7 +289,7 @@
     <value>Kurti naujÄ…</value>
   </data>
   <data name="Properties" xml:space="preserve">
-    <value>YpatybÄ—s</value>
+    <value>YpatybÄ-s</value>
   </data>
   <data name="Open" xml:space="preserve">
     <value>Atidaryti/Atverti</value>
@@ -310,7 +310,7 @@
     <value>IÅ¡trinti</value>
   </data>
   <data name="PinFolderToSidebar" xml:space="preserve">
-    <value>Prisegti prie Å¡oninÄ—s juostos</value>
+    <value>Prisegti prie Å¡oninÄ-s juostos</value>
   </data>
   <data name="WelcomeDialog.Title" xml:space="preserve">
     <value>Sveiki atvykÄ™ Ä¯ Files!</value>
@@ -319,7 +319,7 @@
     <value>Suteikti leidimÄ…</value>
   </data>
   <data name="WelcomeDialogTextBlock.Text" xml:space="preserve">
-    <value>NorÄ—dami pradÄ—ti, turÄ—site suteikti mums leidimÄ… rodyti jÅ«sÅ³ failus. Bus atidarytas nustatymÅ³ puslapis, kuriame galÄ—site suteikti Å¡Ä¯ leidimÄ…. AtlikÄ™ Å¡Ä¯ veiksmÄ… turÄ—site iÅ¡ naujo atidaryti programÄ….</value>
+    <value>NorÄ-dami pradÄ-ti, turÄ-site suteikti mums leidimÄ… rodyti jÅ«sÅ³ failus. Bus atidarytas nustatymÅ³ puslapis, kuriame galÄ-site suteikti Å¡Ä¯ leidimÄ…. AtlikÄ™ Å¡Ä¯ veiksmÄ… turÄ-site iÅ¡ naujo atidaryti programÄ….</value>
   </data>
   <data name="Display" xml:space="preserve">
     <value>Ekranas</value>
@@ -558,7 +558,7 @@
     <value>Būsena</value>
   </data>
   <data name="NavigationToolbarVisiblePathNoResults" xml:space="preserve">
-    <value>NÄ—ra rezultatÅ³</value>
+    <value>NÄ-ra rezultatÅ³</value>
   </data>
   <data name="SubDirectoryAccessDenied" xml:space="preserve">
     <value>Nepavyksta pasiekti jokių rodytinų elementų</value>
@@ -597,7 +597,7 @@
     <value>Nuoroda</value>
   </data>
   <data name="ShortcutWebLinkFileType" xml:space="preserve">
-    <value>InternetinÄ— nuoroda</value>
+    <value>InternetinÄ- nuoroda</value>
   </data>
   <data name="ShortcutCreateNewSuffix" xml:space="preserve">
     <value>{0} – spartusis klavišas</value>
@@ -837,7 +837,7 @@
     <value>Takelio numeris</value>
   </data>
   <data name="PropertyDuration" xml:space="preserve">
-    <value>TrukmÄ—</value>
+    <value>TrukmÄ-</value>
   </data>
   <data name="PropertyFrameCount" xml:space="preserve">
     <value>Kadrų skaičius</value>
@@ -1068,7 +1068,7 @@
     <value>Originalus kelias</value>
   </data>
   <data name="Add" xml:space="preserve">
-    <value>PridÄ—ti</value>
+    <value>PridÄ-ti</value>
   </data>
   <data name="Edit" xml:space="preserve">
     <value>Redaguoti</value>
@@ -1530,10 +1530,10 @@
     <value>Neturite leidimo peržiūrėti šio objekto saugos ypatybes. Norėdami tęsti, spustelėkite „Išplėstiniai leidimai“.</value>
   </data>
   <data name="SecurityOwnerLabel.Text" xml:space="preserve">
-    <value>Savininkas/-Ä—:</value>
+    <value>Savininkas/-Ä-:</value>
   </data>
   <data name="SecurityUnknownOwnerText.Text" xml:space="preserve">
-    <value>NeÅ¾inoma/-s savininkÄ—/-as</value>
+    <value>NeÅ¾inoma/-s savininkÄ-/-as</value>
   </data>
   <data name="ExtractArchive" xml:space="preserve">
     <value>Išskleisti archyvą</value>
@@ -1557,7 +1557,7 @@
     <value>Atkurti bibliotekas</value>
   </data>
   <data name="PropertyFileOwner" xml:space="preserve">
-    <value>Savininkas/-Ä—</value>
+    <value>Savininkas/-Ä-</value>
   </data>
   <data name="SecuritySpecialLabel.Text" xml:space="preserve">
     <value>Specialusis</value>
@@ -1683,7 +1683,7 @@
     <value>Failo aprašymas</value>
   </data>
   <data name="PropertyCompany" xml:space="preserve">
-    <value>Ä®monÄ—</value>
+    <value>Ä®monÄ-</value>
   </data>
   <data name="PropertyLanguage" xml:space="preserve">
     <value>Kalba</value>
@@ -1713,7 +1713,7 @@
     <value>Slėpti {0} skyrių</value>
   </data>
   <data name="AddFile" xml:space="preserve">
-    <value>PridÄ—ti failÄ…</value>
+    <value>PridÄ-ti failÄ…</value>
   </data>
   <data name="ConsentDialogTitle" xml:space="preserve">
     <value>Galimi atnaujinimai</value>
@@ -2924,11 +2924,11 @@
     <comment>Key name for hotkeys in menus. Use abbreviation if possible.</comment>
   </data>
   <data name="Key.Left" xml:space="preserve">
-    <value>KairÄ—</value>
+    <value>KairÄ-</value>
     <comment>Key name for hotkeys in menus. Use abbreviation if possible.</comment>
   </data>
   <data name="Key.Right" xml:space="preserve">
-    <value>DeÅ¡inÄ—</value>
+    <value>DeÅ¡inÄ-</value>
     <comment>Key name for hotkeys in menus. Use abbreviation if possible.</comment>
   </data>
   <data name="Key.Down" xml:space="preserve">
@@ -3145,7 +3145,7 @@
     <value>Pakartokite paskutinę failo operaciją</value>
   </data>
   <data name="Location" xml:space="preserve">
-    <value>VietovÄ—:</value>
+    <value>VietovÄ-:</value>
   </data>
   <data name="GroupByMonthDescription" xml:space="preserve">
     <value>Grupuokite elementus pagal mėnesį</value>
@@ -3262,7 +3262,7 @@
     <value>Create a folder with the currently selected {0, plural, one {item} other {items}}</value>
   </data>
   <data name="OpenProperties" xml:space="preserve">
-    <value>YpatybÄ—s</value>
+    <value>YpatybÄ-s</value>
   </data>
   <data name="OpenClassicProperties" xml:space="preserve">
     <value>Atidarykite „File Explorer“ ypatybes</value>
@@ -3489,7 +3489,7 @@
     <value>Palikite programą veikti fone, kai langas uždarytas</value>
   </data>
   <data name="Blue" xml:space="preserve">
-    <value>MÄ—lyna/-s</value>
+    <value>MÄ-lyna/-s</value>
     <comment>One of the custom color themes</comment>
   </data>
   <data name="BlueGray" xml:space="preserve">
@@ -4063,14 +4063,14 @@
     <value>Tinkamas vaizdas</value>
   </data>
   <data name="Left" xml:space="preserve">
-    <value>KairÄ—</value>
+    <value>KairÄ-</value>
     <comment>Image alignment type</comment>
   </data>
   <data name="Opacity" xml:space="preserve">
     <value>Neskaidrumas</value>
   </data>
   <data name="Right" xml:space="preserve">
-    <value>DeÅ¡inÄ—</value>
+    <value>DeÅ¡inÄ-</value>
     <comment>Image alignment type</comment>
   </data>
   <data name="Top" xml:space="preserve">
@@ -4417,7 +4417,7 @@
     <value>Nėra komandų su {0}</value>
   </data>
   <data name="SeeMore" xml:space="preserve">
-    <value>Å½iÅ«rÄ—ti daugiau</value>
+    <value>Å½iÅ«rÄ-ti daugiau</value>
   </data>
   <data name="FilteringFor" xml:space="preserve">
     <value>Filtravimas už</value>

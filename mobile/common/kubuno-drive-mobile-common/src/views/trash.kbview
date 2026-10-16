@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Drive · Trash — converted from browse/BrowseScreens.kt (TrashScreen). The trashed folders and files, grouped
+  Drive · Trash - converted from browse/BrowseScreens.kt (TrashScreen). The trashed folders and files, grouped
   (DOSSIERS then FICHIERS); tap or kebab opens the action sheet (Restore / Delete). Back + title. Rows inlined.
   Drive LIGHT theme.
 -->

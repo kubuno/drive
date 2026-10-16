@@ -1,4 +1,4 @@
-//! `kubuno-drive` — module de gestion de fichiers.
+//! `kubuno-drive` - module de gestion de fichiers.
 //!
 //! Deux faces :
 //! - **client** (toujours compilé, dépendances légères) : `FilesClient` + gestion

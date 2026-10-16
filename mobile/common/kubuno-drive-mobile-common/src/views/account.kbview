@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Drive · Account screen — converted from account/AccountScreen.kt. The signed-in account: identity card
+  Drive · Account screen - converted from account/AccountScreen.kt. The signed-in account: identity card
   (avatar + name/email), profile fields, active sessions (with "this device" badge and revoke), security, and
   sign-out. Avatar + SettingsRow + Badge host controls; session rows inlined. Drive LIGHT theme, logical px.
 -->

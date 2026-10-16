@@ -16,7 +16,7 @@ pub struct DirEntryItem {
     pub modified: Option<std::time::SystemTime>,
     /// Recycle Bin only (`RecycleBinItem.ItemOriginalPath`): the original
     /// folder of the deleted item. `Some` ⇔ the entry comes from the
-    /// Recycle Bin — in that case `modified` carries the DELETION DATE.
+    /// Recycle Bin - in that case `modified` carries the DELETION DATE.
     pub original_path: Option<String>,
 }
 

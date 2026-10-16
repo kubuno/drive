@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Drive · Recent — converted from browse/BrowseScreens.kt (RecentScreen). A flat list of recently-touched
+  Drive · Recent - converted from browse/BrowseScreens.kt (RecentScreen). A flat list of recently-touched
   files (offline, from Room), newest first. Back + title, no sections. Rows inlined. Drive LIGHT theme.
 -->
 <Panel xmlns="https://kubuno.com/views" xmlns:x="https://kubuno.com/views/x"

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Drive · Search — converted from browse/BrowseScreens.kt (SearchScreen). A SearchField in the top bar and a
+  Drive · Search - converted from browse/BrowseScreens.kt (SearchScreen). A SearchField in the top bar and a
   local (offline) results list; a folder result navigates, a file result opens the action sheet. Rows inlined.
   Drive LIGHT theme, logical px.
 -->

@@ -2,7 +2,7 @@
 //!
 //! Port of `Files.App/Helpers/Win32/Win32Helper.Storage.cs::OpenFormatDriveDialog`.
 //!
-//! FORMATTING opens Windows' standard dialog (`SHFormatDrive`) — nothing is
+//! FORMATTING opens Windows' standard dialog (`SHFormatDrive`) - nothing is
 //! erased without the user's click inside that dialog.
 
 use windows::Win32::Foundation::HWND;

@@ -1,4 +1,4 @@
-//! Per-directory change watcher — port of `ShellViewModel.WatchForDirectoryChanges`
+//! Per-directory change watcher - port of `ShellViewModel.WatchForDirectoryChanges`
 //! (ReadDirectoryChangesW on a worker thread, notifying the UI thread).
 
 use std::sync::atomic::{AtomicBool, Ordering};

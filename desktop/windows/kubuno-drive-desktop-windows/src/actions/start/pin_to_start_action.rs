@@ -16,7 +16,7 @@ use super::{native_tile_id, pin_targets};
 /// - `Description`: `Strings.PinToStartDescription`.
 /// - `Glyph`: `themedIconStyle: "App.ThemedIcons.FavoritePin"`.
 /// - `IsExecutable`: `context.ShellPage is not null` (true as soon as a tab is
-///   open on a folder — we require at least one pinnable target).
+///   open on a folder - we require at least one pinnable target).
 ///
 /// DEVIATION: `ExecuteAsync` calls `StartMenuService.PinAsync(storable, name)`,
 /// which creates a WinRT `SecondaryTile` (package identity required). Not
@@ -41,7 +41,7 @@ impl Action for PinToStart {
             // `StartMenuService.PinAsync(storable, displayName)`: creates a
             // SecondaryTile with id `native_tile_id(path)`. WinRT API
             // `Windows.UI.StartScreen` unavailable without a package
-            // identity — pinning not performed.
+            // identity - pinning not performed.
             let _tile_id = native_tile_id(&path);
         }
     }

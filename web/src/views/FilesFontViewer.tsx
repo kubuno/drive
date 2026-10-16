@@ -27,7 +27,7 @@ export function isFontFile(file: FileItem): boolean {
 const ALPHA_UP    = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 const ALPHA_LO    = 'abcdefghijklmnopqrstuvwxyz'
 const NUMS        = '0123456789'
-const PUNCTUATION = '! ? @ # % & . , ; : ( ) [ ] { } " \' / \\ — …'
+const PUNCTUATION = '! ? @ # % & . , ; : ( ) [ ] { } " \' / \\ - …'
 
 const SIZES = [12, 16, 24, 36, 48, 72] as const
 type Size = typeof SIZES[number]

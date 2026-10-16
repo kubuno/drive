@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Drive · Move sheet — converted from sheet/ItemActions.kt (MoveSheet). A bottom sheet: the item name, then the
+  Drive · Move sheet - converted from sheet/ItemActions.kt (MoveSheet). A bottom sheet: the item name, then the
   destination folders (the root and each visible folder), each with the move icon. Drive LIGHT theme.
 -->
 <Panel xmlns="https://kubuno.com/views" xmlns:x="https://kubuno.com/views/x"

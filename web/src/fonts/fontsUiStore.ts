@@ -15,7 +15,7 @@ export const FONT_SORT_LABELS: Record<FontSort, string> = {
 interface FontsUiStore {
   query: string
   sort:  FontSort
-  /** Selected family names (the "cart") — mirrored from FontsExplorer so the
+  /** Selected family names (the "cart") - mirrored from FontsExplorer so the
    *  header bag can show the count. */
   cart:  string[]
   /** Whether the selection / download page is open. */

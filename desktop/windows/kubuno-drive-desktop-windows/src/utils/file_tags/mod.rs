@@ -1,4 +1,4 @@
-//! Port of `Files.App/Utils/FileTags/` — a file's NTFS tags.
+//! Port of `Files.App/Utils/FileTags/` - a file's NTFS tags.
 
 pub mod file_tags_helper;
 

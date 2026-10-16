@@ -62,7 +62,7 @@ function EmbedView({ families, onBack }: { families: CartFamily[]; onBack: () =>
         <ArrowLeft size={20} /><span className="text-3xl font-semibold text-text-primary">Code d’intégration</span>
       </button>
       <p className="text-[15px] text-text-secondary mb-6 max-w-2xl">
-        Auto-hébergé : ces règles pointent vers les polices de <span className="font-medium text-text-primary">votre</span> instance Kubuno ({window.location.host}) — aucune dépendance à un service externe.
+        Auto-hébergé : ces règles pointent vers les polices de <span className="font-medium text-text-primary">votre</span> instance Kubuno ({window.location.host}) - aucune dépendance à un service externe.
       </p>
       <h3 className="text-sm font-medium text-text-primary mb-2">Dans le <code className="text-xs">&lt;head&gt;</code> de votre page</h3>
       <CodeBlock code={linkSnippet} />

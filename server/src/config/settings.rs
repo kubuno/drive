@@ -99,7 +99,7 @@ impl Settings {
                     .try_parsing(true),
             );
 
-        // Variables injectées par le superviseur core — priorité maximale
+        // Variables injectées par le superviseur core - priorité maximale
         if let Ok(v) = std::env::var("KUBUNO_CORE_URL")        { builder = builder.set_override("core.url",             v)?; }
         if let Ok(v) = std::env::var("KUBUNO_INTERNAL_SECRET") { builder = builder.set_override("core.internal_secret", v)?; }
         if let Ok(v) = std::env::var("KUBUNO_DB_HOST")         { builder = builder.set_override("database.host",     v)?; }
@@ -110,7 +110,7 @@ impl Settings {
         if let Ok(v) = std::env::var("KUBUNO_DB_PATH")         { builder = builder.set_override("database.path",     v)?; }
         if let Ok(v) = std::env::var("KUBUNO_DB_ENGINE")       { builder = builder.set_override("database.engine",   v)?; }
 
-        // Embeddings (optionnels) — activables aussi via env pour faciliter le déploiement
+        // Embeddings (optionnels) - activables aussi via env pour faciliter le déploiement
         if let Ok(v) = std::env::var("KUBUNO_EMBEDDINGS_URL")   { builder = builder.set_override("embeddings.provider_url", v)?; builder = builder.set_override("embeddings.enabled", true)?; }
         if let Ok(v) = std::env::var("KUBUNO_EMBEDDINGS_KEY")   { builder = builder.set_override("embeddings.api_key",  v)?; }
         if let Ok(v) = std::env::var("KUBUNO_EMBEDDINGS_MODEL") { builder = builder.set_override("embeddings.model",    v)?; }

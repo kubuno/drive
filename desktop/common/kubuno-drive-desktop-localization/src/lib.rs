@@ -106,7 +106,7 @@ fn load_table(culture: &'static str) -> Table {
     let table: Table = Vec::leak(leaked);
 
     // On a race between two threads, the first table inserted wins (the
-    // second, identical one, is simply dropped — bounded leak).
+    // second, identical one, is simply dropped - bounded leak).
     let mut cache = cache.write().unwrap();
     cache.entry(culture).or_insert(table)
 }
@@ -184,7 +184,7 @@ pub fn tr_opt(key: &str) -> Option<&'static str> {
 /// without `OnContent`/`OffContent` (the one in the "Layout" pane, for
 /// example) displays WinUI's system strings. They are therefore not in the
 /// .resw files ported here; we reproduce them for the shipped cultures,
-/// falling back to English — the behavior of WinUI itself when the
+/// falling back to English - the behavior of WinUI itself when the
 /// language isn't installed.
 pub fn toggle_on_off() -> (&'static str, &'static str) {
     let tag = culture();

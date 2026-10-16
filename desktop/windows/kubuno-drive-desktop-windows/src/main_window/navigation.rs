@@ -1,5 +1,5 @@
 #![allow(unused_imports)]
-//! Submodule of `MainWindow` — see `main_window/mod.rs`.
+//! Submodule of `MainWindow` - see `main_window/mod.rs`.
 use windows::core::{w, Result};
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, RECT, WPARAM};
 use windows::Win32::Graphics::Dwm::{
@@ -62,7 +62,7 @@ impl MainWindow {
     }
 
     /// A ComboBox's dropdown menu: OUR acrylic flyout (items styled like
-    /// `ComboBoxItem`, accent pill on selection), presented MODALLY —
+    /// `ComboBoxItem`, accent pill on selection), presented MODALLY -
     /// a nested message loop returns control when the menu closes,
     /// exactly the contract of the old `TrackPopupMenuEx`. Returns the
     /// choice 1-based, or 0 if the menu is dismissed.

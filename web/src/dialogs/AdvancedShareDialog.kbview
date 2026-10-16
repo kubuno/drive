@@ -1,4 +1,4 @@
-<!-- AdvancedShareDialog — converted from AdvancedShareDialog.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<!-- AdvancedShareDialog - converted from AdvancedShareDialog.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
 <Stack x:Props="Props" Direction="LeftToRight" Gap="0" CrossAlign="Center" Justify="Center" Class="fixed inset-0 z-[55]">
   <Panel Class="absolute inset-0 bg-black/40" OnClick="panel_click"/>
   <Panel Class="relative bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 p-6 max-h-[88vh] overflow-auto">

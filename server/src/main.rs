@@ -193,7 +193,7 @@ struct FsckArgs {
     merge_duplicates: bool,
 }
 
-/// `drive:fsck` — lists the rows whose bytes are gone and the rows sharing one
+/// `drive:fsck` - lists the rows whose bytes are gone and the rows sharing one
 /// blob. Read-only unless a repair flag is given. Uses the module's own
 /// configuration (database and storage); runs no migration.
 async fn cmd_drive_fsck(args: FsckArgs) -> Result<()> {
@@ -227,7 +227,7 @@ async fn cmd_drive_fsck(args: FsckArgs) -> Result<()> {
         println!("{}", serde_json::to_string_pretty(&report).context("Sérialisation du rapport")?);
     } else {
         println!(
-            "drive:fsck — {} ({} compte(s), {} fichier(s), {} version(s) vérifiés)",
+            "drive:fsck - {} ({} compte(s), {} fichier(s), {} version(s) vérifiés)",
             if report.dry_run { "lecture seule" } else { "RÉPARATION" },
             report.owners_checked, report.files_checked, report.versions_checked,
         );
@@ -473,7 +473,7 @@ async fn cmd_files_upload(args: UploadArgs) -> Result<()> {
                 let status = resp.status();
                 let body   = resp.text().await.unwrap_or_default();
                 println!("{RED}✗{RESET}");
-                eprintln!("    HTTP {status} — {body}");
+                eprintln!("    HTTP {status} - {body}");
                 failed += 1;
             }
             Err(e) => {
@@ -663,7 +663,7 @@ async fn main() -> Result<()> {
 
     // Platform fonts shipped with the module (Outfit, Roboto Flex):
     // seeded into System/Fonts, protected. Idempotent; a failure must not keep
-    // the module from starting — the css2 endpoint just serves less until the
+    // the module from starting - the css2 endpoint just serves less until the
     // next restart.
     if let Err(e) = kubuno_drive::services::system_fonts::seed(&state.db, &state.storage).await {
         tracing::error!(error = %e, "Seed des polices système échoué");
@@ -673,7 +673,7 @@ async fn main() -> Result<()> {
     // protected folder renamed with a raw UPDATE, which bypasses the path
     // cascade in `rename_folder`). Left unfixed, two folders can claim the same
     // local path and desktop sync clients materialise neither. Idempotent and
-    // non-fatal — a stale path just persists until the next successful restart.
+    // non-fatal - a stale path just persists until the next successful restart.
     match kubuno_drive::services::folder_reconcile::reconcile_folder_paths(&state.db, &state.storage).await {
         Ok(0) => {}
         Ok(n) => tracing::warn!(count = n, "Réconciliation des chemins de dossiers : {n} corrigé(s)"),
@@ -683,7 +683,7 @@ async fn main() -> Result<()> {
     // Enregistrement auprès du core (avec retry infini)
     register_with_core(&http, &settings).await;
 
-    // Heartbeat toutes les 30s — re-enregistre si le core nous a supprimés du registre
+    // Heartbeat toutes les 30s - re-enregistre si le core nous a supprimés du registre
     {
         let http2     = http.clone();
         let settings2 = settings.clone();
@@ -695,11 +695,11 @@ async fn main() -> Result<()> {
                 match http2.post(&url).header("X-Internal-Secret", secret.as_str()).send().await {
                     Ok(r) if r.status().is_success() => {}
                     Ok(r) if r.status() == reqwest::StatusCode::NOT_FOUND => {
-                        tracing::info!("Heartbeat 404 — module retiré du registre, ré-enregistrement…");
+                        tracing::info!("Heartbeat 404 - module retiré du registre, ré-enregistrement…");
                         register_with_core(&http2, &settings2).await;
                     }
                     Ok(r) if r.status() == reqwest::StatusCode::FORBIDDEN => {
-                        tracing::info!("Heartbeat 403 — module désactivé, attente…");
+                        tracing::info!("Heartbeat 403 - module désactivé, attente…");
                     }
                     Ok(r)  => tracing::warn!(status = %r.status(), "Heartbeat réponse inattendue"),
                     Err(e) => tracing::warn!(error = %e, "Heartbeat erreur réseau"),
@@ -716,7 +716,7 @@ async fn main() -> Result<()> {
 
     tracing::info!("Kubuno Drive démarré sur http://{addr}");
 
-    // Watcher filesystem — détecte les fichiers déposés directement sur le disque
+    // Watcher filesystem - détecte les fichiers déposés directement sur le disque
     {
         let storage_base = std::path::PathBuf::from(settings.storage.local_path());
         let db_watch     = state.db.clone();
@@ -725,7 +725,7 @@ async fn main() -> Result<()> {
         });
     }
 
-    // Worker d'indexation de recherche — backfill initial + suivi des changements
+    // Worker d'indexation de recherche - backfill initial + suivi des changements
     {
         let state_idx = state.clone();
         tokio::spawn(async move {
@@ -733,7 +733,7 @@ async fn main() -> Result<()> {
         });
     }
 
-    // Worker de nettoyage de la corbeille — purge auto des fichiers anciens
+    // Worker de nettoyage de la corbeille - purge auto des fichiers anciens
     {
         let state_trash = state.clone();
         tokio::spawn(async move {
@@ -741,7 +741,7 @@ async fn main() -> Result<()> {
         });
     }
 
-    // Rapporteur de consommation — déclare au core ce que drive occupe, par
+    // Rapporteur de consommation - déclare au core ce que drive occupe, par
     // compte. Synchronisation complète au démarrage puis toutes les 6 h, et
     // déclaration incrémentale quelques secondes après chaque écriture.
     {
@@ -768,7 +768,7 @@ async fn register_with_core(http: &Client, settings: &Settings) {
     let core_url = &settings.core.url;
     let secret   = &settings.core.internal_secret;
 
-    // Lire le manifest — valeurs par défaut si absent
+    // Lire le manifest - valeurs par défaut si absent
     let manifest = load_manifest();
     let display_name  = manifest.as_ref().map(|m| m.module.display_name.as_str()).unwrap_or("Files").to_string();
     let description   = manifest.as_ref().and_then(|m| m.module.description.clone());

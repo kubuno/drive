@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Drive · Empty folder — the EmptyFolder / TabEmptyState pattern (BrowserScreen.kt), shared by Recent, Trash,
+  Drive · Empty folder - the EmptyFolder / TabEmptyState pattern (BrowserScreen.kt), shared by Recent, Trash,
   Search, Starred, Shared, Home: a centred icon, a message and a hint, with an optional primary action. Drive
   LIGHT theme, logical px. Top bar + bottom nav around a centred empty state.
 -->

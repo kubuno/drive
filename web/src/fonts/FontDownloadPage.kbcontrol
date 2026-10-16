@@ -1,4 +1,4 @@
-<!-- FontDownloadPage — converted from FontDownloadPage.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<!-- FontDownloadPage - converted from FontDownloadPage.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
 <UserControl x:Props="FontDownloadPageProps">
   <Panel Class="contents">
     <Stack Gap="12" CrossAlign="Center" Justify="Center" Visible="{Binding show_case_1}" Class="max-w-6xl mx-auto py-24 text-center">

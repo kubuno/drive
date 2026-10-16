@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Drive · New folder dialog — converted from AppNav.kt (NewFolderDialog, an AlertDialog). A centered modal card
+  Drive · New folder dialog - converted from AppNav.kt (NewFolderDialog, an AlertDialog). A centered modal card
   over a dimmed backdrop: title, an empty name field, and Cancel / Create actions. Drive LIGHT theme.
 -->
 <Panel xmlns="https://kubuno.com/views" xmlns:x="https://kubuno.com/views/x"

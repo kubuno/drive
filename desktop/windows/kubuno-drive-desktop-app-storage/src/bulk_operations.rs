@@ -262,7 +262,7 @@ fn pcwstr_to_string(text: &PCWSTR) -> String {
     }
 }
 
-/// Port of `WindowsBulkOperationsSink` — replaces the manual vtable with
+/// Port of `WindowsBulkOperationsSink` - replaces the manual vtable with
 /// `#[implement]`.
 #[implement(IFileOperationProgressSink)]
 struct BulkOperationsSink {

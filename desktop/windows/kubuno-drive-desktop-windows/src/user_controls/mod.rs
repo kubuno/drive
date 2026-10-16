@@ -1,4 +1,4 @@
-//! Port of `Files.App/UserControls/` — the hand-painted controls. Each
+//! Port of `Files.App/UserControls/` - the hand-painted controls. Each
 //! sub-module mirrors an original UserControl and extends [`crate::ui::Painter`]
 //! with that control's drawing methods.
 //!
@@ -12,7 +12,7 @@
 //! - `widgets` ↔ `UserControls/Widgets/`
 //! - `layout_flyout` ↔ the `<Flyout>` of the `LayoutOptionsButton` (Toolbar.xaml)
 //! - `flyout` / `flyout_window` ↔ the WinUI popups (MenuFlyout /
-//!   CommandBarFlyout / PopupWindowSiteBridge) — infrastructure, not a
+//!   CommandBarFlyout / PopupWindowSiteBridge) - infrastructure, not a
 //!   UserControl
 //! - `edit_box` ↔ the inline rename TextBox of the layout pages
 //! - `scrollbar` ↔ the standard WinUI `ScrollBar` (not overridden by Files)

@@ -2,7 +2,7 @@
  * Provider marks for the remote-mount forms.
  *
  * Brand glyphs come from Simple Icons (CC0) and are drawn in each brand's own
- * colour, so a provider is recognised before its name is read — the emoji they
+ * colour, so a provider is recognised before its name is read - the emoji they
  * replace showed the same cloud for Nextcloud and ownCloud, and a plain blue
  * circle for Drive. Protocols (WebDAV, SFTP, FTP, NFS) have no brand: they keep
  * a lucide glyph, like the rest of the interface.

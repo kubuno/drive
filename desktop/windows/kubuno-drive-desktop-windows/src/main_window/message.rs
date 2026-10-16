@@ -1,5 +1,5 @@
 #![allow(unused_imports)]
-//! Sous-module de `MainWindow` — voir `main_window/mod.rs`.
+//! Sous-module de `MainWindow` - voir `main_window/mod.rs`.
 use windows::core::{w, Result};
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, RECT, WPARAM};
 use windows::Win32::Graphics::Dwm::{
@@ -83,7 +83,7 @@ impl MainWindow {
         let alt = unsafe { GetKeyState(VK_MENU.0 as i32) } < 0;
 
         // Escape during a tab drag: cancels it (the original's
-        // `isCancelingDragOperation`) — a detached tab returns to its
+        // `isCancelingDragOperation`) - a detached tab returns to its
         // original index.
         if vk == 0x1B && self.tab_drag.is_some() {
             if let Some(mut d) = self.tab_drag.take() {
@@ -165,7 +165,7 @@ impl MainWindow {
 
         // ALL the shortcuts (F2, Ctrl+C/X/V, Alt+arrows, Backspace,
         // Delete, F5…) live in `actions/`: the registry above has already
-        // resolved them. Only the arrow keys remain — the ListView's own
+        // resolved them. Only the arrow keys remain - the ListView's own
         // keyboard handling (not a C# action): they move the FOCUS, plain =
         // simple selection, Shift = extends from the anchor, Ctrl = moves
         // the focus only.
@@ -318,7 +318,7 @@ impl MainWindow {
                     }
                 }
                 // Reconciles the pane with the new width: crossing the
-                // Minimal threshold (641) is DISCRETE — the pane snaps to
+                // Minimal threshold (641) is DISCRETE - the pane snaps to
                 // stowed (or docked), it doesn't slide.
                 let width_dip = w as f32 / (self.dpi / 96.0);
                 self.state.sidebar_pane_anim = None;
@@ -389,7 +389,7 @@ impl MainWindow {
                 }
                 // The ColorPicker: the continuous zones (saturation/value area,
                 // hue and alpha sliders)
-                // ARM on button-down — the drag then follows the mouse and
+                // ARM on button-down - the drag then follows the mouse and
                 // releases on button-up, like a real Slider.
                 if let Some(panel) = self.state.flyout.as_ref().and_then(|f| f.picker) {
                     use crate::user_controls::color_picker::PickerZone;
@@ -529,7 +529,7 @@ impl MainWindow {
                 }
                 Some(LRESULT(0))
             }
-            // An open flyout holds the capture — that's what makes it modal.
+            // An open flyout holds the capture - that's what makes it modal.
             // Releasing it here would trigger WM_CAPTURECHANGED, and thus
             // close it: the « Disposition » panel would close on the first
             // click on a card. `sync_flyout` releases it when it closes.
@@ -930,7 +930,7 @@ impl MainWindow {
                     // The wheel over the info pane scrolls ITS stack (the
                     // original's RootPropertiesScrollViewer). The visible
                     // area = below the thumbnail (tabs 12+32, thumbnail
-                    // 12+156, margin 4 — the same layout as the drawing pass).
+                    // 12+156, margin 4 - the same layout as the drawing pass).
                     let layout = self.layout();
                     let pane = layout.info_pane.unwrap();
                     let viewport = pane.bottom - (pane.top + 216.0);
@@ -989,7 +989,7 @@ impl MainWindow {
                             if let Some(ch) = char::from_u32(c) {
                                 // Forbidden characters are only filtered in
                                 // NAME editors (inline rename, CreateArchive,
-                                // CreateItem) — not in path fields nor the
+                                // CreateItem) - not in path fields nor the
                                 // omnibar, like `IsValidForFilename` on the
                                 // C# side.
                                 use crate::dialogs::DialogAction as DA;
@@ -1163,7 +1163,7 @@ impl MainWindow {
             }
             // A tab dropped on our strip from another window of the port
             // (port of `TabView_TabStripDrop`: insertion at the drop point,
-            // LRESULT(1) = taken — the sender then closes its tab).
+            // LRESULT(1) = taken - the sender then closes its tab).
             windows::Win32::UI::WindowsAndMessaging::WM_COPYDATA => {
                 let cds = unsafe {
                     &*(lparam.0

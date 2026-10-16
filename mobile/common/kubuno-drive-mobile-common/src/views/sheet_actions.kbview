@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Drive · Item action sheet — converted from sheet/Sheets.kt + sheet/ItemActions.kt (ActionSheet +
+  Drive · Item action sheet - converted from sheet/Sheets.kt + sheet/ItemActions.kt (ActionSheet +
   ItemActionSheet). A modal bottom sheet over a dimmed backdrop: drag handle, the item name as title, and the
   action rows (download, rename, move, star, pin, info) plus the danger "trash" row. Drive LIGHT theme.
   Rendered as a complete overlay screen (the backdrop dims; the sheet docks to the bottom).

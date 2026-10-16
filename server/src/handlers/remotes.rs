@@ -1,4 +1,4 @@
-//! Montages distants — le BACKEND est centralisé dans le core. Ces handlers ne
+//! Montages distants - le BACKEND est centralisé dans le core. Ces handlers ne
 //! font que **proxifier** `/api/v1/drive/remotes/*` vers les routes internes du
 //! core `/internal/storage/mounts/:user_id/*` (X-Internal-Secret + user_id).
 //! Cf. [[project_storage_centralization]].
@@ -96,7 +96,7 @@ pub async fn smb_shares(State(state): State<AppState>, Extension(user): Extensio
     forward_json(&state, Method::POST, &format!("/internal/storage/smb-shares/{}", user.id), Some(dto)).await
 }
 
-/// Redacted config of a mount, for the edit form. Secrets stay on the server —
+/// Redacted config of a mount, for the edit form. Secrets stay on the server -
 /// only their NAMES come back. Like the two above, deliberately not gated on the
 /// instance switch: it is repair work.
 pub async fn get_connection_config(State(state): State<AppState>, Extension(user): Extension<FilesUser>, Path(id): Path<Uuid>) -> Result<Response, FilesError> {

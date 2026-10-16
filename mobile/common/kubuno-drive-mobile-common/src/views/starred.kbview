@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Drive · Starred tab — converted from starred/StarredScreen.kt. The favourite files (files only), available
+  Drive · Starred tab - converted from starred/StarredScreen.kt. The favourite files (files only), available
   offline. A bottom-nav tab (Favoris active), a single file list, no sections. Rows inlined. Drive LIGHT theme.
 -->
 <Panel xmlns="https://kubuno.com/views" xmlns:x="https://kubuno.com/views/x"

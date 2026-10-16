@@ -1,4 +1,4 @@
-<!-- FilesStoragePage — converted from FilesStoragePage.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<!-- FilesStoragePage - converted from FilesStoragePage.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
 <Panel Class="h-full overflow-y-auto py-6 px-6">
   <Stack Direction="LeftToRight" Gap="12" CrossAlign="Center" Class="mb-6">
     <Panel AccessibleRole="PushButton"

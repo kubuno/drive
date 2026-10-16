@@ -1,4 +1,4 @@
-<!-- ArchiveBrowser — converted from ArchiveBrowser.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<!-- ArchiveBrowser - converted from ArchiveBrowser.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
 <Stack x:Props="Props"
        Direction="LeftToRight"
        Gap="0"

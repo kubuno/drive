@@ -79,7 +79,7 @@ pub fn build(state: AppState) -> Router {
         .route("/shares/received",              get(shares::received))
         .route("/shares/received-items",        get(shares::received_items))
         .route("/shares/:id",                   delete(shares::revoke))
-        // Étiquettes (tags) colorées — organisation transversale
+        // Étiquettes (tags) colorées - organisation transversale
         .route("/tags",                         get(tags::list).post(tags::create))
         .route("/tags/assignments",             get(tags::assignments))
         .route("/tags/:id",                     patch(tags::update).delete(tags::delete))
@@ -168,7 +168,7 @@ pub fn build(state: AppState) -> Router {
         .route("/fonts/files/:id",       get(fonts::file))
         .with_state(state.clone());
 
-    // IPC — accès inter-modules (protégé par X-Internal-Secret)
+    // IPC - accès inter-modules (protégé par X-Internal-Secret)
     let ipc_routes = Router::new()
         .route("/ipc/folders",                   post(ipc::create_folder))
         .route("/ipc/folders/ensure-path",        post(ipc::ensure_folder_path))

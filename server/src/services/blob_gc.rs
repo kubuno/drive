@@ -5,8 +5,8 @@
 //! keep the database and the storage consistent:
 //!
 //! * bytes are removed only AFTER the rows that pointed at them are deleted and
-//!   committed (a crash in between leaves an orphan blob — wasted space, which the
-//!   scanner or the usage recount reconciles — never a live row without bytes);
+//!   committed (a crash in between leaves an orphan blob - wasted space, which the
+//!   scanner or the usage recount reconciles - never a live row without bytes);
 //! * bytes are removed only when no live row of the owner still references them
 //!   (`drive.files` or `drive.file_versions`): two rows can share one path (a live
 //!   file re-using the name of a trashed one), and a directory can hold the bytes
@@ -29,8 +29,8 @@ struct PathRow {
 
 /// Comparison key of a storage-relative path.
 ///
-/// Stored paths are built with `PathBuf::join`, so they use `\` on Windows —
-/// mixed with the `/` of a nested virtual folder path — and `/` elsewhere; the
+/// Stored paths are built with `PathBuf::join`, so they use `\` on Windows -
+/// mixed with the `/` of a nested virtual folder path - and `/` elsewhere; the
 /// Windows and macOS file systems are case-insensitive. The key unifies the
 /// separators, drops empty / `.` segments and folds case, so that two spellings
 /// reaching the same file on ANY supported OS compare equal. Folding case is
@@ -207,7 +207,7 @@ fn same_segment(a: &str, b: &str) -> bool {
 /// Where a directory move carried the blob at `path`: when `path` lies under
 /// `old_dir` *as this platform's file system sees it* (any separator; case
 /// folded only where the file system folds it), the same path re-rooted under
-/// `new_dir`; otherwise `None` — the move did not touch those bytes.
+/// `new_dir`; otherwise `None` - the move did not touch those bytes.
 pub fn rebase(path: &str, old_dir: &str, new_dir: &str) -> Option<String> {
     let p = segments(path);
     let o = segments(old_dir);

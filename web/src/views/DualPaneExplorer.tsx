@@ -1,5 +1,5 @@
 /**
- * DualPaneExplorer — vue « double-volet » de Drive (façon gestionnaire de fichiers).
+ * DualPaneExplorer - vue « double-volet » de Drive (façon gestionnaire de fichiers).
  * Deux `StorageExplorer` côte à côte, chacun branché sur la source de son choix
  * (Mon Drive ou n'importe quel montage distant). Transferts dans les deux sens, y
  * compris par glisser-déposer inter-volets (délégué à `transferItem`).
@@ -102,12 +102,12 @@ export default function DualPaneExplorer() {
           <Pane source={leftSource} label={leftLabel} options={options} onPick={setLeftKey}
             onExternalDrop={(payload, target) => transfer(fromOf(payload.sourceKey), leftSource, payload, target)} />
         </div>
-        {/* Splitter — same control as the shell's panels: a 5px bar, plus a grip pill
+        {/* Splitter - same control as the shell's panels: a 5px bar, plus a grip pill
             that materialises on hover and tints, so the divider reads as draggable
             instead of as a decorative rule. */}
         <div onPointerDown={onDividerDown}
           /* z-20: the grip pill (14px) is wider than the 5px bar, so it overflows onto
-             the neighbouring pane — which would otherwise paint over its right half. */
+             the neighbouring pane - which would otherwise paint over its right half. */
           className={`group relative z-20 flex shrink-0 items-center justify-center
                       ${orient === 'h' ? 'w-[5px] cursor-col-resize' : 'h-[5px] cursor-row-resize'}`}>
           <span className={`absolute rounded-full bg-border transition-colors group-hover:bg-primary/40

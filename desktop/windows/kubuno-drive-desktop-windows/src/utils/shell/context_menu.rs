@@ -1,6 +1,6 @@
 //! ContextMenu (mirrors ContextMenu.cs)
 //!
-//! Native shell context menu for an item — the same menu the original app
+//! Native shell context menu for an item - the same menu the original app
 //! surfaces through `IContextMenu` (Utils/Shell/ContextMenu.cs).
 //!
 //! [`ShellMenu`] **enumerates** the `IContextMenu` so its entries can be drawn
@@ -9,7 +9,7 @@
 //! « Chargement … » row, and `AddShellMenuItemsAsync` swaps in the shell items
 //! once they have been queried.
 //!
-//! [`ShellWorker`] owns the `IContextMenu` on a dedicated STA thread — the
+//! [`ShellWorker`] owns the `IContextMenu` on a dedicated STA thread - the
 //! analogue of `ThreadWithMessageQueue.cs`, kept tightly coupled to `ShellMenu`.
 
 use windows::Win32::Foundation::HWND;
@@ -96,7 +96,7 @@ fn bitmap_pixels(hbitmap: HBITMAP) -> Option<kubuno_drive_desktop_app_storage::S
 }
 
 /// A live `IContextMenu` whose entries we host in our own flyout. It must stay
-/// alive between the query and the invoke — the shell verbs are only valid on
+/// alive between the query and the invoke - the shell verbs are only valid on
 /// the very object that produced the ids.
 pub struct ShellMenu {
     menu: IContextMenu,
@@ -217,7 +217,7 @@ impl Drop for ShellMenu {
 /// The worker that owns the `IContextMenu`.
 ///
 /// `QueryContextMenu` wakes every shell extension installed on the machine and
-/// routinely takes a few hundred milliseconds — on the UI thread that would
+/// routinely takes a few hundred milliseconds - on the UI thread that would
 /// freeze the menu mid-unfold. The original runs it as a `Task`
 /// (`AddShellMenuItemsAsync`); we give it its own STA thread, which also keeps
 /// the COM object on a single apartment, as `IContextMenu` requires: the verbs

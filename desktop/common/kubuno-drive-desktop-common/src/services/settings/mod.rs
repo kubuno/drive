@@ -441,7 +441,7 @@ pub struct AppSettings {
     /// Port of `FoldersSettingsService.ShowFileExtensions`.
     pub show_file_extensions: bool,
     /// `LayoutSettingsService`: one size per layout, like the original
-    /// (each has its own scale — see `ViewMode::size_max`).
+    /// (each has its own scale - see `ViewMode::size_max`).
     pub details_view_size: u8,
     pub list_view_size: u8,
     pub cards_view_size: u8,
@@ -540,7 +540,7 @@ pub struct AppSettings {
     pub show_pinned_section: bool,
     #[serde(default = "yes")]
     pub show_drives_section: bool,
-    /// `ShowLibrarySection` — default FALSE in the original.
+    /// `ShowLibrarySection` - default FALSE in the original.
     #[serde(default)]
     pub show_library_section: bool,
     #[serde(default = "yes")]

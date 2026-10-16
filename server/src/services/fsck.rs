@@ -1,13 +1,13 @@
-//! Consistency check between the file rows and the storage — `drive:fsck`.
+//! Consistency check between the file rows and the storage - `drive:fsck`.
 //!
 //! Lists the two kinds of damage the old deletion and naming code could leave
 //! behind:
 //!
-//! * **rows without bytes** — a `drive.files` or `drive.file_versions` row whose
+//! * **rows without bytes** - a `drive.files` or `drive.file_versions` row whose
 //!   `storage_path` points at nothing (a folder deleted for good used to wipe the
 //!   bytes of files it re-parented to the root, and emptying the trash could
 //!   delete the bytes of a live file sharing them);
-//! * **rows sharing one blob** — several rows reading and writing the same
+//! * **rows sharing one blob** - several rows reading and writing the same
 //!   location (a live file uploaded under the name of a trashed one in the same
 //!   folder): writing, moving or deleting one silently affects the others.
 //!
@@ -21,7 +21,7 @@
 //!   copy, never a broken row). Contents a row already lost cannot come back:
 //!   they were overwritten before this check ran.
 //! * `trash_missing` moves the live files whose bytes are confirmed absent to the
-//!   trash — reversible, and it makes the damage visible to their owner instead
+//!   trash - reversible, and it makes the damage visible to their owner instead
 //!   of failing on open. Nothing is ever hard-deleted.
 //! * `merge_duplicates` merges the recorded duplicates into the rows they
 //!   duplicate (see `services::duplicates`; the module also does it at start-up).

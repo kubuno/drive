@@ -1,7 +1,7 @@
 //! Port of `Files.App/UserControls/NavigationToolbar.xaml`: the sidebar
 //! hamburger (only when the pane is closed), navigation buttons
-//! (back/forward/up/refresh), the Omnibar with its THREE modes — path
-//! (breadcrumb), command palette and search — whose mode icons sit at the
+//! (back/forward/up/refresh), the Omnibar with its THREE modes - path
+//! (breadcrumb), command palette and search - whose mode icons sit at the
 //! right edge INSIDE the bar, and the StatusCenter button on the far right.
 
 use kubuno_desktop_ui::navigation::Breadcrumb;
@@ -17,13 +17,13 @@ use crate::ui::{
 /// so the whole bar reads as one Material Symbols family.
 const NAV_ICON_SIZE: f32 = 16.0;
 
-/// Where the path trail starts inside the omnibar — past the home icon and its
-/// chevron — and how far it stops short of the mode buttons.
+/// Where the path trail starts inside the omnibar - past the home icon and its
+/// chevron - and how far it stops short of the mode buttons.
 const TRAIL_START_INSET: f32 = 52.0;
 const TRAIL_RIGHT_MARGIN: f32 = 40.0;
 /// The trail's own rows are 2 DIP inside the pill, top and bottom.
 const TRAIL_INSET_Y: f32 = 2.0;
-/// A chevron glyph's box — `formats().icon_small`'s em, which is the size the
+/// A chevron glyph's box - `formats().icon_small`'s em, which is the size the
 /// design system draws its own `ChevronRight` geometry at.
 const CHEVRON_SIZE: f32 = 12.0;
 
@@ -31,8 +31,8 @@ thread_local! {
     /// The width each path segment asked for on the last frame, straight from
     /// [`Breadcrumb::segment_widths`].
     ///
-    /// A segment's width is a DirectWrite extent and `Layout::compute` — which
-    /// needs the folded trail's rectangles to hit-test them — is static and has
+    /// A segment's width is a DirectWrite extent and `Layout::compute` - which
+    /// needs the folded trail's rectangles to hit-test them - is static and has
     /// no drawing surface, so the widths are taken once per frame in
     /// [`premeasure`] and the layout pass reuses them. The folding itself is
     /// computed in ONE place, [`Breadcrumb::layout_with`], which both the
@@ -47,7 +47,7 @@ pub(crate) fn shows_breadcrumbs(location: &Location) -> bool {
 }
 
 /// The trail, as the design system's own primitive. `root_chevron` stays off:
-/// the chevron after the home icon belongs to the omnibar, not to the trail —
+/// the chevron after the home icon belongs to the omnibar, not to the trail -
 /// its box is measured from the icon, and it shows for `Paramètres` too, where
 /// there is no trail at all.
 fn build_breadcrumb(segments: &[(String, std::path::PathBuf)]) -> Breadcrumb {
@@ -79,8 +79,8 @@ pub(crate) fn premeasure(c: &dyn kubuno_desktop_ui::Canvas, state: &UiState) {
     SEGMENT_WIDTHS.with(|w| *w.borrow_mut() = widths);
 }
 
-/// The trail's geometry — which head segments fold behind the `…`, and where
-/// the visible ones sit — for the layout pass to hit-test.
+/// The trail's geometry - which head segments fold behind the `…`, and where
+/// the visible ones sit - for the layout pass to hit-test.
 pub(crate) fn breadcrumb_layout(
     segments: &[(String, std::path::PathBuf)],
     bounds: Rect,
@@ -88,8 +88,8 @@ pub(crate) fn breadcrumb_layout(
     let trail = build_breadcrumb(segments);
     SEGMENT_WIDTHS.with(|w| {
         let cached = w.borrow();
-        // `Layout::compute` also runs between two frames — on a mouse move,
-        // say — and a navigation changes the path before the repaint that
+        // `Layout::compute` also runs between two frames - on a mouse move,
+        // say - and a navigation changes the path before the repaint that
         // measures it. A measurement for another path would fold the wrong
         // segments, so it is only used when it still describes this one;
         // otherwise the estimate stands in for the frame, as it did before
@@ -133,7 +133,7 @@ impl Painter<'_> {
                 D2D1_FIGURE_BEGIN_FILLED, D2D1_FIGURE_END_CLOSED, D2D1_FILL_MODE_WINDING,
             };
             // Accent-tinted title band ("accent color on title bars"),
-            // light theme only — under the tab/strip union. When the window
+            // light theme only - under the tab/strip union. When the window
             // loses focus, we switch to the INACTIVE tint (the accent
             // disappears from the title bar, as in the original).
             let titlebar = if state.window_active {
@@ -161,11 +161,11 @@ impl Painter<'_> {
             // TabBarItemStyle paints, in this order (the selected item's
             // Canvas.ZIndex is raised by TabView, so its geometry covers the
             // neighbors' border line):
-            //   1. BottomBorderLine  — 1px, TabViewBorderBrush, per item; the
+            //   1. BottomBorderLine  - 1px, TabViewBorderBrush, per item; the
             //      SELECTED item hides its own, so the line stops at its walls.
-            //   2. Left/RightRadiusRenderArc — 4×4 crescents, same brush, that
+            //   2. Left/RightRadiusRenderArc - 4×4 crescents, same brush, that
             //      carry that 1px line around the concave flares.
-            //   3. SelectedBackgroundPath — TabGeometry, translucent, on top.
+            //   3. SelectedBackgroundPath - TabGeometry, translucent, on top.
             // While the active tab is being DRAGGED it is lifted out of the
             // strip (ListView detaches the item), so it no longer notches the
             // border line and no longer merges with the surface below.
@@ -278,7 +278,7 @@ impl Painter<'_> {
                 layout.address_bar.right - 44.0,
                 layout.address_bar.bottom - 3.0,
             );
-            // The pill bar itself is the text box — no inner chrome.
+            // The pill bar itself is the text box - no inner chrome.
             kubuno_drive_desktop_app_controls::edit_box::draw_text(
                 self,
                 &box_rect,
@@ -316,11 +316,11 @@ impl Painter<'_> {
             Location::Dir(_) | Location::RecycleBin | Location::SearchResults { .. } => {
                 // The trail is `kubuno_desktop_ui::navigation::Breadcrumb`, which wraps
                 // the very `layout_breadcrumbs` the layout pass folded the path
-                // with — one algorithm, reached from both sides.
+                // with - one algorithm, reached from both sides.
                 let segments = tab.breadcrumbs();
                 let trail = build_breadcrumb(&segments);
                 // The root chevron is the omnibar's own, measured off the home
-                // icon rather than off the trail, so it stays hand-drawn — with
+                // icon rather than off the trail, so it stays hand-drawn - with
                 // the design system's chevron geometry, like the trail's.
                 let home_chevron = Rect::new(
                     home_icon.right + 2.0,
@@ -385,11 +385,11 @@ impl Painter<'_> {
 
     /// ShowStatusCenterButton (`NavigationToolbar.xaml`): the ThemedIcon icon at
     /// rest; during operations (`ShowProgressRing`), the icon gives way
-    /// to the `InfoBadge` — the operation COUNT (`InfoBadgeValue`), centered.
+    /// to the `InfoBadge` - the operation COUNT (`InfoBadgeValue`), centered.
     ///
     /// The determinate `MedianOperationProgressRing` (`AverageOperationProgressValue`)
     /// is not drawn: `OpsMonitor` only tracks (id, label), with no percentage
-    /// per operation — showing a ring at a made-up value would betray
+    /// per operation - showing a ring at a made-up value would betray
     /// fidelity. The ring will follow once the worker reports real progress.
     fn draw_status_center_button(&self, layout: &Layout, state: &UiState) {
         use windows::Win32::Graphics::Direct2D::Common::D2D1_COLOR_F;

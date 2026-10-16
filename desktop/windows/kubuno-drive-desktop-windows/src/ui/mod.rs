@@ -6,7 +6,7 @@
 //! live in `crate::user_controls`, mirroring `Files.App/UserControls/`.
 
 // The immediate-mode UI engine (state, layout, drawing) has no equivalent in
-// the original (the XAML framework handles that) — we split it by role. Each
+// the original (the XAML framework handles that) - we split it by role. Each
 // submodule re-exports via `pub use *`, so external `crate::ui::…` paths
 // stay unchanged.
 mod metrics;

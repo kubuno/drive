@@ -3,7 +3,7 @@
 use crate::actions::{Action, HotKey};
 use crate::main_window::MainWindow;
 
-/// `NavigateBackAction.cs` (Alt+Left; Backspace as second — mouse buttons
+/// `NavigateBackAction.cs` (Alt+Left; Backspace as second - mouse buttons
 /// 4/5 and GoBack will come with their own routing).
 pub struct NavigateBack;
 impl Action for NavigateBack {

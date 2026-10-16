@@ -1,4 +1,4 @@
-<!-- DriveToolbar — converted from DriveToolbar.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<!-- DriveToolbar - converted from DriveToolbar.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
 <UserControl x:Props="Props">
   <Stack Direction="LeftToRight" Gap="12" CrossAlign="Start" Class="mb-5">
     <Panel Class="flex-1 min-w-0">

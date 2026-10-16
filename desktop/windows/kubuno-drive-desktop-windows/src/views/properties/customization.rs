@@ -1,4 +1,4 @@
-//! "Customization" tab of the properties sheet — mirror of
+//! "Customization" tab of the properties sheet - mirror of
 //! `Views/Properties/CustomizationPage.xaml` (the DRAW). The view-model
 //! (`CustomizationModel`/`gather`, `desktop.ini`/`.lnk` reading,
 //! `CustomizationViewModel`) now lives in

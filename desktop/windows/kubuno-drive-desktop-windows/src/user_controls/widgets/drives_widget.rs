@@ -1,4 +1,4 @@
-//! DrivesWidget (mirrors DrivesWidget.xaml.cs) — the Home page drive cards
+//! DrivesWidget (mirrors DrivesWidget.xaml.cs) - the Home page drive cards
 //! with usage gauge.
 
 use kubuno_drive_desktop_app_controls::themes::shape;
@@ -27,7 +27,7 @@ impl Painter<'_> {
         for (i, rect) in layout.drive_cards.iter().enumerate() {
             let drive = &model.drives[i];
             let hot = state.hot == Some(Hot::DriveCard(i));
-            // `@ui/Card.tsx:55` — see the note in `quick_access_widget`:
+            // `@ui/Card.tsx:55` - see the note in `quick_access_widget`:
             // `rounded-xl` (8) `border border-border` `bg-surface-0`.
             let fill = if hot { &t.card_preview_background } else { &t.layer_background };
             self.fill_rounded(rect, shape::radius::XL, fill);
@@ -43,7 +43,7 @@ impl Painter<'_> {
             let name_rect = Rect::new(rect.left + 56.0, rect.top + 8.0, rect.right - 8.0, rect.top + 28.0);
             self.text_ellipsis(&drive.display_name(), &name_rect, &f.body, &t.text_primary);
 
-            // Usage gauge — the drive web's storage bar
+            // Usage gauge - the drive web's storage bar
             // (`FilesStorageGaugeHeader.tsx:37-41`): `h-1.5` = 6 DIP, not 4,
             // `rounded-full` on BOTH track and fill, `bg-black/10` track, and a
             // fill colour-coded by the ratio instead of a permanent accent.

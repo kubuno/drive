@@ -11,7 +11,7 @@
 //!
 //! READ ONLY: writing (`SetCompatibilityOptionsForPath`) goes through an
 //! ELEVATED PowerShell command in the original (`New-ItemProperty` /
-//! `Remove-ItemProperty` on `HKCU:\…\Layers`) — not ported in this slice.
+//! `Remove-ItemProperty` on `HKCU:\…\Layers`) - not ported in this slice.
 
 use crate::views::properties::PropertiesTarget;
 
@@ -159,7 +159,7 @@ fn from_string(raw: Option<&str>) -> CompatibilityModel {
     }
 }
 
-/// Labels — mirrors the `Dictionary<…, string>` of `CompatibilityViewModel`.
+/// Labels - mirrors the `Dictionary<…, string>` of `CompatibilityViewModel`.
 fn compat_mode_label(desc: &str) -> String {
     match desc {
         // These values are LITERAL strings in the original (not localized).

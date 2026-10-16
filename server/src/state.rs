@@ -18,7 +18,7 @@ pub struct AppState {
 
 impl AppState {
     /// A snapshot of the current instance settings. Falls back to the compiled
-    /// defaults if the lock was poisoned by a panicking writer — a lost value
+    /// defaults if the lock was poisoned by a panicking writer - a lost value
     /// must never take a protection down.
     pub fn instance(&self) -> InstanceConfig {
         self.instance.read().map(|c| c.clone()).unwrap_or_default()
@@ -38,8 +38,8 @@ impl AppState {
     }
 
     /// Refuses a file whose extension the administrator blocked instance-wide.
-    /// Called by the entry points that let a user CHOOSE a name — plain upload,
-    /// chunked upload, URL import, WebDAV — so a blocked extension cannot be
+    /// Called by the entry points that let a user CHOOSE a name - plain upload,
+    /// chunked upload, URL import, WebDAV - so a blocked extension cannot be
     /// slipped in through the quieter door.
     pub fn check_upload_name(&self, filename: &str) -> Result<(), FilesError> {
         self.instance()

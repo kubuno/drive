@@ -5,7 +5,7 @@
 
 use super::{get, update};
 
-/// `GeneralSettingsService.UserId`: `Get(Guid.NewGuid().ToString())` —
+/// `GeneralSettingsService.UserId`: `Get(Guid.NewGuid().ToString())` -
 /// generated once and persisted.
 pub fn user_id() -> String {
     let existing = get().user_id;

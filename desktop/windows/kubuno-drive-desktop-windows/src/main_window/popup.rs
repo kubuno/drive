@@ -1,5 +1,5 @@
 #![allow(unused_imports)]
-//! Submodule of `MainWindow` — see `main_window/mod.rs`.
+//! Submodule of `MainWindow` - see `main_window/mod.rs`.
 use windows::core::{w, Result};
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, RECT, WPARAM};
 use windows::Win32::Graphics::Dwm::{
@@ -176,7 +176,7 @@ impl MainWindow {
         };
 
         // The unfold: the popup window itself grows, so DWM animates
-        // the acrylic, shadow, and rounded corners along with it — exactly what
+        // the acrylic, shadow, and rounded corners along with it - exactly what
         // WinUI does, animating the popup rather than its content. The content
         // itself is painted at its final place: the rows are revealed.
         let (opened, sub_opened, subsub_opened) = {

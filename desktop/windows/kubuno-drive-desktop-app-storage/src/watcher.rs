@@ -76,7 +76,7 @@ impl WindowsFolderChangeWatcher {
         self.events.subscribe()
     }
 
-    /// Port of `Start` — ref-counted like the C# version; the first call
+    /// Port of `Start` - ref-counted like the C# version; the first call
     /// spawns the notification thread.
     pub fn start(&mut self) {
         self.start_count += 1;
@@ -126,7 +126,7 @@ impl WindowsFolderChangeWatcher {
 }
 
 impl Drop for WindowsFolderChangeWatcher {
-    /// Port of `Dispose` — RAII replaces the C# disposer.
+    /// Port of `Dispose` - RAII replaces the C# disposer.
     fn drop(&mut self) {
         self.shutdown();
     }
@@ -325,7 +325,7 @@ mod tests {
 
     #[test]
     fn start_stop_lifecycle() {
-        // FOLDERID_Recent — watching it must start and stop cleanly.
+        // FOLDERID_Recent - watching it must start and stop cleanly.
         let mut watcher = WindowsFolderChangeWatcher::new(
             crate::guids::FOLDERID_RECENT,
             SHCNE_ALLEVENTS,

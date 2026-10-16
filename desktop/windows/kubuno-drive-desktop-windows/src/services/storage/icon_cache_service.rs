@@ -118,7 +118,7 @@ impl IconCache {
         self.put(key, bitmap);
     }
 
-    /// Same, but preferring the content thumbnail — fetched ASYNCHRONOUSLY on
+    /// Same, but preferring the content thumbnail - fetched ASYNCHRONOUSLY on
     /// a dedicated STA worker (thumbnail providers can take seconds; the C#
     /// original also loads them off the UI thread).
     pub fn ensure_thumbnail(&mut self, ctx: &ID2D1DeviceContext, path: &str, size_px: i32, hwnd_raw: isize) {

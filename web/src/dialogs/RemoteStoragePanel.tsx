@@ -259,7 +259,7 @@ function ConnectionRow({ conn }: { conn: RemoteConnection }) {
         </div>
       )}
 
-      {/* Inline edit — in place on the row, not in a modal. */}
+      {/* Inline edit - in place on the row, not in a modal. */}
       {editing && (
         <div className="px-3 pb-3">
           <ConnectionForm
@@ -306,7 +306,7 @@ function ConnectionRow({ conn }: { conn: RemoteConnection }) {
 /**
  * Creates a mount, or edits an existing one.
  *
- * Editing prefills what the owner typed — host, share, username, domain, paths —
+ * Editing prefills what the owner typed - host, share, username, domain, paths -
  * and leaves ONLY the secrets blank, because those never leave the server. A
  * blank secret therefore means "keep the current one", which is what lets a user
  * fix a typo in the host without re-typing the password. The provider is frozen:
@@ -426,7 +426,7 @@ function ConnectionForm({ existing, onCancel, onSaved }: {
           />
         </div>
 
-        {/* Provider — frozen while editing (see the component's doc comment). */}
+        {/* Provider - frozen while editing (see the component's doc comment). */}
         <div>
           <label className="block text-xs font-medium text-text-secondary mb-1">{t('rs.type_label')}</label>
           {editing ? (
@@ -523,7 +523,7 @@ function ConnectionForm({ existing, onCancel, onSaved }: {
         {mutation.isError && (
           <p className="text-xs text-danger bg-danger/5 border border-danger/20 rounded-lg px-3 py-2">
             {/* The API client flattens failures to a bare { code, message }, so
-                the server's reason lives at the root — reading `response.data`
+                the server's reason lives at the root - reading `response.data`
                 here always fell through to the generic label. */}
             {(mutation.error as { message?: string })?.message ?? t('rs.err_create')}
           </p>
@@ -557,7 +557,7 @@ export default function RemoteStoragePanel() {
 
   // A floating window, not a full-height drawer: managing mounts is a side
   // errand, and the drawer's backdrop hid the very files the user was placing.
-  // No footer — nothing here is confirmed, each row acts on its own.
+  // No footer - nothing here is confirmed, each row acts on its own.
   return (
     <FloatingWindow
       title={t('rs.panel_title')}

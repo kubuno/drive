@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Drive · Browser in GRID mode — the other view of BrowserScreen.kt (ViewMode.GRID): full-width FolderCards,
+  Drive · Browser in GRID mode - the other view of BrowserScreen.kt (ViewMode.GRID): full-width FolderCards,
   then FileCards in a 2-column grid (header with type icon + name + kebab, then a 128-high preview area with a
   big glyph and an extension badge). Cards inlined. Drive LIGHT theme, logical px (~390 wide).
 -->

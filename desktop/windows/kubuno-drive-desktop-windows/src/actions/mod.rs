@@ -3,7 +3,7 @@
 //! Each action is a unit struct implementing [`Action`] (the counterpart
 //! of `IAction`: label, description, glyph, hotkey, executability);
 //! toggles additionally implement [`ToggleAction`] (`IToggleAction.IsOn`).
-//! The Rust file mirrors the C# file of the same name — `display/layout_action`
+//! The Rust file mirrors the C# file of the same name - `display/layout_action`
 //! ↔ `Actions/Display/LayoutAction.cs`, etc. `Actions/Git/` is excluded
 //! (user decision).
 //!
@@ -45,7 +45,7 @@ impl HotKey {
     }
 
     /// The hotkey text as displayed by the original (`HotKey.LocalizedLabel`)
-    /// — key names come from the keyboard layout.
+    /// - key names come from the keyboard layout.
     pub fn text(&self) -> String {
         crate::main_window::hotkey_text_vk(self.key, self.ctrl, self.shift, self.alt)
     }

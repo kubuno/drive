@@ -1,4 +1,4 @@
-//! HomeModel (port-only — aggregate of the Home page and sidebar data)
+//! HomeModel (port-only - aggregate of the Home page and sidebar data)
 
 use super::{load_drives, load_quick_access, load_recent_files};
 use super::{DriveItem, QuickAccessItem, RecentFileItem};

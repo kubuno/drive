@@ -72,7 +72,7 @@ pub fn current_language_name() -> String {
 /// unit (`GroupByDateUnit`): the "Today / Yesterday / Earlier
 /// this week / …" scale, then, after the fixed labels, Day groups by full
 /// date, Month by month, Year by year. Returns (descending rank, label)
-/// — the rank orders groups from most recent to oldest
+/// - the rank orders groups from most recent to oldest
 /// (`SortIndexOverride`).
 pub fn time_span_label_unit(
     t: std::time::SystemTime,

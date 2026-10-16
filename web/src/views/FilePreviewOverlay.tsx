@@ -1,8 +1,8 @@
 // PDF previewer, built ON TOP of the generic FilePreviewShell: the shell owns
 // the chrome (header, menubar, share, open-with, prev/next, gutter, details,
-// dialogs, base keys) while this file plugs in everything PAGE-related —
+// dialogs, base keys) while this file plugs in everything PAGE-related -
 // pdf.js loading, continuously scrolled pages, thumbnails/outline rail, zoom,
-// in-document search, anchored comments and image-based printing — through the
+// in-document search, anchored comments and image-based printing - through the
 // shell's extension points. pdf.js is loaded lazily so the main bundle stays
 // small. All file dialogs (rename, move, share, labels) are owned by the
 // parent and render above the overlay (they use z > 50).
@@ -69,7 +69,7 @@ function loadPdfjs(): Promise<PdfJsModule> {
 interface Props {
   file:          FileItem
   /** All previewable files in the current view (folder or search results), in
-   *  order and of ANY supported type — powers ←/→ file navigation. */
+   *  order and of ANY supported type - powers ←/→ file navigation. */
   files:         FileItem[]
   onClose:       () => void
   /** Opens another previewable file in its own viewer (PDF stays in this
@@ -90,7 +90,7 @@ interface SearchHitRect { page: number; x: number; y: number; w: number; h: numb
 // Dragging a selection across the blank space between text runs would otherwise
 // jump to distant spans (absolute positioning breaks the browser's hit testing).
 // pdf.js fixes this by keeping an `endOfContent` div that, while a selection is
-// active, is moved right AFTER the current selection anchor — empty areas then
+// active, is moved right AFTER the current selection anchor - empty areas then
 // hit-test onto it instead of an unrelated span. One global listener serves all
 // mounted text layers (all pages).
 
@@ -490,7 +490,7 @@ function ThumbView({
 // ── Document outline (bookmarks) tree ────────────────────────────────────────
 
 /** One outline entry: items with children get a fold/unfold chevron.
- *  Collapsed by default — the user drills down from the top-level titles. */
+ *  Collapsed by default - the user drills down from the top-level titles. */
 function OutlineItem({ node, depth, onGo }: {
   node:  OutlineNode
   depth: number
@@ -599,7 +599,7 @@ export default function FilePreviewOverlay({
   const me = useAuthStore(s => s.user)
   const current = file
   // A foreign source (mail attachment…) has no Drive record: no view counter,
-  // no anchored comments — only the document itself.
+  // no anchored comments - only the document itself.
   const external = isExternalFile(current)
 
   // ── Document state ─────────────────────────────────────────────────────────
@@ -1069,7 +1069,7 @@ export default function FilePreviewOverlay({
         { type: 'action', label: t('preview.view_outline_item', { defaultValue: 'Plan' }), checked: showThumbs && railMode === 'outline', disabled: outline.length === 0, onClick: () => { setShowThumbs(true); setRailMode('outline') } },
       ],
     },
-    // Comments are stored against a Drive file — nothing to show for an
+    // Comments are stored against a Drive file - nothing to show for an
     // external source.
     ...(external ? [] : [
       { type: 'separator' } as MenuItem,
@@ -1301,7 +1301,7 @@ export default function FilePreviewOverlay({
 
   const overlays = (
     <>
-      {/* Comment mode — blue banner prompting for a region */}
+      {/* Comment mode - blue banner prompting for a region */}
       {commentMode && !draft && (
         <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 pl-4 pr-2 py-2 rounded-lg bg-blue-600 text-white shadow-xl">
           <span className="text-xs">{t('preview.comment_select_zone', { defaultValue: 'Sélectionnez la zone où vous souhaitez ajouter un commentaire.' })}</span>
@@ -1311,7 +1311,7 @@ export default function FilePreviewOverlay({
         </div>
       )}
 
-      {/* Comment composer — anchored next to the drawn region */}
+      {/* Comment composer - anchored next to the drawn region */}
       {draft && (
         <CommentCard anchor={draft.anchor} onClose={exitCommentMode}>
           <CommentAuthorRow name={me?.display_name ?? me?.email ?? ''} avatar={me?.avatar_url ?? null} />
@@ -1339,7 +1339,7 @@ export default function FilePreviewOverlay({
         </CommentCard>
       )}
 
-      {/* Open comment — read + resolve/delete */}
+      {/* Open comment - read + resolve/delete */}
       {openComment && openCommentData && (
         <CommentCard anchor={openComment.anchor} onClose={() => setOpenComment(null)}>
           <div className="flex items-start justify-between gap-2">

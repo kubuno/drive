@@ -1,5 +1,5 @@
 //! Port of `Files.App/Views/Layouts/DetailsLayoutPage.xaml`: rows with
-//! sortable column headers. The header lives OUTSIDE the `ScrollViewer` —
+//! sortable column headers. The header lives OUTSIDE the `ScrollViewer` -
 //! rows scroll underneath it, hence the clipping.
 
 
@@ -45,12 +45,12 @@ impl Painter<'_> {
             (kubuno_drive_desktop_localization::tr(defs[3].0), lefts[3], defs[3].1),
         ];
         // `@ui/DataTable`: the header row is `bg-surface-1` with a
-        // `border-b border-border` under it — the ONLY rule in the table.
+        // `border-b border-border` under it - the ONLY rule in the table.
         self.fill_rounded(header, 0.0, &t.card_background);
         for (i, (label, left, column)) in columns.iter().enumerate() {
             let zone_right = [modified_left, type_left, size_left, header.right][i];
             // `@ui/DataTable` sort button: hovering a header darkens the LABEL
-            // (`hover:text-text-primary`) — it paints no background pill.
+            // (`hover:text-text-primary`) - it paints no background pill.
             let hot = state.hot == Some(Hot::FileHeaderCol(i));
             let label_color = if hot { t.text_primary } else { t.text_secondary };
             // `<th>`: `font-medium text-text-secondary` at `--kb-text-body`

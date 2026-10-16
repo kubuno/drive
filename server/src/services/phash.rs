@@ -3,7 +3,7 @@
 //! pixels horizontaux adjacents → 64 bits. La similarité = distance de Hamming (faible = proche).
 
 /// Calcule le dHash d'une image encodée (JPEG/PNG/WebP/GIF). `None` si non décodable.
-/// Stocké en i64 (BIGINT Postgres) — réinterprétation binaire du u64.
+/// Stocké en i64 (BIGINT Postgres) - réinterprétation binaire du u64.
 pub fn dhash(bytes: &[u8]) -> Option<i64> {
     let img = image::load_from_memory(bytes).ok()?;
     // 9 colonnes × 8 lignes en niveaux de gris → 8 comparaisons par ligne = 64 bits.

@@ -1,5 +1,5 @@
 //! Port of `Files.App/UserControls/Pane/InfoPane.xaml`: the Details/Preview
-//! pane card — Détails/Aperçu selector (SelectionPill), big thumbnail or
+//! pane card - Détails/Aperçu selector (SelectionPill), big thumbnail or
 //! content preview, name, property rows, tags stub, and Properties button.
 
 use kubuno_drive_desktop_app_controls::themes::shape;
@@ -44,12 +44,12 @@ impl Painter<'_> {
             },
         };
 
-        // A FLAT panel like the listing beside it — same white surface, same
+        // A FLAT panel like the listing beside it - same white surface, same
         // rounding, no drop shadow (the web stacks panels on the page
         // background, it never floats them).
         self.fill_rounded(pane, shape::radius::XL, &t.layer_background);
 
-        // Détails/Aperçu selector — `@ui/Tabs.tsx`, variant "underline".
+        // Détails/Aperçu selector - `@ui/Tabs.tsx`, variant "underline".
         // The web draws NO box: a single `border-b border-border` hairline runs
         // under the whole strip (Tabs.tsx:172) and the active tab is marked by a
         // `::before` band, not by a filled pill (Tabs.tsx:117-118):
@@ -113,7 +113,7 @@ impl Painter<'_> {
             } else {
                 self.text(kubuno_drive_desktop_localization::tr("DetailsPanePreviewNotAvaliableText"), &area, &f.body, &t.text_secondary, true);
             }
-            // Properties button is shared with the details tab (pinned here —
+            // Properties button is shared with the details tab (pinned here -
             // the Aperçu tab has no scrolling stack).
             let b = &layout.info_properties;
             state.info_properties_rect.set(Some((b.left, b.top, b.right, b.bottom)));
@@ -161,7 +161,7 @@ impl Painter<'_> {
             name
         };
         // SCROLLING REGION (the original RootPropertiesScrollViewer): name,
-        // rows, tags AND Properties button — nothing overlaps, the
+        // rows, tags AND Properties button - nothing overlaps, the
         // wheel scrolls, the button is the last element of the stack.
         let region = Rect::new(pane.left, thumb_rect.bottom + 4.0, pane.right, pane.bottom);
         let viewport = region.bottom - region.top;
@@ -182,9 +182,9 @@ impl Painter<'_> {
         y = name_rect.bottom + 12.0;
 
         // DRIVE ROOT: InfoPane.xaml's `DriveStorageDetailsAvailable`
-        // state replaces the property rows — file
+        // state replaces the property rows - file
         // system + type, used space (accent), StorageBar,
-        // Available/Total — then the Properties button in the flow.
+        // Available/Total - then the Properties button in the flow.
         if is_dir && crate::main_window::is_drive_root(&path) {
             let bottom = self.draw_drive_details(pane, &path, y);
             self.finish_scroll_region(layout, state, &region, bottom, scroll);
@@ -204,8 +204,8 @@ impl Painter<'_> {
         };
         // The rows depend on the item's TYPE, like the Preview
         // ViewModels: folder (count + dates + path), shortcut (target +
-        // dates + path — the original skips the system properties), file
-        // (the SHELL properties from PreviewPanePropertiesInformation.json —
+        // dates + path - the original skips the system properties), file
+        // (the SHELL properties from PreviewPanePropertiesInformation.json -
         // image dimensions, media duration, music, document…).
         let is_shortcut = path.to_lowercase().ends_with(".lnk");
         let tr = kubuno_drive_desktop_localization::tr;
@@ -232,7 +232,7 @@ impl Painter<'_> {
         }
 
         // Variable-height rows: the VALUES wrap
-        // (TextWrapping="Wrap") instead of being truncated — the path especially.
+        // (TextWrapping="Wrap") instead of being truncated - the path especially.
         let inner_w = pane.right - pane.left - 24.0;
         for (key, value) in rows {
             // Header: caption SemiBold (Local.FileDetailsHeaderTextBlockStyle).
@@ -380,7 +380,7 @@ impl Painter<'_> {
             true,
         );
 
-        // Storage gauge — the drive web's bar, not WinUI's StorageBar (whose
+        // Storage gauge - the drive web's bar, not WinUI's StorageBar (whose
         // value was FATTER than its track). `FilesTreeSidebar.tsx:146-147` and
         // `FilesStorageGaugeHeader.tsx:37-41`: one `h-1.5` (6 DIP) `bg-black/10`
         // track, `rounded-full`, with a `rounded-full` fill of the same height
@@ -417,7 +417,7 @@ impl Painter<'_> {
         top + 138.0
     }
 
-    /// "Propriétés" — `@ui/Button.tsx` variant "secondary", size "sm".
+    /// "Propriétés" - `@ui/Button.tsx` variant "secondary", size "sm".
     ///
     /// Button.tsx:27 gives the fills: `bg-white` at rest (the pane's own
     /// surface, NOT surface-1 as the WinUI chrome had it) over a

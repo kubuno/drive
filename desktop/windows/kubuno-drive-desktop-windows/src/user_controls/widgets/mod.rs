@@ -1,5 +1,5 @@
 //! Port of `Files.App/UserControls/Widgets/` (QuickAccessWidget.xaml,
-//! DrivesWidget.xaml, RecentFilesWidget.xaml): the Home page sections —
+//! DrivesWidget.xaml, RecentFilesWidget.xaml): the Home page sections -
 //! quick access cards, drive cards with usage gauge, and recent files rows.
 //!
 //! `draw_home` orchestrates the Home page; each section is ported in its
@@ -24,7 +24,7 @@ use crate::ui::{Layout, Painter, UiState};
 /// Thresholds and colours are the drive web's, not `@ui/ProgressBar.tsx`'s:
 /// the shared component defaults to 75 % / 90 % (`ProgressBar.tsx:73`), but
 /// every storage bar in drive overrides them to `> 90 %` danger, `> 70 %`
-/// warning, else primary — see `FilesStorageGaugeHeader.tsx:21-24` and
+/// warning, else primary - see `FilesStorageGaugeHeader.tsx:21-24` and
 /// `FilesTreeSidebar.tsx:109`. The web compares the ROUNDED percentage, so we
 /// do too, otherwise 90.4 % would already read as red here and not there.
 pub(crate) fn gauge_color(theme: &Theme, fraction: f32) -> D2D1_COLOR_F {

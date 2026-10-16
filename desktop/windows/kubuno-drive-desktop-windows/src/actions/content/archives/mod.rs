@@ -1,4 +1,4 @@
-//! Port of `Files.App/Actions/Content/Archives/` — `Compress/` and
+//! Port of `Files.App/Actions/Content/Archives/` - `Compress/` and
 //! `Decompress/`. The target comes from the context menu (`parameter`),
 //! otherwise the selection, like `IContentPageContext.SelectedItems`.
 

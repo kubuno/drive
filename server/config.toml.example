@@ -1,4 +1,4 @@
-# ─── Kubuno Files — Configuration ────────────────────────────────────────────
+# ─── Kubuno Files - Configuration ────────────────────────────────────────────
 # Copiez ce fichier en config.toml et adaptez les valeurs.
 # Les variables d'environnement préfixées KD__ surchargent ce fichier.
 # Exemple : KD__SERVER__PORT=3102
@@ -10,7 +10,7 @@ port = 3101
 [core]
 # URL du core Kubuno (pour l'enregistrement du module)
 url             = "http://127.0.0.1:8080"
-# Secret partagé — doit correspondre à server.internal_secret dans le core
+# Secret partagé - doit correspondre à server.internal_secret dans le core
 internal_secret = "change_me"
 
 # ── Base de données ───────────────────────────────────────────────────────────
@@ -20,7 +20,7 @@ internal_secret = "change_me"
 
 [storage]
 backend    = "local"
-# Production (installation Debian) — chemins créés par le postinst
+# Production (installation Debian) - chemins créés par le postinst
 local_path = "/var/lib/kubuno/modules/drive/data"
 temp_path  = "/var/lib/kubuno/modules/drive/temp"
 # Développement local (décommenter et commenter les lignes ci-dessus) :

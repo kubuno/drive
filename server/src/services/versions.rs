@@ -203,7 +203,7 @@ pub async fn delete_version(
 /// Deletes a file's **whole** history, keeping the current content.
 ///
 /// The rows are selected by id and then deleted by that exact id set, so a
-/// revision created between the two statements is neither counted nor removed —
+/// revision created between the two statements is neither counted nor removed -
 /// never a deleted row whose blob survives, nor the reverse.
 pub async fn purge_versions(
     db: &DbPool,
@@ -211,7 +211,7 @@ pub async fn purge_versions(
     owner_id: Uuid,
     file_id: Uuid,
 ) -> Result<VersionsPurgeResult> {
-    // Ownership check — also turns an unknown id into a 404.
+    // Ownership check - also turns an unknown id into a 404.
     get_file(db, owner_id, file_id).await?;
 
     let rows: Vec<VersionBlob> = db

@@ -1,7 +1,7 @@
 //! CloudDrivesDetector (mirrors CloudDrivesDetector.cs)
 //!
 //! Port of `Files.App/Utils/Cloud/CloudDrivesDetector.cs`: cloud drive
-//! detection via the registry. Two detectors ported — OneDrive (the
+//! detection via the registry. Two detectors ported - OneDrive (the
 //! `Accounts` key) and the generic one (pinned Explorer namespace
 //! extensions: iCloud, Nextcloud, MEGA, ownCloud, Proton…); Sharepoint,
 //! Yandex, pCloud, Nutstore, Seadrive and Autodesk remain to be ported.

@@ -2,7 +2,7 @@
 //! the console.
 //!
 //! The values are declared by `module.toml`'s `[[settings]]` blocks, stored in
-//! `core.settings`, and read back here through `/internal/modules/settings` — a
+//! `core.settings`, and read back here through `/internal/modules/settings` - a
 //! module owns its own schema and cannot read the core's tables, and a background
 //! refresher has no user token to use the public config route.
 //!
@@ -22,7 +22,7 @@ pub struct InstanceConfig {
     /// Whether users may create public (tokenised) share links at all. Off turns
     /// the whole public-link feature into a refusal, without touching internal
     /// shares (a share addressed to a named recipient), AND stops serving the
-    /// links already created — a switch that only blocks new links would leave
+    /// links already created - a switch that only blocks new links would leave
     /// yesterday's exposure in place.
     pub public_links_enabled: bool,
     /// Ceiling on a public link's lifetime, in days. `0` = no ceiling. A link
@@ -36,7 +36,7 @@ pub struct InstanceConfig {
     /// one is refused rather than silently created open.
     pub share_require_password: bool,
     /// Whether the holder of a public link may download the bytes. Off, the
-    /// link only ever reveals the item's name and size — enforced at creation
+    /// link only ever reveals the item's name and size - enforced at creation
     /// AND on every download, so the switch also closes existing links.
     pub share_public_download_enabled: bool,
     /// Ceiling on the number of downloads a public link may serve. `0` = no
@@ -88,7 +88,7 @@ impl InstanceConfig {
     /// back to the compiled default rather than to a permissive value: a payload
     /// missing a key (an older core, a failed migration) must not silently drop a
     /// protection. Out-of-range numbers are treated as a mistake and ignored the
-    /// same way — "as shipped", not "as permissive as possible".
+    /// same way - "as shipped", not "as permissive as possible".
     pub fn from_settings(settings: &Value) -> Self {
         let d = Self::default();
         let int_of = |key: &str, min: i64, max: i64, fallback: i64| -> i64 {
@@ -120,7 +120,7 @@ impl InstanceConfig {
 
     /// The effective ceiling on one uploaded file, in bytes: the smaller of the
     /// server's compiled/ops limit and the administrator's. The instance
-    /// setting may only tighten — the router's `DefaultBodyLimit` is built once
+    /// setting may only tighten - the router's `DefaultBodyLimit` is built once
     /// at boot from the server limit and would reject a larger body anyway, so
     /// letting the console raise it would promise a limit that does not hold.
     pub fn effective_max_upload_bytes(&self, server_max: u64) -> u64 {
@@ -131,7 +131,7 @@ impl InstanceConfig {
     }
 
     /// Refuses a filename whose extension the administrator blocked. The name
-    /// is matched on its LAST extension, lower-cased — `setup.EXE` and
+    /// is matched on its LAST extension, lower-cased - `setup.EXE` and
     /// `report.pdf.exe` are both `exe`.
     pub fn check_extension_allowed(&self, filename: &str) -> Result<(), String> {
         if self.blocked_extensions.is_empty() {
@@ -260,7 +260,7 @@ mod tests {
         assert_eq!(cfg.blocked_extensions, vec!["exe", "bat", "msi"]);
         assert!(cfg.check_extension_allowed("rapport.pdf").is_ok());
         assert!(cfg.check_extension_allowed("setup.EXE").is_err());
-        // A double extension is judged on the last one — the one the system runs.
+        // A double extension is judged on the last one - the one the system runs.
         assert!(cfg.check_extension_allowed("facture.pdf.exe").is_err());
         // No extension at all is not a blocked extension.
         assert!(cfg.check_extension_allowed("LISEZMOI").is_ok());

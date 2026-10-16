@@ -7,7 +7,7 @@
 //! arrangement is `kubuno_drive_desktop_app_controls::toolbar::arrange`, which the primitive
 //! wraps. What is written here is the binding: which commands the current
 //! context shows, which `Hot` each of them answers to, and the one thing the
-//! primitive has no notion of — that Drive's bar is two blocks, a primary one
+//! primitive has no notion of - that Drive's bar is two blocks, a primary one
 //! against the left edge and a `BaseCommandBar` packed against the right.
 //!
 //! Overflow is turned OFF on every item ([`ToolStripItemOverflow::Never`]):
@@ -35,7 +35,7 @@ const CARD_INSET_RIGHT: f32 = 8.0;
 /// The card is 48 DIP tall and encloses centred 36 DIP `AppBarButton`s, so it
 /// overflows the row by 6 above and below.
 const ROW_INSET_TOP: f32 = 6.0;
-/// Breathing room kept between the two blocks when the window gets narrow —
+/// Breathing room kept between the two blocks when the window gets narrow -
 /// the left block never grows into the right one's box.
 const BLOCK_GAP: f32 = 8.0;
 
@@ -44,8 +44,8 @@ thread_local! {
     /// [`Toolbar::item_widths`], for the left block and the right one.
     ///
     /// A command's width is a DirectWrite extent as soon as it carries a
-    /// caption (« Nouveau », the Recycle Bin's three), and `Layout::compute` —
-    /// which needs every button's rectangle to hit-test it — is static and has
+    /// caption (« Nouveau », the Recycle Bin's three), and `Layout::compute` -
+    /// which needs every button's rectangle to hit-test it - is static and has
     /// no drawing surface. So the widths are taken once per frame in
     /// [`premeasure`], while a `Canvas` exists, and the layout pass reuses
     /// them: the primitive measures and arranges once, and the hit test and
@@ -124,7 +124,7 @@ pub(crate) fn build_cmdbar(state: &UiState) -> CmdBar {
         return CmdBar { left, left_hots, right, right_hots };
     }
 
-    // LEFT block — primary commands from the « AlwaysVisible » context
+    // LEFT block - primary commands from the « AlwaysVisible » context
     // (`ToolbarSections.DefaultItemsByContext`), in the exact order:
     //   Nouveau ▾ | (separator) | Couper | Copier | Coller | Renommer
     //   | Partager | Supprimer | Propriétés.
@@ -146,7 +146,7 @@ pub(crate) fn build_cmdbar(state: &UiState) -> CmdBar {
     }
     let (left, left_hots) = block(items);
 
-    // RIGHT block — `BaseCommandBar`, in the XAML's exact order:
+    // RIGHT block - `BaseCommandBar`, in the XAML's exact order:
     //   Filtre | Options de sélection ▾ | Trier ▾ | Disposition ▾ | volet de
     //   détails | étagère. No « Grouper » button: grouping lives in the Trier
     //   flyout (MenuFlyoutSubItem).
@@ -165,8 +165,8 @@ pub(crate) fn build_cmdbar(state: &UiState) -> CmdBar {
 /// Where each block is laid: the left one from the card's inner edge, the
 /// right one packed against the opposite edge.
 ///
-/// The packing is the one thing [`arrange`] cannot do — it walks left to right
-/// from the origin it is given — so the right block's origin is computed here
+/// The packing is the one thing [`arrange`] cannot do - it walks left to right
+/// from the origin it is given - so the right block's origin is computed here
 /// from the width its items add up to, spacing included. Everything past that
 /// origin is the primitive's.
 ///
@@ -195,7 +195,7 @@ pub(crate) fn premeasure(c: &dyn kubuno_desktop_ui::Canvas, state: &UiState) {
 }
 
 /// Every command's rectangle and the `Hot` it answers to, for the layout pass
-/// to hit-test — arranged by the primitive itself, so the box the pointer hits
+/// to hit-test - arranged by the primitive itself, so the box the pointer hits
 /// is the box that was drawn.
 pub(crate) fn cmdbar_arrangement(state: &UiState, card: Rect) -> Vec<(Rect, Hot)> {
     let bar = build_cmdbar(state);
@@ -219,7 +219,7 @@ pub(crate) fn cmdbar_arrangement(state: &UiState, card: Rect) -> Vec<(Rect, Hot)
 
 /// The cached widths, but only if they still describe THIS bar.
 ///
-/// `Layout::compute` also runs between two frames — on a mouse move, say — and
+/// `Layout::compute` also runs between two frames - on a mouse move, say - and
 /// the command set changes with the location (the Recycle Bin shows three
 /// buttons where a folder shows nine). A measurement taken for the other set
 /// indexes items that are no longer there, so it is dropped: the bar has no
@@ -241,7 +241,7 @@ impl Painter<'_> {
     pub(crate) fn draw_cmdbar(&self, layout: &Layout, state: &UiState) {
         let Some(card) = layout.cmdbar else { return };
         // The web has NO toolbar card: the command bar sits straight on the
-        // module panel — no border, no shadow, no radius. The content card
+        // module panel - no border, no shadow, no radius. The content card
         // right below carries the separation.
         self.fill_rounded(&card, 0.0, &self.theme.layer_background);
 

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Drive · File info sheet — converted from sheet/Sheets.kt (FileInfoSheet). A bottom sheet: the file name, then
+  Drive · File info sheet - converted from sheet/Sheets.kt (FileInfoSheet). A bottom sheet: the file name, then
   InfoLine rows (label 40% / value 60%): size, type, modified, checksum. Drive LIGHT theme.
 -->
 <Panel xmlns="https://kubuno.com/views" xmlns:x="https://kubuno.com/views/x"

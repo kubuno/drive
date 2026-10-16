@@ -1,5 +1,5 @@
 #![allow(unused_imports)]
-//! Sous-module de `MainWindow` — voir `main_window/mod.rs`.
+//! Sous-module de `MainWindow` - voir `main_window/mod.rs`.
 use windows::core::{w, Result};
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, RECT, WPARAM};
 use windows::Win32::Graphics::Dwm::{
@@ -110,7 +110,7 @@ impl MainWindow {
         let tr = kubuno_drive_desktop_localization::tr;
 
         // Recycle bin (`Check(ShowInRecycleBin)`): Restore + the primary
-        // Delete / Properties — everything else is filtered by the factory.
+        // Delete / Properties - everything else is filtered by the factory.
         if self.state.active().location == Location::RecycleBin {
             let primary = vec![
                 FlyoutItem::new(tr("Delete").to_string(), true)
@@ -148,7 +148,7 @@ impl MainWindow {
         // `areAllItemsFolders = selectedItems.All(Folder)`.
         let all_folders = sel.iter().all(|p| std::path::Path::new(p).is_dir());
         // `selectedItems.FirstOrDefault()`: the FIRST of the selection
-        // (display order), NOT the clicked item — don't "fix it up" to `path`.
+        // (display order), NOT the clicked item - don't "fix it up" to `path`.
         let first = sel.first().cloned().unwrap_or_else(|| path.clone());
         let first_ext = std::path::Path::new(&first)
             .extension()
@@ -160,7 +160,7 @@ impl MainWindow {
         // `CommandBarFlyout.PrimaryCommands`: the icon-only band the factory
         // fills with its `IsPrimary = true` entries, in this exact order. A
         // builder hides an entry when `IsVisible` is unset AND the command is
-        // not executable — hence Share, which `ShareItemHelpers.IsItemShareable`
+        // not executable - hence Share, which `ShareItemHelpers.IsItemShareable`
         // rejects for plain folders.
         let mut primary = vec![
             FlyoutItem::new(tr("Cut").to_string(), true)
@@ -207,11 +207,11 @@ impl MainWindow {
         let is_shortcut = ext == "lnk" || ext == "url";
         let is_executable = matches!(ext.as_str(), "exe" | "bat" | "cmd" | "ahk");
         let is_batch = matches!(ext.as_str(), "bat" | "cmd" | "ahk");
-        // `showOpenItemWith`: a single plain file — never a folder, a shortcut
+        // `showOpenItemWith`: a single plain file - never a folder, a shortcut
         // or an executable.
         let show_open_with = count == 1 && !is_dir && !is_shortcut && !is_executable;
         // `canDecompress = Any() && All(IsArchive)`; `canCompress = !canDecompress
-        // || Count > 1` — the two coexist in multi-selection.
+        // || Count > 1` - the two coexist in multi-selection.
         let can_decompress =
             !sel.is_empty() && sel.iter().all(|p| crate::utils::storage::is_archive(p));
         let can_compress = !can_decompress || count > 1;
@@ -433,7 +433,7 @@ impl MainWindow {
             }
         }
         // « Envoyer vers »: no icon in the original, submenu filled by the
-        // shell — here by the user's SendTo folder.
+        // shell - here by the user's SendTo folder.
         let sendto: Vec<FlyoutItem> = crate::utils::storage::sendto_entries()
             .into_iter()
             .enumerate()
@@ -522,7 +522,7 @@ impl MainWindow {
         // In the recycle bin, « Date de modification » disappears: the port
         // stores the DELETION date in `modified` there (the C# keeps the
         // entry, but its SortOption.DateModified is distinct from
-        // DateDeleted — a deliberate discrepancy).
+        // DateDeleted - a deliberate discrepancy).
         if !in_recycle_bin {
             sort_children.push(
                 FlyoutItem::new(tr("DateModifiedLowerCase").to_string(), true)
@@ -722,7 +722,7 @@ impl MainWindow {
         let mut items: Vec<FlyoutItem> = Vec::new();
         if is_recycle_bin {
             // `Commands.EmptyRecycleBin` and `Commands.RestoreAllRecycleBin`,
-            // BEFORE the common entries — visible only for the recycle bin
+            // BEFORE the common entries - visible only for the recycle bin
             // and enabled per `IsExecutable` (bin not empty).
             let has_items = crate::services::storage::storage_trash_bin_service::query().1 > 0;
             items.push(
@@ -757,7 +757,7 @@ impl MainWindow {
             FlyoutItem::separator(),
         ]);
         if !is_recycle_bin {
-            // `CopyItemFromSidebar`: copies the folder to the clipboard —
+            // `CopyItemFromSidebar`: copies the folder to the clipboard -
             // not executable for the recycle bin (not a folder path).
             items.push(
                 FlyoutItem::new(tr("Copy").to_string(), true)
@@ -834,7 +834,7 @@ impl MainWindow {
     /// Live tab reordering while dragging (port of the TabBar drag & drop).
     /// Outside the strip (± `TAB_DETACH_MARGIN`), the tab DETACHES: removed
     /// from the strip (its neighbors close the gap), a ghost follows the
-    /// cursor; it re-anchors if the cursor comes back — the TabView's behavior.
+    /// cursor; it re-anchors if the cursor comes back - the TabView's behavior.
     /// Handles a click while the flyout is open. Returns true when consumed.
     pub(crate) fn on_flyout_click(&mut self, x: f32, y: f32) -> bool {
         use crate::ui::{FlyoutHit, FlyoutKind};
@@ -843,7 +843,7 @@ impl MainWindow {
         };
 
         // The context menus built from ContentPageContextFlyoutFactory dispatch
-        // by COMMAND, not by item index — their content varies with the item.
+        // by COMMAND, not by item index - their content varies with the item.
         if matches!(
             flyout.kind,
             FlyoutKind::ItemContext | FlyoutKind::EmptySpace | FlyoutKind::SidebarContext
@@ -1104,7 +1104,7 @@ impl MainWindow {
             }
             if let Some(zone) = panel.hit(px, py, x, y) {
                 // Continuous zones are handled on button-DOWN (dragging); the
-                // click handles the discrete ones — the chips and the close
+                // click handles the discrete ones - the chips and the close
                 // button of the panel's header.
                 if zone == PickerZone::Close {
                     self.state.flyout = None;

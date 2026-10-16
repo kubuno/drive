@@ -3,7 +3,7 @@
 //! Mirrors the core's idempotency layer, but lives in the drive because drive
 //! routes are proxied and never reach the core middleware. A mutating request
 //! carrying `Idempotency-Key` runs once; its successful response is stored and
-//! replayed for any later request with the same (user, method, path, key) —
+//! replayed for any later request with the same (user, method, path, key) -
 //! so an offline client replaying a queued upload can't create a duplicate.
 
 use axum::{
@@ -18,7 +18,7 @@ use sha2::{Digest, Sha256};
 
 use crate::state::AppState;
 
-const MAX_CACHED_BODY: usize = 4 * 1024 * 1024; // 4 MB — drive write responses are small JSON
+const MAX_CACHED_BODY: usize = 4 * 1024 * 1024; // 4 MB - drive write responses are small JSON
 const TTL_HOURS: i64 = 24;
 
 /// The stored response replayed for a repeated idempotency key.

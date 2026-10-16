@@ -80,7 +80,7 @@ fn sidebar_entry_path(entry: &SidebarEntry, model: &HomeModel) -> Option<String>
 
 /// The sidebar's selected entry during navigation: the one whose path is
 /// the LONGEST prefix of the current location (the original
-/// `UpdateSidebarSelectedItemFromArgs` of SidebarViewModel) — a folder
+/// `UpdateSidebarSelectedItemFromArgs` of SidebarViewModel) - a folder
 /// under C:\ highlights « Disque système 1 (C:) » for lack of a closer pin;
 /// a deeper ancestor pin wins over the drive.
 pub(crate) fn sidebar_selected_entry(

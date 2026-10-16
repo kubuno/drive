@@ -73,7 +73,7 @@ pub struct WindowsContextMenuItem {
 }
 
 impl WindowsStorable {
-    /// Port of `GetPropertyValue<string>` — `IShellItem2::GetString` with a
+    /// Port of `GetPropertyValue<string>` - `IShellItem2::GetString` with a
     /// property key resolved via `PSGetPropertyKeyFromName`.
     pub fn get_property_string(&self, prop_key: &str) -> windows::core::Result<String> {
         // SAFETY: standard property-store access; the returned string is
@@ -87,7 +87,7 @@ impl WindowsStorable {
         }
     }
 
-    /// Port of `GetPropertyValue<bool>` — `IShellItem2::GetBool`.
+    /// Port of `GetPropertyValue<bool>` - `IShellItem2::GetBool`.
     pub fn get_property_bool(&self, prop_key: &str) -> windows::core::Result<bool> {
         // SAFETY: standard property-store access.
         unsafe {
@@ -152,7 +152,7 @@ impl WindowsStorable {
         }
     }
 
-    /// Port of `TryGetShellTooltip` — `IQueryInfo::GetInfoTip`.
+    /// Port of `TryGetShellTooltip` - `IQueryInfo::GetInfoTip`.
     pub fn try_get_shell_tooltip(&self) -> windows::core::Result<String> {
         // SAFETY: standard tooltip query; the returned string is released via
         // `take_co_task_string`.
@@ -204,7 +204,7 @@ impl WindowsStorable {
         }
     }
 
-    /// Port of `TryToggleFileCompressedAttribute` — `DeviceIoControl` with
+    /// Port of `TryToggleFileCompressedAttribute` - `DeviceIoControl` with
     /// `FSCTL_SET_COMPRESSION`.
     pub fn try_toggle_file_compressed_attribute(&self, value: bool) -> bool {
         // SAFETY: the handle is validated by `CreateFileW` returning `Ok` and
@@ -249,7 +249,7 @@ impl WindowsStorable {
 
     // -- Non-bitmap parts of WindowsStorableHelpers.Icon.cs ----------------
 
-    /// Port of `TrySetFolderIcon` — `SHGetSetFolderCustomSettings` with
+    /// Port of `TrySetFolderIcon` - `SHGetSetFolderCustomSettings` with
     /// `FCSM_ICONFILE`.
     pub fn try_set_folder_icon(
         &self,
@@ -272,7 +272,7 @@ impl WindowsStorable {
         unsafe { SHGetSetFolderCustomSettings(&mut settings, &folder_path, FCS_FORCEWRITE) }
     }
 
-    /// Port of `TrySetShortcutIcon` — `IShellLinkW::SetIconLocation`.
+    /// Port of `TrySetShortcutIcon` - `IShellLinkW::SetIconLocation`.
     pub fn try_set_shortcut_icon(
         &self,
         icon_file: &WindowsStorable,
@@ -314,7 +314,7 @@ impl WindowsFolder {
         }
     }
 
-    /// Port of `GetShellNewItems` — enumerates the entries of the shell "New"
+    /// Port of `GetShellNewItems` - enumerates the entries of the shell "New"
     /// submenu (`CLSID_NewMenu`). Requires an STA thread.
     pub fn get_shell_new_items(&self) -> windows::core::Result<Vec<WindowsContextMenuItem>> {
         // SAFETY: the menu handles are destroyed before returning; the pidl is
@@ -382,7 +382,7 @@ impl WindowsFolder {
         }
     }
 
-    /// Port of `InvokeShellNewItem` — invokes an entry returned by
+    /// Port of `InvokeShellNewItem` - invokes an entry returned by
     /// [`Self::get_shell_new_items`] by its command id. Requires an STA thread.
     pub fn invoke_shell_new_item(&self, item: &WindowsContextMenuItem) -> windows::core::Result<()> {
         // SAFETY: standard context-menu invocation with a MAKEINTRESOURCE-style

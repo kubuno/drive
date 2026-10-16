@@ -1,5 +1,5 @@
 #![allow(unused_imports)]
-//! Submodule of `MainWindow` — see `main_window/mod.rs`.
+//! Submodule of `MainWindow` - see `main_window/mod.rs`.
 use windows::core::{w, Result};
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, RECT, WPARAM};
 use windows::Win32::Graphics::Dwm::{
@@ -51,7 +51,7 @@ impl MainWindow {
     }
 
     /// "Edit tags" (pane): the list of defined tags
-    /// (settings), checked according to the item — the `EditTags` flyout
+    /// (settings), checked according to the item - the `EditTags` flyout
     /// of the original DetailsEditTags.
     pub(crate) fn start_sidebar_animation(&mut self) {
         unsafe {
@@ -61,7 +61,7 @@ impl MainWindow {
 
     /// `LayoutSettingsService`: each layout keeps ITS OWN size.
     /// Expands/collapses a sidebar tree node. On expand, the
-    /// child folders (and only them) are loaded into the cache — via
+    /// child folders (and only them) are loaded into the cache - via
     /// `load_directory`, which already honors "Hidden items".
     pub(crate) fn toggle_sidebar_folder(&mut self, path: &str) {
         let key = path.to_lowercase();
@@ -81,9 +81,9 @@ impl MainWindow {
 
     /// `UpdateDisplayModeForPaneWidth`: below `COMPACT_MAX_WIDTH`, the original
     /// switches to Compact mode. Lacking a Compact mode here, we close the pane
-    /// — which the hamburger button already does — and keep the last width.
+    /// - which the hamburger button already does - and keep the last width.
     /// `UpdateDisplayModeForPaneWidth`: below `COMPACT_MAX_WIDTH` (200) the
-    /// bar switches to COMPACT mode (56 rail) — not closed — and switches back
+    /// bar switches to COMPACT mode (56 rail) - not closed - and switches back
     /// to Expanded as soon as the drag goes back past the threshold; the drag
     /// stays live from one edge to the other, like the XAML's continuous manipulation.
     pub(crate) fn set_sidebar_width(&mut self, width: f32) {

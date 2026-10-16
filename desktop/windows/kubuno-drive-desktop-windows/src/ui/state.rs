@@ -33,7 +33,7 @@ pub struct UiState {
     pub tabs: Vec<TabGroup>,
     pub active_tab: usize,
     pub hot: Option<Hot>,
-    /// The pane splitter currently being dragged, if any — the resize rail
+    /// The pane splitter currently being dragged, if any - the resize rail
     /// stays lit (and turns accent) for the whole drag, even once the pointer
     /// has run past it.
     pub pane_dragging: Option<Hot>,
@@ -53,7 +53,7 @@ pub struct UiState {
     /// during a TabStripDragOver).
     pub tab_preview_insert: Option<usize>,
     /// The pane's « Modifier les étiquettes » clickable zone, captured BY THE
-    /// DRAWING (its position depends on measured text heights) — hence the
+    /// DRAWING (its position depends on measured text heights) - hence the
     /// `Cell`: drawing only has `&UiState`.
     pub info_edit_tags_rect: std::cell::Cell<Option<(f32, f32, f32, f32)>>,
     /// Info pane scroll (the original `RootPropertiesScrollViewer`: name,
@@ -63,7 +63,7 @@ pub struct UiState {
     /// (bounds the wheel).
     pub info_pane_extent: std::cell::Cell<f32>,
     /// Rect of the Properties button, captured by the drawing (it's part of
-    /// the scrolling FLOW — its position varies with the content).
+    /// the scrolling FLOW - its position varies with the content).
     pub info_properties_rect: std::cell::Cell<Option<(f32, f32, f32, f32)>>,
     /// Last scroll: WinUI's `ScrollBar` only shows its indicator while
     /// scrolling, then it fades out.
@@ -95,7 +95,7 @@ pub struct UiState {
     /// The open `ContentDialog`, if any (modal: it intercepts everything).
     pub dialog: Option<crate::dialogs::DialogState>,
     /// Does the window have focus? False when another window is active:
-    /// the title bar then switches to the INACTIVE tint (like the original —
+    /// the title bar then switches to the INACTIVE tint (like the original -
     /// the Mica backdrop desaturates and the accent color leaves the title bar).
     pub window_active: bool,
     /// The file conflict dialog (`FilesystemOperationDialog`), modal over
@@ -139,7 +139,7 @@ pub struct TabSlide {
     pub t0: std::time::Instant,
 }
 
-/// ListViewItemDragThemeOpacity — the dragged tab is drawn translucent.
+/// ListViewItemDragThemeOpacity - the dragged tab is drawn translucent.
 pub const TAB_DRAG_OPACITY: f32 = 0.80;
 
 /// The `ScrollBar`'s opacity.
@@ -276,7 +276,7 @@ impl UiState {
         self.tab_slides.get(i).map_or(0.0, TabSlide::offset)
     }
 
-    /// True while any tab is still gliding — drives the animation timer.
+    /// True while any tab is still gliding - drives the animation timer.
     pub fn tabs_sliding(&self) -> bool {
         self.tab_slides.iter().any(|s| !s.done())
     }

@@ -217,7 +217,7 @@ export function useDriveItemMenu({
   }
 
   // Purging a history is destructive and irreversible, so the dialog spells out
-  // exactly what it costs and what it gives back — how many revisions disappear
+  // exactly what it costs and what it gives back - how many revisions disappear
   // and how many bytes return to the quota. That sentence IS the feature: without
   // it there is nothing to decide on. The file is captured synchronously because
   // clicking the entry closes the menu and clears `menu`.

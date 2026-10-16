@@ -20,7 +20,7 @@ pub fn set_desktop_wallpaper(path: &str) -> Result<()> {
         let pszpath = HSTRING::from(path);
         for i in 0..count {
             let monitor = wallpaper.GetMonitorDevicePathAt(i)?;
-            // SetWallpaper(monitorId, path) — monitorId is an allocated PWSTR
+            // SetWallpaper(monitorId, path) - monitorId is an allocated PWSTR
             // passed through as-is.
             let _ = wallpaper.SetWallpaper(PCWSTR(monitor.0), &pszpath);
             windows::Win32::System::Com::CoTaskMemFree(Some(monitor.0 as *const _));

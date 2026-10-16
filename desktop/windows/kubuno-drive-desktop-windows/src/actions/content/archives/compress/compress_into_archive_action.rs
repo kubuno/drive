@@ -3,8 +3,8 @@
 use crate::actions::Action;
 use crate::main_window::MainWindow;
 
-/// `CompressIntoArchiveAction.cs`: opens the `CreateArchiveDialog` — editable
-/// name, zip/7z format — like the original.
+/// `CompressIntoArchiveAction.cs`: opens the `CreateArchiveDialog` - editable
+/// name, zip/7z format - like the original.
 pub struct CompressIntoArchive;
 impl Action for CompressIntoArchive {
     fn label(&self) -> &'static str {

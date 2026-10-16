@@ -1,5 +1,5 @@
 //! `FilesPropertiesWindow` : the 2nd top-level window of the properties
-//! sheet — the counterpart of the non-modal `WindowEx` from
+//! sheet - the counterpart of the non-modal `WindowEx` from
 //! `FilePropertiesHelpers.OpenPropertiesWindow` (800x500-DPI, Mica, non-
 //! maximizable, positioned at the cursor and clamped to the work area).
 //!
@@ -753,7 +753,7 @@ impl FilesPropertiesWindow {
         match msg {
             WM_NCCALCSIZE => {
                 // Removes the frame: the client occupies the whole window
-                // (glass sheet). Same computation as the main window —
+                // (glass sheet). Same computation as the main window -
                 // whether wparam is TRUE (NCCALCSIZE_PARAMS) or FALSE (RECT),
                 // the rectangle to adjust is at the head of lparam.
                 let rc = unsafe { &mut *(lparam.0 as *mut RECT) };

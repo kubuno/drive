@@ -12,7 +12,7 @@ export function isArchiveFile(f: FileItem): boolean {
     || nm.endsWith('.zip') || nm.endsWith('.tar') || nm.endsWith('.tar.gz') || nm.endsWith('.tgz')
 }
 
-/** True for files that open in a native full-screen / floating preview — the
+/** True for files that open in a native full-screen / floating preview - the
  *  set the previewer's ←/→ navigation cycles through. */
 export function isPreviewable(f: FileItem): boolean {
   return f.mime_type.startsWith('image/') || f.mime_type.startsWith('video/')

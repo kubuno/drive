@@ -49,7 +49,7 @@ function StatsBar({ files, totalBytes, pct, barColor }: { files: FileItem[]; tot
       <div className="flex h-2 rounded-full overflow-hidden bg-surface-3">
         {byCategory.length > 0
           ? byCategory.map(c => (
-              <div key={c.label} title={`${c.label} — ${formatSize(c.bytes)}`}
+              <div key={c.label} title={`${c.label} - ${formatSize(c.bytes)}`}
                    className="transition-all duration-500"
                    style={{ width: `${(c.bytes / denom) * pct}%`, background: c.color }} />
             ))
@@ -60,7 +60,7 @@ function StatsBar({ files, totalBytes, pct, barColor }: { files: FileItem[]; tot
           {byCategory.map(c => (
             <div key={c.label} className="flex items-center gap-1.5 text-xs text-text-secondary">
               <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: c.color }} />
-              {c.label} — {formatSize(c.bytes)}
+              {c.label} - {formatSize(c.bytes)}
             </div>
           ))}
         </div>

@@ -1,5 +1,5 @@
 #![allow(unused_imports)]
-//! Submodule of `MainWindow` — see `main_window/mod.rs`.
+//! Submodule of `MainWindow` - see `main_window/mod.rs`.
 use windows::core::{w, Result};
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, RECT, WPARAM};
 use windows::Win32::Graphics::Dwm::{
@@ -96,7 +96,7 @@ impl MainWindow {
         // the paint did: a `Painter` built purely to measure (nothing is drawn
         // through it, and it is dropped before `self` is touched again).
         //
-        // A ComboBox drops its menu BELOW the button, left-aligned — the anchor
+        // A ComboBox drops its menu BELOW the button, left-aligned - the anchor
         // is computed here for the `dropdown` that the arm will open. Expander
         // headers: only their own control zone is NOT an expand toggle (like
         // the SettingsExpander in the original).
@@ -132,7 +132,7 @@ impl MainWindow {
                 }
                 // No render target (between a device loss and the next paint):
                 // nothing can be measured, so the header behaves as if the
-                // click missed every control — which is what it did before.
+                // click missed every control - which is what it did before.
                 None => (None, expander),
             }
         };

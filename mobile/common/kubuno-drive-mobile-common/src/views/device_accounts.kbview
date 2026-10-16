@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Drive · Onboarding · Device accounts — the DeviceAccountsScreen of OnboardingScreens.kt: pick an account
+  Drive · Onboarding · Device accounts - the DeviceAccountsScreen of OnboardingScreens.kt: pick an account
   already present on the device, or add another server. Avatar + two-line rows + chevron, inside a card.
   Drive LIGHT theme, logical px. Centered content.
 -->

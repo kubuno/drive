@@ -41,7 +41,7 @@ struct IdName {
 /// Version-history aggregate, as two correlated scalar sub-selects over the
 /// already-restricted set aliased `b`. It replaces a `LEFT JOIN LATERAL` (which
 /// neither SQLite nor MariaDB has): a correlated sub-select in the projection is
-/// portable and, like the lateral join, is evaluated once per output row — i.e.
+/// portable and, like the lateral join, is evaluated once per output row - i.e.
 /// after the paging, so at most the listing ceiling of lookups on
 /// `idx_files_versions_file`, never a full aggregate of `drive.file_versions`.
 fn version_stats_cols(b: Backend) -> String {
@@ -62,7 +62,7 @@ fn version_stats_cols(b: Backend) -> String {
 /// helper appends `change_seq`, the id and the owner as `$n+1..=$n+3`. Because
 /// `change_seq` always takes a new value, a matched row genuinely changes, so a
 /// zero `rows_affected` unambiguously means "no such owned row" on every engine
-/// (MySQL reports 0 for a no-op update — the fresh seq sidesteps that).
+/// (MySQL reports 0 for a no-op update - the fresh seq sidesteps that).
 async fn update_file_returning(
     db: &DbPool,
     owner_id: Uuid,
@@ -392,7 +392,7 @@ fn release_reservation(location: &str) {
 
 /// Rejects a name that is not one plain path segment: the name becomes a segment
 /// of the on-disk path, and a separator or a `..` would let it escape its folder
-/// — or the owner's tree.
+/// - or the owner's tree.
 pub fn ensure_plain_name(name: &str) -> Result<()> {
     if !kubuno_drive_core::is_plain_segment(name) {
         return Err(FilesError::Validation("Nom de fichier invalide".into()));
@@ -402,8 +402,8 @@ pub fn ensure_plain_name(name: &str) -> Result<()> {
 
 /// Picks the storage path for bytes named `name` in the folder at `virt_path`:
 /// `{owner}/files{virt_path}/{name}` when it is free, else the same name numbered
-/// (`a (2).txt`, `a (3).txt`…). Free means referenced by no row — files, trashed
-/// ones included, and versions — and absent from the storage (an unknown blob is
+/// (`a (2).txt`, `a (3).txt`…). Free means referenced by no row - files, trashed
+/// ones included, and versions - and absent from the storage (an unknown blob is
 /// never overwritten; on a case-insensitive file system this also catches a
 /// sibling differing only by case). Only the physical location is numbered: the
 /// display name stays the caller's.
@@ -484,8 +484,8 @@ async fn relocate_blob(
 }
 
 /// Relocates a row's bytes to `to`, then applies `set_sql` to the row (which
-/// must point it at `to`). When the database step fails — a name taken by a
-/// concurrent write, typically — the bytes go back where the row still says
+/// must point it at `to`). When the database step fails - a name taken by a
+/// concurrent write, typically - the bytes go back where the row still says
 /// they are, so the row never points at an empty location.
 async fn relocate_and_update(
     db: &DbPool,
@@ -874,8 +874,8 @@ pub async fn set_protected(db: &DbPool, owner_id: Uuid, file_id: Uuid, protected
 }
 
 /// Takes a file out of the trash. When a live file of its folder now carries the
-/// same name, the restored one gets a unique name (`a (2).txt`) — and a location
-/// of its own — rather than two visible files sharing one name.
+/// same name, the restored one gets a unique name (`a (2).txt`) - and a location
+/// of its own - rather than two visible files sharing one name.
 pub async fn restore_file(
     db: &DbPool,
     storage: &Arc<dyn StorageBackend>,

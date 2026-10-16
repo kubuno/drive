@@ -87,7 +87,7 @@ pub fn clipboard_set_files(hwnd: HWND, paths: &[String], cut: bool) -> bool {
     }
 }
 
-/// Puts plain text on the clipboard (CF_UNICODETEXT) — AboutViewModel's
+/// Puts plain text on the clipboard (CF_UNICODETEXT) - AboutViewModel's
 /// Copy version / Windows version / user ID commands.
 pub fn clipboard_set_text(hwnd: HWND, text: &str) -> bool {
     use windows::Win32::System::Ole::CF_UNICODETEXT;
@@ -113,7 +113,7 @@ pub fn clipboard_set_text(hwnd: HWND, text: &str) -> bool {
     }
 }
 
-/// Whether the clipboard holds files — `PasteItemAction.IsExecutable`, which is
+/// Whether the clipboard holds files - `PasteItemAction.IsExecutable`, which is
 /// what greys out the command bar's Paste button.
 pub fn clipboard_has_files() -> bool {
     unsafe { IsClipboardFormatAvailable(CF_HDROP.0 as u32).is_ok() }
@@ -152,7 +152,7 @@ pub fn clipboard_get_files(hwnd: HWND) -> Option<(Vec<String>, bool)> {
 }
 
 // ---------------------------------------------------------------------------
-// Shortcuts (.lnk) — `CreateShortcutAction`, `PasteItemAsShortcutAction`.
+// Shortcuts (.lnk) - `CreateShortcutAction`, `PasteItemAsShortcutAction`.
 //
 // The original service goes through `IWindowsShortcutService`, which
 // relies on IShellLink: that's exactly what we do here.
@@ -164,7 +164,7 @@ pub fn create_shortcut(target: &str, link_path: &str) -> bool {
     use windows::Win32::System::Com::{CoCreateInstance, IPersistFile, CLSCTX_INPROC_SERVER};
     use windows::Win32::UI::Shell::{IShellLinkW, ShellLink};
 
-    // `IPersistFile::Save` requires Windows separators — a path coming
+    // `IPersistFile::Save` requires Windows separators - a path coming
     // from the command line may carry "/".
     let link_path = link_path.replace('/', "\\");
 
@@ -224,7 +224,7 @@ pub fn shortcut_name(dir: &str, target: &str) -> String {
 }
 
 // ---------------------------------------------------------------------------
-// Archives — `StorageArchiveService`.
+// Archives - `StorageArchiveService`.
 //
 // The original bundles SevenZipSharp; we rely on the tools shipped with
 // Windows: `tar.exe` (bsdtar, present since Windows 10 1803) can create
@@ -317,7 +317,7 @@ pub fn decompress(archive: &str, dest: &str) -> bool {
 }
 
 /// `BaseDecompressArchiveAction` (ExtractHereSmart): true when the archive
-/// has several top-level entries — it then deserves its own folder.
+/// has several top-level entries - it then deserves its own folder.
 pub fn archive_has_multiple_roots(archive: &str) -> bool {
     let lower = archive.to_ascii_lowercase();
     let listing = if lower.ends_with(".7z") || lower.ends_with(".rar") {

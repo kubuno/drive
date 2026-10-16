@@ -1,4 +1,4 @@
-//! Port of `Files.App/Utils/Git/` — libgit2 interop.
+//! Port of `Files.App/Utils/Git/` - libgit2 interop.
 
 pub mod git_helpers;
 

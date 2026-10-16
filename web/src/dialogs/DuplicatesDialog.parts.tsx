@@ -8,7 +8,7 @@ import { Trash2, FileText, CheckCircle2 } from "lucide-react"
 import type { DuplicatesDialog } from './DuplicatesDialog'
 function fmtDate(iso: string): string {
   const d = new Date(iso)
-  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString('fr-FR')
+  return Number.isNaN(d.getTime()) ? '-' : d.toLocaleDateString('fr-FR')
 }
 
 export function Part1() {

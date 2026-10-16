@@ -1,4 +1,4 @@
-# Kubuno Drive — desktop app
+# Kubuno Drive - desktop app
 
 The native desktop file manager of the drive module: a Rust port of **[Files](https://github.com/files-community/Files)**
 (files-community, MIT), one Cargo workspace for every operating system (`Cargo.toml` here), independent of the

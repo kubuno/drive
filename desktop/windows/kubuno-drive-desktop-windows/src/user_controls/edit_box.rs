@@ -7,10 +7,10 @@
 /// `EditState.entry` value meaning "this editor is the search/filter box".
 pub const EDIT_SEARCH: usize = usize::MAX;
 /// `EditState.entry` value meaning "this editor is the path input"
-/// (Omnibar path mode — EditPath action, Ctrl+L / Alt+D).
+/// (Omnibar path mode - EditPath action, Ctrl+L / Alt+D).
 pub const EDIT_PATH: usize = usize::MAX - 1;
 /// `EditState.entry` value meaning "this editor is the command palette"
-/// (Omnibar command-palette mode — OpenCommandPalette, Ctrl+Maj+P).
+/// (Omnibar command-palette mode - OpenCommandPalette, Ctrl+Maj+P).
 pub const EDIT_PALETTE: usize = usize::MAX - 2;
 
 /// The text field of a `ContentDialog` (CreateArchiveDialog…).

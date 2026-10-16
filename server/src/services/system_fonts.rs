@@ -2,7 +2,7 @@
 //!
 //! The platform's own face (Outfit) is embedded in the binary and seeded into
 //! the shared `System/Fonts` directory at startup, marked `is_protected` so
-//! nobody — administrators included — can delete it. The core's stylesheet then
+//! nobody - administrators included - can delete it. The core's stylesheet then
 //! loads it from THIS instance (`/api/v1/drive/fonts/css2`, see
 //! [`crate::handlers::fonts`]) instead of a third-party CDN.
 //!
@@ -56,7 +56,7 @@ const EMBEDDED_FONTS: &[(&str, &[u8])] = &[
     ("Roboto Italic.ttf", font_asset!("Roboto-Italic.ttf")),
     // Kept available (pickers, documents that already use them).
     // Plus Jakarta Sans ships both cuts because it HAS a real italic, unlike
-    // Outfit — a document set in it gets a drawn oblique rather than one the
+    // Outfit - a document set in it gets a drawn oblique rather than one the
     // browser slants itself.
     ("Plus Jakarta Sans.ttf", font_asset!("PlusJakartaSans.ttf")),
     ("Plus Jakarta Sans Italic.ttf", font_asset!("PlusJakartaSans-Italic.ttf")),
@@ -74,14 +74,14 @@ const EMBEDDED_FONTS: &[(&str, &[u8])] = &[
 /// Faces this module used to ship and no longer does.
 ///
 /// Seeding alone cannot undo itself: it never deletes, and what it installed is
-/// `is_protected`, which the API refuses to remove — administrators included.
+/// `is_protected`, which the API refuses to remove - administrators included.
 /// So an instance that was seeded with a font we have since dropped would keep
 /// serving it for ever, and the whole point of dropping it would be lost. These
 /// names are actively removed at startup.
 ///
 /// The Google Sans families were retired in favour of Outfit: this product is a
 /// sovereign alternative to Google Workspace, and shipping Google's own
-/// typeface in it was incoherent — quite apart from the six `Google Sans Text`
+/// typeface in it was incoherent - quite apart from the six `Google Sans Text`
 /// files whose licence metadata was empty, which is not something to redistribute
 /// in a package.
 const RETIRED_FONTS: &[&str] = &[
@@ -128,7 +128,7 @@ async fn retire_dropped_fonts(db: &DbPool, storage: &Arc<dyn StorageBackend>) {
 /// Idempotent: removes the faces this module no longer ships, uploads each
 /// embedded font that System/Fonts does not already hold (matched by file
 /// name), (re)asserts `is_protected` on those it does, and refreshes IN PLACE
-/// any whose bytes drifted from the embedded ones — protected files cannot be
+/// any whose bytes drifted from the embedded ones - protected files cannot be
 /// replaced through the API, administrators included, so a corrected binary can
 /// only ever arrive through here.
 pub async fn seed(db: &DbPool, storage: &Arc<dyn StorageBackend>) -> Result<()> {

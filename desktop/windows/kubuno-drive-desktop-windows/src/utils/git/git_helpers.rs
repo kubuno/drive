@@ -124,7 +124,7 @@ pub fn branches(path: &str) -> Vec<BranchItem> {
 pub fn checkout(path: &str, branch: &str) -> Result<(), git2::Error> {
     let repo = discover(path).ok_or_else(no_repo)?;
     // A remote branch "origin/x" is checked out by creating/pointing the
-    // local "x" that tracks it — otherwise we point the local directly.
+    // local "x" that tracks it - otherwise we point the local directly.
     let (local_name, refname) = match repo.find_branch(branch, BranchType::Local) {
         Ok(b) => (branch.to_string(), b.into_reference().name().unwrap_or("").to_string()),
         Err(_) => {
@@ -162,7 +162,7 @@ pub fn create_branch(path: &str, name: &str) -> Result<(), git2::Error> {
 
 /// `GitHelpers.DeleteBranch`: deletes the local branch `name`. Ready on
 /// the service side; the UI gesture (the original's custom
-/// `BranchesFlyout` per-row trash button) remains to be wired up — the
+/// `BranchesFlyout` per-row trash button) remains to be wired up - the
 /// current branch flyout is a menu, not yet the per-row-buttons ListView.
 #[allow(dead_code)]
 pub fn delete_branch(path: &str, name: &str) -> Result<(), git2::Error> {
@@ -172,7 +172,7 @@ pub fn delete_branch(path: &str, name: &str) -> Result<(), git2::Error> {
 }
 
 /// Authentication callbacks: first the credential helper (stored HTTPS),
-/// then the SSH agent, finally the default identity — the range libgit2
+/// then the SSH agent, finally the default identity - the range libgit2
 /// offers to reproduce the original's provider without its GitHub OAuth.
 fn remote_callbacks<'a>() -> RemoteCallbacks<'a> {
     let mut cb = RemoteCallbacks::new();
@@ -254,7 +254,7 @@ pub fn push(path: &str) -> Result<(), git2::Error> {
     remote.push(&[refspec.as_str()], Some(&mut opts))
 }
 
-/// `GitSyncAction`: pull (fetch + integration) THEN push — the push is
+/// `GitSyncAction`: pull (fetch + integration) THEN push - the push is
 /// launched via `ContinueWith`, so unconditionally (even if pull fails).
 pub fn sync(path: &str) -> Result<(), git2::Error> {
     let _ = pull(path);

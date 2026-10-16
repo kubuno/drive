@@ -96,7 +96,7 @@ async fn mount_id_by_name(state: &AppState, user_id: Uuid, name: &str) -> Result
 
 // ── Browse ───────────────────────────────────────────────────────────────────
 
-/// `GET /api/v1/drive/resolve/browse?path=[storage]/dir` — list a directory.
+/// `GET /api/v1/drive/resolve/browse?path=[storage]/dir` - list a directory.
 /// Returns `{ items: [{ name, path, is_dir, size_bytes, mime_type, modified_at }] }`
 /// where each `path` is the canonical path of the child.
 pub async fn browse(
@@ -197,7 +197,7 @@ async fn browse_remote(state: &AppState, user_id: Uuid, mount: &str, rel: &str) 
 
 // ── File ─────────────────────────────────────────────────────────────────────
 
-/// `GET /api/v1/drive/resolve/file?path=[storage]/file.ext` — stream a file.
+/// `GET /api/v1/drive/resolve/file?path=[storage]/file.ext` - stream a file.
 pub async fn file(
     State(state): State<AppState>,
     Extension(user): Extension<FilesUser>,

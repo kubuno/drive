@@ -25,7 +25,7 @@ pub struct SetVersioningDto {
     pub enabled: bool,
 }
 
-/// What purging a file's history actually gave back — the two figures the
+/// What purging a file's history actually gave back - the two figures the
 /// interface promised before asking for confirmation.
 #[derive(Debug, Clone, Copy, Serialize)]
 pub struct VersionsPurgeResult {

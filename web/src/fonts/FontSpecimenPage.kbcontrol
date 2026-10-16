@@ -1,4 +1,4 @@
-<!-- FontSpecimenPage — converted from FontSpecimenPage.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<!-- FontSpecimenPage - converted from FontSpecimenPage.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
 <UserControl x:Props="FontSpecimenPageProps">
   <Panel Class="max-w-6xl mx-auto pb-16">
     <Stack Direction="LeftToRight" Gap="12" CrossAlign="Center" Class="mb-6">

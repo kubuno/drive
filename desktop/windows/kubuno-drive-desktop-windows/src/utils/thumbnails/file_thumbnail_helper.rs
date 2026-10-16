@@ -44,7 +44,7 @@ pub(crate) fn spawn_worker(
             let (path, size_px, _) = &key;
             // Like `fetch_icon`: target a NATIVE shell frame (…48, 256).
             // At an intermediate size (e.g. 245), the shell fails on
-            // folders — the original also requests Jumbo=256 for the
+            // folders - the original also requests Jumbo=256 for the
             // pane (FolderPreviewViewModel), hence its "open" folder.
             const STANDARD: [i32; 5] = [16, 24, 32, 48, 256];
             let fetch_px = STANDARD.iter().copied().find(|s| *s >= *size_px).unwrap_or(256);

@@ -37,7 +37,7 @@
 //!   (`DrivesWidgetViewModel.cs:172-179`). So the C# never unlocks with a
 //!   password itself. Here, as the task allows, we implement
 //!   `is_bitlocker_locked` (robust detection) and `unlock_bitlocker`
-//!   (via the system tool `manage-bde`, best-effort — see the TODO).
+//!   (via the system tool `manage-bde`, best-effort - see the TODO).
 //!
 //! ## Robustness
 //!

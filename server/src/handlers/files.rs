@@ -264,7 +264,7 @@ pub async fn download(
 ///
 /// `Ok(Some((start, end)))` (inclusive) for a satisfiable range, `Ok(None)` to
 /// serve the whole body (no header, another unit, several ranges, or a header
-/// that does not parse — RFC 9110 says to ignore it then), `Err(())` when the
+/// that does not parse - RFC 9110 says to ignore it then), `Err(())` when the
 /// range cannot be satisfied (→ 416).
 fn parse_byte_range(header: Option<&str>, len: u64) -> std::result::Result<Option<(u64, u64)>, ()> {
     let Some(spec) = header.and_then(|h| h.trim().strip_prefix("bytes=")) else {
@@ -386,7 +386,7 @@ pub async fn trash(
     // A locked file must be explicitly unlocked before it can be trashed.
     if locks::locked_holder(&state.db, file_id).await?.is_some() {
         return Err(FilesError::Conflict(
-            "Fichier verrouillé — déverrouillez-le avant de le mettre à la corbeille".into(),
+            "Fichier verrouillé - déverrouillez-le avant de le mettre à la corbeille".into(),
         ));
     }
     let file = files::trash_file(&state.db, user.id, file_id).await?;
@@ -415,7 +415,7 @@ pub async fn delete(
 ) -> Result<Json<Value>> {
     if locks::locked_holder(&state.db, file_id).await?.is_some() {
         return Err(FilesError::Conflict(
-            "Fichier verrouillé — déverrouillez-le avant de le supprimer".into(),
+            "Fichier verrouillé - déverrouillez-le avant de le supprimer".into(),
         ));
     }
     files::delete_file_permanently(&state.db, &state.storage, user.id, file_id).await?;
@@ -457,7 +457,7 @@ pub async fn update_user_metadata(
     Ok(Json(json!({ "file": file })))
 }
 
-/// POST /files/:id/copy — copier un fichier dans un dossier cible
+/// POST /files/:id/copy - copier un fichier dans un dossier cible
 pub async fn copy_file(
     State(state): State<AppState>,
     Extension(user): Extension<FilesUser>,
@@ -470,7 +470,7 @@ pub async fn copy_file(
     Ok(Json(json!({ "file": file })))
 }
 
-/// POST /compress — créer une archive ZIP à partir de fichiers/dossiers
+/// POST /compress - créer une archive ZIP à partir de fichiers/dossiers
 pub async fn compress(
     State(state): State<AppState>,
     Extension(user): Extension<FilesUser>,

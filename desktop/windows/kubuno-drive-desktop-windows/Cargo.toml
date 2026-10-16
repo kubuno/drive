@@ -88,7 +88,7 @@ features = [
     # protégés) via CredUIPromptForWindowsCredentialsW + Cred(Un)PackAuthenticationBufferW.
     "Win32_Security_Credentials",
     # StorageSecurity.mount_iso/unmount_iso : API VirtualDisk (virtdisk.dll)
-    # pour monter/démonter une image .iso — OpenVirtualDisk / AttachVirtualDisk.
+    # pour monter/démonter une image .iso - OpenVirtualDisk / AttachVirtualDisk.
     "Win32_Storage_Vhd",
     "UI_ViewManagement",
     # ShareItemHelpers.ShareItemsAsync: the Windows share sheet.

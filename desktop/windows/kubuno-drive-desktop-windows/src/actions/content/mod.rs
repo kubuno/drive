@@ -1,5 +1,5 @@
 //! Port of `Files.App/Actions/Content/` (Archives, Run, Share, Background,
-//! ImageManipulation; the other subfolders — Tags… — will come with their
+//! ImageManipulation; the other subfolders - Tags… - will come with their
 //! features).
 
 pub mod archives;

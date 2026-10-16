@@ -46,7 +46,7 @@ pub enum Hot {
     CmdDelete,
     /// `OpenProperties` (AlwaysVisible context, icon only).
     CmdProperties,
-    /// Recycle Bin — the « RecycleBin » context from `ToolbarSections.cs:51-56`:
+    /// Recycle Bin - the « RecycleBin » context from `ToolbarSections.cs:51-56`:
     /// the three labeled AppBarButtons (`showLabel: true`) that REPLACE the
     /// « AlwaysVisible » block (mapping in `ToolbarItemDescriptor.cs:184`).
     CmdEmptyRecycleBin,
@@ -135,7 +135,7 @@ pub enum Hot {
 
 /// Port of the chrome's `ToolTipService.ToolTip` (navigation bar, command
 /// bar, status bar). Two forms in the original: `Commands.X.LabelWithHotKey`
-/// — the label followed by « (shortcut) » — or a plain `{helpers:ResourceString}`.
+/// - the label followed by « (shortcut) » - or a plain `{helpers:ResourceString}`.
 ///
 /// Returns `None` for elements without a tooltip (text, file rows, etc.:
 /// the original only puts one on icon-only buttons).
@@ -144,7 +144,7 @@ pub fn tooltip_for(hot: Hot) -> Option<String> {
     use kubuno_drive_desktop_localization::tr;
 
     // `LabelWithHotKey`: « Libellé (Raccourci) » if the action has a HotKey,
-    // otherwise the label alone — exactly the original's `Command.LabelWithHotKey`.
+    // otherwise the label alone - exactly the original's `Command.LabelWithHotKey`.
     fn cmd(name: &'static str) -> Option<String> {
         let a = by_name(name)?;
         let label = tr(a.label());

@@ -1,4 +1,4 @@
-//! Cache of real shell icons as Direct2D bitmaps — pair of the C#'s
+//! Cache of real shell icons as Direct2D bitmaps - pair of the C#'s
 //! `IconCacheService` (Services/Storage) + `FileThumbnailHelper`
 //! (Utils/Storage/Helpers).
 

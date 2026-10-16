@@ -1,4 +1,4 @@
-<!-- TrashStatsBanner — converted from TrashStatsBanner.tsx by @kubuno/views-migrate. -->
+<!-- TrashStatsBanner - converted from TrashStatsBanner.tsx by @kubuno/views-migrate. -->
 <UserControl>
   <Stack Direction="LeftToRight"
          Gap="12"

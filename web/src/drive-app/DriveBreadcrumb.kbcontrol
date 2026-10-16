@@ -1,4 +1,4 @@
-<!-- Breadcrumb — converted from Breadcrumb.tsx by @kubuno/views-migrate. -->
+<!-- Breadcrumb - converted from Breadcrumb.tsx by @kubuno/views-migrate. -->
 <UserControl x:Props="BreadcrumbProps">
   <Panel Class="contents">
     <Label HtmlTag="H1"

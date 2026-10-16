@@ -1,7 +1,7 @@
 /**
  * Point d'entrée du bundle MODULE drive (la page /drive), chargé à l'exécution.
  * Buildé séparément (vite.module.config) : core via `@kubuno/sdk`, infra fichiers
- * via `@kubuno/drive`, @ui via `@ui` — tous externes, résolus par l'import map.
+ * via `@kubuno/drive`, @ui via `@ui` - tous externes, résolus par l'import map.
  */
 import { createElement, lazy } from 'react'
 import { Home, Star, Users, Folder, HardDrive } from 'lucide-react'
@@ -97,7 +97,7 @@ export function register() {
   })
 
   // Background context menu: MenuItem[] DATA for the shell's MenuDropdown
-  // (literal point name — no @kubuno/sdk republish needed for the constant).
+  // (literal point name - no @kubuno/sdk republish needed for the constant).
   ExtensionRegistry.register('shell.context-menu-items', 'drive', {
     moduleId: 'drive',
     items: filesContextMenuItems,
@@ -109,7 +109,7 @@ export function register() {
   SlotRegistry.register('app-dialogs',           'drive', FilesSaveDialog)
   SlotRegistry.register('app-dialogs',           'drive', FilesFolderPickerDialog)
   // Shell-level, not inside DriveApp: the sidebar's mount context menu opens
-  // this from ANY drive route, and DriveApp only exists on a few of them — so
+  // this from ANY drive route, and DriveApp only exists on a few of them - so
   // "Gérer les montages" set the flag and nothing appeared until the user
   // navigated back to Mon Drive.
   SlotRegistry.register('app-dialogs',           'drive', RemoteStoragePanel)
@@ -119,7 +119,7 @@ export function register() {
 
   // Barre de navigation basse (mobile) : le shell rend ces onglets à la place de
   // ses destinations génériques tant qu'on est dans /drive.
-  // NB : objet passé via une variable — `mobileTabs` n'existe pas encore dans les
+  // NB : objet passé via une variable - `mobileTabs` n'existe pas encore dans les
   // types npm @kubuno/sdk 0.1.2 (le host à jour le lit au runtime). Inliner le
   // littéral déclencherait le contrôle des propriétés excédentaires de TS.
   const mobileTabs = [
@@ -129,7 +129,7 @@ export function register() {
     { id: 'files',   labelKey: 'drive:nav.files',        Icon: Folder, path: '/drive', end: true },
   ]
 
-  // NB : configs passées via des VARIABLES — `mobileTabs` n'existe pas encore dans
+  // NB : configs passées via des VARIABLES - `mobileTabs` n'existe pas encore dans
   // les types npm @kubuno/sdk 0.1.2 (le host à jour le lit au runtime), et un
   // littéral inline déclencherait le contrôle des propriétés excédentaires de TS.
   const driveSidebar = {
@@ -141,7 +141,7 @@ export function register() {
   }
   useSidebarStore.getState().register(driveSidebar)
 
-  // Settings/storage pages: same nav, but NO "New" action — the mobile FAB is
+  // Settings/storage pages: same nav, but NO "New" action - the mobile FAB is
   // built from it, and a "New folder" button floating over the preferences form
   // makes no sense. A more specific routePrefix wins in resolveActiveSidebarConfig.
   for (const routePrefix of ['/drive/settings', '/drive/storage']) {
@@ -226,7 +226,7 @@ export function register() {
     // chat files…) with Drive's own renderers. `canPreview` lets the caller
     // fall back to a download without opening an empty overlay.
     // Two shapes: a single source, or `{ items, index }` for a whole set (all
-    // the attachments of one e-mail) — the previewer then offers the same
+    // the attachments of one e-mail) - the previewer then offers the same
     // « n / N ‹ › » navigation as Drive, viewer switching included.
     openPreview: (
       source: { url: string; name: string; mime?: string }

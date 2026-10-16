@@ -1,4 +1,4 @@
-//! "Security" tab (READ-ONLY) of the properties sheet — mirror of
+//! "Security" tab (READ-ONLY) of the properties sheet - mirror of
 //! `Views/Properties/SecurityPage.xaml` (the DRAW). The view-model
 //! (`SecurityModel`/`gather`, `Ace` = `AccessControlEntry`, SID resolution)
 //! now lives in `crate::view_models::properties::security_view_model` and is
@@ -200,7 +200,7 @@ pub fn draw(
 }
 
 /// The permission rows (label, checked) of the selected ACE, decoded from
-/// the allowed mask — mirror of `AccessControlEntry`'s `AllowedXAccess`.
+/// the allowed mask - mirror of `AccessControlEntry`'s `AllowedXAccess`.
 fn permission_rows(ace: Option<&Ace>, is_folder: bool) -> Vec<(&'static str, bool)> {
     let mask = ace.map(|a| a.allow_mask).unwrap_or(0);
     let mut rows = vec![

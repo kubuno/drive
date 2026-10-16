@@ -1,4 +1,4 @@
-<!-- FilesStorageGaugeHeader — converted from FilesStorageGaugeHeader.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
+<!-- FilesStorageGaugeHeader - converted from FilesStorageGaugeHeader.tsx by @kubuno/views-migrate (partial: see the TODO comments and the report). -->
 <UserControl>
   <Panel AccessibleRole="PushButton"
          AutoSize="true"

@@ -1,4 +1,4 @@
-//! "General" tab of the properties sheet — mirror of
+//! "General" tab of the properties sheet - mirror of
 //! `Views/Properties/GeneralPage.xaml` driven by `BaseProperties` /
 //! `FileProperties` / `FolderProperties` / `DriveProperties`.
 //!
@@ -24,7 +24,7 @@ use super::PropertiesTarget;
 /// `uc:FileIcon ItemSize="48"`.
 pub const ICON_BOX: f32 = 56.0;
 pub const ICON_SIZE: f32 = 48.0;
-/// `Constants.ShellIconSizes.ExtraLarge` — the size requested for the icon
+/// `Constants.ShellIconSizes.ExtraLarge` - the size requested for the icon
 /// (`FileThumbnailHelper.GetIconAsync(..., ExtraLarge, ...)`).
 pub const SHELL_ICON_EXTRA_LARGE: f32 = 48.0;
 
@@ -36,7 +36,7 @@ pub struct GeneralModel {
     pub icon_path: Option<String>,
     /// Editable name (`ViewModel.ItemName`).
     pub name: String,
-    /// Localized type (`ViewModel.ItemType`) — the file's shell description,
+    /// Localized type (`ViewModel.ItemType`) - the file's shell description,
     /// or "DriveType{Type}" for a drive.
     pub item_type: String,
     /// Parent location (`ViewModel.ItemLocation`).
@@ -48,7 +48,7 @@ pub struct GeneralModel {
     pub size_computing: bool,
     /// Known byte count (immediate for a file ; a folder once computed).
     pub size_bytes: u64,
-    /// Formatted dates (`ToLongLabel`) — `None` hides the row.
+    /// Formatted dates (`ToLongLabel`) - `None` hides the row.
     pub created: Option<String>,
     pub modified: Option<String>,
     pub accessed: Option<String>,
@@ -153,7 +153,7 @@ impl GeneralModel {
                 }
             }
             PropertiesTarget::Multi(paths) => {
-                // Multi-selection: `CombinedProperties` — for this slice we
+                // Multi-selection: `CombinedProperties` - for this slice we
                 // stick to the name ("N items") ; the detail is a TODO.
                 GeneralModel {
                     icon_path: None,
@@ -252,7 +252,7 @@ pub fn draw_general(
         p.text(glyph, &icon_box, &f.icon_large, &theme.text_secondary, true);
     }
 
-    // Right column: name (TextBox — displayed ; editing = TODO) then type.
+    // Right column: name (TextBox - displayed ; editing = TODO) then type.
     let col_x = icon_box.right + 12.0;
     let name_rect = Rect::new(col_x, card.top + 12.0, right - 12.0, card.top + 12.0 + 32.0);
     // The name lives in a `TextBox`: paint its frame (background + border)
@@ -365,7 +365,7 @@ fn draw_kv(p: &Painter, theme: &Theme, label: &str, value: &str, left: f32, top:
     row.bottom
 }
 
-/// `Expander` header (chevron + title) — a 40 DIP clickable track.
+/// `Expander` header (chevron + title) - a 40 DIP clickable track.
 fn draw_expander_header(p: &Painter, theme: &Theme, rect: &Rect, title: &str, expanded: bool) {
     let f = &p.renderer.formats;
     p.fill_rounded(rect, 4.0, &theme.card_background);
@@ -460,7 +460,7 @@ fn tr_key(key: &str) -> &str {
     kubuno_drive_desktop_localization::tr_opt(key).unwrap_or(key)
 }
 
-/// Shell type of an item (`SHGetFileInfo` `SHGFI_TYPENAME`) — the equivalent
+/// Shell type of an item (`SHGetFileInfo` `SHGFI_TYPENAME`) - the equivalent
 /// of `ListedItem.ItemType` ("Text Document", "File folder"…).
 fn shell_type_name(path: &str, is_dir: bool) -> String {
     use windows::Win32::Storage::FileSystem::{FILE_ATTRIBUTE_DIRECTORY, FILE_ATTRIBUTE_NORMAL};

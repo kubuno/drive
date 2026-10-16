@@ -27,7 +27,7 @@ pub async fn list(
     Ok(Json(json!({ "folders": items })))
 }
 
-/// GET /folders/by-size — dossiers triés par taille récursive décroissante.
+/// GET /folders/by-size - dossiers triés par taille récursive décroissante.
 pub async fn list_by_size(
     State(state): State<AppState>,
     Extension(user): Extension<FilesUser>,

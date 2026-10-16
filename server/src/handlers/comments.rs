@@ -14,7 +14,7 @@ use crate::{
     state::AppState,
 };
 
-/// GET /:id/comments — anchored comments on a document the user can read.
+/// GET /:id/comments - anchored comments on a document the user can read.
 pub async fn list(
     State(state): State<AppState>,
     Extension(user): Extension<FilesUser>,
@@ -25,7 +25,7 @@ pub async fn list(
     Ok(Json(json!({ "comments": list })))
 }
 
-/// POST /:id/comments — add a comment anchored to a page region.
+/// POST /:id/comments - add a comment anchored to a page region.
 pub async fn create(
     State(state): State<AppState>,
     Extension(user): Extension<FilesUser>,
@@ -42,7 +42,7 @@ pub struct ResolveDto {
     pub resolved: bool,
 }
 
-/// PATCH /comments/:cid/resolve — mark a comment resolved / reopened.
+/// PATCH /comments/:cid/resolve - mark a comment resolved / reopened.
 pub async fn resolve(
     State(state): State<AppState>,
     Extension(user): Extension<FilesUser>,
@@ -54,7 +54,7 @@ pub async fn resolve(
     Ok(Json(json!({ "comment": comment })))
 }
 
-/// DELETE /comments/:cid — remove a comment (author or admin).
+/// DELETE /comments/:cid - remove a comment (author or admin).
 pub async fn delete(
     State(state): State<AppState>,
     Extension(user): Extension<FilesUser>,

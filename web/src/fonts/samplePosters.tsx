@@ -1,4 +1,4 @@
-// Sample-view "posters" for the fonts home — a Google-Fonts-like gallery where
+// Sample-view "posters" for the fonts home - a Google-Fonts-like gallery where
 // every family gets a distinct, colourful specimen poster. We can't ship the
 // hand-designed art Google uses, so posters are generated from a template
 // system: a palette (background/foreground/accent) crossed with a layout
@@ -16,7 +16,7 @@ export interface PosterProps {
 
 interface Palette { bg: string; fg: string; sub: string; ring?: string }
 
-// Curated palettes — pastels, darks and a couple of gradients (Google-Fonts vibe).
+// Curated palettes - pastels, darks and a couple of gradients (Google-Fonts vibe).
 const PALETTES: Palette[] = [
   { bg: '#f6c945', fg: '#173a2c', sub: '#4b6b3a' },
   { bg: '#ece6fb', fg: '#5a3fb0', sub: '#8271c0' },
@@ -140,7 +140,7 @@ export function SamplePoster({ name, cssFamily, category, template }: PosterProp
         </>
       )
       break
-    default: // 9 — underline bars + name
+    default: // 9 - underline bars + name
       content = (
         <div className="flex-1 flex flex-col justify-center gap-2">
           <div className="h-1.5 w-10 rounded-full" style={{ background: p.fg }} />

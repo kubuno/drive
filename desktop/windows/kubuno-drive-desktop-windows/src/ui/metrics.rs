@@ -33,7 +33,7 @@ pub const STATUSBAR_HEIGHT: f32 = 32.0;
 /// `InfoPane.xaml`: `MinWidth="90"`, and `InfoPaneSettingsService.VerticalSizePx`
 /// won't accept less than 100.
 pub const INFOPANE_MIN_WIDTH: f32 = 100.0;
-/// `MainPage.xaml`: the content column has `MinWidth="208"` — it's what
+/// `MainPage.xaml`: the content column has `MinWidth="208"` - it's what
 /// bounds the pane's growth.
 pub const CONTENT_MIN_WIDTH: f32 = 208.0;
 /// `ShelfPane.xaml`: the Shelf pane has a FIXED width (`Grid Width="240"`).
@@ -97,7 +97,7 @@ pub fn cubic_bezier_ease(x1: f32, y1: f32, x2: f32, y2: f32, t: f32) -> f32 {
     bez(y1, y2, u)
 }
 
-/// Current sidebar width (`SidebarWidth`) — the 56 DIP rail in Compact
+/// Current sidebar width (`SidebarWidth`) - the 56 DIP rail in Compact
 /// mode, like the SidebarView's `PaneColumnDefinition`.
 pub fn sidebar_width() -> f32 {
     let s = crate::services::settings::get();
@@ -106,7 +106,7 @@ pub fn sidebar_width() -> f32 {
 }
 pub const CAPTION_BUTTON_WIDTH: f32 = 46.0;
 /// Height of the Windows 11 caption buttons (min/max/close): 32 DIP, like
-/// the original's system buttons — NOT the full title bar height
+/// the original's system buttons - NOT the full title bar height
 /// (`TAB_BAR_HEIGHT` = 42), otherwise they overflow into the content and
 /// look too tall.
 pub const CAPTION_BUTTON_HEIGHT: f32 = 32.0;

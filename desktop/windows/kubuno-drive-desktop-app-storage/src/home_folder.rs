@@ -19,7 +19,7 @@ impl HomeFolder {
         Self
     }
 
-    /// Port of `GetQuickAccessFolderAsync` — enumerates the Quick Access
+    /// Port of `GetQuickAccessFolderAsync` - enumerates the Quick Access
     /// virtual folder (`3936e9e4-d92c-4eee-a85a-bc16d5ea0819`).
     pub fn get_quick_access_folders(&self) -> Vec<WindowsStorableItem> {
         match WindowsFolder::from_known_folder(FOLDERID_QUICK_ACCESS) {
@@ -31,7 +31,7 @@ impl HomeFolder {
         }
     }
 
-    /// Port of `GetLogicalDrivesAsync` — `GetLogicalDrives` bitmask → one
+    /// Port of `GetLogicalDrivesAsync` - `GetLogicalDrives` bitmask → one
     /// [`WindowsFolder`] per drive root.
     pub fn get_logical_drives(&self) -> Vec<WindowsStorableItem> {
         // SAFETY: plain Win32 call.
@@ -65,7 +65,7 @@ impl HomeFolder {
         drives
     }
 
-    /// Port of `GetNetworkLocationsAsync` — enumerates `FOLDERID_NetHood`.
+    /// Port of `GetNetworkLocationsAsync` - enumerates `FOLDERID_NetHood`.
     pub fn get_network_locations(&self) -> Vec<WindowsStorableItem> {
         match WindowsFolder::from_known_folder(FOLDERID_NETHOOD) {
             Ok(folder) => folder.enumerate_items(StorableKind::FOLDERS),
@@ -76,7 +76,7 @@ impl HomeFolder {
         }
     }
 
-    /// Port of `GetRecentFilesAsync` — enumerates `FOLDERID_Recent`.
+    /// Port of `GetRecentFilesAsync` - enumerates `FOLDERID_Recent`.
     ///
     /// NOTE: the upstream C# code enumerates with `StorableType.Folder`; that
     /// filter is preserved for the 1:1 port.
@@ -92,7 +92,7 @@ impl HomeFolder {
 }
 
 impl Storable for HomeFolder {
-    /// `"Home"` — will be `"files://Home"` in the future (same note as C#).
+    /// `"Home"` - will be `"files://Home"` in the future (same note as C#).
     fn id(&self) -> &str {
         "Home"
     }
@@ -107,7 +107,7 @@ impl Storable for HomeFolder {
 }
 
 impl Folder for HomeFolder {
-    /// Port of `GetItemsAsync` — Quick Access folders, then logical drives,
+    /// Port of `GetItemsAsync` - Quick Access folders, then logical drives,
     /// then network locations (recent files are not part of the aggregate,
     /// same as C#).
     fn get_items(&self, _kind: StorableKind) -> BoxStream<'_, StorageResult<StorableItem>> {
