@@ -391,8 +391,8 @@ fn release_reservation(location: &str) {
 }
 
 /// Rejects a name that is not one plain path segment: the name becomes a segment
-/// of the on-disk path, and a separator or a `..` would let it escape its folder
-/// - or the owner's tree.
+/// of the on-disk path, and a separator or a `..` would let it escape its folder -
+/// or the owner's tree.
 pub fn ensure_plain_name(name: &str) -> Result<()> {
     if !kubuno_drive_core::is_plain_segment(name) {
         return Err(FilesError::Validation("Nom de fichier invalide".into()));

@@ -595,8 +595,8 @@ Le `TabFlyout` de l'original est un `MenuFlyout` WinUI. Nous l'affichions avec
 un `TrackPopupMenuEx` Win32 : le contenu était bon, l'apparence n'avait rien à
 voir (menu système gris, pas de coins arrondis, pas de colonne d'icônes).
 Corrigé : il passe désormais par notre flyout Fluent (`controls/flyout.rs`,
-porté de `MenuFlyoutItemWithThemedIcon`), déjà utilisé par les menus déroulants
-- panneau arrondi (rayon 8), ombre portée, survol arrondi, colonne d'icônes,
+porté de `MenuFlyoutItemWithThemedIcon`), déjà utilisé par les menus déroulants -
+panneau arrondi (rayon 8), ombre portée, survol arrondi, colonne d'icônes,
 raccourcis alignés à droite, entrées désactivées en TextFillColorSecondary.
 `FlyoutKind::TabContext(i)` porte l'onglet visé ; `run_tab_context_command`
 exécute la commande. La largeur n'est plus une constante : elle est calculée sur
@@ -1030,8 +1030,8 @@ Le volet d'informations étant à droite, il grandit quand la souris va à
 ### 14. Préférences d'affichage : elles sont PAR DOSSIER
 
 `LayoutPreferencesManager` garde disposition, tri et sens du tri **par dossier**
-(base `LayoutPreferencesDatabase`, doublée d'un flux ADS sur le dossier lui-même)
-- sauf si `SyncFolderPreferencesAcrossDirectories` est vrai, auquel cas tout le
+(base `LayoutPreferencesDatabase`, doublée d'un flux ADS sur le dossier lui-même) -
+sauf si `SyncFolderPreferencesAcrossDirectories` est vrai, auquel cas tout le
 monde partage les valeurs globales du `LayoutSettingsService`.
 
 `layout_prefs.rs` en reproduit la sémantique, pas la plomberie : la « base » est
@@ -1244,8 +1244,8 @@ générique - les extensions d'espace de noms de l'Explorateur épinglées
 d'identifiant (iCloudDrive, iCloudPhotos, ownCloud, ProtonDrive, SyncCom) puis
 par `ApplicationName` (Nextcloud, kDrive), et la table de noms verbatim (MEGA
 avec le nom du dossier, Nextcloud avec l'identifiant complet…). Vérifié sur la
-machine : les DEUX comptes Nextcloud, OneDrive, iCloud Drive et iCloud Photos
-- identiques à la capture de l'original. La section « Lecteurs cloud »
+machine : les DEUX comptes Nextcloud, OneDrive, iCloud Drive et iCloud Photos -
+identiques à la capture de l'original. La section « Lecteurs cloud »
 (`SidebarCloudDrives`) s'insère entre Lecteurs et Réseau, dépliée par défaut,
 arborescence comprise. Restent : Sharepoint/Yandex/pCloud/Nutstore/Seadrive/
 Autodesk, et les icônes de marque (`DefaultIcon` des CLSID).
@@ -1461,8 +1461,8 @@ d'adresse en mode chemin (anneau simple).
 
 ### 33. Les ComboBox déroulent NOTRE flyout, plus le menu Win32
 
-Les listes déroulantes des pages Paramètres passaient par `TrackPopupMenuEx`
-- le vieux menu système, à mille lieues du ComboBox WinUI. Les trois
+Les listes déroulantes des pages Paramètres passaient par `TrackPopupMenuEx` -
+le vieux menu système, à mille lieues du ComboBox WinUI. Les trois
 `dropdown*` reposent maintenant sur `dropdown_flyout` :
 
 * le menu est un `Flyout` ordinaire (`FlyoutKind::Combo`) rendu dans le popup
@@ -1962,8 +1962,8 @@ visibles.
   premier segment visible).
 - **Rendu** (`navigation_toolbar.rs`) : l'ellipse (glyphe `E712`) + chevron avant
   les segments visibles ; ceux-ci s'indexent à `breadcrumb_start + k`.
-- **Interaction** : `Hot::BreadcrumbEllipsis` ouvre le flyout `BreadcrumbOverflow`
-  - les segments repliés (stockés dans `MainWindow.breadcrumb_overflow`),
+- **Interaction** : `Hot::BreadcrumbEllipsis` ouvre le flyout `BreadcrumbOverflow` -
+  les segments repliés (stockés dans `MainWindow.breadcrumb_overflow`),
   dispatché par index → navigation (même schéma que le flyout des branches Git).
   Le clic sur un segment visible mappe `breadcrumb_start + k` vers son chemin.
 

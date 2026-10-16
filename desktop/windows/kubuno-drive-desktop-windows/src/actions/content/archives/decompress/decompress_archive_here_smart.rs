@@ -6,8 +6,8 @@ use crate::main_window::MainWindow;
 use super::super::target;
 use super::base_decompress_archive_action::{decompress, is_archive_selected};
 
-/// `DecompressArchiveHereSmart.cs` (Ctrl+Shift+E): "Extract here (smart)"
-/// - here if the archive has a single root entry, otherwise into a child
+/// `DecompressArchiveHereSmart.cs` (Ctrl+Shift+E): "Extract here (smart)" -
+/// here if the archive has a single root entry, otherwise into a child
 /// folder named after the archive.
 pub struct DecompressArchiveHereSmart;
 impl Action for DecompressArchiveHereSmart {

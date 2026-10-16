@@ -86,8 +86,8 @@ pub struct UpdateInfo {
 ///
 /// Reproduces `SideloadUpdateService.CheckForUpdatesAsync`: GET of the `.appinstaller`,
 /// extraction of the remote version and bundle, comparison against [`CURRENT_VERSION`].
-/// Any error (network, DNS, parsing) returns `UpdateInfo { available: false, .. }`
-/// - exactly like the C#'s `catch (HttpRequestException)` which leaves
+/// Any error (network, DNS, parsing) returns `UpdateInfo { available: false, .. }` -
+/// exactly like the C#'s `catch (HttpRequestException)` which leaves
 /// `IsUpdateAvailable = false`.
 pub fn check_for_updates() -> UpdateInfo {
     // 1) Fetch the .appinstaller XML (stable channel, like the "Files" package).

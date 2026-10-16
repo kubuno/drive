@@ -15,8 +15,8 @@ pub struct LayoutPreferences {
     pub layout_mode: ViewMode,
     pub sort_column: SortColumn,
     pub sort_ascending: bool,
-    /// `LayoutPreferencesItem.SortFilesFirst` / `SortDirectoriesAlongsideFiles`
-    /// - the "folders first / files first / mixed" radio trio.
+    /// `LayoutPreferencesItem.SortFilesFirst` / `SortDirectoriesAlongsideFiles` -
+    /// the "folders first / files first / mixed" radio trio.
     /// (`serde(default)`: preferences saved before these fields existed.)
     #[serde(default)]
     pub sort_files_first: bool,

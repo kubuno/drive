@@ -12,8 +12,8 @@
 //! Files, folders and tombstones all draw their `change_seq` from a **single**
 //! counter domain (`"drive"`), exactly as the old global `SEQUENCE` did. The
 //! client merges the three sources and paginates by a single `change_seq`
-//! cursor, so the sequence must be globally unique and ordered across all three
-//! - a per-table counter would let a file and a folder share a number and the
+//! cursor, so the sequence must be globally unique and ordered across all three -
+//! a per-table counter would let a file and a folder share a number and the
 //! `change_seq > cursor` filter would drop one.
 //!
 //! # Tombstones carry a kind and a display path

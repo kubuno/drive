@@ -1,8 +1,8 @@
 //! Port of `Files.App/Actions/Open/`.
 //!
 //! Module glue: one C# class = one `.rs` file. The shared free helpers
-//! (`target`, `log_file_path`, `current_dir`, `git_root`) stay here
-//! - on the C# side the logic is inline in each class or in
+//! (`target`, `log_file_path`, `current_dir`, `git_root`) stay here -
+//! on the C# side the logic is inline in each class or in
 //! `Win32Helper`/`FilePropertiesHelpers` - and are imported by the action
 //! files that use them.
 

@@ -40,8 +40,8 @@ impl Painter<'_> {
         for (i, rect) in layout.quick_cards.iter().enumerate() {
             let item = &model.quick_access[i];
             let hot = state.hot == Some(Hot::QuickCard(i));
-            // `@ui/Card.tsx:55`: `rounded-xl border border-border bg-surface-0`
-            // - `--radius-xl` is 8, not the 6 this used, and the surface is
+            // `@ui/Card.tsx:55`: `rounded-xl border border-border bg-surface-0` -
+            // `--radius-xl` is 8, not the 6 this used, and the surface is
             // WHITE, not surface-1 (which is all but the page background, so
             // the cards read as outlines only). Confirmed by the drive home's
             // own cards: `MobileHome.tsx:89`,
