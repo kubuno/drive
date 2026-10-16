@@ -80,8 +80,8 @@ impl MainWindow {
     }
 
     /// `UpdateDisplayModeForPaneWidth`: below `COMPACT_MAX_WIDTH`, the original
-    /// switches to Compact mode. Lacking a Compact mode here, we close the pane
-    /// - which the hamburger button already does - and keep the last width.
+    /// switches to Compact mode. Lacking a Compact mode here, we close the pane -
+    /// which the hamburger button already does - and keep the last width.
     /// `UpdateDisplayModeForPaneWidth`: below `COMPACT_MAX_WIDTH` (200) the
     /// bar switches to COMPACT mode (56 rail) - not closed - and switches back
     /// to Expanded as soon as the drag goes back past the threshold; the drag

@@ -134,8 +134,8 @@ pub enum Hot {
 }
 
 /// Port of the chrome's `ToolTipService.ToolTip` (navigation bar, command
-/// bar, status bar). Two forms in the original: `Commands.X.LabelWithHotKey`
-/// - the label followed by « (shortcut) » - or a plain `{helpers:ResourceString}`.
+/// bar, status bar). Two forms in the original: `Commands.X.LabelWithHotKey` -
+/// the label followed by « (shortcut) » - or a plain `{helpers:ResourceString}`.
 ///
 /// Returns `None` for elements without a tooltip (text, file rows, etc.:
 /// the original only puts one on icon-only buttons).
